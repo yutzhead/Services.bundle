@@ -68,7 +68,7 @@ def MediaObjectsForURL(url):
     codecs = codecsForVideoTypeValue(videoType)
     attrs = {
       'parts': [PartObject(key=src)],
-      'protocols': [Protocol.HTTPVideo],
+      'protocol': Protocol.HTTPVideo
     }
 
     if codecs and len(codecs) > 0:
