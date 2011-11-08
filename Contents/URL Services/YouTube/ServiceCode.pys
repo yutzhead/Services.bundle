@@ -13,23 +13,23 @@ httpHeaders = { 'X-GData-Key' : "key="+DEVELOPER_KEY }
 
 def NormalizeURL(url):
   video_id = None
+
   if isinstance(url, basestring):
     url = urlparse.urlparse(url)
 
   domain = url.netloc
 
+  # Edit mobile urls
   if domain.startswith('m.'):
-    domain = domain.replace('m.','www.')
-    if 'desktop_uri' in url.query:
-      url_path = url.fragment[1:]
-    else:
-      url_path = url.path
-  else:
-    url_path = url.path
+    domain = domain.replace('m.', 'www.')
+
+    # Rewrite mobile urls that contain a hash
+    if url.fragment != '':
+      url = urlparse.urlparse('%s://%s%s' % (url.scheme, domain, url.fragment))
 
   # http://www.youtube.com/?v=lgTssWW2Qw4&feature=player_embedded
   # http://www.youtube.com/watch?v=lgTssWW2Qw4&feature=player_embedded
-  if url_path == '/' or re.match("^/(#/)?watch(_popup)?", url_path):
+  if url.path == '/' or re.match("^/watch(_popup)?", url.path):
     qs = cgi.parse_qs(url.query)
     if 'v' in qs:
       video_id = cgi.parse_qs(url.query)['v'][0]
@@ -37,19 +37,19 @@ def NormalizeURL(url):
   # http://youtu.be/vXhmyyXFd5I
   elif domain == 'youtu.be':
     domain = 'www.youtube.com'
-    video_id = url_path[1:]
+    video_id = url.path[1:]
 
   # http://www.youtube.com/user/andyverg#p/a/u/0/HTGOoQNYGL4
-  elif (url_path[0:6] == '/user/' or re.match("^/[^/]+$", url_path)) and url.fragment != '':
+  elif (url.path[0:6] == '/user/' or re.match("^/[^/]+$", url.path)) and url.fragment != '':
     video_id = url.fragment.split('/')[-1]
 
   # http://www.youtube.com/v/taaSlWjKdDY
-  elif url_path[0:3] == '/v/':
-    video_id = re.findall('/v/(.{11})', url_path)[0]
+  elif url.path[0:3] == '/v/':
+    video_id = re.findall('/v/(.{11})', url.path)[0]
 
   # http://www.youtube.com/e/NO00y65njH0
-  elif url_path[0:3] == '/e/':
-    video_id = re.findall('/e/(.{11})', url_path)[0]
+  elif url.path[0:3] == '/e/':
+    video_id = re.findall('/e/(.{11})', url.path)[0]
 
   if domain.startswith('youtube.'):
     domain = 'www.' + domain
@@ -172,9 +172,9 @@ def PlayVideo(url, default_fmt = None):
         parts = [
           PartObject(key = final_url)
         ],
-        protocol = Protocol.HTTPStreamingVideo if fmt in (18, 22, 37, 38) else []
+        protocol = Protocol.HTTPStreamingVideo if fmt in (18, 22, 37, 38) else Protocol.HTTPVideo
       )
     ]
   ))
-  c.http_cookies = HTTP.GetCookiesForURL('http://www.youtube.com')
+  c.http_cookies = HTTP.CookiesForURL('http://www.youtube.com')
   return c
