@@ -74,12 +74,17 @@ def MetadataObjectForURL(url):
   except:
     rating = None
 
+  try:
+    tags = details['tags']
+  except:
+    tags = None
+
   video = VideoClipObject(
     title = details['title'],
     summary = details['description'],
     thumb = thumb,
     rating = rating,
-    tags = details['tags'],
+    tags = tags,
     originally_available_at = Datetime.ParseDate(details['uploaded']).date(),
     duration = details['duration'] * 1000,
     genres = [details['category']]
