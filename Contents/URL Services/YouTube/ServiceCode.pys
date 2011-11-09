@@ -77,7 +77,7 @@ def MetadataObjectForURL(url):
   try:
     tags = details['tags']
   except:
-    tags = None
+    tags = []
 
   video = VideoClipObject(
     title = details['title'],
