@@ -638,19 +638,29 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://((www|uk)\.)?ign\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.ign</string>
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.ign.com/videos/2011/05/04/mortal-kombat-ladder-master-achievement-trophy-guide</string>
 			</array>
 		</dict>
-
+		<key>iFanboy</key>
+		<dict>
+			<key>URLPattern</key>
+			<string>http://(www.)?ifanboy.com/podcasts/.+</string>
+			<key>Identifier</key>
+			<string>com.plexapp.plugins.ifanboy</string>
+			<key>TestURLs</key>
+			<array>
+				<string>http://ifanboy.com/podcasts/ifanboy-episode-235-robert-kirkman-at-new-york-comic-con-2011/</string>
+			</array>
+		</dict>
 		<key>iMovies</key>
 		<dict>
 			<key>URLPattern</key>
 			<string>http://drivein.awardspace.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.imovies</string>
 			<key>TestURLs</key>
 			<array>
