@@ -1108,6 +1108,17 @@
 				<string>http://www.stubru.be/media/hotshotjoegoddardfeatvalentinagabriel</string>
 			</array>
 		</dict>
+		<key>StumbleUpon</key>
+		<dict>
+			<key>URLPattern</key>
+			<string>http://www.stumbleupon.com/su/[0-9, a-z, A-Z]{6}/.+</string>
+			<key>Identifier</key>
+			<string>com.plexapp.plugins.stumbleupon</string>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.stumbleupon.com/su/1qrBfe/www.youtube.com/watch%253Fv%253DqybUFnY7Y8w</string>
+			</array>
+		</dict>
 		<key>Stuff-TV</key>
 		<dict>
 			<key>URLPattern</key>
