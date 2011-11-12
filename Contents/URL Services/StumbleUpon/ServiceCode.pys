@@ -12,5 +12,5 @@ def MediaObjectsForURL(url):
 
 def ActualURL(url):
   actual_url = 'http://' + String.Unquote(re.search('http://www.stumbleupon.com/su/[0-9, a-z, A-Z]{6}/(.+)', url).group(1))
-  Log(actual_url)
+  #Log(actual_url)
   return actual_url
