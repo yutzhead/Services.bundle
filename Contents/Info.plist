@@ -60,7 +60,7 @@
 		<key>ABCFamily</key>
 		<dict>
 			<key>URLPattern</key>
-			<string>http://abcfamily.go.com/watch/.+</string>
+			<string>http://abcfamily.go.com/(watch|movies)/.+</string>
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.abcfamily</string>
 			<key>TestURLs</key>

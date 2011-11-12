@@ -3,23 +3,33 @@ import re
 NAMESPACES = {"og":"http://opengraphprotocol.org/schema/"}
 
 ####################################################################################################
+
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-
+    
+    mo = None
+    
     if '/abc-family-movies/' in url: #content is a movie, therefore return a MovieObject
-        title = data.xpath('//div[@class="tune-in"]')[0].text
-        summary = data.xpath('//p[@class="tune-in-desc"]')[0].text
-        run_time = data.xpath('//ul[@class="tune-in-info"]/li')[4].text
-        duration = Duration_ms(run_time)
-        thumb = re.search("var thumbnail = '(http://.+\.jpg)';", HTML.StringFromElement(data)).group(1)
+        try:
+          title = data.xpath('//div[@class="tune-in"]')[0].text
+          summary = data.xpath('//p[@class="tune-in-desc"]')[0].text
+          run_time = data.xpath('//ul[@class="tune-in-info"]/li')[4].text
+          duration = Duration_ms(run_time)
+          thumb = re.search("var thumbnail = '(http://.+\.jpg)';", HTML.StringFromElement(data)).group(1)
 
-        mo = MovieObject(
-            title = title,
-            duration = duration,
-            content_rating = rating,
-            summary = summary,
-            thumb = thumb
-            )    
+          mo = MovieObject(
+              title = title,
+              duration = duration,
+              content_rating = rating,
+              summary = summary,
+              thumb = thumb
+              )
+        except: pass
         
     else: #if it's not a movie, assume it's an episode
         try:
@@ -45,16 +55,18 @@ def MetadataObjectForURL(url):
                 summary = summary,
                 thumb = thumbUrl
             )
-        except: #if it's not a movie and not an episode, it must be a clip
-            title = data.xpath('//meta[@property="og:title"]', namespaces=NAMESPACES)[0].get('content')
-            summary = data.xpath('//meta[@property="og:description"]', namespaces=NAMESPACES)[0].get('content')
-            thumb = data.xpath('//meta[@property="og:image"]', namespaces=NAMESPACES)[0].get('content')
+        except: pass
+    #if it's not a movie and not an episode, it must be a clip
+    if mo == None:
+        title = data.xpath('//meta[@property="og:title"]', namespaces=NAMESPACES)[0].get('content')
+        summary = data.xpath('//meta[@property="og:description"]', namespaces=NAMESPACES)[0].get('content')
+        thumb = data.xpath('//meta[@property="og:image"]', namespaces=NAMESPACES)[0].get('content')
 
-            mo = VideoClipObject(
-                title = title,
-                summary = summary,
-                thumb = thumb
-            )
+        mo = VideoClipObject(
+            title = title,
+            summary = summary,
+            thumb = thumb
+        )
 
     mo.source_title = "ABC Family"
     return mo
