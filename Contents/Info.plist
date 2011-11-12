@@ -14,7 +14,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.channel4.com/programmes/.+/4od(/?#|/player/)([0-9]{7})</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.4oD</string>
 			<key>TestURLs</key>
 			<array>
@@ -26,7 +26,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://5by5.tv/.+/[0-9]+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.5by5</string>
 			<key>TestURLs</key>
 			<array>
@@ -38,7 +38,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://abc.go.com/watch/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.abc</string>
 			<key>TestURLs</key>
 			<array>
@@ -49,7 +49,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?academicearth.org/lectures/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.academicearth</string>
 			<key>TestURLs</key>
 			<array>
@@ -61,7 +61,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://abcfamily.go.com/watch/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.abcfamily</string>
 			<key>TestURLs</key>
 			<array>
@@ -72,7 +72,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.absoluteradio.co.uk/player.*/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.absoluteradio</string>
 			<key>TestURLs</key>
 			<array>
@@ -84,7 +84,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://tv.adobe.com/watch/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.adobetv</string>
 			<key>TestURLs</key>
 			<array>
@@ -95,7 +95,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://adrenalinfeed.com/[0-9]+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.adrenalinefeed</string>
 			<key>TestURLs</key>
 			<array>
@@ -118,7 +118,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?apple\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.amt</string>
 			<key>TestURLs</key>
 			<array>
@@ -130,7 +130,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://arbejdsglaede.23video.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.arbejdsglaedeTV</string>
 			<key>TestURLs</key>
 			<array>
@@ -141,7 +141,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://videos.arte.tv/.+/videos/.+-[0-9]+.html</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.artep7</string>
 			<key>TestURLs</key>
 			<array>
@@ -153,7 +153,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.automatedhome.co.uk/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.automatedhome</string>
 			<key>TestURLs</key>
 			<array>
@@ -164,7 +164,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www\.bbc\.co\.uk/iplayer/episode/[^/$]{8}</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.iplayer</string>
 			<key>TestURLs</key>
 			<array>
@@ -176,7 +176,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.bing.com/videos/watch/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.bing</string>
 			<key>TestURLs</key>
 			<array>
@@ -188,7 +188,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.blinkbox.com(/Free)?/((TV|Television)|Movie(s)?)/[0-9]+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.blinkbox</string>
 			<key>TestURLs</key>
 			<array>
@@ -201,7 +201,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?blip\.tv/(((file|play)/([A-Za-z0-9]){7,11}(\.html)?)|([^/]+/.+\-([0-9]{7})))</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.blip</string>
 			<key>TestURLs</key>
 			<array>
@@ -215,7 +215,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.break.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.breakcom</string>
 			<key>TestURLs</key>
 			<array>
@@ -251,7 +251,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?cbs\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.cbs</string>
 			<key>TestURLs</key>
 			<array>
@@ -262,7 +262,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://channel9.msdn.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.channel9</string>
 			<key>TestURLs</key>
 			<array>
@@ -286,7 +286,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://current.com/.+/[0-9]+_.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.currenttv</string>
 			<key>TestURLs</key>
 			<array>
@@ -298,7 +298,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(cnettv|reviews).cnet.com/.+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.cnettv</string>
 			<key>TestURLs</key>
 			<array>
@@ -311,7 +311,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.cnn.com/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.cnn</string>
 			<key>TestURLs</key>
 			<array>
@@ -322,7 +322,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.collegehumor.com/video/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.college_humor</string>
 			<key>TestURLs</key>
 			<array>
@@ -334,7 +334,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.comedycentral.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.comedycentral</string>
 			<key>TestURLs</key>
 			<array>
@@ -345,7 +345,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomdeynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.ctvglobemedia</string>
 			<key>TestURLs</key>
 			<array>
@@ -356,7 +356,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.dailykos.com/tv/.+/[0-9]+/?</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.dailykos</string>
 			<key>TestURLs</key>
 			<array>
@@ -368,7 +368,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?dailymotion.com/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.dailymotion</string>
 			<key>TestURLs</key>
 			<array>
@@ -380,7 +380,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?dolectures\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.dolectures</string>
 			<key>TestURLs</key>
 			<array>
@@ -392,7 +392,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?doctype\.tv/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.doctype</string>
 			<key>TestURLs</key>
 			<array>
@@ -404,7 +404,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?dr.dk/nu/live#/.+|http://(.+\.)?dr.dk/radio/player/\?.+|http://(.+\.)?dr.dk/nu/player/#/.*/.+|http://(.+\.)?dr.dk/radio/player/\?[i][d]/\d+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.drnu</string>
 			<key>TestURLs</key>
 			<array>
@@ -418,7 +418,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.dumpert.nl/mediabase/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.dumpert</string>
 			<key>TestURLs</key>
 			<array>
@@ -431,7 +431,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?euronews.net/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.euronews</string>
 			<key>TestURLs</key>
 			<array>
@@ -444,7 +444,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://fora.tv/[0-9]{4}/[0-9]{2}/[0-9]{2}/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.foratv</string>
 			<key>TestURLs</key>
 			<array>
@@ -456,7 +456,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://video.foxnews.com(/#)?/v/[0-9]+.*</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.foxnews</string>
 			<key>TestURLs</key>
 			<array>
@@ -469,7 +469,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://.+freecaster.tv/.+/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.freecaster</string>
 			<key>TestURLs</key>
 			<array>
@@ -493,7 +493,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.funnyordie.com/videos/[^/].+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.funnyordie</string>
 			<key>TestURLs</key>
 			<array>
@@ -505,7 +505,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.fxguide.com/(fxguidetv|fxguidetves|fxpodcasts|thevfxshow|therc)/.+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.fxguidetv</string>
 			<key>TestURLs</key>
 			<array>
@@ -520,7 +520,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.fxuk.com/shows/.+/videos/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.fxuk</string>
 			<key>TestURLs</key>
 			<array>
@@ -532,7 +532,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?g4tv.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.g4tv</string>
 			<key>TestURLs</key>
 			<array>
@@ -545,7 +545,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.gamer.nl/video/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.gamernl</string>
 			<key>TestURLs</key>
 			<array>
@@ -592,7 +592,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?history.com/.+#.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.historychannel</string>
 			<key>TestURLs</key>
 			<array>
@@ -603,7 +603,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?howtobecome\.tv/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.howtobecome</string>
 			<key>TestURLs</key>
 			<array>
@@ -614,7 +614,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)hulu.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.hulu</string>
 			<key>TestURLs</key>
 			<array>
@@ -627,7 +627,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://((www|uk)\.)?ign\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.ign</string>
 			<key>TestURLs</key>
 			<array>
@@ -639,7 +639,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://drivein.awardspace.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.imovies</string>
 			<key>TestURLs</key>
 			<array>
@@ -661,7 +661,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://kelbytv.com/.+/[0-9]{4}/[0-9]{2}/[0-9]{2}/.+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.kelbytv</string>
 			<key>TestURLs</key>
 			<array>
@@ -673,7 +673,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.kontraband.com/videos/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.kontraband</string>
 			<key>TestURLs</key>
 			<array>
@@ -684,7 +684,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.khanacademy.org/video/.+?playlist=.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.khanacademy</string>
 			<key>TestURLs</key>
 			<array>
@@ -696,7 +696,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.liveleak.com/view?.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.liveleak</string>
 			<key>TestURLs</key>
 			<array>
@@ -708,7 +708,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>https?://www.lovefilm.com/film/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.lovefilm-player</string>
 			<key>TestURLs</key>
 			<array>
@@ -732,7 +732,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://marvel.com/videos/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.marvel</string>
 			<key>TestURLs</key>
 			<array>
@@ -744,7 +744,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.metacafe.com/watch/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.metacafe</string>
 			<key>TestURLs</key>
 			<array>
@@ -757,7 +757,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.metro.co.uk/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.metro</string>
 			<key>TestURLs</key>
 			<array>
@@ -769,7 +769,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.mevio.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.mevio</string>
 			<key>TestURLs</key>
 			<array>
@@ -781,7 +781,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.moviesense.nl/[0-9]{4}/[0-9]{2}/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.moviesense</string>
 			<key>TestURLs</key>
 			<array>
@@ -793,7 +793,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://video.mpora.com/\w+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.mpora</string>
 			<key>TestURLs</key>
 			<array>
@@ -805,7 +805,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://photo.mpora.com/(photo|album)/\w+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.mpora</string>
 			<key>TestURLs</key>
 			<array>
@@ -817,7 +817,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.myspace.com/video/.*/[0-9]+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.myspace</string>
 			<key>TestURLs</key>
 			<array>
@@ -829,7 +829,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://video.nationalgeographic.com/video/player/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.nationalgeographic</string>
 			<key>TestURLs</key>
 			<array>
@@ -841,7 +841,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://photography.nationalgeographic.com/photography/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.nationalgeographic</string>
 			<key>TestURLs</key>
 			<array>
@@ -853,7 +853,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.nbc.com/.+/video/(?!/categories).*/[0-9]+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.nbc</string>
 			<key>TestURLs</key>
 			<array>
@@ -866,7 +866,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.newsy.com/videos/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.newsy</string>
 			<key>TestURLs</key>
 			<array>
@@ -878,7 +878,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://video.nytimes.com/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.thenytimes</string>
 			<key>TestURLs</key>
 			<array>
@@ -892,7 +892,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.nfb.ca/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.nfbonf</string>
 			<key>TestURLs</key>
 			<array>
@@ -903,7 +903,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.nme.com/nme-video/.+/[0-9]+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.nme</string>
 			<key>TestURLs</key>
 			<array>
@@ -915,7 +915,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.parentsask.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.parentsask</string>
 			<key>TestURLs</key>
 			<array>
@@ -927,7 +927,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?pitchfork\.com/tv/(?!musicvideos).+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.pitchforktv</string>
 			<key>TestURLs</key>
 			<array>
@@ -939,7 +939,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?pitchfork.com/tv/musicvideos/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.pitchforktv</string>
 			<key>TestURLs</key>
 			<array>
@@ -951,7 +951,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?pokerstars.tv/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.pokerstarstv</string>
 			<key>TestURLs</key>
 			<array>
@@ -963,7 +963,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://railscasts.com/episodes/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.railscasts</string>
 			<key>TestURLs</key>
 			<array>
@@ -975,7 +975,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?rai.tv/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.raitv</string>
 			<key>TestURLs</key>
 			<array>
@@ -986,7 +986,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://revision3\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.revision3</string>
 			<key>TestURLs</key>
 			<array>
@@ -997,7 +997,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?roosterteeth\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.roosterteeth</string>
 			<key>TestURLs</key>
 			<array>
@@ -1008,7 +1008,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://showmedo.com/videotutorials/video.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.showmedo</string>
 			<key>TestURLs</key>
 			<array>
@@ -1020,7 +1020,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.shredordie.com/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.shredordie</string>
 			<key>TestURLs</key>
 			<array>
@@ -1032,7 +1032,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://go.sky.com/vod/content/.+/videoDetailsPage.do</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.skyplayer</string>
 			<key>TestURLs</key>
 			<array>
@@ -1045,7 +1045,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.skysports.com/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.skysports</string>
 			<key>TestURLs</key>
 			<array>
@@ -1057,7 +1057,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www.)?themonthly.com.au/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.slowtv</string>
 			<key>TestURLs</key>
 			<array>
@@ -1068,7 +1068,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.snagfilms.com/films/title/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.snagfilms</string>
 			<key>TestURLs</key>
 			<array>
@@ -1091,7 +1091,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.stuff.tv/video/(vidcasts|reviews)/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.stufftv</string>
 			<key>TestURLs</key>
 			<array>
@@ -1103,7 +1103,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://svtplay.se/t/[0-9]+/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.svtplay</string>
 			<key>TestURLs</key>
 			<array>
@@ -1115,7 +1115,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?t3.com/.*</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.t3</string>
 			<key>TestURLs</key>
 			<array>
@@ -1127,7 +1127,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.ted.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.ted</string>
 			<key>TestURLs</key>
 			<array>
@@ -1141,7 +1141,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.colbertnation.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.thecolbertreport</string>
 			<key>TestURLs</key>
 			<array>
@@ -1153,7 +1153,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.thedailyshow.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.thedailyshow</string>
 			<key>TestURLs</key>
 			<array>
@@ -1165,7 +1165,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.escapistmagazine.com/videos/view/.*</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.escapist</string>
 			<key>TestURLs</key>
 			<array>
@@ -1177,7 +1177,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.guardian.co.uk/[^/]+/video/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.theguardian</string>
 			<key>TestURLs</key>
 			<array>
@@ -1189,7 +1189,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(.+\.)?(theonion.com/video|theonion.com/articles|onionsportsnetwork.com/articles)/.+,[0-9]+/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.theonion</string>
 			<key>TestURLs</key>
 			<array>
@@ -1203,7 +1203,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.traileraddict.com/trailer/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.traileraddict</string>
 			<key>TestURLs</key>
 			<array>
@@ -1215,7 +1215,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.triplem.com.au/.+/video.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.triplem</string>
 			<key>TestURLs</key>
 			<array>
@@ -1238,7 +1238,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://uk.filmtrailer.com/.*</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.ukfilmtrailer</string>
 			<key>TestURLs</key>
 			<array>
@@ -1251,7 +1251,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://unclejayexplains.com/[0-9]{4}/[0-9]{2}/[0-9]{2}/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.unclejayexplains</string>
 			<key>TestURLs</key>
 			<array>
@@ -1263,7 +1263,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.universalsports.com/video/assetid=.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.universalsports</string>
 			<key>TestURLs</key>
 			<array>
@@ -1275,7 +1275,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.vgtv.no/#!id=[0-9]+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.vgtv</string>
 			<key>TestURLs</key>
 			<array>
@@ -1286,7 +1286,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.videobash.com/video_show/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.videobash</string>
 			<key>TestURLs</key>
 			<array>
@@ -1298,7 +1298,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://www.videojug.com/film/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.videojug</string>
 			<key>TestURLs</key>
 			<array>
@@ -1323,7 +1323,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://vimcasts.org/episodes/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.vimcasts</string>
 			<key>TestURLs</key>
 			<array>
@@ -1335,7 +1335,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?vimeo\.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.vimeo</string>
 			<key>TestURLs</key>
 			<array>
@@ -1348,7 +1348,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://viralvideochart.unrulymedia.com/youtube/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.viralvideochart</string>
 			<key>TestURLs</key>
 			<array>
@@ -1360,7 +1360,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://((www|video)\.)?(deredactie|ketnet|sporza)\.be/(permalink|cm/vrtnieuws/mediatheek|cm/ketnet/ketnet-mediaplayer|cm/sporza/videozone)/</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.vrt</string>
 			<key>TestURLs</key>
 			<array>
@@ -1374,7 +1374,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.)?wimp.com/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.wimp</string>
 			<key>TestURLs</key>
 			<array>
@@ -1385,7 +1385,7 @@
 		<dict>
 			<key>URLPattern</key>
 			<string>http://(www\.|m\.)?youtu(be\.com|\.be)/.+</string>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.youtube</string>
 			<key>TestURLs</key>
 			<array>
@@ -1402,7 +1402,7 @@
 			<string>^$</string>
 			<key>Fallback</key>
 			<true/>
-			<key>LinkedPlugin</key>
+			<key>Identifier</key>
 			<string>com.plexapp.plugins.html5video</string>
 			<key>TestURLs</key>
 			<array>
