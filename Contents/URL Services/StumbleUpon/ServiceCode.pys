@@ -1,0 +1,16 @@
+import re
+
+def NormalizeURL(url):
+  return url
+
+def MetadataObjectForURL(url):
+  return URLService.MetadataObjectForURL(ActualURL(url))
+
+@deferred
+def MediaObjectsForURL(url):
+  return URLService.MediaObjectsForURL(ActualURL(url))
+
+def ActualURL(url):
+  actual_url = 'http://' + String.Unquote(re.search('http://www.stumbleupon.com/su/[0-9, a-z, A-Z]{6}/(.+)', url).group(1))
+  #Log(actual_url)
+  return actual_url
