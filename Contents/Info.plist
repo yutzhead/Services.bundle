@@ -106,7 +106,7 @@
 		<key>Al Jazeera English</key>
 		<dict>
 			<key>URLPattern</key>
-			<string>http://english.aljazeera.net/programmes/.+</string>
+			<string>http://(english|www).aljazeera.(net|com)/programmes/.+</string>
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.aljazeera</string>
 			<key>TestURLs</key>

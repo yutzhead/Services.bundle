@@ -4,6 +4,11 @@ AJ_NAMESPACES = {"og":"http://www.w3.org/1999/xhtml"}
 
 ####################################################################################################
 
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+
 def MetadataObjectForURL(url):
   
   data = HTML.ElementFromURL(url)
