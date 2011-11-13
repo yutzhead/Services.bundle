@@ -89,20 +89,23 @@ def VideoInfo(url):
   # For HD videos: use the given height (480, 720, 1080)
   # For SD videos: use a 16x9 AR when calculating the approximate height of a video for videos we know the width of
   #
-  resolution = re.search('_(h|i)([0-9]+)(w|p)?\.(mov|m4v)', url)
-  
-  if resolution.group(3) == 'p':
-    video_resolution = resolution.group(2)
-  elif resolution.group(1) == 'i' and resolution.group(2) == '320':
-    video_resolution = 360 # Apple's i320 videos have actually a width of 640 -- (640/16)*9 = 360
-  else:
-    width = int(resolution.group(2))
-    video_resolution = int((width/16)*9)
+  try:
+    resolution = re.search('_(h|i)([0-9]+)(w|p)?\.(mov|m4v)', url)
 
-  if int(video_resolution) in [576, 480, 720, 1080]:
-    video_resolution = str(video_resolution)
-  else:
-    video_resolution = 'sd'
+    if resolution.group(3) == 'p':
+      video_resolution = resolution.group(2)
+    elif resolution.group(1) == 'i' and resolution.group(2) == '320':
+      video_resolution = 360 # Apple's i320 videos have actually a width of 640 -- (640/16)*9 = 360
+    else:
+      width = int(resolution.group(2))
+      video_resolution = int((width/16)*9)
+
+    if int(video_resolution) in [576, 480, 720, 1080]:
+      video_resolution = str(video_resolution)
+    else:
+      video_resolution = 'sd'
+  except:
+    video_resolution = None
 
   return [ipod, video_resolution]
 
