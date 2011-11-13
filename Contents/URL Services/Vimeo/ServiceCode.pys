@@ -16,11 +16,11 @@ def NormalizeURL(url):
   # http://vimeo.com/groups/5dmkii/videos/26352235
   if re.match(".*/(\d+)$", url.path):
     video_id = url.path[url.path.rfind('/')+1:]
-    
+
   #http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
   if re.search("clip_id=(\d+)&", url.query):
     video_id = re.search("clip_id=(\d+)&", url.query).group(1)
-  
+
 
   if video_id is None:
     return None
@@ -35,7 +35,7 @@ def MetadataObjectForURL(url):
 
   # Fetch the page.
   json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
-  
+
   # Construct a metadata item.
   originally_available_at = Datetime.ParseDate(json['upload_date'])
   return VideoClipObject(
@@ -47,7 +47,7 @@ def MetadataObjectForURL(url):
     genres = json['tags'].split(', '),
     directors = [json['user_name']]
   )
-  
+
 def MediaObjectsForURL(url):
   items = [
     MediaObject(
@@ -59,7 +59,7 @@ def MediaObjectsForURL(url):
       audio_channels = 2,
       optimized_for_streaming = True
     ),
-    
+
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='mobile', codecs=None))],
       container = Container.MP4,
@@ -71,8 +71,8 @@ def MediaObjectsForURL(url):
     ),
   ]
   return items
-  
-  
+
+
 import urllib2, httplib, re
 
 class SmartRedirectHandler(urllib2.HTTPRedirectHandler):     
@@ -94,21 +94,21 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
 
   m1 = re.search('"hd":([0-9])', video)
   m2 = re.search('"signature":"([0-9a-f]+)","timestamp":([0-9]+)', video)
-  
+
   if m1 and m2:
     hd = int(m1.groups()[0])
-    
+
     if format == None:
       if Prefs['hd'] == True and hd == True:
         format = 'hd'
       else:
         format = 'sd'
-      
+
     if codecs != None:
       codecs = '&codecs=' + codecs
     else:
       codecs = ''
-      
+
     (sig, time) = m2.groups()
     headers['Referer'] = url
     url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
@@ -132,7 +132,7 @@ def PlayVideoIndirect(url, format=None, codecs='H264,VP8,VP6'):
 
   if video_url is None:
     return None
-    
+
   c = ObjectContainer()
   c.add(VideoClipObject(
     key = URLService.LookupURLForMediaURL(url),
@@ -144,5 +144,5 @@ def PlayVideoIndirect(url, format=None, codecs='H264,VP8,VP6'):
       )
     ]
   ))
-  c.http_cookies = HTTP.GetCookiesForURL('http://www.vimeo.com')
+  c.http_cookies = HTTP.CookiesForURL('http://vimeo.com')
   return c
