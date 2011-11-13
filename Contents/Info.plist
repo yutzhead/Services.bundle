@@ -344,7 +344,7 @@
 		<key>CTV</key>
 		<dict>
 			<key>URLPattern</key>
-			<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomdeynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
+			<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.ctvglobemedia</string>
 			<key>TestURLs</key>
