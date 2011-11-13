@@ -1,4 +1,4 @@
-XML_URL = 'http://www.cnn.com/video/data/3.0%s/index.xml'
+XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
 
 CNN_SMIL = 'http://ht.cdn.turner.com/cnn/big/bestoftv/2011/07/25/exp.tsr.todd.murdoch.pkg.mov.cnn.smil'
 
@@ -15,7 +15,7 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-  data_url = XML_URL % url.split('#')[1]
+  data_url = XML_URL % url.split('#')[1].strip('/video/')
   data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
   
   thumbUrl = data.xpath('//image[@name="640x480"]')[0].text
@@ -29,7 +29,10 @@ def MetadataObjectForURL(url):
   duration = data.xpath('//length')[0].text
   #Log(duration)
   durationParts = duration.split(':')
-  duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
+  if durationParts[0] == '':
+    duration = int(durationParts[1])*1000
+  else:
+    duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
   #Log(duration)
   
   try: show = data.xpath('//branding')[0].text
@@ -144,7 +147,8 @@ def TestURLs():
     for video in cnn.xpath('//ol[@id="WE_RECOMMENDList"]/li'):
         if len(test_urls) > 2: break
         else: pass
-        video_url = video.get('videoid')
-        test_urls.append(CNN_URL + '#/' + video_url)
+        video_url = CNN_URL + '#/' + video.get('videoid')
+        Log(video_url)
+        test_urls.append(video_url)
 
-    return [test_urls]
+    return test_urls
