@@ -89,8 +89,8 @@ class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
 
 def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
   key = url[url.rfind('/')+1:]
-  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5' }
-  video = HTTP.Request(url, cacheTime=0, headers=headers).content
+  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
+  video = HTTP.Request(url, cacheTime=1, headers=headers).content
 
   m1 = re.search('"hd":([0-9])', video)
   m2 = re.search('"signature":"([0-9a-f]+)","timestamp":([0-9]+)', video)
@@ -110,7 +110,7 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
       codecs = ''
 
     (sig, time) = m2.groups()
-    headers['Referer'] = url
+    headers = {'Referer': url, 'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
     url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
     request = urllib2.Request(url, None, headers)
     opener = urllib2.build_opener(SmartRedirectHandler)
@@ -120,6 +120,8 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
 
 @indirect
 def PlayVideoIndirect(url, format=None, codecs='H264,VP8,VP6'):
+  HTTP.ClearCookies()
+
   try:
     video_url = GetVideoURL(url, format, codecs)
   except:
