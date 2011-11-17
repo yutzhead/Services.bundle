@@ -65,6 +65,8 @@ def PlayVideo(url, fmt):
 def GetThumb(data_url):
     content = HTTP.Request(data_url).content.strip('[').strip(']')
     data = JSON.ObjectFromString(content)
-    thumb = data['image']
-    return Redirect(thumb)
-    
+
+    if 'image' in data:
+      return data['image']
+    else:
+      return None
