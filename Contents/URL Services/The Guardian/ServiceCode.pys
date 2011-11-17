@@ -11,9 +11,13 @@ def MetadataObjectForURL(url):
         title = page.xpath("//meta[@property = 'og:title']")[0].get('content')
         title = title.replace('- video', '')
         summary = page.xpath("//meta[@property = 'og:description']")[0].get('content')
-        date = page.xpath("//meta[@property = 'article:published_time']")[0].get('content')
-        date = Datetime.ParseDate(date)
         tags = page.xpath("//meta[@name = 'keywords']")[0].get('content').split(',')
+
+        date = None
+        try:
+            page.xpath("//meta[@property = 'article:published_time']")[0].get('content')
+            date = Datetime.ParseDate(date)
+        except: pass
 
         # Attempt to extract a higher quality thumbnail from the actual player configuration. Otherwise
         # we'll just drop down to the known one from the head of the page.
