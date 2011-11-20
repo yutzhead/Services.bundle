@@ -51,33 +51,16 @@ def MediaObjectsForURL(url):
         audio_channels = 2,
         optimized_for_streaming = True,
         bitrate = 400,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))]
-      ),
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        video_resolution = 'sd',
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
       )
     ]
 
 ####################################################################################################
 
-def PlayVideo(url, res):
+def PlayVideo(url):
 
     # Read the page associated with the url. We should find a number of video paths located within it.
     content = HTTP.Request(url).content
-    video = re.findall('file.+?(http.+?\.mp4|m4v)', content)
+    video = re.findall('file\s+:.+?(http.+?\.mp?4v?)', content)[0]
 
-    # Translate the request resolution into an indexer. The list of video elements will be in ascending
-    # order. However, a HD one may not be available, therefore we must fall back to the SD version.
-    index = 0
-    if res == 'hd':
-        index = 1
-    index = max(0, min(index, len(video) - 1))
-
-    # Redirect to the appropriate url.
-    return Redirect(video[index])
+    return Redirect(video)
