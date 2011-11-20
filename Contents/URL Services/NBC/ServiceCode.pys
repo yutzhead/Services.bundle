@@ -12,7 +12,7 @@ def MetadataObjectForURL(url):
 
         # The given url should contain the video ID. We need this in order to use a different
         # url to obtain the specific details in a sensible format.
-        matches = re.match(".*nbc.com/.*/video/.*/(?P<id>[0-9]+)/", url)
+        matches = re.match(".*nbc.com/.*/video/.*/(?P<id>[0-9]+).*", url)
         id = matches.group('id')
         
         # Request the page that contains the details of the title.
@@ -72,3 +72,31 @@ def MediaObjectsForURL(url):
         protocol = Protocol.WebKit
       )
     ]
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    page = HTML.ElementFromURL("http://www.nbc.com/video/library/")
+
+    # Full length episodes
+    results = page.xpath("//div[@id='header-full-eps']//li")
+    for index in range(2):
+        item = results[index]
+
+        url = item.xpath(".//a")[0].get('href')
+        if url.startswith("http://") == False:
+            url = "http://www.nbc.com" + url
+        test_urls.append(url)
+
+    # Video clips
+    results = page.xpath("//div[@id='header-video-clips']//li")
+    for index in range(2):
+        item = results[index]
+
+        url = item.xpath(".//a")[0].get('href')
+        if url.startswith("http://") == False:
+            url = "http://www.nbc.com" + url
+        test_urls.append(url)
+
+    return test_urls
