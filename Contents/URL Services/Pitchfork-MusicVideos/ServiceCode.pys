@@ -22,8 +22,7 @@ def MediaObjectsForURL(url):
         video_resolution = "1080",
         optimized_for_streaming = True,
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1080"))],
-        protocol = Protocol.HTTPMP4Video
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1080"))]
       ),
       MediaObject(
         container = Container.MP4,
@@ -32,8 +31,7 @@ def MediaObjectsForURL(url):
         video_resolution = "720",
         optimized_for_streaming = True,
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))],
-        protocol = Protocol.HTTPMP4Video
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))]
       ),
       MediaObject(
         container = Container.MP4,
@@ -42,8 +40,7 @@ def MediaObjectsForURL(url):
         video_resolution = "480",
         optimized_for_streaming = True,
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480"))],
-        protocol = Protocol.HTTPMP4Video
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480"))]
       ),
       MediaObject(
         container = Container.MP4,
@@ -52,8 +49,7 @@ def MediaObjectsForURL(url):
         video_resolution = "sd",
         optimized_for_streaming = True,
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))],
-        protocol = Protocol.HTTPMP4Video
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
       )
     ]
 

@@ -48,7 +48,6 @@ def MediaObjectsForURL(url):
         #    ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='small'))],
-            protocol = Protocol.HTTPVideo,
             container = 'flv',
             aspect_ratio = '1.33',
             #bitrate = '598',

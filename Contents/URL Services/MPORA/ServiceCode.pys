@@ -36,18 +36,22 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
+        container = Container.MP4,
         video_resolution = '720',
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))],
-        protocol = Protocol.HTTPMP4Video
+        audio_channels = 2,
+        bitrate = 2400,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
       ),
       MediaObject(
+        container = Container.MP4,
         video_resolution = 'sd',
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))],
-        protocol = Protocol.HTTPMP4Video
+        audio_channels = 2,
+        bitrate = 1500,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
       )
     ]
 

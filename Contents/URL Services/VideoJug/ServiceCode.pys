@@ -37,7 +37,6 @@ def MediaObjectsForURL(url):
         video_resolution = '360',
         audio_channels = 2,
         optimized_for_streaming = True,
-        protocol = Protocol.HTTPMP4Video,
         parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_HD))]
       ),
       MediaObject(
@@ -47,7 +46,6 @@ def MediaObjectsForURL(url):
         video_resolution = '180',
         audio_channels = 2,
         optimized_for_streaming = True,
-        protocol = Protocol.HTTPMP4Video,
         parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_SD))]
       )
     ]

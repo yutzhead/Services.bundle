@@ -60,6 +60,7 @@ def MediaObjectsForURL(url):
                 container = Container.MP4,
                 protocol = Protocol.HTTPMP4Video,
                 audio_channels = 2,
+                optimized_for_streaming = True,
                 parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))] # 950x540
             ),
             MediaObject(
@@ -68,6 +69,7 @@ def MediaObjectsForURL(url):
                 container = Container.MP4,
                 protocol = Protocol.HTTPMP4Video,
                 audio_channels = 2,
+                optimized_for_streaming = True,
                 parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))] # 480x270
             )
         ]

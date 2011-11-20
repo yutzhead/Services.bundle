@@ -30,8 +30,7 @@ def MediaObjectsForURL(url):
   return [
     MediaObject(
     parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
-    container = 'mp4',
-    protocol = 'HTTPMP4Video',
+    container = Container.MP4,
     video_resolution = '720',
     aspect_ratio = '1.77',
     video_codec = VideoCodec.H264,
@@ -40,8 +39,7 @@ def MediaObjectsForURL(url):
     ),
     MediaObject(
     parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
-    container = 'mp4',
-    protocol = 'HTTPMP4Video',
+    container = Container.MP4,
     video_resolution = 'sd',
     aspect_ratio = '1.77',
     video_codec = VideoCodec.H264,

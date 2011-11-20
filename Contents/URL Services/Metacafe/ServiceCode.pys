@@ -74,6 +74,7 @@ def MediaObjectsForURL(url):
               audio_codec = AudioCodec.AAC,
               container = Container.MP4,
               video_resolution = "720",
+              optimized_for_streaming = True,
               parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
             )
         )
@@ -84,6 +85,7 @@ def MediaObjectsForURL(url):
           audio_codec = AudioCodec.AAC,
           container = Container.MP4,
           video_resolution = "sd",
+          optimized_for_streaming = True,
           parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
         )
     )

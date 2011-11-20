@@ -31,7 +31,6 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = "1280",
-        protocol = Protocol.HTTPMP4Video,
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1280"))]
@@ -41,7 +40,6 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = "720",
-        protocol = Protocol.HTTPMP4Video,
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))]
@@ -51,7 +49,6 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = "640",
-        protocol = Protocol.HTTPMP4Video,
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, res = "640"))]
@@ -61,7 +58,6 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = "480",
-        protocol = Protocol.HTTPMP4Video,
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480"))]
@@ -71,7 +67,6 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = "400",
-        protocol = Protocol.HTTPMP4Video,
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, res = "400"))]

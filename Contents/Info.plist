@@ -360,7 +360,6 @@
 			<string>com.plexapp.plugins.dailykos</string>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.dailykos.com/tv/w/002882/</string>
 				<string>http://www.dailykos.com/tv/w/002880/</string>
 			</array>
 		</dict>
@@ -681,7 +680,7 @@
 		<key>Kelby-TV</key>
 		<dict>
 			<key>URLPattern</key>
-			<string>http://kelbytv.com/.+/[0-9]{4}/[0-9]{2}/[0-9]{2}/.+/</string>
+			<string>http://kelbytv.com/.+/[0-9]{4}/[0-9]{2}/[0-9]{2}/.+</string>
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.kelbytv</string>
 			<key>TestURLs</key>

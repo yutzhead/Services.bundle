@@ -30,13 +30,12 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
+        container = Container.MP4,
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
         video_resolution = '540',
         optimized_for_streaming = True,
         audio_channels = 2,
-        protocol = Protocol.HTTPMP4Video,
         parts = [PartObject(key=Callback(PlayVideo, url = url))]
       )
     ]
