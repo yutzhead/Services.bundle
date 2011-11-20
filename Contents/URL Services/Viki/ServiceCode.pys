@@ -37,9 +37,9 @@ def MetadataObjectForURL(url):
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
     
-  title = data['ads']['acudeo']['title']
+  title = data['title']
   #Log(title)
-  summary = data['ads']['acudeo']['description']
+  summary = data['description']
   #Log(summary)
   thumb = data['thumbnail']
   #Log(thumb)
@@ -64,9 +64,9 @@ def EpisodeMetadata(url, episode):
     
   title = episode
   #Log(title)
-  show = data['ads']['acudeo']['title']
+  show = data['title']
   #Log(show)
-  summary = data['ads']['acudeo']['description']
+  summary = data['description']
   #Log(summary)
   absolute_index = int(episode.split(' ')[1])
   #Log(absolute_index)
@@ -93,9 +93,9 @@ def MovieMetadata(url):
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
     
-  title = data['ads']['acudeo']['title']
+  title = data['title']
   Log(title)
-  summary = data['ads']['acudeo']['description']
+  summary = data['description']
   #Log(summary)
   thumb = data['thumbnail']
   #Log(thumb)
@@ -127,7 +127,7 @@ def MediaObjectsForURL(url):
 
 def PlayVideo(url):
 
-  video_id = url.split('/')[-1]
+  video_id = re.match(".*/videos/(?P<id>[0-9]+).*", url).groupdict()['id']
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
   
