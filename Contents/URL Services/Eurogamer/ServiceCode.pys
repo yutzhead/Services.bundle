@@ -57,8 +57,15 @@ def MediaObjectsForURL(url):
     ]
     
 def PlayVideo(url, fmt):
-    data = JSON.ObjectFromURL(DATA_URL % data.xpath('//div[class="video-wrapper"]/div')[0].get('id').strip('video-'))
-    mp4_url = data['file']
+
+    # Obtain the id of the video
+    page = HTML.ElementFromURL(url)
+    id = page.xpath("//div[@class='video-wrapper']/div")[0].get('id').strip('video-')
+
+    # Look up the associated JSON to extract the MP4 url
+    data = JSON.ObjectFromURL(DATA_URL % id, cacheTime = 0)
+    mp4_url = data[0]['file']
+    Log(mp4_url)
     return Redirect(mp4_url)
     
 def GetThumb(data_url):

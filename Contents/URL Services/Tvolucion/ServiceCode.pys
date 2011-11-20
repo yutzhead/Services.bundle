@@ -1,6 +1,7 @@
 import re
 
 BASE_URL = 'http://tvolucion.esmas.com/'
+VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
 
 def NormalizeURL(url):
     return url
@@ -48,10 +49,26 @@ def MediaObjectsForURL(url):
 
 def PlayVideo(url):
 
-    data = HTML.ElementFromURL(url+'/ipad')
+    page = HTML.ElementFromURL(url+'/ipad')
     
-    mp4_url = data.xpath('//video')[0].get('src')
+    # Sometimes the video is available directly from the ipad page.
+    mp4_urls = page.xpath('//video')
+    if len(mp4_urls) > 0:
+        return Redirect(mp4_urls[0].get('src'))
+
+    # If it's not available, it's possible that the page is using the Brightcove player instead. We must
+    # therefore check for this
+    brightcove_player = page.xpath("//object[@class='BrightcoveExperience']")[0]
+    player_id = brightcove_player.xpath(".//param[@name='playerID']")[0].get('value')
+    video_player = brightcove_player.xpath(".//param[@name='@videoPlayer']")[0].get('value')
     
+    video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (player_id, video_player)).content
+    experience = re.search('var experienceJSON = (.+)};', video_details_page).group(1) + '}'
+    details = JSON.ObjectFromString(experience)
+
+    video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
+    return Redirect(video_url)
+
     return Redirect(mp4_url)
     
 def TestURLs():

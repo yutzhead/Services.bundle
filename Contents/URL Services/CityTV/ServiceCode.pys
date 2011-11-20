@@ -121,8 +121,9 @@ def TestURLs():
     data = HTML.ElementFromURL(BASE_URL % 'home/0/')
     for recent_video in data.xpath('.//div[@class="featured_inner"]/div[@class="item"]'):
       if len(test_urls) < 6:
-        link = recent_video.xpath('./a')[0].get('href')
-        url = VIDEO_URL % link
+        url = recent_video.xpath('./a')[0].get('href')
+        if url.startswith("http://") == False:
+            url = VIDEO_URL % url
         test_urls.append(url)
       else:
         break

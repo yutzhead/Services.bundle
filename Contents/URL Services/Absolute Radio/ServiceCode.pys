@@ -59,3 +59,20 @@ def PlayVideo(url, res):
 
     (streamer, file) = video_url.split('/OD/')
     return Redirect(RTMPVideoURL(url=streamer + '/OD/', clip=file))
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    # Request a page which should contain a collection of videos
+    page = HTML.ElementFromURL("http://www.absoluteradio.co.uk/video/tags/artist,interview/")
+    results = page.xpath("//div[@id='main_content']//p[@class='clip_result']")
+    for index in range(2):
+        item = results[index]
+
+        url = item.xpath(".//a")[0].get('href')
+        if url.startswith("http://") == False:
+            url = "http://www.absoluteradio.co.uk" + url
+        test_urls.append(url)
+
+    return test_urls

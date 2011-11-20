@@ -39,13 +39,12 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
 
-    page_content = HTTP.Request(url).content
-    page = HTML.ElementFromString(page_content)
+    page = HTML.ElementFromURL(url)
 
-    # If the page contains scripts associated with audio, then the page contains MP3's
-    audio_elements = page.xpath("//script[contains(text(), 'audio')]")
+    # If the page contains an audio element, then it's associated media is an MP3.
+    audio_elements = page.xpath("//div[@class='audio']")
     if len(audio_elements) > 0:
-        track_url = re.match(".*mp3player.swf\?file=(?P<track_url>[^&]*).*", page_content, re.DOTALL).groupdict()['track_url']
+        track_url = audio_elements[0].get('data-audurl')
         return [
           MediaObject(
             audio_codec = AudioCodec.MP3,
@@ -53,9 +52,9 @@ def MediaObjectsForURL(url):
           )
         ]
 
-    # We now have to examine the video url to determine it's format.
+    # Since the page does not contain audio, it must contain video
+    video_url = page.xpath("//div[@class='video']")[0].get('data-vidurl')
     container = 'flv'
-    video_url = re.match(".*var flashurl = '(?P<video_url>[^\']*)';.*", page_content, re.DOTALL).groupdict()['video_url']
     if video_url.endswith(".mp4"):
         container = Container.MP4
 

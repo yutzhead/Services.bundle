@@ -76,8 +76,7 @@
 			<string>com.plexapp.plugins.absoluteradio</string>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.absoluteradio.co.uk/player/Paolo-Nutini/9013/Interview.html</string>
-				<string>http://www.absoluteradio.co.uk/player/Hard-Fi/9098/Live-session.html</string>
+				<!-- provided by TestURLs() in ServiceCode.pys -->
 			</array>
 		</dict>
 		<key>Adobe TV</key>
@@ -872,14 +871,12 @@
 		<key>NBC</key>
 		<dict>
 			<key>URLPattern</key>
-			<string>http://www.nbc.com/.+/video/(?!/categories).*/[0-9]+/</string>
+			<string>http://www.nbc.com/.+/video/(?!/categories).*/[0-9]+.*</string>
 			<key>Identifier</key>
 			<string>com.plexapp.plugins.nbc</string>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.nbc.com/chuck/video/chuck-vs-the-cliffhanger/1327691/</string>
-				<string>http://www.nbc.com/chuck/video/morgan-versus-the-intersect-comic-con-exclusive/1342639/</string>
-				<string>http://www.nbc.com/classic-tv/battlestar-galactica/video/conquest-of-the-earth/258120/</string>
+				<!-- provided by TestURLs() in ServiceCode.pys -->
 			</array>
 		</dict>
 		<key>Newsy</key>
@@ -1213,7 +1210,7 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.guardian.co.uk/media/video/2011/sep/29/watergate-carl-bernstein-rupert-murdoch-video</string>
-				<string>http://www.guardian.co.uk/commentisfree/video/2011/oct/06/david-mitchell-soapbox-not-one-video?INTCMP=ILCNETTXT3486</string>
+				<string>http://www.guardian.co.uk/culture/video/2011/nov/16/terence-conran-design-video</string>
 			</array>
 		</dict>
 		<key>The Onion</key>
@@ -1345,7 +1342,7 @@
 			<string>com.plexapp.plugins.viki</string>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.viki.com/channels/1820-city-hunter/videos/47856</string>
+				<string>http://www.viki.com/channels/1217-schemes-of-a-beauty/videos/45635/1</string>
 				<string>http://www.viki.com/channels/1659-v-scoop/videos/52205</string>
 				<string>http://www.viki.com/channels/5232-crook/videos/50373</string>
 			</array>

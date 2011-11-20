@@ -1,7 +1,5 @@
 import re
 
-NAMESPACES = {"og":"http://opengraphprotocol.org/schema/"}
-
 ####################################################################################################
 
 def NormalizeURL(url):
@@ -58,9 +56,23 @@ def MetadataObjectForURL(url):
         except: pass
     #if it's not a movie and not an episode, it must be a clip
     if mo == None:
-        title = data.xpath('//meta[@property="og:title"]', namespaces=NAMESPACES)[0].get('content')
-        summary = data.xpath('//meta[@property="og:description"]', namespaces=NAMESPACES)[0].get('content')
-        thumb = data.xpath('//meta[@property="og:image"]', namespaces=NAMESPACES)[0].get('content')
+
+        title = None
+        try:
+            title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+        except:
+            title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[1]
+
+        summary = None
+        try:
+            summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
+        except:
+            summary = data.xpath('//meta[@name="description"]')[0].get('content')
+
+        thumb = None
+        try:
+            thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+        except: pass
 
         mo = VideoClipObject(
             title = title,
@@ -150,10 +162,16 @@ def TestURLs():
     
     test_urls = []
     
-    data_1 = HTML.ElementFromURL(NEW_EPISODES)
-    test_urls.append(data_1.xpath('//div[@class="ep_title"]/a')[0].get('href'))
-    
-    data_2 = HTML.ElementFromURL(NEW_CLIPS)
-    test_urls.append(data_2.xpath('//div[@class="ep_title"]/a')[0].get('href'))
+    for item in HTML.ElementFromURL(NEW_EPISODES):
+        url = item.xpath('//div[@class="ep_title"]/a')[0].get('href')
+        if re.match("http://abcfamily.go.com/(watch|movies)/.+", url) != None:
+            test_urls.append(url)
+            break
+
+    for item in HTML.ElementFromURL(NEW_CLIPS):
+        url = item.xpath('//div[@class="ep_title"]/a')[0].get('href')
+        if re.match("http://abcfamily.go.com/(watch|movies)/.+", url) != None:
+            test_urls.append(url)
+            break
 
     return test_urls
