@@ -112,7 +112,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, resolution):
   
-    data_url = XML_URL % url.split('#')[1]
+    data_url = XML_URL % url.split('#')[1].strip('/video/')
     data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
   
     smil_url = data.xpath('//file')[0].text
