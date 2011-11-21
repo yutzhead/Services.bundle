@@ -143,7 +143,7 @@ def PlayVideo(url, bitrate = None):
         if len(res) > 0 and len(res[0].get('src')) > 0:
             clip = res[0].get('src')
             available = True
-            index = index - 1
+        index = index - 1
   
     player = "rtmp://cp88586.edgefcs.net/ondemand/"
     return Redirect(RTMPVideoURL(player, clip))
