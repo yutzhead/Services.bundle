@@ -44,18 +44,18 @@ def MediaObjectsForURL(url):
   except:
     Log("no MP4 url found")
     try: # find the link to an external site for the video (usually youtube)
-      external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//a[@class="external"]')[0].get('href')
+      try:
+        external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
+      except:
+        try:
+          external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
+        except:
+          external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//a[@class="external"]')[0].get('href')
       Log("External video url:" + external_url)
       return URLService.MediaObjectsForURL(external_url)
     except:  
-      try:
-        try:external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
-        except:external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
-        Log("External video url:" + external_url)
-        return URLService.MediaObjectsForURL(external_url)
-      except:
-        Log("No External URL found")
-        pass
+      Log("No External URL found")
+      pass
 
 ####################################################################################################
 
