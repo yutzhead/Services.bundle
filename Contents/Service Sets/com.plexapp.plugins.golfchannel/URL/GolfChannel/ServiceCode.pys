@@ -10,11 +10,8 @@ def MetadataObjectForURL(url):
     video = data.xpath('//ref')[1]
     
     title = video.get('title')
-    #Log(title)
     summary = video.get('abstract')
-    #Log(summary)
     duration = int(video.get('dur').strip('ms'))
-    #Log(duration)
     
     co = VideoClipObject(
         title = title,
@@ -28,16 +25,14 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url))],
-            protocol = 'Webkit'
+            parts = [PartObject(key=Callback(PlayVideo, url=url))],
+            protocol = 'webkit'
         )
     ]
     
 def GetSMIL(url):
     data = HTTP.Request(url).content
-    #Log(data)
     pid = re.search('pid=(.+)%26path=', data).group(1)
-    #Log(pid)
     smil = HTML.ElementFromURL(SMIL_URL % pid)
     return smil
     
@@ -46,7 +41,5 @@ def PlayVideo(url):
     rtmp_url = smil.xpath('//ref')[1].get('src')
     clip = re.search('ondemand/.+/(.*)', rtmp_url).group(1)
     rtmp_url = rtmp_url.strip(clip)
-    #Log(rtmp_url)
     clip = clip.strip('.flv')
-    #Log(clip)
     return Redirect(RTMPVideoURL(url=rtmp_url, clip=clip))
