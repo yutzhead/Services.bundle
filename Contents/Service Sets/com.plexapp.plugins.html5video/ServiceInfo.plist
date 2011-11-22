@@ -16,6 +16,8 @@
 			<array>
 				<string>^$</string>
 			</array>
+			<key>Fallback</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>
