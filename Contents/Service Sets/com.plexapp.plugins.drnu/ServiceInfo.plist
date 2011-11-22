@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>DRNU</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.dr.dk/nu/live#/DR1</string>
+				<string>http://www.dr.dk/radio/player/?P1D</string>
+				<string>http://www.dr.dk/nu/player/#/barda/37</string>
+				<string>http://www.dr.dk/radio/player/?id/2837</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(.+\.)?dr.dk/nu/live#/.+|http://(.+\.)?dr.dk/radio/player/\?.+|http://(.+\.)?dr.dk/nu/player/#/.*/.+|http://(.+\.)?dr.dk/radio/player/\?[i][d]/\d+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

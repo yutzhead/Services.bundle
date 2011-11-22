@@ -1,0 +1,67 @@
+import re
+
+IPAD_URL = 'http://video.nationalgeographic.com/video/player/media-mp4/%s/mp4/variant-playlist.m3u8'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+  
+  if len(url.split('/full-episodes/')) > 1:
+    full_episode = True
+    show_title = (url.split('/full-episodes/')[1].split('/')[0].replace('-', ' ')).title()
+    Log(show_title)
+  else:
+    full_episode = False
+  
+  title = data.xpath('//title')[0].text.split(' -- ')[1]
+  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+  description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
+  keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
+  
+  if full_episode:
+    # Construct a metadata item
+    eo = EpisodeObject(
+      title = title,
+      show = show_title,
+      summary = description,
+      thumb = thumbUrl,
+      #tags = keywords
+      )
+    return eo
+  else:
+    # Construct a metadata item
+    vc = VideoClipObject(
+      title = title,
+      summary = description,
+      thumb = thumbUrl,
+      tags = keywords
+      )
+    return vc
+  
+####################################################################################################
+def MediaObjectsForURL(url):
+  
+  video_id = re.search(".*/([^/]+)", url).group(1)
+  extension = video_id.find('.html')
+  if extension > 0:
+    video_id = video_id[:extension]
+  
+  return [
+    MediaObject(
+<<<<<<< Updated upstream
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+=======
+>>>>>>> Stashed changes
+      parts = [PartObject(key=Callback(PlayVideo, id=video_id))],
+      protocol = 'hls'
+    )
+  ]
+
+####################################################################################################
+
+def PlayVideo(id):
+  return Redirect(IPAD_URL % id)

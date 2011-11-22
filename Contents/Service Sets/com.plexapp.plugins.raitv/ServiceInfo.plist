@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>RaiTV</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.rai.tv/dl/RaiTV/programmi/media/ContentItem-f181f5cd-b3cd-4910-8b22-a157472cf5e4.html?refresh_ce#p=</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(www\.)?rai.tv/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

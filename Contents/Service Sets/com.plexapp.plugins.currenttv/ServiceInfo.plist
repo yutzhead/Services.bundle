@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Current</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://current.com/50docs/93391229_morgan-spurlock-meets-mr-brainwash.htm</string>
+				<string>http://current.com/groups/videos/93375776_vanguard-illegal-immigrants-usa-monday-8th-august-10pm.htm</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://current.com/.+/[0-9]+_.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

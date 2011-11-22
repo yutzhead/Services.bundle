@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Arte</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://videos.arte.tv/fr/videos/un_billet_de_train_pour_-4083520.html</string>
+				<string>http://videos.arte.tv/en/videos/les_coups_de_coeur_arte_le_dessous_des_cartes_atlas_junior-3571954.html</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://videos.arte.tv/.+/videos/.+-[0-9]+.html</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

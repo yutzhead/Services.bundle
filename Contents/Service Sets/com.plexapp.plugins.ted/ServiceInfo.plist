@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>TED-Talks</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.ted.com/talks/arvind_gupta_turning_trash_into_toys_for_learning.html</string>
+				<string>http://www.ted.com/talks/jeremy_rifkin_on_the_empathic_civilization.html</string>
+				<string>http://www.ted.com/talks/jk_rowling_the_fringe_benefits_of_failure.html</string>
+				<string>http://www.ted.com/talks/sean_carroll_on_the_arrow_of_time_part_2.html</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.ted.com/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

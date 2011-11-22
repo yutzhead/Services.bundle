@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>LoveFilm-Player</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.lovefilm.com/film/Mad-Men-Series-04-Episode-01-Public-Relations/155407/</string>
+				<string>http://www.lovefilm.com/film/Collateral/32051/</string>
+				<string>http://www.lovefilm.com/film/Peep-Show-Series-01-Episode-01/132037/</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>https?://www.lovefilm.com/film/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

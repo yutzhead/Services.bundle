@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Euronews</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.euronews.net/nocomment/2011/07/28/kosovo-border-post-on-fire/</string>
+				<string>http://www.euronews.net/nocomment/2011/07/27/yoga-classes-for-dogs-in-hong-kong/</string>
+				<string>http://www.euronews.net/2011/10/31/unesco-gives-palestinians-full-membership/</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(www.)?euronews.net/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
