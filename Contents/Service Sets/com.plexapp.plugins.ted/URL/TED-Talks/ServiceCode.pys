@@ -37,65 +37,84 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
   videoList = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  
+
   try: # find the downloadable mp4
-    video_urls = videoList.xpath('.//h3[contains(text(), "Video")]/following-sibling::dl[@class="downloads"]/dt/a')
+    video_urls = videoList.xpath('//h3[contains(text(), "Video")]/following-sibling::dl[@class="downloads"]/dt/a')
     return MP4_MediaObjects(video_urls, url)
   except:
-    Log("no MP4 url found")
-    try: # find the link to an external site for the video (usually youtube)
+    try:
+      video_urls = videoList.xpath('//a[contains(@href, ".mp4")]')
+      return MP4_MediaObjects(video_urls, url)
+    except:
+      Log(" --> No MP4 URL(s) found")
+      # Try and find a link to an external site for the video (usually youtube)
       try:
         external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
+        return URLService.MediaObjectsForURL(external_url)
       except:
         try:
           external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
+          return URLService.MediaObjectsForURL(external_url)
         except:
-          external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//a[@class="external"]')[0].get('href')
-      Log("External video url:" + external_url)
-      return URLService.MediaObjectsForURL(external_url)
-    except:  
-      Log("No External URL found")
-      pass
+          Log(" --> No external URL found")
+          return None
 
 ####################################################################################################
-
 def MP4_MediaObjects(mp4_list, url):
-    
-  url_480 = mp4_list[2].get('href')
-  sd_url = mp4_list[0].get('href')
-  loRes_url = mp4_list[3].get('href')
 
-  return [MediaObject(
-      parts = [PartObject(key = url_480)],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      aspect_ratio = '1.77',
-      bitrate = '840',
-      video_resolution = '480',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
+  if len(mp4_list) > 1:
+    url_480 = mp4_list[2].get('href')
+    sd_url = mp4_list[0].get('href')
+    loRes_url = mp4_list[3].get('href')
+
+    return [
+      MediaObject(
+        parts = [PartObject(key = url_480)],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        aspect_ratio = '1.77',
+        bitrate = '840',
+        video_resolution = '480',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
       ),
       MediaObject(
-      parts = [PartObject(key=sd_url)],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      aspect_ratio = '1.77',
-      bitrate = '403',
-      video_resolution = 'sd',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
+        parts = [PartObject(key=sd_url)],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        aspect_ratio = '1.77',
+        bitrate = '400',
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
       ),
       MediaObject(
-      parts = [PartObject(key=loRes_url)],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      aspect_ratio = '1.77',
-      bitrate = '40',
-      video_resolution = 'sd',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
+        parts = [PartObject(key=loRes_url)],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        aspect_ratio = '1.77',
+        bitrate = '40',
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
+      )
+    ]
+  else:
+    url = mp4_list[0].get('href')
+
+    return [
+      MediaObject(
+        parts = [PartObject(key = url)],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        aspect_ratio = '1.77',
+        bitrate = '450',
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
       )
     ]
