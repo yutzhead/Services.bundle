@@ -1,7 +1,7 @@
 import re
 TED_BASE = 'http://www.ted.com'
-####################################################################################################
 
+####################################################################################################
 def NormalizeURL(url):
   return url.split('&')[0]
 
@@ -36,85 +36,80 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
-  videoList = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
 
-  try: # find the downloadable mp4
-    video_urls = videoList.xpath('//h3[contains(text(), "Video")]/following-sibling::dl[@class="downloads"]/dt/a')
-    return MP4_MediaObjects(video_urls, url)
-  except:
+  content = HTTP.Request(url, cacheTime=7200).content
+  slug = re.findall("\$\('#download_dialog'\)\.load\('([^']+)", content)
+
+  if slug:
+    download_info = HTTP.Request(TED_BASE + slug[0], cacheTime=CACHE_1MONTH).content
+    download_url = re.findall("(http://download.ted.com/talks/.+{quality}{lang}\.mp4)", download_info)
+    items = []
+
+    if download_url:
+      download_url = download_url[0].replace('{lang}', '')
+
+      for quality in HTML.ElementFromString(download_info).xpath('//input[@name="download_quality"]'):
+        q = quality.get('data-name')
+
+        if q == 'light':
+          mo = MediaObject(
+            parts = [
+              PartObject( key = download_url.replace('{quality}', '-light') )
+            ],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            aspect_ratio = '1.77',
+            bitrate = '40',
+            video_resolution = 'sd',
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+          )
+
+        elif q == 'regular':
+          mo = MediaObject(
+            parts = [
+              PartObject( key = download_url.replace('{quality}', '') )
+            ],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            aspect_ratio = '1.77',
+            bitrate = '400',
+            video_resolution = 'sd',
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+          )
+
+        elif q == '480p':
+          mo = MediaObject(
+            parts = [
+              PartObject( key = download_url.replace('{quality}', '-480p') )
+            ],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            aspect_ratio = '1.77',
+            bitrate = '840',
+            video_resolution = '480',
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+          )
+
+        items.append(mo)
+
+    items.reverse()
+    return items
+
+  else:
+    # Try and find a link to an external site for the video (usually YouTube)
     try:
-      video_urls = videoList.xpath('//a[contains(@href, ".mp4")]')
-      return MP4_MediaObjects(video_urls, url)
+      external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
+      return URLService.MediaObjectsForURL(external_url)
     except:
-      Log(" --> No MP4 URL(s) found")
-      # Try and find a link to an external site for the video (usually youtube)
       try:
-        external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
+        external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
         return URLService.MediaObjectsForURL(external_url)
       except:
-        try:
-          external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
-          return URLService.MediaObjectsForURL(external_url)
-        except:
-          Log(" --> No external URL found")
-          return None
-
-####################################################################################################
-def MP4_MediaObjects(mp4_list, url):
-
-  if len(mp4_list) > 1:
-    url_480 = mp4_list[2].get('href')
-    sd_url = mp4_list[0].get('href')
-    loRes_url = mp4_list[3].get('href')
-
-    return [
-      MediaObject(
-        parts = [PartObject(key = url_480)],
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        aspect_ratio = '1.77',
-        bitrate = '840',
-        video_resolution = '480',
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        optimized_for_streaming = True
-      ),
-      MediaObject(
-        parts = [PartObject(key=sd_url)],
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        aspect_ratio = '1.77',
-        bitrate = '400',
-        video_resolution = 'sd',
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        optimized_for_streaming = True
-      ),
-      MediaObject(
-        parts = [PartObject(key=loRes_url)],
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        aspect_ratio = '1.77',
-        bitrate = '40',
-        video_resolution = 'sd',
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        optimized_for_streaming = True
-      )
-    ]
-  else:
-    url = mp4_list[0].get('href')
-
-    return [
-      MediaObject(
-        parts = [PartObject(key = url)],
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        aspect_ratio = '1.77',
-        bitrate = '450',
-        video_resolution = 'sd',
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        optimized_for_streaming = True
-      )
-    ]
+        Log(" --> No external URLs found")
+        return None
