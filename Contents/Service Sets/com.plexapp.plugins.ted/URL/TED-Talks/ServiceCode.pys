@@ -103,12 +103,14 @@ def MediaObjectsForURL(url):
 
   else:
     # Try and find a link to an external site for the video (usually YouTube)
+    page = HTML.ElementFromString(content)
+
     try:
-      external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
+      external_url = page.xpath('//embed[contains(@src, "youtube.com")]')[0].get('src')
       return URLService.MediaObjectsForURL(external_url)
     except:
       try:
-        external_url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
+        external_url = page.xpath('//embed[contains(@src, "vimeo.com")]')[0].get('src')
         return URLService.MediaObjectsForURL(external_url)
       except:
         Log(" --> No external URLs found")
