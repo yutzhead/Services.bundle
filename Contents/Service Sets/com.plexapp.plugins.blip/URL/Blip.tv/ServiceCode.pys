@@ -11,7 +11,7 @@ def MetadataObjectForURL(url):
 
   summary = data['description']
   if summary != None:
-    sumary = String.StripTags(re.sub(u'[\u0000-\u001F]', '', summary))
+    summary = String.StripTags(re.sub(u'[\u0000-\u001F]', '', summary))
 
   video = VideoClipObject(
     title = data['title'],
