@@ -21,7 +21,7 @@ def MetadataObjectForURL(url):
   details = HTTP.Request(url, cacheTime=CACHE_1DAY, headers=httpHeaders).content
   video_details = HTML.ElementFromString(details)
 
-  title = video_details.xpath('//div[@id="videoMetaData"]//h1')[0].text
+  title = video_details.xpath('//div[@id="videoMetaData"]//h1')[0].text.strip()
 
   try:
     summary = video_details.xpath('//div[@id="videoMetaData"]//div[@class="longdesc"]/p')[0].text
