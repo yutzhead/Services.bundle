@@ -10,7 +10,7 @@
 			<array>
 				<string>http://www.videojug.com/film/tennis-high-deep-spin</string>
 				<string>http://www.videojug.com/film/how-to-negotiate-your-salary-for-a-new-job</string>
-                <string>http://m.videojug.com/film/how-to-make-bacon-chicken-salad</string>
+				<string>http://m.videojug.com/film/how-to-make-bacon-chicken-salad</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
