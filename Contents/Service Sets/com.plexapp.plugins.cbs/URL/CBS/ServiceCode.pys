@@ -1,73 +1,63 @@
 import re
 
-CBS_NAMESPACE  = {'og':'http://www.w3.org/1999/xhtml'}
-CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&pid=%s'
 CBS_URL = 'http://www.cbs.com'
+CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&pid=%s'
 
 ####################################################################################################
-
 def NormalizeURL(url):
   return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  
-  details = data.xpath('//div[@class="cbs-video-metadata"]')[0]
-  
-  Log(details.xpath('text()')[1].strip())
-  if "Full Episode" in details.xpath('text()')[1]:
-    videoType = "Full Episode"
-  else:
-    videoType = "Clip"
-  #Log(videoType)
-  
-  title = details.xpath('span[@class="cbs-video-title H6_14"]')[0].text
-  thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=CBS_NAMESPACE)[0].get('content')
-  #Log(thumbUrl)
-  
-  summary = details.xpath('//meta[@name="description"]')[0].get('content')
-  #Log(summary)
-  
-  #try:
-  duration = re.search('([0-9]+:[0-9]{2})', details.xpath('text()')[1]).group(1)
-  #Log(duration)
-  durationParts = duration.split(':')
-  duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
-  #Log(duration)
-  
-  if videoType == "Full Episode":
+  page = HTTP.Request(url, cacheTime=7200).content
+  data = HTML.ElementFromString(page)
 
-    show_title = title.split(' - ')[0]
-    #Log(show_title)
-    episode_title = title.split(' - ')[1]
-    #Log(episode_title)
-    air_date = details.xpath('//div[@class="inner"]/b')[1].text.strip('Air Date: ')
-    #Log(air_date)
+  if len( data.xpath('//div[@id="video-metadata-display-container"]//*[contains(text(), "Full Episode")]') ) > 0:
+    video_type = "Full Episode"
+  else:
+    video_type = "Clip"
+
+  title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+  (show_title, episode_title, junk) = title.split(' - ', 2)
+  summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
+
+  try:
+    thumb = re.search('videoImagePlatform="([^"]+)', page).group(1)
+  except:
+    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+
+  if video_type == "Full Episode":
+    try:
+      air_date = data.xpath('//div[@id="video-metadata-display-container"]//b[contains(text(), "Air Date")]/parent::p/text()')[0].strip()
+      originally_available_at = Datetime.ParseDate(air_date).date()
+    except:
+      originally_available_at = None
+
+    try:
+      timecode = data.xpath('//div[@id="video-metadata-display-container"]//b[contains(text(), "Full Episode")]/parent::p/text()')[0].strip()
+      duration = re.search('([0-9]+):([0-9]{2})', timecode)
+      duration = ( (int(duration.group(1))*60) + int(duration.group(2)) ) * 1000
+    except:
+      duration = None
 
     # Construct a metadata item
     eo = EpisodeObject(
       title = episode_title,
       show = show_title,
-      originally_available_at = Datetime.ParseDate(air_date).date(),
-      duration = duration, 
-      #index = int(episode_index),
-      #parentIndex = int(season_index),
-      #content_rating = rating,
       summary = summary,
-      thumb = thumbUrl
+      originally_available_at = originally_available_at,
+      duration = duration, 
+      thumb = thumb
     )
     return eo
-  
-  elif videoType == "Clip":
+
+  elif video_type == "Clip":
     
     # Construct a metadata item
     co = EpisodeObject(
-      title = title,
-      duration = duration,
+      title = ' - '.join([show_title, episode_title]),
       summary = summary,
-      thumb = thumbUrl
+      thumb = thumb
     )
     return co
   
@@ -78,39 +68,38 @@ def MediaObjectsForURL(url):
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url))],
       protocol = Protocol.RTMP,
-      #container = 'mp4',
-      aspect_ratio = "1.78",
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC
+      aspect_ratio = '1.78'
     )
   ]
 
 ####################################################################################################
 def PlayVideo(url):
-  
-  pid = url.split('pid=')[1]
-  
-  smil = HTTP.Request(CBS_SMIL % pid).content
-  player = smil.split('ref src')
-  player = player[2].split('"')
-  if '.mp4' in player[1]:
-    player = player[1].replace('.mp4', '')
-    clip = player.split(';')
-    clip = 'mp4:' + clip[4]
-  else:
-    player = player[1].replace('.flv', '')
-    clip = player.split(';')
-    clip = clip[4]
-  return Redirect(RTMPVideoItem(player, clip))
+
+  pid = re.search('pid=([^&]+)', url)
+  if pid:
+    pid = pid.group(1)
+
+    smil = HTTP.Request(CBS_SMIL % pid).content
+    player = smil.split('ref src')
+    player = player[2].split('"')
+
+    if '.mp4' in player[1]:
+      player = player[1].replace('.mp4', '')
+      clip = player.split(';')
+      clip = 'mp4:' + clip[4]
+    else:
+      player = player[1].replace('.flv', '')
+      clip = player.split(';')
+      clip = clip[4]
+
+    return Redirect(RTMPVideoItem(player, clip))
 
 ####################################################################################################
 def TestURLs():
-    test_urls = []
-    data = HTML.ElementFromURL(CBS_URL + '/video/')
+  test_urls = []
+  data = HTML.ElementFromURL(CBS_URL + '/video/')
 
-    url = data.xpath('//div[@id="videoCopy"]//a')[0].get('href')
-    Log(url)
-    test_urls.append(url)
+  url = data.xpath('//div[@id="videoCopy"]//a')[0].get('href')
+  test_urls.append(url)
 
-    return test_urls
-
+  return test_urls
