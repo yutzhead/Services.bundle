@@ -1,5 +1,7 @@
 import re
-CLIP_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
+EPISODE_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
+CLIP_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?clipid=%s'
+#http://watch.thecomedynetwork.ca/AJAX/ClipLookup.aspx?clipid=565275
 
 SITES = ['ctv.ca', 'tsn.ca', 'discoverychannel.ca', 'thecomedynetwork.ca', 'bravo.ca', 'spacecast.com', 'fashiontelevision.com']
 
@@ -23,9 +25,10 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url)
 
   try:
+    data = HTML.ElementFromURL(url)
+    
     title = data.xpath('//meta[@name="title"]')[0].get('content').split(' : ')
     show_title = title[0]
     episode_title = title[1]
@@ -48,14 +51,22 @@ def MetadataObjectForURL(url):
     )
   
   except:
-    item = data.xpath('//dt/a[@href="'+url+'"]')[0]
-    onclick = item.get('onclick')
-    details = JSON.ObjectFromString('{' + onclick.split('{')[1].split('}')[0] + '}')
-    title = details['Title']
+    network = re.search('watch\.(.+)/.+', url).group(1)
+    #Log(network)
+    clipId = url.split('#clip')[1]
+    #Log(clipId)
+    
+    clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clipId)).content).group(1))
+    #Log(clip_details)
+    
+    #item = data.xpath('//dt/a[@href="'+url+'"]')[0]
+    #onclick = item.get('onclick')
+    #details = JSON.ObjectFromString('{' + onclick.split('{')[1].split('}')[0] + '}')
+    title = clip_details['Title']
     #Log(title)
-    summary = details['Description']
+    summary = clip_details['Description']
     #Log(summary)
-    thumb = details['Thumbnail']
+    thumb = clip_details['Thumbnail']
     #Log(thumb)
     
     mo = VideoClipObject(
@@ -91,7 +102,7 @@ def PlayVideo(url):
     network = re.search('watch\.(.+?)/', url).group(1)
     #Log(network)
   
-    show = HTTP.Request(CLIP_LOOKUP %(network, episode_id)).content
+    show = HTTP.Request(EPISODE_LOOKUP %(network, episode_id)).content
     #Log(show)
     expression = re.compile("EpisodePermalink:'(.+?)'", re.MULTILINE)
     permalink = expression.search(show).group(1)
@@ -107,7 +118,7 @@ def PlayVideo(url):
   except:
     video_url = url + '#Flash'
     
-  Log(video_url)
+  #Log(video_url)
 
   return Redirect(WebVideoURL(video_url))
 
