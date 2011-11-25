@@ -5,6 +5,11 @@ VIDEO_URL_EXT_SD = '__PHOENG.mp4'
 
 ####################################################################################################
 
+def NormalizeURL(url):
+    return url.replace('http://m.','http://www.')
+
+####################################################################################################
+
 def MetadataObjectForURL(url):
 
     # Attempt to extract the details of the title from the page.
