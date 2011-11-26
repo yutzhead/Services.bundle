@@ -6,9 +6,19 @@ def NormalizeURL(url):
   return url.split('&')[0]
 
 ####################################################################################################
+def TestURLs():
+  test_urls = []
+
+  for url in HTML.ElementFromURL(TED_BASE + '/talks', cacheTime=7200).xpath('//dl[contains(@class, "talkMedallion")][position() < 4]//img/parent::a'):
+    url = TED_BASE + url.get('href')
+    test_urls.append(url)
+
+  return test_urls
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
-  content = HTTP.Request(url, cacheTime=7200, errors='ignore').content
+  content = HTTP.Request(url, cacheTime=7200).content
   data = HTML.ElementFromString(content)
 
   title = data.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
