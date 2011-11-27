@@ -18,7 +18,6 @@ def MetadataObjectForURL(url):
     duration = video_data.xpath('//div[@id="details"]/span')[2].text.strip('Runtime: ')
     duration = (int(duration.split(':')[0])*60 + int(duration.split(':')[1]))*1000
     thumb = BASE_URL + re.search("image:'(/learnmore/.+)',", content).group(1)
-    Log(thumb)
     
     mo = VideoClipObject(
         title = title,
