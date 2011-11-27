@@ -3,13 +3,13 @@ TED_BASE = 'http://www.ted.com'
 
 ####################################################################################################
 def NormalizeURL(url):
-  return url.split('&')[0]
+  return url.split('?')[0]
 
 ####################################################################################################
 def TestURLs():
   test_urls = []
 
-  for url in HTML.ElementFromURL(TED_BASE + '/talks', cacheTime=7200).xpath('//dl[contains(@class, "talkMedallion")][position() < 4]//img/parent::a'):
+  for url in HTML.ElementFromURL(TED_BASE + '/talks', cacheTime=CACHE_1HOUR).xpath('//dl[contains(@class, "talkMedallion")][position() < 4]//img/parent::a'):
     url = TED_BASE + url.get('href')
     test_urls.append(url)
 
@@ -18,16 +18,18 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  content = HTTP.Request(url, cacheTime=7200).content
+  content = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
   data = HTML.ElementFromString(content)
 
   title = data.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
   summary = data.xpath('//meta[@name="description"]')[0].get('content')
-  
+
   try: filmDate = re.search('fd:"(.+?)",', content).group(1)
   except: filmDate = re.search(';year=(.+?);', content).group(1)
+
   try: postedDate = Datetime.ParseDate(re.search('pd:"(.+?)",', content).group(1)).date()
   except: postedDate = Datetime.ParseDate(re.search(';year=(.+?);', content).group(1)).date()
+
   try: event = re.search('en:"(.+?)",', content).group(1)
   except: event = String.Unquote(re.search(';event=(.+?);', content).group(1), usePlus=True)
 
@@ -41,75 +43,51 @@ def MetadataObjectForURL(url):
     summary = summary,
     thumb = thumbUrl
   )
+
   return vc
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
 
-  content = HTTP.Request(url, cacheTime=7200).content
+  content = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
   slug = re.findall("\$\('#download_dialog'\)\.load\('([^']+)", content)
 
   if slug:
-    download_info = HTTP.Request(TED_BASE + slug[0], cacheTime=CACHE_1MONTH).content
-    download_url = re.findall("(http://download.ted.com/talks/.+{quality}{lang}\.mp4)", download_info)
-    items = []
 
-    if download_url:
-      download_url = download_url[0].replace('{lang}', '')
+    return [
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url, format='480p'))],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        bitrate = '800',
+        video_resolution = '480',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
+      ),
 
-      for quality in HTML.ElementFromString(download_info).xpath('//input[@name="download_quality"]'):
-        q = quality.get('data-name')
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url, format='regular'))],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        bitrate = '400',
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
+      ),
 
-        if q == 'light':
-          mo = MediaObject(
-            parts = [
-              PartObject( key = download_url.replace('{quality}', '-light') )
-            ],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            aspect_ratio = '1.77',
-            bitrate = '40',
-            video_resolution = 'sd',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-          )
-
-        elif q == 'regular':
-          mo = MediaObject(
-            parts = [
-              PartObject( key = download_url.replace('{quality}', '') )
-            ],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            aspect_ratio = '1.77',
-            bitrate = '400',
-            video_resolution = 'sd',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-          )
-
-        elif q == '480p':
-          mo = MediaObject(
-            parts = [
-              PartObject( key = download_url.replace('{quality}', '-480p') )
-            ],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            aspect_ratio = '1.77',
-            bitrate = '840',
-            video_resolution = '480',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-          )
-
-        items.append(mo)
-
-    items.reverse()
-    return items
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url, format='light'))],
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        bitrate = '40',
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        optimized_for_streaming = True
+      )
+    ]
 
   else:
     # Try and find a link to an external site for the video (usually YouTube)
@@ -125,3 +103,26 @@ def MediaObjectsForURL(url):
       except:
         Log(" --> No external URLs found")
         return None
+
+####################################################################################################
+def PlayVideo(url, format):
+
+  content = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
+  slug = re.findall("\$\('#download_dialog'\)\.load\('([^']+)", content)
+
+  if slug:
+    download_info = HTTP.Request(TED_BASE + slug[0], cacheTime=CACHE_1WEEK).content
+    download_url = re.findall("(http://download.ted.com/talks/.+{quality}{lang}\.mp4)", download_info)
+    items = []
+
+    if download_url:
+      download_url = download_url[0].replace('{lang}', '')
+
+      if format == '480p':
+        download_url = download_url.replace('{quality}', '-480p')
+      elif format == 'light':
+        download_url = download_url.replace('{quality}', '-light')
+      else:
+        download_url = download_url.replace('{quality}', '') # <-- regular
+
+      return Redirect(download_url)
