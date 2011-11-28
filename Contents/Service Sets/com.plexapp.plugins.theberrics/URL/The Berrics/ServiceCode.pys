@@ -1,5 +1,3 @@
-import re
-
 PHOTO_URL = 'https://img.theberrics.com/i.php?src=/video/stills/%s'
 VIDEO_DETAILS_URL = 'http://theberrics.com/media/json_file_request/%s'
 
@@ -42,9 +40,9 @@ def MediaObjectsForURL(url):
         container = Container.MP4,
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        video_resolution = '394',
+        video_resolution = 'sd',
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))],
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
       )
     ]
 
