@@ -1,0 +1,41 @@
+import re
+
+NAMESPACES = { 'p': 'http://bbc.co.uk/2008/emp/playlist' }
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        # Access the page
+        page = HTML.ElementFromURL(url)
+
+        # Find the playlist url that the item is associated with
+        playlist_url = page.xpath("//param[@name='playlist']")[0].get('value')
+        playlist_page = XML.ElementFromURL(playlist_url)
+
+        # Extract the available information
+        title = playlist_page.xpath("//p:playlist/p:title/text()", namespaces = NAMESPACES)[0]
+        description = playlist_page.xpath("//p:playlist/p:summary/text()", namespaces = NAMESPACES)[0]
+        thumb = playlist_page.xpath("//p:playlist/p:link[@rel='holding']", namespaces = NAMESPACES)[0].get('href')
+        #date = playlist_page.xpath("//:playlist/p:updated/text()", namespaces = NAMESPACES)[0]
+        #date = Datetime.ParseDate(date)
+
+        return VideoClipObject(
+            title = title,
+            summary = description,
+            thumb = thumb)
+            #originally_available_at = date)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      parts = [PartObject(key=WebVideoURL(url))],
+      protocol = Protocol.WebKit
+    )
+  ]

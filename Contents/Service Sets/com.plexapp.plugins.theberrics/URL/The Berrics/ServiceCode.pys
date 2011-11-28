@@ -1,0 +1,65 @@
+import re
+
+PHOTO_URL = 'https://img.theberrics.com/i.php?src=/video/stills/%s'
+VIDEO_DETAILS_URL = 'http://theberrics.com/media/json_file_request/%s'
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        # Obtain the page
+        page = HTML.ElementFromURL(url)
+
+        # Get a description from the main page.
+        description = page.xpath("//div[@class='text-item']/text()")[0].strip()
+
+        # Extract the configuration of the player, to determine the id of the associated content
+        config_json = page.xpath("//div[@class='video-file']/div")[0].get('media_file')
+        config = JSON.ObjectFromString(config_json)
+        id = config['MediaFile']['id']
+
+        # Obtain the details associated with the video.
+        details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
+        title = details['name']
+        thumb = PHOTO_URL % details['file_video_still']
+        date = Datetime.ParseDate(details['created'])
+
+        return VideoClipObject(
+            title = title,
+            summary = description,
+            thumb = thumb,
+            originally_available_at = date)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '394',
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))],
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url):
+
+    # Obtain the page
+    page = HTML.ElementFromURL(url)
+
+    # Extract the configuration of the player, to determine the id of the associated content
+    config_json = page.xpath("//div[@class='video-file']/div")[0].get('media_file')
+    config = JSON.ObjectFromString(config_json)
+    id = config['MediaFile']['id']
+
+    # Obtain the details associated with the video and return a redirect to the actual video.
+    details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
+    return Redirect(details['brightcove_url'])
