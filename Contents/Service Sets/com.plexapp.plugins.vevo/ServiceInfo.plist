@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Vevo</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.vevo.com/watch/lmfao/sexy-and-i-know-it/USUV71101468</string>
+				<string>http://www.vevo.com/watch/professor-green/never-be-a-right-time/GB1201100064</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.vevo.com/watch/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
