@@ -1,0 +1,58 @@
+import re
+
+DETAIL_URL = "http://www.tvigle.ru/xml/single.php?obj=%s&cnl=%s"
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        content = HTTP.Request(url).content
+        cnl_id = re.search("cnl_id = '([0-9]+)'", content).group(1)
+        obj_id = re.search("video=([0-9]+)", url).group(1)
+
+        # Request the detail page
+        details_page = XML.ElementFromURL(DETAIL_URL % (obj_id, cnl_id))
+        details = details_page.xpath("//video")[0]
+        return VideoClipObject(
+            title = details.get('name'),
+            summary = details.get('anons'),
+            thumb = details.get('img'),
+            originally_available_at = Datetime.ParseDate(details.get('date')))
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = 'flv',
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '404', 
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'file'))]
+      ),
+      MediaObject(
+        container = 'flv',
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '270', 
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'low_file'))]
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url, res):
+
+    content = HTTP.Request(url).content
+    cnl_id = re.search("cnl_id = '([0-9]+)'", content).group(1)
+    obj_id = re.search("video=([0-9]+)", url).group(1)
+
+    details_page = XML.ElementFromURL(DETAIL_URL % (obj_id, cnl_id))
+    details = details_page.xpath("//video")[0]
+    return Redirect(details.get(res))
