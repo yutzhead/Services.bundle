@@ -22,13 +22,13 @@ def MetadataObjectForURL(url):
     thumb = page.xpath("//link[@rel='image_src']")[0].get('href').replace('Medium.jpg', 'Large.jpg')
     date = page.xpath("//span[@itemprop='datePublished']")[0].text
     date = Datetime.ParseDate(date)
-#    duration = int(float(page.xpath("//meta[@name='item-duration']")[0].get('content')) * 1000)
+    duration = TimeToMs( page.xpath("//span[@itemprop='duration']")[0].text )
 
     return VideoClipObject(
         title = title,
         summary = description,
         thumb = thumb,
-#        duration = duration,
+        duration = duration,
         originally_available_at = date)
 
 ####################################################################################################
@@ -48,7 +48,7 @@ def MediaObjectsForURL(url):
         container = Container.MP4,
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        video_resolution = 'sd',
+        video_resolution = '180',
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_SD))]
@@ -70,3 +70,16 @@ def PlayVideo(url, file_ext):
     end = thumb_without_extension.rfind('.')
     video_url = thumb[:end] + file_ext
     return Redirect(video_url)
+
+
+####################################################################################################
+
+def TimeToMs(timecode):
+    seconds = 0
+    duration = timecode.split(':')
+    duration.reverse()
+
+    for i in range(0, len(duration)):
+        seconds += int(duration[i]) * (60**i)
+
+    return seconds * 1000
