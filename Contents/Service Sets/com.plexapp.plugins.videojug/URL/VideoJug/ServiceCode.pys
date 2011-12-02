@@ -16,19 +16,19 @@ def MetadataObjectForURL(url):
     page = HTML.ElementFromURL(url)
 
     # Extract the details from the page
-    title = page.xpath("//meta[@name='title']")[0].get('content')
-    description = page.xpath("//meta[@name='description']")[0].get('content')
-    thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
-    date = page.xpath("//meta[@name='publish-date']")[0].get('content')
+    # We parse the document as HTML, so use lowercase only for attribute names
+    title = page.xpath("//meta[@property='og:title']")[0].get('content')
+    description = page.xpath("//meta[@property='og:description']")[0].get('content')
+    thumb = page.xpath("//link[@rel='image_src']")[0].get('href').replace('Medium.jpg', 'Large.jpg')
+    date = page.xpath("//span[@itemprop='datePublished']")[0].text
     date = Datetime.ParseDate(date)
-    duration = int(float(page.xpath("//meta[@name='item-duration']")[0].get('content')) * 1000)
-    thumb = page.xpath("//p[@class='displayIt']/a")[0].get('href')
+#    duration = int(float(page.xpath("//meta[@name='item-duration']")[0].get('content')) * 1000)
 
     return VideoClipObject(
         title = title,
         summary = description,
         thumb = thumb,
-        duration = duration,
+#        duration = duration,
         originally_available_at = date)
 
 ####################################################################################################
@@ -48,7 +48,7 @@ def MediaObjectsForURL(url):
         container = Container.MP4,
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
-        video_resolution = '180',
+        video_resolution = 'sd',
         audio_channels = 2,
         optimized_for_streaming = True,
         parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_SD))]
