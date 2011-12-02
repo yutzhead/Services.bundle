@@ -16,7 +16,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://([^\.]+.)?euronews.net/.+</string>
+				<string>http://([^.]+.)?euronews.net/.+</string>
 			</array>
 		</dict>
 	</dict>
