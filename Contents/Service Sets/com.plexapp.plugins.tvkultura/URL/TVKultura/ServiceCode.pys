@@ -43,7 +43,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
     data = HTML.ElementFromURL(url)
-    vid = data.xpath('//link[@rel="video_src"]')[0].get('src').split('vid=')[1]
+    vid = data.xpath('//link[@rel="video_src"]')[0].get('href').split('vid=')[1]
     vid_xml = XML.ElementFromURL(XML_URL % vid).xpath('video_item')[0]
     flv_url = vid_xml.xpath('.//video')[0].text
      
