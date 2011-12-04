@@ -24,10 +24,4 @@ def MediaObjectsForURL(url):
         external_url = String.Unquote(external_url)
     except:
         pass
-    Log(external_url)
     return URLService.MediaObjectsForURL(external_url)
-    
-#http://a.blip.tv/scripts/shoggplayer.html#showplayerpath=http%3A%2F%2Fa.blip.tv%2Fscripts%2Fshoggplayer.html&feedurl=http%3A%2F%2Fredvsblue.blip.tv%2Frss%2Fflash&brandname=Red+vs.+Blue&brandlink=http%3A%2F%2Froosterteeth.com%2F&enablejs=true&lightcolor=0x8db5d3&backcolor=0x1a69a7&frontcolor=0xffffff&showinfo=false&autostart=true&usecaptions=true&file=http%3A%2F%2Fblip.tv%2Frss%2Fflash%2F5489428&lookup=h6Uags%2BGeAA
-
-#post_id = 5489428
-#JSON_URL = http://blip.tv/posts/5489428?skin=json&version=2
