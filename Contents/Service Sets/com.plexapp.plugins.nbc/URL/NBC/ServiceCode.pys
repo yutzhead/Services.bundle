@@ -6,13 +6,16 @@ VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
 CLIP_CONFIG_ID = "16009"
 
 ####################################################################################################
+def NormalizeURL(url):
+    return url
 
+####################################################################################################
 def MetadataObjectForURL(url):
     try:
 
         # The given url should contain the video ID. We need this in order to use a different
         # url to obtain the specific details in a sensible format.
-        matches = re.match(".*nbc.com/.*/video/.*/(?P<id>[0-9]+).*", url)
+        matches = re.match(".*(nbc|latenightwithjimmyfallon).com/(.*/)?video/.*/(?P<id>[0-9]+).*", url)
         id = matches.group('id')
         
         # Request the page that contains the details of the title.
