@@ -11,7 +11,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.nbc.com/.+/video/(?!/categories).*/[0-9]+.*</string>
+				<string>http://www.(nbc|latenightwithjimmyfallon).com/.+/video/(?!/categories).*/[0-9]+.*</string>
 			</array>
 		</dict>
 	</dict>
