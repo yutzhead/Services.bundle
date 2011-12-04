@@ -5,11 +5,8 @@ def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url, errors='ignore')
     
     title = data.xpath('//meta[@name="title"]')[0].get('content')
-    #Log(title)
     summary = data.xpath('//meta[@name="description"]')[0].get('content')
-    #Log(summary)
     thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
-    #Log(thumb)
     
     co = VideoClipObject(
         title = title,
@@ -23,5 +20,14 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     data = HTML.ElementFromURL(url, errors='ignore')
     external_url = data.xpath('//link[@rel="video_src"]')[0].get('href')
-    #Log(external_url)
+    try:
+        external_url = String.Unquote(external_url)
+    except:
+        pass
+    Log(external_url)
     return URLService.MediaObjectsForURL(external_url)
+    
+#http://a.blip.tv/scripts/shoggplayer.html#showplayerpath=http%3A%2F%2Fa.blip.tv%2Fscripts%2Fshoggplayer.html&feedurl=http%3A%2F%2Fredvsblue.blip.tv%2Frss%2Fflash&brandname=Red+vs.+Blue&brandlink=http%3A%2F%2Froosterteeth.com%2F&enablejs=true&lightcolor=0x8db5d3&backcolor=0x1a69a7&frontcolor=0xffffff&showinfo=false&autostart=true&usecaptions=true&file=http%3A%2F%2Fblip.tv%2Frss%2Fflash%2F5489428&lookup=h6Uags%2BGeAA
+
+#post_id = 5489428
+#JSON_URL = http://blip.tv/posts/5489428?skin=json&version=2
