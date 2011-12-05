@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 
   try:
     date = page.xpath('//section[@id="MainContent"]//small')[0].text
-    date = re.search('.+?,\s[0-9]{4}', date).group(1)
+    date = re.search('(.+?,\s[0-9]{4})', date).group(1)
     originally_available_at = Datetime.ParseDate(date).date()
   except:
     originally_available_at = None
