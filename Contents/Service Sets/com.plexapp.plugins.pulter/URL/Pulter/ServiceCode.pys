@@ -19,7 +19,7 @@ def MetadataObjectForURL(url):
       summary = data.xpath('//div[@class="player"]//p')[0].text
       thumb = R('icon-default.png')
       
-      xml_url = GetVideoXMLURL(url)
+      xml_url = GetVideoDetailsURL(url)
       data = XML.ElementFromURL(xml_url)
       duration = int(data.xpath('//duration')[0].text)
   
@@ -29,7 +29,25 @@ def MetadataObjectForURL(url):
           duration = duration,
           thumb = thumb
           )
-    else: #be prepared to handle other cases (eg. TV episodes)
+    elif '/series/' in url:
+      show_title = data.xpath('//div[@class="player"]//a')[0].text
+      ep_title = data.xpath('//div[@class="player"]/div/div/div')[1].text
+      summary = data.xpath('//div[@class="player"]//p/text()')[0]
+      
+      
+      xml_url = GetVideoDetailsURL(url)
+      data = XML.ElementFromURL(xml_url)
+      duration = int(data.xpath('//duration')[0].text)
+      thumb = GetThumb(url)
+  
+      mo = EpisodeObject(
+          show = show_title,
+          title = ep_title,
+          summary = summary,
+          duration = duration,
+          thumb = thumb #Callback(GetThumb, url)
+          )
+    else: #be prepared to handle other cases (eg. videoclips)
       pass
     return mo
   
@@ -50,7 +68,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url):
-    xml_url = GetVideoXMLURL(url)
+    xml_url = GetVideoDetailsURL(url)
     
     data = XML.ElementFromURL(xml_url)
     
@@ -60,7 +78,7 @@ def PlayVideo(url):
     return Redirect(flv_url)
     
 ####################################################################################################
-def GetVideoXMLURL(url):
+def GetFlashRedirectURL(url):
     content = HTTP.Request(url).content
     swf_redirect = BASE_URL + re.search('swfobject.embedSWF\("(/player/int/fla/[A-Za-z0-9_%+-]+)",', content).group(1)
     request = urllib2.Request(swf_redirect)
@@ -68,11 +86,20 @@ def GetVideoXMLURL(url):
     f = opener.open(request)
     if f.status == 301 or f.status == 302 or f.status == 303:
       redirect_url = String.Unquote(f.url, usePlus=False)
-      videoPartList_url = re.search('&etu=(http://api.pulter.ru/video/elementtimeline/list.svc/getvideopartlist.+)&eou=', redirect_url).group(1)
     else:
       pass
     
-    return videoPartList_url
+    return redirect_url
+
+####################################################################################################
+def GetVideoDetailsURL(url):
+  xml_url = re.search('&etu=(http://api.pulter.ru/video/elementtimeline/list.svc/getvideopartlist.+)&eou=', GetFlashRedirectURL(url)).group(1)
+  return xml_url
+
+####################################################################################################
+def GetThumb(url):
+  thumb = re.search('tiu=(http://.+\.jpg)&vdu=', GetFlashRedirectURL(url)).group(1)
+  return thumb
 
 ####################################################################################################
 class SmartRedirectHandler(urllib2.HTTPRedirectHandler):

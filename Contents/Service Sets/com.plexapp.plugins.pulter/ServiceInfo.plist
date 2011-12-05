@@ -9,10 +9,11 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://pulter.ru/cinema/Dvadcat_Tisjach_Ljo_Pod_Vodoj_1916/s01</string>
+				<string>http://pulter.ru/series/Glavniy_kalibr/s01</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://pulter.ru/(cinema)/.+</string>
+				<string>http://pulter.ru/(cinema|series)/.+</string>
 			</array>
 		</dict>
 	</dict>
