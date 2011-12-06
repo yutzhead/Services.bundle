@@ -1,4 +1,4 @@
-PHOTO_URL = 'https://img.theberrics.com/i.php?src=/video/stills/%s'
+PHOTO_URL = 'http://img.theberrics.com/i.php?src=/video/stills/%s'
 VIDEO_DETAILS_URL = 'http://theberrics.com/media/json_file_request/%s'
 
 ####################################################################################################
