@@ -15,7 +15,7 @@ def MetadataObjectForURL(url):
 
         # The given url should contain the video ID. We need this in order to use a different
         # url to obtain the specific details in a sensible format.
-        matches = re.match(".*(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.*/)?video/.*(?P<id>[0-9]{6,})", url)
+        matches = re.match(".*(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.*/)?video/.*?(?P<id>[0-9]{6,})", url)
         id = matches.group('id')
         
         # Request the page that contains the details of the title.
@@ -89,23 +89,17 @@ def TestURLs():
     page = HTML.ElementFromURL("http://www.nbc.com/video/library/")
 
     # Full length episodes
-    results = page.xpath("//div[@id='header-full-eps']//li")
+    results = page.xpath("//div[@id='header-full-eps']//li/a[not(contains(@href, 'http'))]")
     for index in range(2):
         item = results[index]
-
-        url = item.xpath(".//a")[0].get('href')
-        if url.startswith("http://") == False:
-            url = "http://www.nbc.com" + url
+        url = "http://www.nbc.com" + item.get('href')
         test_urls.append(url)
 
     # Video clips
-    results = page.xpath("//div[@id='header-video-clips']//li")
+    results = page.xpath("//div[@id='header-video-clips']//li/a[contains(@href, 'http://www.nbc.com')]")
     for index in range(2):
         item = results[index]
-
-        url = item.xpath(".//a")[0].get('href')
-        if url.startswith("http://") == False:
-            url = "http://www.nbc.com" + url
+        url = item.get('href')
         test_urls.append(url)
 
     return test_urls
