@@ -11,7 +11,7 @@ def MetadataObjectForURL(url):
   durationParts = duration.split(':')
   duration = ((int(durationParts[0])*60) + (int(durationParts[1])))*1000
   summary = details.xpath('.//div[@class="copy"]/p')[0].text
-  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+  thumbUrl = 'http://' + data.xpath('//link[@rel="image_src"]')[0].get('href').split('http://')[-1]
 
   # Construct a metadata item
   ec = EpisodeObject(
