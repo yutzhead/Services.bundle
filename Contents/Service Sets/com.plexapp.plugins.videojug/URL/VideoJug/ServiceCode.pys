@@ -23,13 +23,16 @@ def MetadataObjectForURL(url):
     date = page.xpath("//span[@itemprop='datePublished']")[0].text
     date = Datetime.ParseDate(date)
     duration = TimeToMs( page.xpath("//span[@itemprop='duration']")[0].text )
+    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+    tags = [ tag.strip() for tag in tags ]
 
     return VideoClipObject(
         title = title,
         summary = description,
         thumb = thumb,
         duration = duration,
-        originally_available_at = date)
+        originally_available_at = date,
+        tags = tags)
 
 ####################################################################################################
 
