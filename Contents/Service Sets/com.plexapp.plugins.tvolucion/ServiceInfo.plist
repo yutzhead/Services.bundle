@@ -6,9 +6,6 @@
 	<dict>
 		<key>Tvolucion</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://tvolucion.esmas.com/.+</string>
