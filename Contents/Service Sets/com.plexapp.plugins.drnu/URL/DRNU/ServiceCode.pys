@@ -8,8 +8,8 @@ apiBaseRadioWebURL = 'http://www.dr.dk/tjenester/medieapi/api/%s'
 bwInt = {"high":1000, "medium":500, "low":250, "auto":20000}
 
 def NormalizeURL(url):
-	if ':' in url.rsplit('/',1)[1]:
-		url = url.rsplit('/')[0]
+#	if ':' in url.rsplit('/',1)[1]:
+#		url = url.rsplit('/')[0]
 	return url
    
 def MetadataObjectForURL(url):
@@ -17,6 +17,7 @@ def MetadataObjectForURL(url):
 	### Live TV
 	if re.search('http://.*dr.dk/nu/live#/.+', url):
 		jsonDrLive = JSON.ObjectFromString(HTTP.Request(jsDrLive).content.split("'liveStreams':")[1].split("};")[0])
+		jsonNowNext = JSON.ObjectFromURL(apiBaseURL % 'nownext')
 		for channels in jsonNowNext['channels']:
 			if channels['channel'] == url.rsplit("#/")[1]:
 				if channels['current'] is not None:
