@@ -14,10 +14,10 @@ def MetadataObjectForURL(url):
 
     data = HTML.ElementFromURL(url)
     
-    if '/cinema/' in url:
+    if '/cinema/' or '/docs/' or '/kids/' in url:
       title = data.xpath('//div[@class="player"]//a')[0].text
       summary = data.xpath('//div[@class="player"]//p')[0].text
-      thumb = R('icon-default.png')
+      thumb = GetThumb(url)
       
       xml_url = GetVideoDetailsURL(url)
       data = XML.ElementFromURL(xml_url)
@@ -29,7 +29,7 @@ def MetadataObjectForURL(url):
           duration = duration,
           thumb = thumb
           )
-    elif '/series/' in url:
+    elif '/series/' or '/shows/' in url:
       show_title = data.xpath('//div[@class="player"]//a')[0].text
       ep_title = data.xpath('//div[@class="player"]/div/div/div')[1].text
       summary = data.xpath('//div[@class="player"]//p/text()')[0]
@@ -45,9 +45,9 @@ def MetadataObjectForURL(url):
           title = ep_title,
           summary = summary,
           duration = duration,
-          thumb = thumb #Callback(GetThumb, url)
+          thumb = thumb
           )
-    else: #be prepared to handle other cases (eg. videoclips)
+    else:
       pass
     return mo
   
@@ -98,7 +98,10 @@ def GetVideoDetailsURL(url):
 
 ####################################################################################################
 def GetThumb(url):
-  thumb = re.search('tiu=(http://.+\.jpg)&vdu=', GetFlashRedirectURL(url)).group(1)
+  try:
+    thumb = re.search('tiu=(http://.+\.jpg)&vdu=', GetFlashRedirectURL(url)).group(1)
+  except:
+    R('icon-default.png')
   return thumb
 
 ####################################################################################################
