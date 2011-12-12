@@ -33,7 +33,9 @@ def MetadataObjectForURL(url):
             rating = details['rating'],
             directors = details['directors'],
             studio = details['studio'],
-            genres = details['genres'])
+            genres = details['genres'],
+            duration = details['duration'],
+            originally_available_at = details['date'])
     else:
 
         # There are currently two known formats for TV episode titles seen available on the LoveFilm-Player. Examples of
@@ -92,7 +94,9 @@ def MetadataObjectForURL(url):
             thumb = details['thumb'],
             art = details['art'],
             rating = details['rating'],
-            directors = details['directors'])
+            directors = details['directors'],
+            duration = details['duration'],
+            originally_available_at = details['date'])
 
 # This helper method will attempt to parse the html contained within the given page and identify the know elements of interest. 
 # This includes the following: Title, Summary, Rating, Cover Art, Thumbnail Directors, Actors.
@@ -105,14 +109,12 @@ def ParseItem(page):
     
     # [Optional] The artwork
     details['art'] = None
-    try:
-        art_style = page.xpath("//div[@id='flash_player']")[0].get('style')
-        details['art'] = re.match("^background-image: url\((?P<image_url>.*)\)$", art_style).groupdict()['image_url']
+    try: details['art'] = page.xpath("//meta[@property='og:image']")[0].get('content').replace('https://','http://')
     except: pass
     
     # [Optional] The thumbnail
     details['thumb'] = None
-    try: details['thumb'] = page.xpath("//div[@id='panel-details']/div[contains(@class, 'cover')]//img")[0].get('src')
+    try: details['thumb'] = page.xpath("//div[@id='panel-details']/div[contains(@class, 'cover')]//img")[0].get('src').replace('https://','http://')
     except: pass
     
     # [Optional] The summary
@@ -120,9 +122,19 @@ def ParseItem(page):
     try: details['summary'] = page.xpath("//div[@id='panel-details']/p/text()")[0].strip()
     except: pass
     
+    # [Optional] The date available
+    details['date'] = None
+    try: details['date'] = Datetime.ParseDate(page.xpath("//meta[@property='video:release_date']")[0].get('content'))
+    except: pass
+
+    # [Optional] The duration
+    details['duration'] = None
+    try: details['duration'] = int(page.xpath("//meta[@property='video:duration']")[0].get('content')) * 1000
+    except: pass
+
     # [Optional] The user rating
     details['rating'] = None
-    try: details['rating'] = int(page.xpath("//li[@property='v:rating']")[0].get('content')) * 2
+    try: details['rating'] = float(page.xpath("//li[@property='v:rating']")[0].get('content')) * 2
     except: pass
 
     # [Optional] A list of the actors starring
