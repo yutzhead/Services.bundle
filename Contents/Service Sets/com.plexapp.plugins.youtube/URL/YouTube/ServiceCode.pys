@@ -19,6 +19,9 @@ def NormalizeURL(url):
 
   domain = url.netloc
 
+  if domain.startswith('youtube.'):
+    domain = 'www.' + domain
+
   # Edit mobile urls
   if domain.startswith('m.'):
     domain = domain.replace('m.', 'www.')
@@ -51,11 +54,18 @@ def NormalizeURL(url):
   elif url.path[0:3] == '/e/':
     video_id = re.findall('/e/(.{11})', url.path)[0]
 
-  if domain.startswith('youtube.'):
-    domain = 'www.' + domain
+  # http://www.youtube.com/embed/nd5WGLWNllA
+  elif url.path[0:7] == '/embed/':
+    video_id = re.findall('/embed/(.{11})', url.path)[0]
 
   if video_id is None:
-    return None
+    page = HTTP.Request(url.geturl())
+    if re.search('text/html', page.headers['content-type']):
+      id = re.search('"video_id":\s"([^"]+)', page.content)
+      if id:
+        video_id = id.group(1)
+    else:
+      return None
 
   return 'http://%s/watch?v=%s' % (domain, video_id)
 
