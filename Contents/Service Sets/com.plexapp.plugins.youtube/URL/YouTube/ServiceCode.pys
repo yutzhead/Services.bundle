@@ -64,6 +64,8 @@ def NormalizeURL(url):
       id = re.search('"video_id":\s"([^"]+)', page.content)
       if id:
         video_id = id.group(1)
+      else:
+        return None
     else:
       return None
 
