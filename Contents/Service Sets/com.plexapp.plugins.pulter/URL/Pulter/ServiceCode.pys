@@ -4,55 +4,52 @@ BASE_URL = 'http://pulter.ru'
 XML_URL = 'http://api.pulter.ru/video/elementtimeline/list.svc/getvideopartlist?e=mnw2LLhqcEe7d_5ddaovKA2&ip=64.201.208.186&u=&h=ZAFsDSuznnrE51NgeAOyrw2'
 
 ####################################################################################################
-
 def NormalizeURL(url):
   return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     data = HTML.ElementFromURL(url)
-    
+
     if '/cinema/' or '/docs/' or '/kids/' in url:
       title = data.xpath('//div[@class="player"]//a')[0].text
       summary = data.xpath('//div[@class="player"]//p')[0].text
       thumb = GetThumb(url)
-      
+
       xml_url = GetVideoDetailsURL(url)
       data = XML.ElementFromURL(xml_url)
       duration = int(data.xpath('//duration')[0].text)
-  
-      mo = MovieObject(
+
+      return MovieObject(
           title = title,
           summary = summary,
           duration = duration,
           thumb = thumb
           )
+
     elif '/series/' or '/shows/' in url:
       show_title = data.xpath('//div[@class="player"]//a')[0].text
       ep_title = data.xpath('//div[@class="player"]/div/div/div')[1].text
       summary = data.xpath('//div[@class="player"]//p/text()')[0]
-      
-      
+
       xml_url = GetVideoDetailsURL(url)
       data = XML.ElementFromURL(xml_url)
       duration = int(data.xpath('//duration')[0].text)
       thumb = GetThumb(url)
-  
-      mo = EpisodeObject(
+
+      return EpisodeObject(
           show = show_title,
           title = ep_title,
           summary = summary,
           duration = duration,
           thumb = thumb
           )
-    else:
-      pass
-    return mo
-  
-####################################################################################################
 
+    else:
+      return None
+
+####################################################################################################
 def MediaObjectsForURL(url):
 
     return [
@@ -69,14 +66,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
     xml_url = GetVideoDetailsURL(url)
-    
     data = XML.ElementFromURL(xml_url)
-    
     flv_url = data.xpath('//fileUrl')[0].text
-    Log(flv_url)
-    
+
     return Redirect(flv_url)
-    
+
 ####################################################################################################
 def GetFlashRedirectURL(url):
     content = HTTP.Request(url).content
@@ -86,10 +80,9 @@ def GetFlashRedirectURL(url):
     f = opener.open(request)
     if f.status == 301 or f.status == 302 or f.status == 303:
       redirect_url = String.Unquote(f.url, usePlus=False)
+      return redirect_url
     else:
-      pass
-    
-    return redirect_url
+      return None
 
 ####################################################################################################
 def GetVideoDetailsURL(url):
@@ -101,7 +94,8 @@ def GetThumb(url):
   try:
     thumb = re.search('tiu=(http://.+\.jpg)&vdu=', GetFlashRedirectURL(url)).group(1)
   except:
-    R('icon-default.png')
+    thumb = R('icon-default.png')
+
   return thumb
 
 ####################################################################################################
