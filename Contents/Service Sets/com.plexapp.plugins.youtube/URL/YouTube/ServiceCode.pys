@@ -58,6 +58,10 @@ def NormalizeURL(url):
   elif url.path[0:7] == '/embed/':
     video_id = re.findall('/embed/(.{11})', url.path)[0]
 
+  # http://www.youtube.com/my_subscriptions?pid=h1zmNxWzZYk&show_edit=1&feature=uploadeemail_edit
+  elif url.path[0:17] == '/my_subscriptions' and url.query != '':
+    video_id = re.findall('pid=(.{11})', url.query)[0]
+
   if video_id is None:
     page = HTTP.Request(url.geturl())
     if re.search('text/html', page.headers['content-type']):
