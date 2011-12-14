@@ -8,11 +8,13 @@ def NormalizeURL(url):
     opener = urllib2.build_opener(SmartRedirectHandler)
     f = opener.open(request)
     if f.status == 301 or f.status == 302:
-      return '%s?view=shortcutArticle&shortcutView=popupPlayer' % f.url
+      url = f.url.split('?')[0]
+      return '%s?view=shortcutArticle&shortcutView=popupPlayer' % url
     else:
       Log(' --> No redirect for url: ' + url)
       Log(' --> HTTP status code: ' + f.status)
   else:
+    url = url.split('?')[0]
     return '%s?view=shortcutArticle&shortcutView=popupPlayer' % url
 
 ####################################################################################################
