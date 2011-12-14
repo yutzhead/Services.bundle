@@ -3,44 +3,39 @@ import re
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page
-        page = HTML.ElementFromURL(url)
+    page = HTML.ElementFromURL(url)
 
-        # Extract the information from the page...
-        show = page.xpath("//h1/a/text()")[0]
-        title = page.xpath("//div[@class='episode_notes']/h2/text()")[0]
-        thumb = page.xpath("//div[@id='mast']//img")[0].get('src')
-        
-        # The duration of the podcast will be in the form MINS:SECS. We need to use a regular expression
-        # to try and obtain it, before then converting it into milliseconds.
-        duration = None
-        duration_text = ''.join(page.xpath("//div[@class='audio_links']/p/text()")).strip()
-        try: 
-            duration_dict = re.match("(?P<mins>[0-9]+):(?P<secs>[0-9]+)", duration_text).groupdict()
-            mins = int(duration_dict['mins'])
-            secs = int(duration_dict['secs'])
-            duration = ((mins * 60) + secs) * 1000
-        except: pass
+    # Extract the information from the page...
+    show = page.xpath("//h1/a/text()")[0]
+    title = page.xpath("//h2[@class='title']/text()")[0]
+    thumb = page.xpath("//div[@id='mast']//img")[0].get('src')
 
-        # The episode details are in the form "Episode #NUM - DATE"
-        episode_details = page.xpath("//div[@class='episode_notes']/h5/text()")[0]
+    # The duration of the podcast will be in the form MINS:SECS. We need to use a regular expression
+    # to try and obtain it, before then converting it into milliseconds.
+    duration = None
+    duration_text = ''.join(page.xpath("//div[@class='audio_links']/p/text()")).strip()
+    try: 
+        duration_dict = re.match("(?P<mins>[0-9]+):(?P<secs>[0-9]+)", duration_text).groupdict()
+        mins = int(duration_dict['mins'])
+        secs = int(duration_dict['secs'])
+        duration = ((mins * 60) + secs) * 1000
+    except: pass
 
-        # Extract the episode's index
-        episode_index = None
-        try: episode_index = int(re.match("Episode #(?P<index>[0-9]+).*", episode_details).groupdict()['index'])
-        except: pass
+    # The episode details are in the form "Episode #NUM - DATE"
+    episode_details = page.xpath("//div[@class='episode_notes']/h5/text()")[0]
 
-        return TrackObject(
-            title = title,
-            artist = show,
-            index = episode_index,
-            thumb = thumb,
-            duration = duration)
+    # Extract the episode's index
+    episode_index = None
+    try: episode_index = int(re.match("Episode #(?P<index>[0-9]+).*", episode_details).groupdict()['index'])
+    except: pass
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return TrackObject(
+        title = title,
+        artist = show,
+        index = episode_index,
+        thumb = thumb,
+        duration = duration)
 
 ####################################################################################################
 
@@ -56,7 +51,6 @@ def MediaObjectsForURL(url):
 
 def PlayTrack(url):
 
-    # Request the page
     page = HTML.ElementFromURL(url)
 
     # Redirect to the available MP3
