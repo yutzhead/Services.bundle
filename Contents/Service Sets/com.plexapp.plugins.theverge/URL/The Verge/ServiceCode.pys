@@ -1,0 +1,74 @@
+import re
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        # Attempt to extract the details of the title from the page.
+        page = HTML.ElementFromURL(url)
+
+        # The page only currently contains the title and a brief description
+        title = page.xpath("//meta[@property='og:title']")[0].get('content')
+        description = page.xpath("//meta[@property='og:description']")[0].get('content').strip()
+        thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
+
+        tags = []
+        try: 
+            tags = page.xpath("//meta[@name='sailthru.tags']")[0].get('content').split(',')
+            tags = [ tag.strip() for tag in tags ]
+        except: pass
+        
+        date = None
+        try: date = Datetime.ParseDate(page.xpath("//meta[@name='sailthru.date']")[0].get('content'))
+        except: pass
+
+        return VideoClipObject(
+            title = title,
+            summary = description,
+            thumb = thumb,
+            originally_available_at = date,
+            tags = tags)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        video_resolution = "960",
+        parts = [PartObject(key=Callback(PlayVideo, url = url, src = 'standard'))]
+      ),
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        video_resolution = "480",
+        parts = [PartObject(key=Callback(PlayVideo, url = url, src = 'iphone'))]
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url, src):
+
+    page = HTML.ElementFromURL(url)
+
+    # The page contains an iframe which contains details of the available sources. 
+    video_iframe_url = page.xpath("//iframe[contains(@src, 'theverge.vid.io')]")[0].get('src')
+    video_page_content = HTTP.Request(video_iframe_url).content
+
+    # Find the sources
+    sources_text = re.search('media: (.+),', video_page_content).group(1)
+    sources = JSON.ObjectFromString(sources_text)
+
+    for source in sources:
+        if source['name'] == src:
+            return Redirect(source['sources'][0]['src'])

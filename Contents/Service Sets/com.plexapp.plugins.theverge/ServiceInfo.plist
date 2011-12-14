@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>The Verge</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.theverge.com/2011/11/15/2565287/on-the-verge-001</string>
+				<string>http://www.theverge.com/2011/12/10/2623457/the-vergecast-005-12-09-2011</string>
+				<string>http://www.theverge.com/2011/10/31/2527890/nokia-kinetic-device-demo</string>
+				<string>http://www.theverge.com/2011/11/17/2568348/galaxy-nexus-review</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.theverge.com/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
