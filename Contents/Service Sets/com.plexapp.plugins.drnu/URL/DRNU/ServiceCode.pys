@@ -54,9 +54,6 @@ def MetadataObjectForURL(url):
 		vc.source_title = jsonDrOD['broadcastChannel']
 		vc.originally_available_at = date.fromtimestamp(int(jsonDrOD['broadcastTime'].rsplit('(')[1].rsplit('+',1)[0])/1000)
 		vc.summary = jsonDrOD['description']
-#		thumb = 'http://www.dr.dk/radio/image/MediaItemImage?mediaitemId=' + id + '&width=512&height=512&broadcastChannel=' + jsonDrOD['broadcastChannel']
-#		thumb = String.Quote(thumb)
-#		vc.thumb = thumb
 	return vc
 
 def MediaObjectsForURL(url):
