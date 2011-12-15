@@ -1,0 +1,103 @@
+import re
+VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	try:
+		xml_url = VIDEO_INFO % GetVideoId(url)
+	except:
+		Log.Exception("Could not retrieve videoId in MetadataObjectForURL function")
+		return None
+
+	info = XML.ElementFromURL(xml_url)
+	title = info.xpath('//headline')[0].text.strip()
+	summary = String.StripTags( info.xpath('//description')[0].text )
+	duration = None
+
+	if info.xpath('//category')[0].text != 'Full Episodes':
+		duration = Duration( info.xpath('//length')[0].text )
+
+	try:
+		thumb = info.xpath('//image[@width="640"]')[0].text
+	except:
+		try:
+			thumb = info.xpath('//image')[-1].text
+		except:
+			thumb = None
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration,
+		thumb = thumb
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	if 'full-episode' in url:
+
+		return [
+			MediaObject(
+				parts = [PartObject(key=WebVideoURL(url))],
+				protocol = Protocol.WebKit
+			)
+		]
+
+	else:
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url = url))],
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				container = Container.MP4,
+				video_resolution = 'sd',
+				aspect_ratio = '1.78',
+				audio_channels = 2,
+				optimized_for_streaming = True,
+				bitrate = 1000
+			)
+		]
+
+####################################################################################################
+def PlayVideo(url):
+
+	try:
+		xml_url = VIDEO_INFO % GetVideoId(url)
+	except:
+		Log.Exception("Could not retrieve videoId in PlayVideo function")
+		return None
+
+	video_url = XML.ElementFromURL(xml_url).xpath('//file[@bitrate="embed"]')[0].text
+	return Redirect(video_url)
+
+####################################################################################################
+def GetVideoId(url):
+
+	part = url.split('/')
+
+	if len(part) > 4 and part[4].isdigit():
+		return int(part[4])
+	else:
+		object_param = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/object//param[@name="movie"]')
+		if len(object_param) > 0:
+			param = object_param[0].get('value')
+			videoId = re.search('videoId=([0-9]+)', param)
+
+			if videoId:
+				return int(videoId.group(1))
+
+	return None
+
+####################################################################################################
+def Duration(timecode):
+
+	seconds = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000
