@@ -2,6 +2,15 @@ import re
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
 
 ####################################################################################################
+def TestURLs():
+	test_urls = []
+
+	for url in HTML.ElementFromURL('http://teamcoco.com/video').xpath('//ul[@class="videos"]/li[position() < 4]/a'):
+		test_urls.append( url.get('href') )
+
+	return test_urls
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
 	try:
