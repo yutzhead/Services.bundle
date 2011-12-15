@@ -10,13 +10,14 @@
 			<array>
 				<string>http://youtu.be/vXhmyyXFd5I</string>
 				<string>http://youtube.com/watch?v=vXhmyyXFd5I</string>
+				<string>https://www.youtube.com/watch?v=siOHh0uzcuY</string>
 				<string>http://www.youtube.com/user/andyverg#p/a/u/0/HTGOoQNYGL4</string>
 				<string>http://www.youtube.com/shemarooent#p/u/0/7RzbNiw3rOs</string>
 				<string>http://m.youtube.com/#/watch?v=Eef-JaGhSto</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.|m\.)?youtu(be\.com|\.be)/.+</string>
+				<string>https?://(www\.|m\.)?youtu(be\.com|\.be)/.+</string>
 			</array>
 		</dict>
 	</dict>
