@@ -56,7 +56,7 @@ def PlayVideo(url):
     
     # The player page will contain a reference to the mobile JS page (including all required parameters).
     # We therefore search for the known url.
-    mobile_player_page_args = re.match('.*var R="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
+    mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
     mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args).content
 
     # We now have the mobile JS player page. 

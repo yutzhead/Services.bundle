@@ -1,74 +1,66 @@
 import re
 
+PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
+MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
+
 ####################################################################################################
 def MetadataObjectForURL(url):
-  external_source = ExternalSource(url)
-  return URLService.MetadataObjectForURL(external_source)
+
+    page = HTML.ElementFromURL(url)
+
+    title = page.xpath("//meta[@name='title']")[0].get('content')
+    summary = page.xpath("//meta[@name='description']")[0].get('content')
+    thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
+
+    date = None
+    try:
+        date_text = page.xpath("//div[@class='video_youtube_column']/p/text()")[0]
+        date_text = date_text.split('@')[0].strip()
+        date = Datetime.ParseDate(date_text)
+    except: pass
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb,
+        originally_available_at = date)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "1080",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1080"))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "720",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "480",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480"))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "sd",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
-    )
-  ]
+    return [
+      MediaObject(
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        container = Container.MP4,
+        video_resolution = '540',
+        optimized_for_streaming = True,
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      )
+    ]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url, res):
+def PlayVideo(url):
 
-  # Find the external source and the available media objects.
-  external_source = ExternalSource(url)
-  media = URLService.MediaObjectsForURL(external_source)
+    # Request the page
+    page = HTML.ElementFromURL(url)
 
-  resolutions = ["1080", "720", "480", "sd"]
-  index = resolutions.index(res)
-  for resolution_index in range(index, len(resolutions)):
-    current_resolution = resolutions[resolution_index]
-    for video in media:
-      if video.video_codec != VideoCodec.H264:
-        continue
-      if str(video.video_resolution) == current_resolution:
-        return Redirect(video.parts[0].key)
+    # The first thing that we need to obtain is the actual "embed code".
+    video_url = page.xpath('//link[@rel="video_src"]')[0].get('href')
+    embed_code = re.search('embedCode=(.+)&', video_url).group(1)
 
-  return Redirect(media[-1].parts[0].key)
+    # Once we've got this, we can then request the main JS page to do with the actual player. Since it
+    # only actually contains JS source, we simply obtain the content.
+    player_page = HTTP.Request(PLAYER_URL % embed_code).content
+    
+    # The player page will contain a reference to the mobile JS page (including all required parameters).
+    # We therefore search for the known url.
+    mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
+    mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args).content
 
-####################################################################################################
-def ExternalSource(url):
+    # We now have the mobile JS player page. 
+    stream_json = re.match('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^)]+)\).*', mobile_player_page, re.DOTALL).groupdict()['json']
+    stream_json = stream_json.decode('unicode_escape')[2:]
+    stream_details = JSON.ObjectFromString(stream_json)
 
-  page = HTML.ElementFromURL(url)
-  actual_url = page.xpath("//div[@class='youtube_embed']//param[@name='movie']")[0].get('value')
-  return actual_url
+    return Redirect(stream_details[0]['ipad_url'])
