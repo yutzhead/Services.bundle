@@ -1,5 +1,6 @@
 import re
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
+FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
 
 ####################################################################################################
 def TestURLs():
@@ -49,7 +50,7 @@ def MediaObjectsForURL(url):
 
 		return [
 			MediaObject(
-				parts = [PartObject(key=WebVideoURL(url))],
+				parts = [PartObject(key=Callback(PlayVideo, url = url))],
 				protocol = Protocol.WebKit
 			)
 		]
@@ -73,13 +74,17 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	try:
-		xml_url = VIDEO_INFO % GetVideoId(url)
+		video_id = GetVideoId(url)
 	except:
 		Log.Exception("Could not retrieve videoId in PlayVideo function")
 		return None
 
-	video_url = XML.ElementFromURL(xml_url).xpath('//file[@bitrate="embed"]')[0].text
-	return Redirect(video_url)
+	if 'full-episode' in url:
+		return Redirect(WebVideoURL(FULL_EPISODE % video_id))
+
+	else:
+		video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
+		return Redirect(video_url)
 
 ####################################################################################################
 def GetVideoId(url):
