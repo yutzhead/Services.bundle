@@ -58,7 +58,7 @@ def PlayVideo(url):
     data = HTML.ElementFromURL(url)
 
     # The first thing that we need to obtain is the actual "embed code".
-    video_url = data.xpath('//meta[@name="og:video"]')[0].get('content')
+    video_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
     embed_code = re.search('embedCode=(.+)&', video_url).group(1)
 
     # Once we've got this, we can then request the main JS page to do with the actual player. Since it
@@ -67,7 +67,7 @@ def PlayVideo(url):
 
     # The player page will contain a reference to the mobile JS page (including all required parameters).
     # We therefore search for the known url.
-    mobile_player_page_args = re.match('.*var R="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
+    mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
     mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args).content
 
     # We now have the mobile JS player page. 
