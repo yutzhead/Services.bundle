@@ -62,7 +62,7 @@ def TestURLs():
 
     page = HTML.ElementFromURL("http://videos.arte.tv/en/videos")
 
-    results = page.xpath("//a[contains(@href, "/en/videos/")]/img/parent::a")
+    results = page.xpath("//a[contains(@href, '/en/videos/')]/img/parent::a")
     for index in range(2):
         item = results[index]
         url = "http://videos.arte.tv" + item.get('href')
