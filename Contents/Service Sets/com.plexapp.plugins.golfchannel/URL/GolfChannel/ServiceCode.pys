@@ -7,7 +7,7 @@ def NormalizeURL(url):
     
 def MetadataObjectForURL(url):
     data = GetSMIL(url)
-    video = data.xpath('//ref')[1]
+    video = data.xpath('//ref')[0]
     
     title = video.get('title')
     summary = video.get('abstract')
@@ -34,12 +34,12 @@ def GetSMIL(url):
     data = HTTP.Request(url).content
     pid = re.search('pid=(.+)%26path=', data).group(1)
     smil = HTML.ElementFromURL(SMIL_URL % pid)
+    Log(HTML.StringFromElement(smil))
     return smil
     
 def PlayVideo(url):
     smil = GetSMIL(url)
-    rtmp_url = smil.xpath('//ref')[1].get('src')
-    clip = re.search('ondemand/.+/(.*)', rtmp_url).group(1)
-    rtmp_url = rtmp_url.strip(clip)
+    rtmp_url = smil.xpath('//meta')[0].get('base')
+    clip = smil.xpath('//ref')[0].get('src')
     clip = clip.strip('.flv')
     return Redirect(RTMPVideoURL(url=rtmp_url, clip=clip))
