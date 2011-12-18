@@ -44,3 +44,23 @@ def PlayVideo(url):
     video_url = re.match('.*videofile:"(?P<video_url>[^"]+)".*', page, re.DOTALL).groupdict()['video_url'] + ".flv"
 
     return Redirect(BASE_URL + video_url)
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    page = HTML.ElementFromURL('http://www.euronews.net/')
+
+    for link in page.xpath("//span[@class='vid']/.."):
+        if len(test_urls) < 3:
+            url = link.get('href')
+            url = "http://www.euronews.net" + url
+
+            if url not in test_urls:
+                test_urls.append(url)
+
+
+        else:
+            break
+
+    return test_urls

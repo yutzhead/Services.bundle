@@ -6,14 +6,6 @@
 	<dict>
 		<key>Euronews</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.euronews.net/nocomment/2011/07/28/kosovo-border-post-on-fire/</string>
-				<string>http://www.euronews.net/nocomment/2011/07/27/yoga-classes-for-dogs-in-hong-kong/</string>
-				<string>http://www.euronews.net/2011/10/31/unesco-gives-palestinians-full-membership/</string>
-				<string>http://ru.euronews.net/2011/11/29/pressure-on-brussels-amid-new-debt-crisis-warnings/</string>
-				<string>http://fr.euronews.net/2011/11/29/eurogroup-nouvelle-reunion-sous-pression/</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://([^.]+.)?euronews.net/.+</string>

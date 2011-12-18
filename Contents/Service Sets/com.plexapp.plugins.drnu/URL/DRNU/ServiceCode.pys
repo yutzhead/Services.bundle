@@ -21,6 +21,7 @@ def MetadataObjectForURL(url):
 		for channels in jsonNowNext['channels']:
 			if channels['channel'] == url.rsplit("#/")[1]:
 				if channels['current'] is not None:
+                                        vc.title = channels['current']['channelName']
 					vc.original_title = channels['current']['programTitle']
 					vc.summary = channels['current']['description']
 					if channels['current']['punchline'] is not None:

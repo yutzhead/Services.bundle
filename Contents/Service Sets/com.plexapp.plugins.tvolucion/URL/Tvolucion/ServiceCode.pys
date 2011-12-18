@@ -77,6 +77,11 @@ def TestURLs():
     
     for program_type in data.xpath('//ul[@class="carruselTrack"]'):
         url = program_type.xpath('.//li[@class="trackHeader"]/a')[0].get('href')
+
+        # It appears that Series videos are geo-blocked. Therefore we shall not sure these in this test.
+        if url.startswith("http://tvolucion.esmas.com/series/") == True:
+            continue
+
         test_urls.append(url)
         
     return test_urls 
