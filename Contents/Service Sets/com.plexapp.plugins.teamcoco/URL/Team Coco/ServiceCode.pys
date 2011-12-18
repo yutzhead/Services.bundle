@@ -27,6 +27,8 @@ def MetadataObjectForURL(url):
 	duration = info.xpath('//length')
 	if duration:
 		duration = Duration( duration[0].text )
+	else:
+		duration = None
 
 	try:
 		thumb = info.xpath('//image[@width="640"]')[0].text
