@@ -70,6 +70,10 @@ def TestURLs():
     for link in page.xpath("//a[contains(@href, 'videos')]"):
         if len(test_urls) < 3:
             url = link.get('href')
+
+            if re.match("http://current.com/.+/[0-9]+_.+", url) == None:
+                continue
+
             if url not in test_urls:
                 test_urls.append(url)
         else:
