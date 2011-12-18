@@ -23,10 +23,12 @@ def MetadataObjectForURL(url):
 	info = XML.ElementFromURL(xml_url)
 	title = info.xpath('//headline')[0].text.strip()
 	summary = String.StripTags( info.xpath('//description')[0].text )
-	duration = None
 
-	if info.xpath('//category')[0].text != 'Full Episodes':
+	duration = None
+        try:
+	    if info.xpath('//category')[0].text != 'Full Episodes':
 		duration = Duration( info.xpath('//length')[0].text )
+        except: pass
 
 	try:
 		thumb = info.xpath('//image[@width="640"]')[0].text
