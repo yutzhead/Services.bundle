@@ -1,7 +1,10 @@
-import re, urlparse
+import re, urlparse, urllib2, httplib
 
+####################################################################################################
 def NormalizeURL(url):
+
   video_id = None
+
   if isinstance(url, basestring):
     url = urlparse.urlparse(url)
 
@@ -21,12 +24,12 @@ def NormalizeURL(url):
   if re.search("clip_id=(\d+)&", url.query):
     video_id = re.search("clip_id=(\d+)&", url.query).group(1)
 
-
   if video_id is None:
     return None
 
   return "http://vimeo.com/%s" % video_id
 
+####################################################################################################
 def MetadataObjectForURL(url):
   
   # Figure out the URL to call.
@@ -48,6 +51,7 @@ def MetadataObjectForURL(url):
     directors = [json['user_name']]
   )
 
+####################################################################################################
 def MediaObjectsForURL(url):
   items = [
     MediaObject(
@@ -61,7 +65,7 @@ def MediaObjectsForURL(url):
     ),
 
     MediaObject(
-      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='mobile', codecs=None))],
+      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='sd', codecs='H264'))],
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       video_resolution = 480,
@@ -72,9 +76,7 @@ def MediaObjectsForURL(url):
   ]
   return items
 
-
-import urllib2, httplib, re
-
+####################################################################################################
 class SmartRedirectHandler(urllib2.HTTPRedirectHandler):     
   def http_error_301(self, req, fp, code, msg, headers):
     result = urllib2.HTTPRedirectHandler.http_error_301(self, req, fp, code, msg, headers)              
@@ -86,8 +88,8 @@ class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
     result.status = code                                
     return result
 
-
-def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
+####################################################################################################
+def GetVideoURL(url, format=None, codecs=None):
   key = url[url.rfind('/')+1:]
   headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
   video = HTTP.Request(url, cacheTime=1, headers=headers).content
@@ -98,11 +100,10 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
   if m1 and m2:
     hd = int(m1.groups()[0])
 
-    if format == None:
-      if Prefs['hd'] == True and hd == True:
-        format = 'hd'
-      else:
-        format = 'sd'
+    if hd == True and format == 'hd':
+      format = 'hd'
+    else:
+      format = 'sd'
 
     if codecs != None:
       codecs = '&codecs=' + codecs
@@ -110,7 +111,6 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
       codecs = ''
 
     (sig, time) = m2.groups()
-    headers = {'Referer': url, 'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
     url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
     request = urllib2.Request(url, None, headers)
     opener = urllib2.build_opener(SmartRedirectHandler)
@@ -118,19 +118,15 @@ def GetVideoURL(url, format=None, codecs='H264,VP8,VP6'):
     if f.status == 301 or f.status == 302:
       return f.url
 
+####################################################################################################
 @indirect
-def PlayVideoIndirect(url, format=None, codecs='H264,VP8,VP6'):
+def PlayVideoIndirect(url, format=None, codecs=None):
   HTTP.ClearCookies()
 
   try:
     video_url = GetVideoURL(url, format, codecs)
   except:
-    Log.Debug("Primary video URL failure.")
-    try:
-      video_url = GetVideoURL(url, 'sd', codecs)
-    except:
-      Log.Debug("Secondary SD URL failure.")
-      video_url = GetVideoURL(url, None, 'H264,VP8,VP6')
+    video_url = GetVideoURL(url, None, 'H264,VP8,VP6')
 
   if video_url is None:
     return None
@@ -146,5 +142,5 @@ def PlayVideoIndirect(url, format=None, codecs='H264,VP8,VP6'):
       )
     ]
   ))
-  c.http_cookies = HTTP.CookiesForURL('http://vimeo.com')
+  c.http_cookies = HTTP.CookiesForURL('http://vimeo.com/')
   return c
