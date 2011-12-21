@@ -67,12 +67,20 @@ def TestURLs():
     # Request a page which should contain a collection of videos
     page = HTML.ElementFromURL("http://www.absoluteradio.co.uk/video/tags/artist,interview/")
     results = page.xpath("//div[@id='main_content']//p[@class='clip_result']")
-    for index in range(2):
-        item = results[index]
+    for item in results:
 
         url = item.xpath(".//a")[0].get('href')
         if url.startswith("http://") == False:
             url = "http://www.absoluteradio.co.uk" + url
+
+        # Ensure that we don't grab any audio sessions...
+        description = item.xpath(".//span[@class='result_desc']/text()")[0].strip()
+        if description.find("Audio session:") != -1:
+            continue
+
         test_urls.append(url)
+
+        if len(test_urls) >= 2:
+            break
 
     return test_urls
