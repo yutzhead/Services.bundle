@@ -1,7 +1,6 @@
 import re
 EPISODE_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
 CLIP_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?clipid=%s'
-#http://watch.thecomedynetwork.ca/AJAX/ClipLookup.aspx?clipid=565275
 
 SITES = ['ctv.ca', 'tsn.ca', 'discoverychannel.ca', 'thecomedynetwork.ca', 'bravo.ca', 'spacecast.com', 'fashiontelevision.com']
 
@@ -51,23 +50,14 @@ def MetadataObjectForURL(url):
     )
   
   except:
-    network = re.search('watch\.(.+)/.+', url).group(1)
-    #Log(network)
-    clipId = url.split('#clip')[1]
-    #Log(clipId)
+    network = re.search('watch\.(.+\.c[a-z]{1,2})/.+', url).group(1)
+    clipId = re.search('clip([0-9]{6})', url).group(1)
     
     clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clipId)).content).group(1))
-    #Log(clip_details)
     
-    #item = data.xpath('//dt/a[@href="'+url+'"]')[0]
-    #onclick = item.get('onclick')
-    #details = JSON.ObjectFromString('{' + onclick.split('{')[1].split('}')[0] + '}')
     title = clip_details['Title']
-    #Log(title)
     summary = clip_details['Description']
-    #Log(summary)
     thumb = clip_details['Thumbnail']
-    #Log(thumb)
     
     mo = VideoClipObject(
       title = title,
@@ -76,7 +66,6 @@ def MetadataObjectForURL(url):
     )
   
   source_site = re.search("http://watch.(.+\.(ca|com))/.*", url).group(1)
-  #Log(source_site)
   source = SOURCE[source_site]
   
   mo.source_title = source
@@ -98,18 +87,13 @@ def PlayVideo(url):
   
   try:
     episode_id = HTML.ElementFromURL(url).xpath('//meta[@name="EntityId"]')[0].get('content')
-    #Log(episode_id)
     network = re.search('watch\.(.+?)/', url).group(1)
-    #Log(network)
   
     show = HTTP.Request(EPISODE_LOOKUP %(network, episode_id)).content
-    #Log(show)
     expression = re.compile("EpisodePermalink:'(.+?)'", re.MULTILINE)
     permalink = expression.search(show).group(1)
-    #Log(permalink)
     level = 0
     format = re.search("Format:'(.+?)'", show).group(1)
-    #Log(format)
 
     if format == 'WMV':
       video_url = url + '#Silverlight'
@@ -117,8 +101,6 @@ def PlayVideo(url):
       video_url = url + '#Flash'
   except:
     video_url = url + '#Flash'
-    
-  #Log(video_url)
 
   return Redirect(WebVideoURL(video_url))
 
@@ -127,9 +109,15 @@ def TestURLs():
     test_urls = []
     
     for site in SITES:
-        #Log(site)
         data = HTML.ElementFromURL('http://watch.%s' % site)
         url = data.xpath('.//div[@id="CatalogContainer"]//dl[@class="Item"]//a')[0].get('href')
-        test_urls.append(url)
+        if '/#clip' in url:
+          test_urls.append(url)
+        elif '/clip' in url:
+          test_urls.append(url)
+        else:
+          next_page = HTML.ElementFromURL(url)
+          new_url = next_page.xpath('.//div[@id="Level4"]//dl[@class="Item"]//a')[0].get('href')
+          test_urls.append(new_url)
         
     return test_urls
