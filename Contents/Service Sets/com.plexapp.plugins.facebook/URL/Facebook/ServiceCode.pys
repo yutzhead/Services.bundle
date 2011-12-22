@@ -1,0 +1,49 @@
+import re
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    try:
+
+        page_content = HTTP.Request(url).content
+        title = re.search('addVariable\("video_title"\, "([^"]+)"\)', page_content).group(1)
+        thumb = re.search('addVariable\("thumb_url"\, "([^"]+)"\)', page_content).group(1)
+        duration_text = re.search('addVariable\("video_length"\, "([^"]+)"\)', page_content).group(1)
+
+        return VideoClipObject(
+            title = String.Unquote(title.decode('unicode_escape'), usePlus=True),
+            thumb = String.Unquote(thumb.decode('unicode_escape'), usePlus=True),
+            duration = int(String.Unquote(duration_text.decode('unicode_escape'), usePlus=True)))
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '720',
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'highqual_src'))]
+      ),
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = 'SD',
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'lowqual_src'))]
+      )
+    ]
+
+####################################################################################################
+def PlayVideo(url, res):
+
+    page_content = HTTP.Request(url, cacheTime = 0).content
+
+    video_url = re.search('addVariable\("video_src"\, "([^"]+)"\)', page_content).group(1)
+    desired_video = re.search('addVariable\("%s"\, "([^"]+)"\)' % res, page_content)
+    if desired_video:
+      video_url = desired_video.group(1)
+    return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True))
