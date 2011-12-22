@@ -93,9 +93,16 @@ def GetRSS(url):
     return rss_url
 
 def PlayVideo(url, bitrate):
+
     BITRATES = ['2500', '1500', '750', '450', '250', '212']
     feed = RSS.FeedFromURL(GetRSS(url))
     video = feed['items'][0]
-    mp4_url = video['media_content'][BITRATES.index(bitrate)]['url']
+
+    index = BITRATES.index(bitrate)
+    for bitrate_index in range(index, len(BITRATES)):
+        current_bitrate = BITRATES[bitrate_index]
+        for media_element in video['media_content']:
+            if current_bitrate == media_element['bitrate']:
+                return Redirect(media_element['url'])
     
-    return Redirect(mp4_url)
+    return Redirect(video['media_content'][-1]['url'])
