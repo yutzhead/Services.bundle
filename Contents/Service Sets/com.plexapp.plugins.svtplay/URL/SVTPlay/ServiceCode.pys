@@ -80,7 +80,7 @@ def MetadataObjectForURL(url):
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
 
 ####################################################################################################
-# @deferred - Need to be added once confirmed functionality is working!
+@deferred
 def MediaObjectsForURL(url):
 
     # Request the page
