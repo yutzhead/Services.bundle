@@ -1,74 +1,91 @@
 import re
 
+####################################################################################################
 def NormalizeURL(url):
-  return url
+	return url
  
+####################################################################################################
 def MetadataObjectForURL(url):
-  smil = GetXML(url)
-  data = HTML.ElementFromURL(url)
 
-  title = smil.xpath('//title')[0].text
-  #Log(title)
-  try: summary = data.xpath('//div[@class="video-caption bottom_1"]')[0].text.strip()
-  except: summary = ''
-  date = smil.xpath('//airdate')[0].text
-  Log(date)
-  thumb = smil.xpath('//switch[@format-height="720"]/img')[0].get('src')
-  Log(thumb)
- 
-  # Construct a metadata item
-  vc = VideoClipObject(
-    title = title,
-    summary = summary,
-    thumb = thumb,
-    #duration = duration,
-    originally_available_at = Datetime.ParseDate(date).date()
-  ) 
-  return vc
- 
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
+	summary = data.xpath('//meta[@property="og:description"]')[0].get('content').split('"')[1]
+	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+
+	try:
+		date = data.xpath('//ul[@class="video-details"]/li')
+		if len(date) > 0:
+			date = re.search('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', date[0].text, re.IGNORECASE)
+			if date:
+				originally_available_at = Datetime.ParseDate(date.group(1)).date()
+	except:
+		originally_available_at = None
+
+	vc = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		originally_available_at = originally_available_at
+	)
+
+	return vc
+
+####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-    parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
-    container = Container.MP4,
-    video_resolution = '720',
-    aspect_ratio = '1.77',
-    video_codec = VideoCodec.H264,
-    audio_codec = AudioCodec.AAC,
-    audio_channels = 2
-    ),
-    MediaObject(
-    parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
-    container = Container.MP4,
-    video_resolution = 'sd',
-    aspect_ratio = '1.77',
-    video_codec = VideoCodec.H264,
-    audio_codec = AudioCodec.AAC,
-    audio_channels = 2
-    )
-  ]
 
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt=720))],
+			container = Container.MP4,
+			video_resolution = '720',
+			aspect_ratio = '1.77',
+			bitrate = 3000,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt=540))],
+			container = Container.MP4,
+			video_resolution = '540',
+			aspect_ratio = '1.77',
+			bitrate = 2500,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt=360))],
+			container = Container.MP4,
+			video_resolution = '360',
+			aspect_ratio = '1.77',
+			bitrate = 1000,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
 def PlayVideo(url, fmt):
- 
-  smil = GetXML(url)
-  
-  if fmt == 'hd':
-    try:
-      video_url = smil.xpath('//downloadable[@type="HQ"]')[0].get('src')
-    except:
-      video_url = smil.xpath('//downloadable[@type="iPod"]')[0].get('src')
-  elif fmt == 'sd':
-    video_url = smil.xpath('//downloadable[@type="iPod"]')[0].get('src')
-  #Log(video_url)
- 
-  return Redirect(video_url)
- 
-def GetXML(url):
-  
-  data = HTTP.Request(url).content
-  #Log(data)
-  xml_url = re.search('"config_episodic":"(http:.+\.xml)",', data).group(1)
-  #Log(xml_url)
-  xml = HTML.ElementFromURL(xml_url.replace('\\',''))
- 
-  return xml
+
+	data = HTTP.Request(url).content
+	bitrates = re.search('"bitrates":(\[.+?\])', data)
+	available = []
+
+	if bitrates:
+		bitrates = JSON.ObjectFromString(bitrates.group(1))
+
+		for b in bitrates:
+			available.append( b['height'] )
+
+		closest = min((abs(fmt - i), i) for i in available)[1]
+
+		for b in bitrates:
+			if closest == b['height']:
+				url = b['url'].replace('mp4:', '')
+				url = 'http://assets.ign.com/%s' % url
+				return Redirect(url)
