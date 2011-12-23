@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://svtplay.se/t/[0-9]+/.+</string>
+				<string>http://svtplay.se/(t|v)/[0-9]+/.+</string>
 			</array>
 		</dict>
 	</dict>
