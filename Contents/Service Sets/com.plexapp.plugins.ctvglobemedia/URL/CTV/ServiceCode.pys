@@ -110,14 +110,16 @@ def TestURLs():
     
     for site in SITES:
         data = HTML.ElementFromURL('http://watch.%s' % site)
-        url = data.xpath('.//div[@id="CatalogContainer"]//dl[@class="Item"]//a')[0].get('href')
-        if '/#clip' in url:
-          test_urls.append(url)
-        elif '/clip' in url:
+        url = data.xpath('//div[@id="CatalogContainer"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
+
+        if '#clip' in url or '/clip' in url:
           test_urls.append(url)
         else:
           next_page = HTML.ElementFromURL(url)
-          new_url = next_page.xpath('.//div[@id="Level4"]//dl[@class="Item"]//a')[0].get('href')
+          try:
+            new_url = next_page.xpath('//div[@id="Level3"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
+          except:
+            new_url = next_page.xpath('//div[@id="Level4"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
           test_urls.append(new_url)
         
     return test_urls
