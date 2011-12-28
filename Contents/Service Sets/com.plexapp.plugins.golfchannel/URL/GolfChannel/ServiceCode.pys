@@ -34,7 +34,6 @@ def GetSMIL(url):
     data = HTTP.Request(url).content
     pid = re.search('pid=(.+)%26path=', data).group(1)
     smil = HTML.ElementFromURL(SMIL_URL % pid)
-    Log(HTML.StringFromElement(smil))
     return smil
     
 def PlayVideo(url):
