@@ -1,7 +1,5 @@
 import re
 
-AJ_NAMESPACES = {"og":"http://www.w3.org/1999/xhtml"}
-
 ####################################################################################################
 
 def NormalizeURL(url):
@@ -16,14 +14,14 @@ def MetadataObjectForURL(url):
   show = data.xpath('//meta[@name="channel"]')[0].get('content')
   episode = data.xpath('//meta[@name="title"]')[0].get('content')
   date = data.xpath('//meta[@name="LastModifiedDate"]')[0].get('content')
-  tagline = data.xpath('//meta[@name="ogdescription"]')[0].get('content')
+  tagline = data.xpath('//meta[@property="og:description"]')[0].get('content')
   thumb = data.xpath('//meta[@name="image"]')[0].get('content')
   summary = data.xpath('//td[@class="DetailedSummary"]//text()')
   summary_text= ''
   for item in summary:
     summary_text += item
   summary = summary_text.split('Click here for more')[0].strip()
-  source = data.xpath('//meta[@name="ogsitename"]')[0].get('content')
+  source = data.xpath('//meta[@property="og:sitename"]')[0].get('content')
   
   eo = EpisodeObject(
     show = show,
