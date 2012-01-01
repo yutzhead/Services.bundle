@@ -6,14 +6,9 @@
 	<dict>
 		<key>JamieOliver</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.jamieoliver.com/videos/</string>
-				<string>http://www.jamieoliver.com/videos/watch/fifteen-graduate/492</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.jamieoliver.com/videos/.*</string>
+				<string>http://www.jamieoliver.com/videos/.+</string>
 			</array>
 		</dict>
 	</dict>

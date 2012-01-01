@@ -64,3 +64,15 @@ def PlayVideo(url):
     stream_details = JSON.ObjectFromString(stream_json)
 
     return Redirect(stream_details[0]['ipad_url'])
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    for url in HTML.ElementFromURL('http://www.jamieoliver.com/videos/home').xpath('//div[@class="most_viewed"]/div[position() < 4]//a'):
+        href = 'http://www.jamieoliver.com%s' % url.get('href')
+
+        if href not in test_urls:
+            test_urls.append(href)
+
+    return test_urls
