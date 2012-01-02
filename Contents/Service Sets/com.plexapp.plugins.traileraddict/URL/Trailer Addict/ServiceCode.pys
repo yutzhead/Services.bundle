@@ -1,4 +1,4 @@
-import re, cgi
+import cgi
 
 BASE_URL = "http://www.traileraddict.com"
 VIDEO_URL = "http://www.traileraddict.com/fvar.php?tid=%s"
