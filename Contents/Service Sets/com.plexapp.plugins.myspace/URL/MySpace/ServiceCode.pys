@@ -45,7 +45,7 @@ def PlayVideo(url):
 
     # Find the appropriate details page
     video_id = re.search('/([0-9]+)$', url).group(1)
-    details_page = XML.ElementFromURL(DETAILS_PAGE % video_id)
+    details_page = XML.ElementFromURL(DETAILS_PAGE % video_id, cacheTime = 0)
 
     video_url = details_page.xpath("//item/media:content", namespaces = NAMESPACES)[0].get('url')
     return Redirect(video_url)
