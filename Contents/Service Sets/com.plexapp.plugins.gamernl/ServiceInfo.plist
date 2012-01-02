@@ -6,11 +6,6 @@
 	<dict>
 		<key>GamerNL</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.gamer.nl/video/118625/nederlanders-strijden-in-de-finale-van-het-call-of-duty-toernooi</string>
-				<string>http://www.gamer.nl/video/115585/gamejournaal-popcap-laat-wens-ernstig-zieke-jongen-uitkomen?hd</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.gamer.nl/video/[0-9]+/.+</string>
