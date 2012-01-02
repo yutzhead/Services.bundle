@@ -97,7 +97,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
     # Request the url
-    page = HTML.ElementFromURL(url)
+    page = HTML.ElementFromURL(url, cacheTime=0)
 
     flash_vars_encoded = page.xpath("//object/param[@id='flashVars']")[0].get('value')
     flash_vars = String.Unquote(flash_vars_encoded)
