@@ -1,0 +1,63 @@
+import re
+
+THUMB_URL = 'http://www.europafilmtreasures.eu/bases/T_1204_%s_8635.jpg'
+TOKEN_URL = 'http://www.europafilmtreasures.eu/php/redirect.php?method=get_token.php&offset=%s'
+FLV_URL = 'http://tresors_films.geniebuilder.com/flowprovider.php?file=T_1204_%s_500.flv&token=%s&position=0'
+
+####################################################################################################
+
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+  
+    vid_id = VidID(url)
+    headers = {"Referer":"http://www.europafilmtreasures.eu/fiche_technique.htm?ID=%s" % vid_id}
+    
+    data = HTML.ElementFromURL(url, headers=headers)
+    
+    title = data.xpath('//h1')[0].text
+    summary = ''.join(data.xpath('//DIV[@class="paragrapheStandard"]//text()'))
+    thumb = THUMB_URL % vid_id
+
+    mo = MovieObject(
+        title = title,
+        summary = summary,
+        thumb = thumb
+        )
+
+    return mo
+  
+####################################################################################################
+
+def MediaObjectsForURL(url):
+
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url))],
+            container = 'flv',
+            video_resolution = 'sd',
+            video_codec = 'h264',
+            audio_codec = 'aac',
+            audio_channels = 2
+            )
+        ]
+
+####################################################################################################
+def PlayVideo(url):
+    vid_id = VidID(url)
+    flv_url = FLV_URL % (vid_id, GetToken()) 
+    return Redirect(flv_url)
+    
+####################################################################################################
+def GetToken():
+  token = HTTP.Request(TOKEN_URL % Datetime.TimestampFromDatetime(Datetime.Now())).content
+  Log(token)
+  return token
+
+####################################################################################################
+def VidID(url):
+  vid_id = re.search('http://www.europafilmtreasures.eu/PY/([0-9]{3})/.+', url).group(1)
+  return vid_id
