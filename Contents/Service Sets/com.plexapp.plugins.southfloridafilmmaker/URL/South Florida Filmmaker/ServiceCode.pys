@@ -15,6 +15,7 @@ def MetadataObjectForURL(url):
     date = Datetime.ParseDate(date)
     tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
     tags = [ tag.strip() for tag in tags ]
+    tags = list(set(tags))
 
     return VideoClipObject(
         title = title,
