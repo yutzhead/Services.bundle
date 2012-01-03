@@ -88,7 +88,7 @@ def MediaObjectsForURL(url):
 
 def GetRSS(url):
     content = HTTP.Request(url).content
-    published_id = re.search('&publishedid=([0-9]{5})&playlistid=', content).group(1)
+    published_id = re.search('&publishedid=([0-9]+)&playlistid=', content).group(1)
     rss_url = RSS_URL % published_id
     return rss_url
 
