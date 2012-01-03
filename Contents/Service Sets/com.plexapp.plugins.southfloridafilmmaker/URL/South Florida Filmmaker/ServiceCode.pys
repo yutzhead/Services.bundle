@@ -91,14 +91,26 @@ def GetExternalSource(url):
 
     page = HTML.ElementFromURL(url)
     
-    # Check to see if it's from Vimeo
+    # Check to see if it's from Vimeo (iframe)
     vimeo_links = page.xpath("//iframe[contains(@id,'vimeo')]")
     if len(vimeo_links) > 0:
         vimeo_player_link = vimeo_links[0].get('src')
-        vimeo_id = re.match(".*//player.vimeo.com/video/(?P<id>[0-9]+).+", vimeo_player_link).groupdict()['id']
+        vimeo_id = re.search("//player.vimeo.com/video/([0-9]+)", vimeo_player_link).group(1)
+        return "http://vimeo.com/" + vimeo_id
+
+    # Check to see if it's from Vimeo (embed)
+    vimeo_links = page.xpath("//param[contains(@value,'vimeo.com')]")
+    if len(vimeo_links) > 0:
+        vimeo_player_link = vimeo_links[0].get('value')
+        vimeo_id = re.search("clip_id=([0-9]+)", vimeo_player_link).group(1)
         return "http://vimeo.com/" + vimeo_id
 
     # Check to see if it's from YouTube
     youtube_links = page.xpath("//span[contains(@id, 'youtube')]")
-    if len(youtube_links) > 0: 
+    if len(youtube_links) > 0:
         return youtube_links[0].xpath("./a")[0].get('href')
+
+    # Check to see if it's from YouTube (iframe)
+    youtube_links = page.xpath("//iframe[contains(@src, 'youtube.com')]")
+    if len(youtube_links) > 0:
+        return youtube_links[0].get('src')
