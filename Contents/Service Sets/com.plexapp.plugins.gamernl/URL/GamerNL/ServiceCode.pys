@@ -67,7 +67,7 @@ def PlayVideo(url, res):
 	if xml_url:
 		xml_url = BASE_URL + xml_url.group(1)
 
-		xml = XML.ElementFromURL(xml_url)
+		xml = XML.ElementFromURL(xml_url, cacheTime=0)
 		video_url = xml.xpath("//media:content", namespaces = NAMESPACES)[0].get('url')
 		return Redirect(video_url)
 
