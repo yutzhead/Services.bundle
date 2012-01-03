@@ -5,6 +5,9 @@ NAMESPACES = {'x': 'http://www.aptoma.no/produkt/tv/xmlns'}
 
 VIDEO_STATUS = 'http://www.vgtv.no/data/actions/videostatus/?id=%s'
 
+TEST_URLS = "http://www.vgtv.no/data/actions/videolist/?limit=50&callback=portal.jsonp.latest"
+TEST_URL = "http://www.vgtv.no/#!id=%s"
+
 ####################################################################################################
 
 def MetadataObjectForURL(url):
@@ -73,3 +76,22 @@ def GetIDFromURL(url):
         id = id
 
     return id
+
+####################################################################################################
+
+def TestURLs():
+    test_urls = []
+
+    test_page_content = HTTP.Request(TEST_URLS).content
+    start = test_page_content.find('(') + 1
+    end = test_page_content.find(')')
+
+    test_json = JSON.ObjectFromString(test_page_content[start:end])
+    for item in test_json['videos']:
+        if len(test_urls) < 3:
+            url = TEST_URL % item['id']
+            test_urls.append(url)
+        else:
+            break
+    
+    return test_urls

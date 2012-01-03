@@ -6,10 +6,6 @@
 	<dict>
 		<key>VGTV</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.vgtv.no/#!id=44785</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.vgtv.no/#!id=[0-9]+</string>
