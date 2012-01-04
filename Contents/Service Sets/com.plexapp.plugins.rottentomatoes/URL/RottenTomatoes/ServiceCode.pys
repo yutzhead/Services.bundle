@@ -95,7 +95,7 @@ def GetRSS(url):
 def PlayVideo(url, bitrate):
 
     BITRATES = ['2500', '1500', '750', '450', '250', '212']
-    feed = RSS.FeedFromURL(GetRSS(url))
+    feed = RSS.FeedFromURL(GetRSS(url), cacheTime=0)
     video = feed['items'][0]
 
     index = BITRATES.index(bitrate)
