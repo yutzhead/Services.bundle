@@ -4,23 +4,18 @@ BASE_URL = 'http://video.euronews.net/'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    try:
-        
-        # Request the url
-        page = HTML.ElementFromURL(url)
 
-        # Extract the details available directly form the page.
-        title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
-        description = page.xpath("//head//meta[@name='description']")[0].get('content')
-        thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
-        
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb)
+    page = HTML.ElementFromURL(url)
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Extract the details available directly form the page.
+    title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
+    description = page.xpath("//head//meta[@name='description']")[0].get('content')
+    thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
