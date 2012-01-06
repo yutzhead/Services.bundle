@@ -1,0 +1,30 @@
+import re
+
+def NormalizeURL(url):
+    return url
+    
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
+    title = data.xpath('//title')[0].text
+    thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
+    mo = VideoClipObject(
+        title = title,
+        thumb = thumb)
+    return mo
+    
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url))],
+            container = 'flv',
+            video_resolution = '402',
+            video_codec = 'flv1',
+            audio_codec = 'mp3',
+            audio_channels = 2
+            )
+        ]
+        
+def PlayVideo(url):
+    content = HTTP.Request(url).content
+    flv_url = re.search('"url":"(http://charlierose\..+\.flv)"', content).group(1)
+    return Redirect(flv_url)
