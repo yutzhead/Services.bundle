@@ -3,8 +3,8 @@ import re
 def NormalizeURL(url):
     return url
     
-def MetadataObjectFoRURL(url):
-    data = HTML.ElementForURL(url)
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
     title = data.xpath('//title')[0].text
     thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
     mo = VideoClipObject(
@@ -26,5 +26,5 @@ def MediaObjectsForURL(url):
         
 def PlayVideo(url):
     content = HTTP.Request(url).content
-    flv_url = re.search('"url":"(http://charlierose\..+\.flv)"', url).group(1)
+    flv_url = re.search('"url":"(http://charlierose\..+\.flv)"', content).group(1)
     return Redirect(flv_url)
