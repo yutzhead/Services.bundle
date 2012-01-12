@@ -1,0 +1,61 @@
+import datetime, re
+
+XL_URL = 'http://www.rtl.nl/xl/#/u/%s/'
+XL_SNACKS_URL = 'http://www.rtl.nl/xl/#/snacks/u/%s/'
+XL_DATA_URL = 'http://www.rtl.nl/system/s4m/xldata/abstract/%s'
+THUMB_URL = 'http://data.rtl.nl/system/img//%s.jpg'
+
+HTTP.CacheTime = CACHE_1DAY
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27' }
+
+####################################################################################################
+def NormalizeURL(url):
+	uuid = re.search('([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', url)
+
+	if uuid:
+		if '/snacks/' in url:
+			url = XL_SNACKS_URL % uuid.group(1)
+		else:
+			url = XL_URL % uuid.group(1)
+
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	uuid = re.search('([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', url).group(1)
+	url = XL_DATA_URL % uuid
+	data = HTML.ElementFromURL(url).xpath('//material[@key="' + uuid + '"]')[0]
+
+	title = data.xpath('./title')[0].text
+	summary = data.xpath('./synopsis')[0].text
+	studio = data.xpath('./broadcast_station_display')[0].text
+
+	broadcast = data.xpath('./broadcast_date_display')[0].text
+	broadcast = datetime.date.fromtimestamp( float(broadcast) )
+	originally_available_at = Datetime.ParseDate( str(broadcast) ).date()
+
+	duration = data.xpath('./length')[0].text
+
+	thumb_id = data.xpath('./thumbnail_id')[0].text
+	thumb = THUMB_URL % thumb_id
+
+	video = VideoClipObject(
+		title = title,
+		summary = summary,
+		originally_available_at = originally_available_at,
+		studio = studio,
+		thumb = thumb
+	)
+
+	return video
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=WebVideoURL(url))],
+			protocol = Protocol.WebKit
+		)
+	]
