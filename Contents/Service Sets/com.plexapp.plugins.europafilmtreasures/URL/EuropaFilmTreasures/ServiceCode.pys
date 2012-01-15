@@ -48,12 +48,14 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
     vid_id = VidID(url)
-    flv_url = FLV_URL % (vid_id, GetToken()) 
+    flv_url = FLV_URL % (vid_id, GetToken())
+    Log(flv_url)
     return Redirect(flv_url)
     
 ####################################################################################################
 def GetToken():
-  token = HTTP.Request(TOKEN_URL % Datetime.TimestampFromDatetime(Datetime.Now())).content
+  offset = int(Datetime.TimestampFromDatetime(Datetime.Now()))
+  token = HTTP.Request(TOKEN_URL % offset).content
   Log(token)
   return token
 
