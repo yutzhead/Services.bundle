@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Pulter</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://pulter.ru/cinema/Dvadcat_Tisjach_Ljo_Pod_Vodoj_1916/s01</string>
+				<string>http://pulter.ru/series/Glavniy_kalibr/s01</string>
+				<string>http://pulter.ru/shows/Ubileyniy_daydzhest_Fitil_45_let/s25</string>
+				<string>http://pulter.ru/docs/Beloe_solnce_Baykonura/Beloe_solnce_Baykonura</string>
+				<string>http://pulter.ru/kids/Deti_kapitana_Granta_1936/s01</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://pulter.ru/(cinema|series|shows|docs|kids)/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
