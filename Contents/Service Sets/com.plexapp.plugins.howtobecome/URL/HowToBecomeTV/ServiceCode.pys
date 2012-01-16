@@ -73,9 +73,9 @@ def PlayVideo(url, res):
 def GetExternalSource(url):
 
   # Request the url
-  page = HTML.ElementFromURL(url, timeout = 30)
+  page = HTML.ElementFromURL(url)
 
   # The page actually just contains a link to a you tube video. Instead of re-implementing the 
   # associated logic, we should be able to simply re-direct the call to the You Tube service.
   # We must first obtain the specific you tube url.
-  return page.xpath("//param[@name='movie']")[0].get('value')
+  return page.xpath("//iframe")[0].get('src')

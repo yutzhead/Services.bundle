@@ -2,6 +2,8 @@ import re
 
 BASE_URL = 'http://video.euronews.net/'
 
+EUROLIVE = 'http://www.euronews.net/media/player_live_1_11.swf'
+
 ####################################################################################################
 def MetadataObjectForURL(url):
 
@@ -19,6 +21,17 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+    # If a live channel has been specified, then we should return a suitable webkit based MediaObject.
+    # This is really only used by the actual plugin when dealing with Live channels.
+    if url.startswith(EUROLIVE) == True:
+        return [
+            MediaObject(
+                protocol = 'webkit',
+                parts = [PartObject(key=WebVideoURL(url))]
+            )
+        ]
+
     return [
       MediaObject(
         video_codec = VideoCodec.VP6,
