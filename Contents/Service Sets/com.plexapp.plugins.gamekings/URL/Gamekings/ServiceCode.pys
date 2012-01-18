@@ -55,6 +55,10 @@ def PlayVideo(url):
 
   page = HTTP.Request(url).content
   id = re.search("showVideo\('([^']+)','([^']+)'", page)
-  playlist = XML.ElementFromURL(PLAYLIST % id.group(2))
+
+  playlist = HTTP.Request(PLAYLIST % id.group(2)).content
+  playlist = re.sub('&(?!amp;)', '&amp;', playlist)
+  playlist = XML.ElementFromString(playlist)
+
   url = playlist.xpath('//xspf:track/xspf:identifier[text()="' + id.group(1) + '"]/../xspf:location', namespaces=XSPF_NS)[0].text
   return Redirect(url)
