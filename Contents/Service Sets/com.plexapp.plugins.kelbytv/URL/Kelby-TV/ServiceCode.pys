@@ -11,7 +11,7 @@ def MetadataObjectForURL(url):
         page = HTML.ElementFromURL(url)
 
         # Extract the details available from the various pages.
-        show = page.xpath("//link[@rel='index']")[0].get('title')
+        show = page.xpath("//title")[0].text.rsplit(' | ', 1)[1]
         episode_title = page.xpath("//div[@class='show']//h2/span/text()")[0]
         description = page.xpath("//meta[@name='description']")[0].get('content')
         thumb = page.xpath("//video[@id='player']")[0].get('poster')
