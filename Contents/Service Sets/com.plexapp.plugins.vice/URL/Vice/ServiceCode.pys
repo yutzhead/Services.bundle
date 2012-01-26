@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
 #    try: description = String.Decode(description)
 #    except: pass
 
-    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
     Log(thumb)
 
     try:
