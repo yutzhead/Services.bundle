@@ -1,16 +1,8 @@
 XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
-
-CNN_SMIL = 'http://ht.cdn.turner.com/cnn/big/bestoftv/2011/07/25/exp.tsr.todd.murdoch.pkg.mov.cnn.smil'
-
 MEDIA_URL = 'http://ht.cdn.turner.com/%s'
-
 CNN_URL = 'http://www.cnn.com/video/'
 
-####################################################################################################
-
-def NormalizeURL(url):
-  ### Add changes here if we start seeing non-"normal" urls
-  return url
+NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 
 ####################################################################################################
 
@@ -111,28 +103,36 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, resolution):
-  
+
     data_url = XML_URL % url.split('#')[1].strip('/video/')
     data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
-  
-    smil_url = data.xpath('//file')[0].text
-  
-    smil = HTML.ElementFromURL(smil_url, cacheTime=7200, errors='ignore')
-  
-    mp4_url = ''
-  
-    for video in smil.xpath('//video'):
-        mp4_url = video.get('src')
-        if resolution in mp4_url:
-          break
-        #test_res = video.get('bitrate')
-        #if test_res == resolution:
-        #    mp4_url = video.get('src')
-        else: pass
-    
-    if mp4_url == '': Log('Unable to find  MP4 link')
-    
-    return Redirect(MEDIA_URL % mp4_url)
+
+    # If the video is available directly from the original XML page, then we should simply grab it.
+    video = None
+    videos = data.xpath("//file[contains(@bitrate, '%s')]/text()" % resolution)
+    if len(videos) > 0:
+        video = videos[0]
+
+    # Some videos do not have the appropriate base URL
+    if video != None and video.startswith("http://") == False:
+        video = MEDIA_URL % video
+
+    if video == None:
+        other_videos = data.xpath("//groupFiles/file[contains(text(), '%s')]/text()" % resolution)
+        if len(other_videos) > 0:
+            base = data.xpath("//groupFiles/baseUrl/text()")[0]
+            clip = other-videos[0]
+            video = base + clip
+
+    # If the available video is not an MP4, or has not actually be found, we have to fall back to access
+    # the one available via another source.
+    if video == None or video.endswith(".mp4") == False:
+        other_source = data.xpath("//groupFiles/file/text()")[0]
+        smil = XML.ElementFromURL(other_source)
+        base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+        clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
+        video = base + clip
+    return Redirect(video)
 
 ####################################################################################################
 def TestURLs():
@@ -143,7 +143,6 @@ def TestURLs():
         if len(test_urls) > 2: break
         else: pass
         video_url = CNN_URL + '#/' + video.get('videoid')
-        Log(video_url)
         test_urls.append(video_url)
 
     return test_urls
