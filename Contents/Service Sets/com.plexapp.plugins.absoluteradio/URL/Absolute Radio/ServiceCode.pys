@@ -78,7 +78,7 @@ def TestURLs():
         if description.find("Audio session:") != -1:
             continue
 
-        test_urls.append(url)
+        test_urls.append(url.replace(' ', '+'))
 
         if len(test_urls) >= 2:
             break
