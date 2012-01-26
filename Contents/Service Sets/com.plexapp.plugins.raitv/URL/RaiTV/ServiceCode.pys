@@ -6,28 +6,25 @@ def NormalizeURL(url):
     return url
     
 def MetadataObjectForURL(url):
-    data = HTML.ElementFromURL(url, errors='ignore')
-    
-    title = data.xpath('//h1[@id="idMedia"]')[0].text
-    #Log(title)
-    summary = data.xpath('//h2[@id="infoMedia"]')[0].text
-    #Log(summary)
+
+    data = HTML.ElementFromURL(url)
+
+    title = data.xpath("//meta[@property='og:title']")[0].get('content')
+    summary = data.xpath("//meta[@property='og:description']")[0].get('content')
     thumb = BASE_URL + data.xpath('//link[@rel="image_src"]')[0].get('href')
-    #Log(thumb)
+
     try: date = Datetime.ParseDate(data.xpath('//meta[@name="item-date"]')[0].get('content')).date()
     except:
         try: date = Datetime.ParseDate(data.xpath('//meta[@name="itemDate"]')[0].get('content')).date()
         except:
             try: date = Datetime.ParseDate(data.xpath('//meta[@name="pdate"]')[0].get('content')).date()
             except: date = None
-    #Log(date)
     
     vc = VideoClipObject(
         title = title,
         summary = summary,
         originally_available_at = date,
-        thumb = thumb
-        )
+        thumb = thumb)
     return vc
     
 def MediaObjectsForURL(url):
@@ -43,15 +40,25 @@ def MediaObjectsForURL(url):
   ]
 
 def PlayVideo(url):
-    data = HTML.ElementFromURL(url, errors='ignore')
-    
-    script = data.xpath('//div[@id="silverlightControlHost"]/script')[0].text
-    playlist = re.search('var videoURL = "(http://.+)";', script).group(1)
-    #Log(playlist)
-    
-    ### we may need to extract the url for the wmv from the playlist ###
-    # asx = HTML.ElementFromURL(playlist, errors='ignore')
-    # wmv = asx.xpath('//ref')[0].get('href')
-    # return Redirect(wmv)
-    
-    return Redirect(playlist)
+    data = HTML.ElementFromURL(url)
+    video_url = data.xpath("//meta[@name='videourl']")[0].get('content')
+    return Redirect(video_url)
+
+def TestURLs():
+    test_urls = []
+
+    # Request a page which should contain a collection of videos
+    page = HTML.ElementFromURL(BASE_URL)
+    results = page.xpath("//div[@class='videoContainer']//li[contains(@id, 'ContentItem')]")
+    for item in results:
+
+        url = item.xpath(".//a")[0].get('href')
+        if url.startswith("http://") == False:
+            url = BASE_URL + url
+
+        test_urls.append(url)
+
+        if len(test_urls) >= 2:
+            break
+
+    return test_urls
