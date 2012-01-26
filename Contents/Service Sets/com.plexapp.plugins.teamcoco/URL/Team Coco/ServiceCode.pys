@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 
 	info = XML.ElementFromURL(xml_url)
 	title = info.xpath('//headline')[0].text.strip()
-	summary = String.StripTags( info.xpath('//description')[0].text )
+	summary = String.StripTags( info.xpath('//description')[0].text ).strip()
 
 	duration = info.xpath('//length')
 	if duration:
@@ -98,15 +98,23 @@ def GetVideoId(url):
 	if len(part) > 4 and part[4].isdigit():
 		return int(part[4])
 	else:
-		object_param = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/object//param[@name="movie"]')
-		if len(object_param) > 0:
-			param = object_param[0].get('value')
-			videoId = re.search('videoId=([0-9]+)', param)
+		try:
+			object_param = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/object//param[@name="movie"]')
+			if len(object_param) > 0:
+				param = object_param[0].get('value')
+				videoId = re.search('videoId=([0-9]+)', param)
+		except:
+			try:
+				object = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/text()')
+				if len(object) > 0:
+					videoId = re.search('videoId=([0-9]+)', object)
+			except:
+				pass
 
-			if videoId:
-				return int(videoId.group(1))
+		if videoId:
+			return int(videoId.group(1))
 
-	return None
+	return
 
 ####################################################################################################
 def Duration(timecode):
