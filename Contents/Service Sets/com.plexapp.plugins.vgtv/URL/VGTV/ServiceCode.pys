@@ -84,7 +84,7 @@ def TestURLs():
 
     test_page_content = HTTP.Request(TEST_URLS).content
     start = test_page_content.find('(') + 1
-    end = test_page_content.find(')')
+    end = test_page_content.rfind(')')
 
     test_json = JSON.ObjectFromString(test_page_content[start:end])
     for item in test_json['videos']:
