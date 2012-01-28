@@ -28,8 +28,11 @@ def MetadataObjectForURL(url):
 	data = HTML.ElementFromURL(url).xpath('//material[@key="' + uuid + '"]')[0]
 
 	title = data.xpath('./title')[0].text
-	summary = data.xpath('./synopsis')[0].text
 	studio = data.xpath('./broadcast_station_display')[0].text
+
+	summary = None
+	try: summary = data.xpath('./synopsis')[0].text
+	except: pass
 
 	broadcast = data.xpath('./broadcast_date_display')[0].text
 	broadcast = datetime.date.fromtimestamp( float(broadcast) )
@@ -59,3 +62,24 @@ def MediaObjectsForURL(url):
 			protocol = Protocol.WebKit
 		)
 	]
+
+####################################################################################################
+
+def TestURLs():
+    test_urls = []
+
+    page = HTML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0')
+    results = page.xpath("//material")
+    Log("IAIA: " + str(len(results)))
+    for item in results:
+    	video_id = item.get('key')
+    	if len(video_id) < 2:
+    		continue
+
+    	url = "http://www.rtl.nl/xl/#/u/%s" % video_id
+
+        test_urls.append(url)
+        if len(test_urls) >= 2:
+            break
+
+    return test_urls
