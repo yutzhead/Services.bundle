@@ -24,9 +24,20 @@ def MetadataObjectForURL(url):
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))],
+        audio_channels = 2
+      )
+    ]
 
+####################################################################################################
+
+def PlayVideo(url):
     content = HTTP.Request(url).content
     playerId = re.search('param name="playerID" value="([0-9]+)"', content).group(1)
     videoId = re.search('param name="@videoPlayer" value="([0-9]+)"', content).group(1)
@@ -35,22 +46,5 @@ def MediaObjectsForURL(url):
     experience = re.search('var experienceJSON = (.+)};', video_details_page).group(1) + '}'
     details = JSON.ObjectFromString(experience)
 
-    media_objects = []
-    videos = details['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']
-    for video_item in videos:
-        if video_item['videoCodec'] != "H264":
-            continue
-
-        media_objects.append(MediaObject(
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            video_resolution = video_item['frameHeight'],
-            bitrate = video_item['encodingRate'],
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [PartObject(key=video_item['defaultURL'])]
-        ))
-   
-
-    return media_objects
+    video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
+    return Redirect(video_url)
