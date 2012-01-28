@@ -70,7 +70,6 @@ def TestURLs():
 
     page = HTML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0')
     results = page.xpath("//material")
-    Log("IAIA: " + str(len(results)))
     for item in results:
     	video_id = item.get('key')
     	if len(video_id) < 2:
