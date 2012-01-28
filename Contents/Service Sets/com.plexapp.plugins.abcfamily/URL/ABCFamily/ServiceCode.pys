@@ -157,21 +157,15 @@ def Duration_ms(run_time):
 ####################################################################################################
 def TestURLs():
     
-    NEW_EPISODES = 'http://abcfamily.go.com/vp2/longformcarouselimagelist/feed/aHR0cDovL2FiYy5nby5jb20vdnAyL3dzL3MvY29udGVudHMvMjAwMC9wbGF5bGlzdHMvMDAyLzAwMS9QTDU1Njk1MzgvLTEvLTEvLTEvLTEve3N0YXJ0fS97c2l6ZX0_cmFuZD0wNTA0MDAyMF80/start/0/limit/4/t/PL5569538/c/indexFEPCarousel/pg/true?rand=05040020_4'
-    NEW_CLIPS = 'http://abcfamily.go.com/vp2/shortformcarouselimagelist/feed/aHR0cDovL2FiYy5nby5jb20vdnAyL3dzL3MvY29udGVudHMvMjAwMC9wbGF5bGlzdHMvMDAyLzAwMS9QTDU1NjMzNTgvLTEvLTEvLTEvLTEve3N0YXJ0fS97c2l6ZX0_cmFuZD0wNTA0MDAyMF80/start/0/limit/8/t/PL5563358/c/undefined/pg/true?rand=05040020_4'
-    
     test_urls = []
-    
-    for item in HTML.ElementFromURL(NEW_EPISODES):
-        url = item.xpath('//div[@class="ep_title"]/a')[0].get('href')
-        if re.match("http://abcfamily.go.com/(watch|movies)/.+", url) != None:
-            test_urls.append(url)
-            break
 
-    for item in HTML.ElementFromURL(NEW_CLIPS):
-        url = item.xpath('//div[@class="ep_title"]/a')[0].get('href')
-        if re.match("http://abcfamily.go.com/(watch|movies)/.+", url) != None:
-            test_urls.append(url)
+    page = HTML.ElementFromURL('http://abcfamily.go.com/')
+    results = page.xpath('//div[@class = "moreFamilyItem"]//a')
+    for item in results:
+        url = item.get('href')
+        test_urls.append(url)
+
+        if len(test_urls) > 3:
             break
 
     return test_urls
