@@ -49,7 +49,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
     # Request the url
-    page_content = HTTP.Request(url).content
+    page_content = HTTP.Request(url, values={"birth_day":"10","birth_month":"02","birth_year":"1980"}).content
 
     # Find the 'flashvars' associated with the player. This contains the required config path.
     configUrl = re.match('.*flashvars=&quot;config=(?P<url>[^&]*)&quot;.*', page_content, re.DOTALL).groupdict()['url']
