@@ -57,7 +57,7 @@ def PlayVideo(url):
 
     # We'll only use the 'best' mp4 format available. There are likely to be smaller ones also 
     # available, but they're pretty small.
-    video_path = details['formats']['http']['m4v'][0]['paths'][0]
+    video_path = details['formats']['http']['mp4'][0]['paths'][0]
     address = video_path['address']
     port = video_path['port']
     path = video_path['path']
