@@ -57,7 +57,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 
-def PlayVideo(url, file_ext):
+def PlayVideo(url, file_ext, fallback = None):
 
     # Request the page
     page = HTML.ElementFromURL(url)
@@ -69,6 +69,16 @@ def PlayVideo(url, file_ext):
     thumb_without_extension = thumb[:thumb.rfind('.')]
     end = thumb_without_extension.rfind('.')
     video_url = thumb[:end] + file_ext
+
+    # It appears that some of the videos have moved to a different server. I'm not sure how the app
+    # can detect this, but the safest thing to do is to check the header, and if it fails attempt the
+    # other known instance.
+    if fallback is not None:
+        try: 
+            HTTP.Request(video_url).headers
+        except:
+            video_url = video_url.replace('content5', 'content3')
+
     return Redirect(video_url)
 
 
