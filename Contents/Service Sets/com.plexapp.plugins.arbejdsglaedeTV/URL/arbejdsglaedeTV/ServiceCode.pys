@@ -3,11 +3,13 @@ import re
 httpHeaders = {'Accept-Encoding' : 'deflate'}
 
 BASE_URL = 'http://arbejdsglaede.23video.com'
-JSON_URL = 'http://arbejdsglaede.23video.com/api/photo/list?raw&format=json&token=%s&player_id=0'
+JSON_URL = 'http://arbejdsglaede.23video.com/api/photo/list?raw&format=json&photo_id=%s&token=%s&player_id=0'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
   
+  photo_id = re.match(".+/video/(?P<id>[0-9]+)/.+", url).groupdict()['id']
+
   data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore', headers=httpHeaders)
 
   thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
@@ -16,7 +18,7 @@ def MetadataObjectForURL(url):
   token = thumbUrl.split('/')[-2]
   #Log(token)
   
-  details = JSON.ObjectFromURL(JSON_URL % token)['photo']
+  details = JSON.ObjectFromURL(JSON_URL % (photo_id, token))['photo']
   
   title = details['title']
   #Log(title)
@@ -61,12 +63,13 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 
 def PlayVideo(url, fmt=''):
+  photo_id = re.match(".+/video/(?P<id>[0-9]+)/.+", url).groupdict()['id']
   data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore', headers=httpHeaders)
 
   token = (data.xpath('//link[@rel="image_src"]')[0].get('href')).split('/')[-2]
   #Log(token)
   
-  details = JSON.ObjectFromURL(JSON_URL % token)['photo']
+  details = JSON.ObjectFromURL(JSON_URL % (photo_id, token))['photo']
 
   if fmt == 'hd':
     video = details['video_hd_download']
