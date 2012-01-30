@@ -30,29 +30,53 @@ def MetadataObjectForURL(url):
     try: episode_index = int(re.match("Episode #(?P<index>[0-9]+).*", episode_details).groupdict()['index'])
     except: pass
 
-    return TrackObject(
+    # The channel has not requested information about a video, therefore we can simply return the track
+    # information.
+    if url.find('#video') == -1:
+        return TrackObject(
+            title = title,
+            artist = show,
+            index = episode_index,
+            thumb = thumb,
+            duration = duration)
+
+    summary = ''.join(page.xpath("//div[contains(@class, 'broadcast')]/p/text()")).strip()
+    return VideoClipObject(
         title = title,
-        artist = show,
-        index = episode_index,
+        summary = summary,
         thumb = thumb,
         duration = duration)
 
 ####################################################################################################
 
 def MediaObjectsForURL(url):
+
+    # We need to detect if the actual channel has requested the video. If this is the case, we can
+    # return the appropriate MediaObject.
+    if url.find('#video') != -1:
+        return [
+            MediaObject(
+                container = Container.MP4,
+                video_codec = VideoCodec.H264,
+                audio_codec = AudioCodec.AAC,
+                audio_channels = 2,
+                parts = [PartObject(key=Callback(PlayMedia, url = url.strip('#video'), media = "MP4"))]
+            )
+        ]
+
     return [
       MediaObject(
         audio_codec = AudioCodec.MP3,
-        parts = [PartObject(key=Callback(PlayTrack, url = url))]
+        parts = [PartObject(key=Callback(PlayMedia, ext = 'mp3', url = url, media = "MP3"))]
       )
     ]
 
 ####################################################################################################
 
-def PlayTrack(url):
+def PlayMedia(url, media):
 
     page = HTML.ElementFromURL(url)
 
-    # Redirect to the available MP3
-    track_url = page.xpath("//a[contains(text(), 'MP3')]")[0].get('href')
+    # Redirect to the available media
+    track_url = page.xpath("//a[contains(text(), '%s')]" % media)[0].get('href')
     return Redirect(track_url)
