@@ -79,11 +79,11 @@ def PlayVideo(url, fmt):
   videos = data.xpath('//div[@id="action-panels-download-MP4"]')[0]
   available_videos = videos.xpath('.//a[@class="sizename"]')
 
-  # There appears to be a small number of SD videos which are not available. Therefore, for these few
-  # we will simply grab the lowest quality available, likely to be 480p
+  # There appears to be a small number of SD/480p videos which are not available. Therefore, for these few
+  # we will simply grab the lowest quality available, so for SD, it will be 480p and for 480p it will be SD
   try: video = available_videos[FMT_INDEX[fmt]]
   except:
-    if fmt == 'SD':
+    if fmt == 'SD' or fmt == '480p':
       video = available_videos[-1]
 
   video_url = video.get('href')
