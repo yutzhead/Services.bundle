@@ -77,8 +77,15 @@ def PlayVideo(url, fmt):
   data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
 
   videos = data.xpath('//div[@id="action-panels-download-MP4"]')[0]
+  available_videos = videos.xpath('.//a[@class="sizename"]')
 
-  video = videos.xpath('.//a[@class="sizename"]')[FMT_INDEX[fmt]]
+  # There appears to be a small number of SD videos which are not available. Therefore, for these few
+  # we will simply grab the lowest quality available, likely to be 480p
+  try: video = available_videos[FMT_INDEX[fmt]]
+  except:
+    if fmt == 'SD':
+      video = available_videos[-1]
+
   video_url = video.get('href')
 
   return Redirect(video_url)
