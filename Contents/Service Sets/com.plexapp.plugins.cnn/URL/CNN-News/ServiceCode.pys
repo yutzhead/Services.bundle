@@ -114,8 +114,7 @@ def PlayVideo(url, resolution):
         base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
         clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
         video = base + clip
-    except: 
-        Log.Exception('booms')
+    except: pass
 
     if video == None:
         videos = data.xpath("//file[contains(@bitrate, '%s')]/text()" % resolution)
