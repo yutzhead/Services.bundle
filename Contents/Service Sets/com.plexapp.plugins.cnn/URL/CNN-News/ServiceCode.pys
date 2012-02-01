@@ -107,11 +107,20 @@ def PlayVideo(url, resolution):
     data_url = XML_URL % url.split('#')[1].strip('/video/')
     data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
 
-    # If the video is available directly from the original XML page, then we should simply grab it.
     video = None
-    videos = data.xpath("//file[contains(@bitrate, '%s')]/text()" % resolution)
-    if len(videos) > 0:
-        video = videos[0]
+    try:
+        other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
+        smil = XML.ElementFromURL(other_source)
+        base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+        clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
+        video = base + clip
+    except: 
+        Log.Exception('booms')
+
+    if video == None:
+        videos = data.xpath("//file[contains(@bitrate, '%s')]/text()" % resolution)
+        if len(videos) > 0:
+            svideo = videos[0]
 
     # Some videos do not have the appropriate base URL
     if video != None and video.startswith("http://") == False:
@@ -124,14 +133,6 @@ def PlayVideo(url, resolution):
             clip = other-videos[0]
             video = base + clip
 
-    # If the available video is not an MP4, or has not actually be found, we have to fall back to access
-    # the one available via another source.
-    if video == None or video.endswith(".mp4") == False:
-        other_source = data.xpath("//groupFiles/file/text()")[0]
-        smil = XML.ElementFromURL(other_source)
-        base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
-        clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
-        video = base + clip
     return Redirect(video)
 
 ####################################################################################################
