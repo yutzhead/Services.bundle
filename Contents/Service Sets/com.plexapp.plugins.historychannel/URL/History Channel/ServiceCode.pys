@@ -42,7 +42,7 @@ def PlayVideo(url):
 
   item = GetVideoItem(url)
 
-  video_link = item.xpath("//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
+  video_link = item.xpath(".//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
   video_id = video_link[video_link.find('/s/') + 3:]
 
   auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime = 0).content
@@ -57,13 +57,15 @@ def GetVideoItem(url):
   page = HTML.ElementFromString(page_content)
   mrssdata = re.search('mrssData =[ ]+"([^"]+)', page_content).group(1)
   mrssdata =  String.Unquote(b64decode(mrssdata)).replace('media:','media-')
-
+  Log(mrssdata)
   data = XML.ElementFromString(mrssdata)
 
   item = data.xpath("//item")[0]
   if url.find('#') != -1:
     video_name = url[url.find('#') + 1:]
+    Log("VIDNAME: " + video_name)
     item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
+    Log(HTML.StringFromElement(item))
   
   return item
 
