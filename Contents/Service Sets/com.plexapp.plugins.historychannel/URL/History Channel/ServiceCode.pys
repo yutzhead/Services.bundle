@@ -65,7 +65,6 @@ def GetVideoItem(url):
     video_name = url[url.find('#') + 1:]
     item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
   
-  Log(HTML.StringFromElement(item))
   return item
 
 ####################################################################################################
