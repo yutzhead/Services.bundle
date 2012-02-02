@@ -1,5 +1,8 @@
 import re
 
+# allow any length for these content types
+valid_types = ['text/html', 'application/xhtml+xml']
+
 EMBEDDED_VIDEO = [
   ("//iframe", "src"), 
   ("//embed", "src"), 
