@@ -1,43 +1,73 @@
+import re
+from base64 import b64decode
+
+SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
+
 ####################################################################################################
 def MetadataObjectForURL(url):
-  
-  data = HTML.ElementFromURL(url)
-  details = data.xpath('//div[@class="controller"]')[0]
 
-  title = details.xpath('./h4')[0].text.split(': ')
-  show_title = data.xpath('//div[@class="show-heading"]/h2/text()')[0]
-  episode_title = title[0]
-  duration = details.xpath('./h4/span')[0].text[1:-2]
-  durationParts = duration.split(':')
-  duration = ((int(durationParts[0])*60) + (int(durationParts[1])))*1000
-  summary = details.xpath('.//div[@class="copy"]/p')[0].text
-  thumbUrl = 'http://' + data.xpath('//link[@rel="image_src"]')[0].get('href').split('http://')[-1]
+  item = GetVideoItem(url)
+  page = HTML.ElementFromURL(url)
 
-  # Construct a metadata item
-  ec = EpisodeObject(
+  show_title = page.xpath('//div[@class="show-heading"]/h2/text()')[0]
+  episode_title = item.xpath(".//title/text()")[0]
+  summary = item.xpath(".//media-description/text()")[0]
+  duration = int(item.xpath(".//media-content")[0].get('duration')) * 1000
+  thumb = item.xpath(".//media-thumbnail")[-1].get('url')
+
+  return EpisodeObject(
     title = episode_title,
     show = show_title,
     duration = duration,
-    #season = int(season),
-    #index = int(episode),
-    #originally_available_at = postedDate,
     summary = summary,
-    thumb = thumbUrl
+    thumb = thumb
   )
-  return ec
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [(MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.WebKit
-        )
-      )
-    ]
+  return [
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = '360',
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url))]
+    )
+  ]
 
 ####################################################################################################
 def PlayVideo(url):
-  return Redirect(WebVideoURL(url))
+
+  item = GetVideoItem(url)
+
+  video_link = item.xpath(".//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
+  video_id = video_link[video_link.find('/s/') + 3:]
+
+  auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime = 0).content
+  video_url = video_link + '?format=redirect&sig=' + auth_token
+
+  return Redirect(video_url)
+
+####################################################################################################
+
+def GetVideoItem(url):
+  page_content = HTTP.Request(url).content
+  page = HTML.ElementFromString(page_content)
+  mrssdata = re.search('mrssData =[ ]+"([^"]+)', page_content).group(1)
+  mrssdata =  String.Unquote(b64decode(mrssdata)).replace('media:','media-')
+  Log(mrssdata)
+  data = XML.ElementFromString(mrssdata)
+
+  item = data.xpath("//item")[0]
+  if url.find('#') != -1:
+    video_name = url[url.find('#') + 1:]
+    Log("VIDNAME: " + video_name)
+    item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
+    Log(HTML.StringFromElement(item))
+  
+  return item
 
 ####################################################################################################
 def TestURLs():
