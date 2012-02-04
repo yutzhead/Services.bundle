@@ -65,7 +65,6 @@ def FindExternalSource(req):
       try:
         node_url = video.get(node)
         for sources_check in URLService.AllPatterns:
-          Log("IABI: " + sources_check)
           try: 
             if len(re.findall(sources_check, node_url)) > 0:
               return node_url
