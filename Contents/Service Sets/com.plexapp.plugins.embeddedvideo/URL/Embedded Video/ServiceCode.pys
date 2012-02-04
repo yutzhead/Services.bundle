@@ -3,21 +3,14 @@ import re
 # allow any length for these content types
 valid_types = ['text/html', 'application/xhtml+xml']
 
+# only allow response sizes below a certain length for arbitrary types
+max_length = 1024
+
 EMBEDDED_VIDEO = [
   ("//iframe", "src"), 
   ("//embed", "src"), 
   ("//object", "data"), 
   ("//param[@name = 'flashvars']", "value")]
-
-EMBEDDED_SOURCES = [
-  "youtube\.com\/watch(?:_popup)?\?v=([^&]+)",
-  "youtube\.com\/embed\/([^?\/]+)",
-  "youtu\.be\/([^?\/]+)",
-  "youtube\.com\/v\/([^?\/]+)",
-  "player\.vimeo\.com\/video\/(\d+)",
-  "vimeo\.com\/(\d+)",
-  "vimeo\.com\/[^#]+#(\d+)",
-  "clip_id=(\d+)"]
 
 ####################################################################################################
 
@@ -71,7 +64,8 @@ def FindExternalSource(req):
     for video in doc.xpath(select):
       try:
         node_url = video.get(node)
-        for sources_check in EMBEDDED_SOURCES:
+        for sources_check in URLService.AllPatterns:
+          Log("IABI: " + sources_check)
           try: 
             if len(re.findall(sources_check, node_url)) > 0:
               return node_url
