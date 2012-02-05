@@ -57,15 +57,12 @@ def GetVideoItem(url):
   page = HTML.ElementFromString(page_content)
   mrssdata = re.search('mrssData =[ ]+"([^"]+)', page_content).group(1)
   mrssdata =  String.Unquote(b64decode(mrssdata)).replace('media:','media-')
-  Log(mrssdata)
   data = XML.ElementFromString(mrssdata)
 
   item = data.xpath("//item")[0]
   if url.find('#') != -1:
     video_name = url[url.find('#') + 1:]
-    Log("VIDNAME: " + video_name)
     item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
-    Log(HTML.StringFromElement(item))
   
   return item
 
