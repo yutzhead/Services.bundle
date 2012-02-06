@@ -1,130 +1,148 @@
 import re
 
-PREF_MAP = {'720p':'HD', 'Medium':'MED', 'Low':'LOW'}
-ORDER = ['HD', 'MED', 'LOW']
-
 HTTP.CacheTime = CACHE_1DAY
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27' }
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/534.53.11 (KHTML, like Gecko) Version/5.1.3 Safari/534.53.10' }
+
+QUALITY = ['HD', 'Med', 'Low']
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  html = HTML.ElementFromURL(url, headers=httpHeaders)
 
-  try:
-    rating = html.xpath('//div[@class="rating"]//span[@style][1]')[0].get('style')
-    rating = re.search('width.+?([0-9]+)%', rating).group(1)
-    rating = float(rating)/10
-  except:
-    rating = None
+	video = VideoClipObject()
+	json = GetJson(url)
 
-  tags = []
-  for tag in html.xpath('//div[@class="tags"]/a'):
-    tags.append(tag.text.strip())
+	if json:
+		video.title = json['title']
+		video.summary = json['description']
+		video.thumb = json['thumbnail']
 
-  try:
-    originally_available_at = Datetime.ParseDate(html.xpath('//meta[@name="datepublished"]')[0].get('content')).date()
-  except:
-    originally_available_at = None
+		if 'start_date' in json:
+			try: video.originally_available_at = Datetime.ParseDate(json['start_date']).date()
+			except: pass
 
-  video = VideoClipObject(
-    title = html.xpath('//div[contains(@class, "masthead")]//span[@class="episode_title"]')[0].text.strip(),
-    tagline = html.xpath('//div[contains(@class, "masthead")]/h2/a')[0].text.strip(),
-    summary = html.xpath('//meta[@name="description"]')[0].get('content'),
-    originally_available_at = originally_available_at,
-    duration = CalculateDuration(html.xpath('//meta[@name="duration"]')[0].get('content')),
-    thumb = html.xpath('//meta[@name="thumbnail"]')[0].get('content'),
-    rating = rating,
-    tags = tags
-  )
+		if 'duration' in json:
+			video.duration = TimeToMs(json['duration'])
 
-  return video
+		if 'rating_cache' in json:
+			video.rating = json['rating_cache'] * 2
+
+		tags = []
+		if 'keywords' in json:
+			for keyword in json['keywords']:
+				tags.append(keyword['keyword'])
+			video.tags = tags
+
+	return video
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))]
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD'))],
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+			),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Med'))],
+			video_resolution = '480',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Low'))],
+			video_resolution = 'sd',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url, fmt=None):
-  if not fmt:
-    fmt = Prefs['video_quality']
+def GetJson(url):
 
-  video_page = HTTP.Request(url, headers=httpHeaders).content
+	html = HTTP.Request(url, headers=httpHeaders).content
 
-  try:
-    video_src = HTML.ElementFromString(video_page).xpath('//head/link[@rel="video_src"]')[0].get('href')
-    vid = re.search('fileID=([0-9]+).+context=([0-9]+)', video_src)
-    file_id = int(vid.group(1))
-    context = int(vid.group(2))
-  except:
-    try:
-      vid = re.search('fileID=([0-9]+).+context=([0-9]+)', video_page)
-      file_id = int(vid.group(1))
-      context = int(vid.group(2))
-    except:
-      return None
+	# Extract the relevant JSON part
+	pattern = re.compile('data\s:\s(\{.+\})')
+	result = pattern.search(html)
 
-  video_url = AmfRequest(file_id, context, fmt)
+	if result:
+		json_string = result.group(1).replace("'client_JSON'", '"client_JSON"')
+		json = JSON.ObjectFromString(json_string)['client_JSON']['episode']
+		json['relatedShows'] = []
 
-  if video_url.endswith('.mp4'):
-    protocol = Protocol.HTTPMP4Streaming
-  else:
-    protocol = Protocol.HTTPVideo
-
-  oc = ObjectContainer()
-  oc.add(VideoClipObject(
-    key = URLService.LookupURLForMediaURL(url),
-    items = [
-      MediaObject(
-        parts = [
-          PartObject(key = video_url)
-        ],
-        protocol = protocol
-      )
-    ]
-  ))
-
-  return oc
+		return json
+	else:
+		return None
 
 ####################################################################################################
-def AmfRequest(file_id, context, fmt):
-  client = AMF.RemotingService('http://tv.adobe.com/flashservices/gateway', amf_version=3, user_agent='Shockwave Flash')
-  service = client.getService('services.player')
-  result = service.load(file_id, False, context)
+def TimeToMs(timecode):
 
-  # If there are multiple videos to select from...
-  if 'VIDEOS' in result:
-    pref_value = PREF_MAP[fmt]
-    available = {}
+	seconds = 0
 
-    for version in result['VIDEOS']:
-      if 'PROGRESSIVE' in version:
-        video_url = version['PROGRESSIVE']
+	try:
+		duration = timecode.split(':')
+		duration.reverse()
 
-      q = version['QUALITY']
-      if q in ORDER:
-        available[q] = video_url
+		for i in range(0, len(duration)):
+			seconds += int(duration[i]) * (60**i)
+	except:
+		pass
 
-    for i in range(ORDER.index(pref_value), len(ORDER)):
-      quality = ORDER[i]
-      if quality in available:
-        return available[quality]
-
-  # ...or if there is just one version available
-  elif 'PROGRESSIVE' in result:
-    return result['PROGRESSIVE']
-  else:
-    return None
+	return seconds * 1000
 
 ####################################################################################################
-def CalculateDuration(timecode):
-  milliseconds = 0
-  d = re.search('([0-9]{2}):([0-9]{2}):([0-9]{2})', timecode)
-  milliseconds += int( d.group(1) ) * 60 * 60 * 1000
-  milliseconds += int( d.group(2) ) * 60 * 1000
-  milliseconds += int( d.group(3) ) * 1000
-  return milliseconds
+def PlayVideo(url, fmt):
+
+	json = GetJson(url)
+
+	if not json:
+		return
+
+	available = {}
+
+	# If multiple versions of a video are available, get the ones with 'quality_level' info
+	for video in json['videos']:
+		if 'quality_level' in video and video['url'].endswith('.mp4'):
+			key = video['quality_level']
+			if key in QUALITY:
+				available[key] = video['url']
+
+	# Or if there's just one quality available (older videos mostly), get the mp4 version
+	if len(available) == 0:
+		for video in json['videos']:
+			if video['url'].endswith('.mp4'):
+				key = QUALITY[-1]
+				available[key] = video['url']
+				break
+
+	# Return the requested quality or figure out what the next best available quality is
+	if fmt in available:
+		return Redirect(available[fmt])
+	else:
+		start_index = QUALITY.index(fmt) + 1
+		end_index = len(QUALITY)
+
+		for i in range(start_index, end_index):
+			key = QUALITY[i]
+			if key in available:
+				return Redirect(available[key])
+				break
+		else:
+			key = QUALITY[-1]
+			return Redirect(available[key])
