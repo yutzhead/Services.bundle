@@ -10,14 +10,14 @@ def MetadataObjectForURL(url):
     #Log(title)
     
     ''' need to figure out how to grab date and duration details from the html '''
-    date = data.xpath('//div[@id="details"]//p/text()')[1].strip()
+    date = data.xpath('//div[@class="details"]//p/text()')[1].strip()
     #Log(date)
-    duration = data.xpath('//div[@id="details"]//p/text()')[2].strip()
+    duration = data.xpath('//div[@class="details"]//p/text()')[2].strip()
     durationParts = duration.split(':')
     duration = (int(durationParts[0])*60 + int(durationParts[1]))*1000
     #Log(duration)
     
-    summary = data.xpath('//div[@id="details"]//p')[1].text.strip()
+    summary = data.xpath('//div[@class="details"]//p')[1].text.strip()
     #Log(summary)
     video_id = data.xpath('//div[@class="video-wrapper"]/div')[0].get('id').strip('video-')
     thumb_url = GetThumb(DATA_URL % video_id)
