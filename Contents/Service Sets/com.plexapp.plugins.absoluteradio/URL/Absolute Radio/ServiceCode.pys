@@ -75,7 +75,7 @@ def TestURLs():
 
         # Ensure that we don't grab any audio sessions...
         description = item.xpath(".//span[@class='result_desc']/text()")[0].strip()
-        if description.find("Audio session:") != -1:
+        if description.find("Audio") != -1:
             continue
 
         test_urls.append(url.replace(' ', '+'))
