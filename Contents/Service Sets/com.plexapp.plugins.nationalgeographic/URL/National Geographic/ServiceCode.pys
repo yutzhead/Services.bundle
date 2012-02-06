@@ -14,7 +14,7 @@ def MetadataObjectForURL(url):
     full_episode = False
   
   title = data.xpath('//title')[0].text.split(' -- ')[1]
-  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+  thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
   description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
   keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
   
