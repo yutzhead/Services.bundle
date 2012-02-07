@@ -32,7 +32,10 @@ def MetadataObjectForURL(url):
     show_title = title[0]
     episode_title = title[1]
     summary = data.xpath('//meta[@name="description"]')[0].get('content')
+
+    # Ensure that the thumb URL is well formed.
     thumbUrl = data.xpath('//meta[@name="Thumbnail"]')[0].get('content')
+    thumbUrl = thumbUrl.replace(' ', '%20')
   
     try: season = int(re.search('season\-([0-9]+)', url).group(1))
     except: season = None

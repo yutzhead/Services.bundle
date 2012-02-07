@@ -11,7 +11,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://abcfamily.go.com/(watch|movies)/.+</string>
+				<string>http://abcfamily.go.com/(watch|movies|shows)/.+</string>
 			</array>
 		</dict>
 	</dict>

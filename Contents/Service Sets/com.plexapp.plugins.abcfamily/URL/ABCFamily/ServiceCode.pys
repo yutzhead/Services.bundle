@@ -61,7 +61,7 @@ def MetadataObjectForURL(url):
         try:
             title = data.xpath('//meta[@property="og:title"]')[0].get('content')
         except:
-            title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[1]
+            title = data.xpath('//title/text()')[0].split(' - ')[1]
 
         summary = None
         try:
@@ -160,8 +160,9 @@ def TestURLs():
     test_urls = []
 
     page = HTML.ElementFromURL('http://abcfamily.go.com/')
-    results = page.xpath('//div[@class = "moreFamilyItem"]//a')
+    results = page.xpath("//div[contains(@class, 'chartbeattoppages_videos')]//li[contains(@class, 'contentArea')]//a")
     for item in results:
+
         url = item.get('href')
         test_urls.append(url)
 
