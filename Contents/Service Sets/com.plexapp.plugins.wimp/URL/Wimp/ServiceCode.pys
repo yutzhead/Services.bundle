@@ -40,8 +40,11 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
      content = HTTP.Request(url, cacheTime=0).content
+
+     encoded_details = re.search("var googleCode = '(.*)';", content).group(1)
+     details = String.Base64Decode(encoded_details)
      
-     flv_url = re.search('s1.addVariable\(\"file\",\"(.*)\"\)', content).group(1)
+     flv_url = re.search('s1.addVariable\(\"file\",\"(.*)\"\)', details).group(1)
      
      return Redirect(flv_url)
 
