@@ -56,12 +56,21 @@ def PlayVideo(url):
     details = JSON.ObjectFromURL(VIDEO_STATUS % id)
 
     # We'll only use the 'best' mp4 format available. There are likely to be smaller ones also 
-    # available, but they're pretty small.
-    video_path = details['formats']['http']['mp4'][0]['paths'][0]
-    address = video_path['address']
-    port = video_path['port']
-    path = video_path['path']
-    filename = video_path['filename']
+    # available, but they're pretty small. Also, there are multiple links to the same video but some
+    # might not work. Therefore we need to validate the URL before returning it.
+    video_url = None
+    for video_path in details['formats']['http']['mp4'][0]['paths']:
+        address = video_path['address']
+        port = video_path['port']
+        path = video_path['path']
+        filename = video_path['filename']
+
+        video_url = "http://%s:%s/%s/%s" % (address, port, path, filename)
+        try: 
+            # If we can access the header, then the URL must be good.
+            HTTP.Request(video_url).header
+            break
+        except: pass
 
     return Redirect("http://%s:%s/%s/%s" % (address, port, path, filename))
 
