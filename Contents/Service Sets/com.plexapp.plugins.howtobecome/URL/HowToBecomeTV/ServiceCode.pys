@@ -1,3 +1,5 @@
+import re
+
 ####################################################################################################
 def MetadataObjectForURL(url):
     try:
@@ -73,9 +75,15 @@ def PlayVideo(url, res):
 def GetExternalSource(url):
 
   # Request the url
-  page = HTML.ElementFromURL(url)
+  page_content = HTTP.Request(url).content
+  page = HTML.ElementFromString(page_content)
 
   # The page actually just contains a link to a you tube video. Instead of re-implementing the 
   # associated logic, we should be able to simply re-direct the call to the You Tube service.
   # We must first obtain the specific you tube url.
-  return page.xpath("//iframe[contains(@src, 'youtube')]")[0].get('src')
+  embedded_video = page.xpath("//iframe[contains(@src, 'youtube')]")
+  if len(embedded_video) > 0:
+    return embedded_video[0].get('src')
+
+  # We haven't found the loaded frame, therefore we will search for the known [YouTube] tags
+  return re.match(".*\[youtube\](?P<url>.*)\[/youtube\].*", page_content, re.DOTALL).groupdict()['url']
