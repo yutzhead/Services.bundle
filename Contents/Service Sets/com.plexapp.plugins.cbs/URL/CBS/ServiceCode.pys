@@ -63,36 +63,56 @@ def MetadataObjectForURL(url):
   
 ####################################################################################################
 def MediaObjectsForURL(url):
-  
+ 
   return [
     MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.RTMP,
-      aspect_ratio = '1.78'
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 360,
+      bitrate = 740280,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = 'WIFI-MED-16x9_30'))]
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 224,
+      bitrate = 438942,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = 'WIFI-LOW-16x9_30'))]
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 224,
+      bitrate = 238580,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = '3G-MED-16x9_30'))]
     )
   ]
 
 ####################################################################################################
-def PlayVideo(url):
+def PlayVideo(url, profile):
+
+  if url.find('pid=') == -1:
+    page = HTML.ElementFromURL(url)
+    url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
 
   pid = re.search('pid=([^&]+)', url)
+
   if pid:
     pid = pid.group(1)
 
-    smil = HTTP.Request(CBS_SMIL % pid).content
-    player = smil.split('ref src')
-    player = player[2].split('"')
+    smil = XML.ElementFromURL(CBS_SMIL % pid)
+    video_url = smil.xpath("//video[@profile = '%s']" % profile)[0].get('src')
 
-    if '.mp4' in player[1]:
-      player = player[1].replace('.mp4', '')
-      clip = player.split(';')
-      clip = 'mp4:' + clip[4]
-    else:
-      player = player[1].replace('.flv', '')
-      clip = player.split(';')
-      clip = clip[4]
-
-    return Redirect(RTMPVideoItem(player, clip))
+    return Redirect(video_url)
 
 ####################################################################################################
 def TestURLs():
