@@ -8,8 +8,8 @@ def MetadataObjectForURL(url):
         # Attempt to extract the details from the page.
         page = HTML.ElementFromURL(url)
 
-        title = page.xpath("//div[@id='page']//h1/text()")[0]
-        thumb = page.xpath("//div[@class='videoViewer']//video")[0].get('poster')
+        title = page.xpath("//div[@class='heading']//h2/text()")[0]
+        thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
 
         summary = None
         try: summary = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[1]
@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
             mins = int(duration_dict['mins'])
             secs = int(duration_dict['secs'])
             duration = ((mins * 60) + secs) * 1000
-        except:  Log.Exception("IABI ERROR")
+        except:  Log.Exception("Error attempting to determine duration")
 
         return VideoClipObject(
             title = title,
@@ -50,5 +50,5 @@ def MediaObjectsForURL(url):
 
 def PlayVideo(url):
     page = HTML.ElementFromURL(url)
-    video_url = page.xpath("//div[@class='videoViewer']//video")[0].get('src')
+    video_url = page.xpath("//div[@class='video-player-container']//video")[0].get('src')
     return Redirect(video_url)
