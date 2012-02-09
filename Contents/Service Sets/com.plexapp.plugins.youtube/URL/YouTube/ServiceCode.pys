@@ -64,11 +64,10 @@ def NormalizeURL(url):
     video_id = re.findall('pid=(.{11})', url.query)[0]
 
   if video_id is None:
-    page = HTTP.Request(url.geturl()).content
-    id = re.search('"video_id":\s"([^"]+)', page)
+    id = HTML.ElementFromURL(url.geturl()).xpath('//div[@data-video-id]/@data-video-id')
 
     if id:
-      video_id = id.group(1)
+      video_id = id[0]
     else:
       return None
 
