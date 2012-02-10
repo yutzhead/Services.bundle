@@ -6,13 +6,9 @@
 	<dict>
 		<key>CNN-News</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.cnn.com/video/#/video/bestoftv/2011/07/26/exp.tsr.todd.citizen.outrage.cnn</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.cnn.com/video/.+</string>
+				<string>http://(www\.|edition\.)?cnn\.com/video/.+</string>
 			</array>
 		</dict>
 	</dict>
