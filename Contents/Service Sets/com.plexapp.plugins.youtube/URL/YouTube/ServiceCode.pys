@@ -63,6 +63,13 @@ def NormalizeURL(url):
   elif url.path[0:17] == '/my_subscriptions' and url.query != '':
     video_id = re.findall('pid=(.{11})', url.query)[0]
 
+  # http://www.youtube.com/movie/the-last-man-on-earth
+  elif url.path[0:7] == '/movie/':
+    id = HTML.ElementFromURL(url.geturl()).xpath('//a[contains(@href, "watch-now-button")]')
+
+    if id:
+      video_id = re.search('(\?|&)v=(.{11})', id[0].get('href')).group(2)
+
   if video_id is None:
     page = HTTP.Request(url.geturl()).content
     id = HTML.ElementFromString(page).xpath('//div[@data-video-id]/@data-video-id')
