@@ -1,14 +1,19 @@
 import re
 
-httpHeaders = { 'User-Agent' : 'iTunes/10.2.1' }
+httpHeaders = { 'User-Agent' : 'iTunes/10.5.3' }
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
 
 ####################################################################################################
 def NormalizeURL(url):
-  return url
+
+  url = url.replace('/iphone/', '/')
+  studio, title, video = re.findall('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?/?$', url)[0]
+  if not video: video = 'trailer'
+  return 'http://trailers.apple.com/trailers/%s/%s#%s' % (studio, title, video)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
   url = BuildXmlUrl(url)
 
   try:
@@ -45,6 +50,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   items = []
   url = BuildXmlUrl(url)
 
@@ -85,13 +91,13 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def VideoInfo(url):
+
   ipod = False
   if re.search('_i([0-9]+)\.(m4v|mov)$', url):
     ipod = True
 
   # For HD videos: use the given height (480, 720, 1080)
   # For SD videos: use a 16x9 AR when calculating the approximate height of a video for videos we know the width of
-  #
   try:
     resolution = re.search('_(h|i)([0-9]+)(w|p)?\.(mov|m4v)', url)
 
@@ -114,6 +120,7 @@ def VideoInfo(url):
 
 ####################################################################################################
 def BuildXmlUrl(url):
+
   studio, title, video = re.findall('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?(.+)?$', url)[0]
   if not video: video = 'trailer'
   xml_url = 'http://trailers.apple.com/moviesxml/s/%s/%s/%s.xml' % (studio, title, video)
@@ -122,6 +129,7 @@ def BuildXmlUrl(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url):
+
   c = ObjectContainer()
 
   c.add(VideoClipObject(
