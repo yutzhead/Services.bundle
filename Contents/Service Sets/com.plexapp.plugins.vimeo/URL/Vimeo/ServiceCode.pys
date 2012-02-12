@@ -36,7 +36,7 @@ def MetadataObjectForURL(url):
   vimeo_video_id       = re.findall('vimeo.com\/(\d+)\/?', url)[0]                 # extract the video id
   vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id  # API call
 
-  # Fetch the page.
+  # Fetch the page. Private videos return a HTTP 404 error.
   try:
     json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
   except:
