@@ -37,7 +37,11 @@ def MetadataObjectForURL(url):
   vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id  # API call
 
   # Fetch the page.
-  json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
+  try:
+    json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
+  except:
+    Log('This is a private video.')
+    return
 
   # Construct a metadata item.
   originally_available_at = Datetime.ParseDate(json['upload_date'])
@@ -53,6 +57,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   items = [
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='hd', codecs='H264'))],
@@ -63,7 +68,6 @@ def MediaObjectsForURL(url):
       audio_channels = 2,
       optimized_for_streaming = True
     ),
-
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='sd', codecs='H264'))],
       container = Container.MP4,
@@ -74,6 +78,7 @@ def MediaObjectsForURL(url):
       optimized_for_streaming = True
     ),
   ]
+
   return items
 
 ####################################################################################################
