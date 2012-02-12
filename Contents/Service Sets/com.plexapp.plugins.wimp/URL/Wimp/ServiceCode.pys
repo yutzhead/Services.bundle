@@ -1,51 +1,40 @@
 import re
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5' }
 
 ####################################################################################################
-
 def NormalizeURL(url):
-  return url
+
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    data = HTML.ElementFromURL(url)
-    
-    title = data.xpath('//title')[0].text.strip(' [VIDEO]')
-    #Log(title)
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//title')[0].text.strip(' [VIDEO]')
 
-    vc = VideoClipObject(
-        title = title
-        )
+	vc = VideoClipObject(
+		title = title
+	)
 
-    return vc
-  
+	return vc
+
 ####################################################################################################
-
 def MediaObjectsForURL(url):
 
-    return [
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url))],
-            container = 'flv',
-            aspect_ratio = '1.33',
-            bitrate = '598',
-            video_resolution = 'sd',
-            video_codec = 'h264',
-            audio_codec = 'aac'
-            )
-        ]
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 def PlayVideo(url):
 
-     content = HTTP.Request(url, cacheTime=0).content
-
-     encoded_details = re.search("var googleCode = '(.*)';", content).group(1)
-     details = String.Base64Decode(encoded_details)
-     
-     flv_url = re.search('s1.addVariable\(\"file\",\"(.*)\"\)', details).group(1)
-     
-     return Redirect(flv_url)
-
-####################################################################################################  
+	video = HTML.ElementFromURL(url, cacheTime=0, headers=httpHeaders).xpath('//video')[0].get('src')
+	return Redirect(video)
