@@ -6,9 +6,6 @@
 	<dict>
 		<key>ABCFamily</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://abcfamily.go.com/(watch|movies|shows)/.+</string>
