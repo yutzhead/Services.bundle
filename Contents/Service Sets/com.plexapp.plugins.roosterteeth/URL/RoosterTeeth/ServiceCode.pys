@@ -19,9 +19,7 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
     data = HTML.ElementFromURL(url, errors='ignore')
-    external_url = data.xpath('//link[@rel="video_src"]')[0].get('href')
-    try:
-        external_url = String.Unquote(external_url)
-    except:
-        pass
+    external_url = data.xpath('//iframe[contains(@src, "blip.tv")]')[0].get('src')
+    external_url = String.Unquote(external_url)
+
     return URLService.MediaObjectsForURL(external_url)
