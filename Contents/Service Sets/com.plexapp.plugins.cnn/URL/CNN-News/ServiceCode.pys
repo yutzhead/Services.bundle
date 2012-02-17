@@ -1,3 +1,5 @@
+import re
+
 XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
 MEDIA_URL = 'http://ht.cdn.turner.com/%s'
 CNN_URL = 'http://www.cnn.com/video/'
@@ -6,7 +8,7 @@ NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.replace('/#/', '/?/')
+	return re.sub('/video/[^/]+/video/', '/video/?/video/', url)
 
 ####################################################################################################
 def TestURLs():
