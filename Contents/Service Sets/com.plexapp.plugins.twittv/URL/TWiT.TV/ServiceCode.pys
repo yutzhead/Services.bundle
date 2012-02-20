@@ -69,7 +69,7 @@ def MediaObjectsForURL(url):
 	mediaobjects = []
 
 	# This Week in Tech has 720p videos available
-	if '/show/this-week-in-tech/' in url:
+	if '/show/this-week-in-tech/' in url or 'twit.tv/twit' in url:
 		mediaobjects.append(
 			MediaObject(
 				parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
@@ -112,15 +112,15 @@ def MediaObjectsForURL(url):
 	)
 
 	# Audio mp3
-	mediaobjects.append(
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='audio'))],
-			container = 'mp3',
-			audio_codec = AudioCodec.MP3,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)
-	)
+#	mediaobjects.append(
+#		MediaObject(
+#			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='audio'))],
+#			container = 'mp3',
+#			audio_codec = AudioCodec.MP3,
+#			audio_channels = 2,
+#			optimized_for_streaming = True
+#		)
+#	)
 
 	return mediaobjects
 
