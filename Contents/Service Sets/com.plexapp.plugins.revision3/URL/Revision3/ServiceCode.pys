@@ -14,6 +14,7 @@ def MetadataObjectForURL(url):
   try: date = Datetime.ParseDate(data.xpath('//meta[@name="publish-date"]')[0].get('content')).date()
   except: date = None
   summary = data.xpath('//meta[@property="og:description"]', namespaces=REVISION3_NS)[0].get('content')
+
   try:
     duration = data.xpath('.//div[@id="show-notes"]//div[@class="subtext"]')[0].text
     duration = duration.split('running time ')[1]
@@ -22,11 +23,15 @@ def MetadataObjectForURL(url):
   except:
     duration = None
 
-  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
   try:
-    thumbUrl = thumbUrl.replace('-small.thumb.jpg', '-medium.thumb.jpg')
+    thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
+    thumbUrl = thumbUrl.rsplit('--',1)[0] + '--large.thumb.jpg'
   except:
-    pass
+    try:
+      thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+      thumbUrl = thumbUrl.rsplit('--',1)[0] + '--large.thumb.jpg'
+    except:
+      thumb = None
 
   # Construct a metadata item
   mo = EpisodeObject(
