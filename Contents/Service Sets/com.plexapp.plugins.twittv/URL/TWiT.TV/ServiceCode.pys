@@ -155,3 +155,12 @@ def PlayMedia(url, fmt):
 		url = page.xpath('//a[@class="audio download"]')[0].get('href')
 
 	return Redirect(url)
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+
+	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item[position() < 4]/link'):
+		test_urls.append( url.text )
+
+	return test_urls
