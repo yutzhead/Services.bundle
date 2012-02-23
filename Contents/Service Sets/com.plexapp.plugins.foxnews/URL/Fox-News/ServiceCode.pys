@@ -58,4 +58,5 @@ def PlayVideo(url):
 
     # Redirect to the associated video url
     video_url = json_root['media-content']['mvn-fnc_mp4']
+    video_url = video_url.replace(' ', '%20')
     return Redirect(video_url)
