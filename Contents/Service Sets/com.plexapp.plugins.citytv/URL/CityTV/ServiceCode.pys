@@ -72,25 +72,25 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [(MediaObject(
+  return [
+  	MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.HTTPVideo,
-      container = 'm3u8',
-      optimized_for_streaming = True,
+      protocol = 'hls',
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
       video_resolution = 'sd',
-      video_codec = 'h264',
       aspect_ratio = '1.77',
       audio_channels = 2
-        )
-      )
-    ]
+    )
+  ]
 
 ####################################################################################################
 
 def PlayVideo(url):
     data = DoAmfRequest(url)
     video_url = data['IOSRenditions'][0]['defaultURL']
-    return Redirect(video_url)
+
+    return Redirect(HTTPLiveStreamURL(video_url))
 
 ####################################################################################################
 
