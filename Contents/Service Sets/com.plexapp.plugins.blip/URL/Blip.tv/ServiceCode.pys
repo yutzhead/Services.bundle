@@ -58,7 +58,7 @@ def GetJsonURL(url):
   post_id = None
 
   if url.find('/file/') != -1:
-    file_id = re.search('blip\.tv/file/([0-9]{7})', url).group(1)
+    file_id = re.search('blip\.tv/file/([0-9]{6,7})', url).group(1)
     url = 'http://blip.tv/file/%s' % file_id
   elif url.find('/play/') != -1:
     play_id = re.search('blip\.tv/play/([^$.]+)', url).group(1)
@@ -67,10 +67,10 @@ def GetJsonURL(url):
     f = opener.open(request)
     if f.status == 301 or f.status == 302:
       redirect_url = String.Unquote(f.url, usePlus=False)
-      post_id = re.search('blip\.tv/rss/flash/([0-9]{7})', redirect_url).group(1)
+      post_id = re.search('blip\.tv/rss/flash/([0-9]{6,7})', redirect_url).group(1)
   else:
     try:
-      post_id = re.search('blip\.tv/.+/.+-([0-9]{7})', url).group(1)
+      post_id = re.search('blip\.tv/.+/.+-([0-9]{6,7})', url).group(1)
     except:
       pass
 
