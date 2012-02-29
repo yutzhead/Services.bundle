@@ -73,9 +73,9 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
   return [
-  	MediaObject(
+    MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = 'hls',
+      container = 'mpegts',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
       video_resolution = 'sd',

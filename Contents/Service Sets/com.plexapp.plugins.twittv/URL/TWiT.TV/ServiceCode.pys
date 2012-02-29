@@ -158,6 +158,7 @@ def PlayMedia(url, fmt):
 
 ####################################################################################################
 def TestURLs():
+
 	test_urls = []
 
 	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item[position() < 4]/link'):
