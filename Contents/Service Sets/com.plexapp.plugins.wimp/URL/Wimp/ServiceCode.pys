@@ -1,5 +1,4 @@
 import re
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5' }
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -36,5 +35,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-	video = HTML.ElementFromURL(url, cacheTime=0, headers=httpHeaders).xpath('//video')[0].get('src')
+	url = url.replace('www.', 'm.')
+
+	headers = {
+		'User-Agent':'Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5'
+	}
+
+	video = HTML.ElementFromURL(url, cacheTime=0, headers=headers).xpath('//video')[0].get('src')
 	return Redirect(video)
