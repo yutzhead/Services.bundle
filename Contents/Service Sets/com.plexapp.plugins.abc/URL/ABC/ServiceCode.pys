@@ -83,7 +83,7 @@ def PlayVideo(url, bitrate):
 	available_bitrates = data.xpath('//videos/video[not(@src="")]/@bitrate')
 	closest = min((abs(bitrate - int(i)), i) for i in available_bitrates)[1]
 
-	streamer = 'rtmp://abcondemandfs.fplive.net/abcondemand'
+	streamer = 'rtmp://cp88586.edgefcs.net/abcondemand'
 	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')
 
 	return Redirect(RTMPVideoURL(streamer, clip))
