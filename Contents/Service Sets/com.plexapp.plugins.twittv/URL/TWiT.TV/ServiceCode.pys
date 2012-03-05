@@ -161,7 +161,11 @@ def TestURLs():
 
 	test_urls = []
 
-	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item[position() < 4]/link'):
-		test_urls.append( url.text )
+	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item/link/text()'):
+		if len(test_urls) < 3:
+			if url not in test_urls and re.search('[0-9]$', url):
+				test_urls.append(url)
+		else:
+			break
 
 	return test_urls
