@@ -74,10 +74,10 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
 				video_resolution = '720',
+				aspect_ratio = '1.78',
 				container = Container.MP4,
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
-				aspect_ratio = '1.778',
 				audio_channels = 2,
 				optimized_for_streaming = True
 			)
@@ -88,10 +88,10 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='480p'))],
 			video_resolution = '480',
+			aspect_ratio = '1.78',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
-			aspect_ratio = '1.778',
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
@@ -102,10 +102,10 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='sd'))],
 			video_resolution = 'sd',
+			aspect_ratio = '1.78',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
-			aspect_ratio = '1.778',
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
