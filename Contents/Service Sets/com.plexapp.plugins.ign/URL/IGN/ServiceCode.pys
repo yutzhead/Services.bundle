@@ -89,3 +89,12 @@ def PlayVideo(url, fmt):
 				url = b['url'].replace('mp4:', '')
 				url = 'http://assets.ign.com/%s' % url
 				return Redirect(url)
+
+	else:
+		clip = re.search('"clip":({.+?})', data)
+
+		if clip:
+			clip = JSON.ObjectFromString(clip.group(1))
+#			url = clip['url'].replace('flvlow', 'flvhigh')
+			url = clip['url']
+			return Redirect(url)
