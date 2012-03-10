@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
             summary = details['description'],
             thumb = details['image_url'],
             duration = int(details['duration_in_seconds']) * 1000,
-            originally_available_at = Datetime.FromTimestamp(int(details['created_at'][6:-7]) / 1000),
+            originally_available_at = Datetime.ParseDate(details['created_at'].split('T')[0]),
             genres = details['genres'])
 
     except:
