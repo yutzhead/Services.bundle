@@ -4,17 +4,18 @@ import re
 
 def MetadataObjectForURL(url):
 
-    page = HTML.ElementFromURL(url)
+    page_content = HTTP.Request(url).content
+    page = HTML.ElementFromString(page_content)
 
     # Extract the information from the page...
-    show = page.xpath("//h1/a/text()")[0]
-    title = page.xpath("//h2[@class='title']/text()")[0]
-    thumb = page.xpath("//div[@id='mast']//img")[0].get('src')
+    show = page.xpath("//div[@id='masthead']//h2//text()")[0]
+    title = page.xpath("//div[@id='content']//h2//text()")[0]
+    thumb = page.xpath("//div[@id='masthead']//img")[0].get('src')
 
     # The duration of the podcast will be in the form MINS:SECS. We need to use a regular expression
     # to try and obtain it, before then converting it into milliseconds.
     duration = None
-    duration_text = ''.join(page.xpath("//div[@class='audio_links']/p/text()")).strip()
+    duration_text = re.search("addVariable\('duration','([^']*)'\);", page_content).group(1)
     try: 
         duration_dict = re.match("(?P<mins>[0-9]+):(?P<secs>[0-9]+)", duration_text).groupdict()
         mins = int(duration_dict['mins'])
@@ -23,7 +24,7 @@ def MetadataObjectForURL(url):
     except: pass
 
     # The episode details are in the form "Episode #NUM - DATE"
-    episode_details = page.xpath("//div[@class='episode_notes']/h5/text()")[0]
+    episode_details = page.xpath("//div[@id='content']//legend/text()")[0]
 
     # Extract the episode's index
     episode_index = None
@@ -41,8 +42,11 @@ def MetadataObjectForURL(url):
             duration = duration)
 
     summary = ''.join(page.xpath("//div[contains(@class, 'broadcast')]/p/text()")).strip()
-    return VideoClipObject(
+    return EpisodeObject(
         title = title,
+        show = show,
+        index = episode_index,
+        season = 1,
         summary = summary,
         thumb = thumb,
         duration = duration)
