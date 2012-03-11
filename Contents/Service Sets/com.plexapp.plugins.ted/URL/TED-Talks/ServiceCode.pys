@@ -167,6 +167,7 @@ def PlayVideo(url, res, bitrate = None):
 def GetAvailableMediaObjectsForURL(url):
 
   page_content = HTTP.Request(url, cacheTime = CACHE_1WEEK).content
+  page = HTML.ElementFromString(page_content)
   slug = re.findall("\$\('#download_dialog'\)\.load\('([^']+)", page_content)
   if slug:
 
@@ -205,8 +206,6 @@ def GetAvailableMediaObjectsForURL(url):
       ('//object[contains(@data, "blip.tv")]', 'data', FindBlip, True)
     ]
 
-    page = HTML.ElementFromString(page_content)
-
     for (select, node, find_url, make_indirect) in external_sources:
       try:
         external_url = page.xpath(select)[0].get(node)
@@ -217,7 +216,18 @@ def GetAvailableMediaObjectsForURL(url):
         return URLService.MediaObjectsForURL(external_url)
       except: pass
 
-    return None
+  # If we've got to here without finding any movie, we will make one last attempt from the original
+  # page.
+  direct_links = page.xpath("//meta[@property = 'og:video']")
+  if len(direct_links) > 0:
+    return [
+      MediaObject(
+        video_resolution = 'sd',
+        parts = [PartObject(key = direct_links[0].get('content'))]
+      )
+    ]
+    
+  return None
 
 ####################################################################################################
 def FindBlip(url):
