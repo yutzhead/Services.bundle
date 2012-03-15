@@ -1,0 +1,49 @@
+import re
+
+ARCHIVES = 'http://api.justin.tv/api/channel/archives/%s.json'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+    video = VideoFromURL(url)
+    if video is not None:
+        return VideoClipObject(
+            title = video['title'],
+            thumb = video['image_url_medium'],
+            originally_available_at = Datetime.ParseDate(video['updated_on']),
+            duration = int(video['length']) * 1000)
+
+    return None
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            container = 'flv',
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 1,
+            optimized_for_streaming = True,
+            parts = [PartObject(key = Callback(PlayVideo, url = url))]
+        )
+    ]
+
+####################################################################################################
+def PlayVideo(url):
+
+    video = VideoFromURL(url)
+    return Redirect(video['video_file_url'])
+
+####################################################################################################
+def VideoFromURL(url):
+
+    # Request the details page associated with the channel
+    channel_name = url.split('/')[-3]
+    video_id = url.split('/')[-1]
+    videos = JSON.ObjectFromURL(ARCHIVES % channel_name)
+
+    for video in videos:
+        if video['id'] == video_id:
+            return video
+
+    return None
