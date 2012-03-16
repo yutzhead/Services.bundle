@@ -49,7 +49,10 @@ def NormalizeURL(url):
 
   # http://www.youtube.com/v/taaSlWjKdDY
   elif url.path[0:3] == '/v/':
-    video_id = re.findall('/v/(.{11})', url.path)[0]
+      try:
+          video_id = re.findall('/v/v/(.{11})', url.path)[0]
+      except:
+          video_id = re.findall('/v/(.{11})', url.path)[0]
 
   # http://www.youtube.com/e/NO00y65njH0
   elif url.path[0:3] == '/e/':
