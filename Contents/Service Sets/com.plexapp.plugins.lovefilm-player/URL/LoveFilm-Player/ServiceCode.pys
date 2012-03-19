@@ -5,6 +5,8 @@ TV_BASIC = "^(?P<series_name>[^-]*) - Series (?P<series_number>\d+) - (?P<episod
 TV_PARTIAL = "^(?P<series_name>[^-]*) - Series (?P<series_number>\d+), Episode (?P<episode_number>\d+)$"
 TV_FULL = "^(?P<series_name>[^-]*) - Series (?P<series_number>\d+), Episode (?P<episode_number>\d+) - (?P<episode_name>.*)$"
 
+DE_TV = "^(?P<series_name>[^-]*) - S(?P<series_number>\d+) F(?P<episode_number>\d+) - (?P<episode_name>.*)$"
+
 ####################################################################################################
 
 def NormalizeURL(url):
@@ -16,8 +18,14 @@ def NormalizeURL(url):
     return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
+    if url.find('www.lovefilm.de') > -1:
+        return MetadataObjectForDEURL(url)
+
+    return MetadataObjectForUKURL(url)
+
+####################################################################################################
+def MetadataObjectForUKURL(url):
 
     # Attempt to extract the details of the title from the page.
     page = HTML.ElementFromURL(url)
@@ -98,6 +106,69 @@ def MetadataObjectForURL(url):
             duration = details['duration'],
             originally_available_at = details['date'])
 
+####################################################################################################
+def MetadataObjectForDEURL(url):
+
+    # Attempt to extract the details of the title from the page.
+    page = HTML.ElementFromURL(url)
+    details = ParseItem(page)
+
+    originalTitle = details['title']
+    if re.match(DE_TV, originalTitle) == None:
+        return MovieObject(
+            title = details['title'],
+            summary = details['summary'],
+            thumb = details['thumb'],
+            art = details['art'],
+            rating = details['rating'],
+            directors = details['directors'],
+            studio = details['studio'],
+            genres = details['genres'],
+            duration = details['duration'],
+            originally_available_at = details['date'])
+
+    else:
+
+        # There appears to be only one format for German TV Shows. An example of this is as follows:
+        #  - Castle - S01 F01 - Blumen für dein Grab (2009)
+
+        title = originalTitle
+        show = None
+        season = None
+        index = None
+        index_name = None
+
+        try:
+
+            full = re.match(DE_TV, originalTitle)
+            if full != None:
+                full_dict = full.groupdict()
+                if len(full_dict) > 0:
+                    show = full_dict['series_name']
+                    season = int(full_dict['series_number'])
+                    index = int(full_dict['episode_number'])
+                    index_name = full_dict['episode_name']
+
+        except:
+            # An error has occurred while attempting to extract the details of the episode. To be safe, we will just use
+            # the default values
+            Log.Exception("Error determining TV episode details")
+            pass
+
+        return EpisodeObject(
+            title = title,
+            show = show,
+            season = season,
+            index = index,
+            summary = details['summary'],
+            thumb = details['thumb'],
+            art = details['art'],
+            rating = details['rating'],
+            directors = details['directors'],
+            duration = details['duration'],
+            originally_available_at = details['date'])
+
+####################################################################################################
 # This helper method will attempt to parse the html contained within the given page and identify the know elements of interest. 
 # This includes the following: Title, Summary, Rating, Cover Art, Thumbnail Directors, Actors.
 # These values are contained within the returned dictionary. If an error occurs while attempting to determine one of these, then
