@@ -11,7 +11,11 @@ def MetadataObjectForURL(url):
 
     title = data.xpath("//meta[@property='og:title']")[0].get('content')
     summary = data.xpath("//meta[@property='og:description']")[0].get('content')
-    thumb = BASE_URL + data.xpath('//link[@rel="image_src"]')[0].get('href')
+    thumb_url = data.xpath('//link[@rel="image_src"]')[0].get('href')
+    if 'www.rai.tv' not in thumb_url:
+        thumb = BASE_URL + thumb_url
+    else:
+        thumb = thumb_url
 
     try: date = Datetime.ParseDate(data.xpath('//meta[@name="item-date"]')[0].get('content')).date()
     except:

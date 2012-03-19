@@ -12,7 +12,7 @@ def MetadataObjectForURL(url):
     summary = video['description']
     thumb = video['media_thumbnail'][0]['url']
     duration = video['media_content'][0]['duration']
-    duration = int(duration)*1000
+    duration = int(float(duration)*1000)
     
     mo = VideoClipObject(
         title = title,
@@ -53,36 +53,6 @@ def MediaObjectsForURL(url):
         audio_channels = 2,
         bitrate = '750',
         parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='750'))]
-      ),
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        video_resolution = '128',
-        optimized_for_streaming = True,
-        audio_channels = 2,
-        bitrate = '450',
-        parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='450'))]
-      ),
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        video_resolution = '128',
-        optimized_for_streaming = True,
-        audio_channels = 2,
-        bitrate = '250',
-        parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='250'))]
-      ),
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        video_resolution = '128',
-        optimized_for_streaming = True,
-        audio_channels = 2,
-        bitrate = '212',
-        parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='212'))]
       )
     ]
 
