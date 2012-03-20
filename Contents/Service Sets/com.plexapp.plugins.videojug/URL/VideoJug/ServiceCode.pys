@@ -42,7 +42,7 @@ def MediaObjectsForURL(url):
         video_resolution = '360',
         audio_channels = 2,
         optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_HD))]
+        parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_HD, fallback = VIDEO_URL_EXT_SD))]
       ),
       MediaObject(
         container = Container.MP4,
@@ -74,7 +74,7 @@ def PlayVideo(url, file_ext, fallback = None):
     # can detect this, but the safest thing to do is to check the header, and if it fails attempt the
     # other known instance.
     if fallback is not None:
-        try: 
+        try:
             HTTP.Request(video_url).headers
         except:
             video_url = video_url.replace('content5', 'content3')
