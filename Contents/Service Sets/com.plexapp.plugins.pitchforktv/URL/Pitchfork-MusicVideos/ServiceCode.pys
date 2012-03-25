@@ -6,8 +6,9 @@ def MetadataObjectForURL(url):
 
         # The MusicVideos come from external sources, e.g. YouTube and Vimeo. Therefore we just need
         # to determine the source's url and redirect to the appropriate URL Service.
-        external_source = GetExternalSource(url)
-        return URLService.MetadataObjectForURL(external_source)
+        #external_source = GetExternalSource(url)
+        #return URLService.MetadataObjectForURL(external_source)
+        return VideoClipObject(title = "test")
 
     except:
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
@@ -71,6 +72,10 @@ def PlayVideo(url, res):
         for video in media:
             if str(video.video_resolution) == current_resolution:
                 return Redirect(video.parts[0].key)
+
+    # If we can't find the specific low resolution one that was requested, we will return the lowest,
+    # which would normally be 480.
+    return Redirect(media[-1].parts[0].key)
 
 ####################################################################################################
 def GetExternalSource(url):
