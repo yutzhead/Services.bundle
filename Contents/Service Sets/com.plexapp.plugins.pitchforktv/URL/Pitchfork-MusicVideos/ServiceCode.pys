@@ -6,9 +6,8 @@ def MetadataObjectForURL(url):
 
         # The MusicVideos come from external sources, e.g. YouTube and Vimeo. Therefore we just need
         # to determine the source's url and redirect to the appropriate URL Service.
-        #external_source = GetExternalSource(url)
-        #return URLService.MetadataObjectForURL(external_source)
-        return VideoClipObject(title = "test")
+        external_source = GetExternalSource(url)
+        return URLService.MetadataObjectForURL(external_source)
 
     except:
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
