@@ -72,6 +72,10 @@ def PlayVideo(url, res):
             if str(video.video_resolution) == current_resolution:
                 return Redirect(video.parts[0].key)
 
+    # If we can't find the specific low resolution one that was requested, we will return the lowest,
+    # which would normally be 480.
+    return Redirect(media[-1].parts[0].key)
+
 ####################################################################################################
 def GetExternalSource(url):
 

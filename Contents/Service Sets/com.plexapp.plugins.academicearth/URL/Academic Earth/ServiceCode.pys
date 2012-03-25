@@ -38,8 +38,21 @@ def MetadataObjectForURL(url):
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url))]
+    )
+  ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
 
     # Request the page
     page_content = HTTP.Request(url).content
@@ -50,8 +63,14 @@ def MediaObjectsForURL(url):
     yt_match = re.match('.*flashVars.ytID = "(?P<id>[^"]*)".*', page_content, re.DOTALL)
     if yt_match != None:
         video_url = YOU_TUBE_URL % yt_match.groupdict()['id']
+        media = URLService.MediaObjectsForURL(video_url)
+        return Redirect(media[-1].parts[0].key)
+
     else:
         page = HTML.ElementFromString(page_content)
         video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')  
+        media = URLService.MediaObjectsForURL(video_url)
 
-    return URLService.MediaObjectsForURL(video_url)
+        c = ObjectContainer()
+        c.add(VideoClipObject(key = media[-1].parts[0].key))
+        return c
