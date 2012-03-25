@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?gametrailers\.com/video/.*</string>
+				<string>http://(trailers-ak\.|www\.)?gametrailers\.com/(gt_vault|download|video|player)/.*</string>
 			</array>
 		</dict>
 	</dict>

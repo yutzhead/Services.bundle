@@ -1,22 +1,23 @@
 DETAIL_URL = "http://www.gametrailers.com/neo/?page=xml.mediaplayer.Mrss&mgid=mgid:moses:video:gametrailers.com:%s&keyvalues={keyvalues}"
 PLAYER_URL = "http://www.gametrailers.com/neo/?page=xml.mediaplayer.Mediagen&movieId=%s&width=0&height=0&prerollOption=&siteNameInAdTags=&ssc=&impressiontype=24&swfserver=media.mtvnservices.com&testmode=&hd=1&um=0"
 
-
 def NormalizeURL(url):
     return url
     
 def MetadataObjectForURL(url):
+    if url[-4:] == '.mp4':
+        '''this is a direct video file, don't bother trying to return metadata'''
+        return VideoClipObject()
+    else:
+        pass
+    
     video_id = url.split('/')[-1].split('?')[0]
     data = HTML.ElementFromURL(DETAIL_URL % video_id)
     
     title = data.xpath('//item/title')[0].text
-    #Log(title)
     summary = data.xpath('//item/description')[0].text
-    #Log(summary)
     thumb = data.xpath('//channel/image')[0].get('url')
-    #Log(thumb)
     duration = int(HTML.ElementFromURL(PLAYER_URL % video_id).xpath('//rendition')[0].get('duration'))*1000
-    #Log(duration)
     vc = VideoClipObject(
         title = title,
         summary = summary,
@@ -52,11 +53,24 @@ def MediaObjectsForURL(url):
     ]
 
 def PlayVideo(url, fmt):
-    video_id = url.split('/')[-1].split('?')[0]
-    alternate_id = HTML.ElementFromURL(url).xpath('//span[@class="hdButton"]/a')[0].get('href').split('/')[-1].split('?')[0]
+    if url[-4:] == '.mp4':
+        '''this is a direct video url, just return it'''
+        if fmt == 'hd':
+            url = url.replace('640x360_1200_m30', '960x540_3500_m31')
+        else:
+            pass
+        return Redirect(url)
+    else:
+        pass
     
-    video_data_1 = HTML.ElementFromURL(PLAYER_URL % video_id)
-    video_data_2 = HTML.ElementFromURL(PLAYER_URL % alternate_id)
+    video_id = url.split('/')[-1].split('\.html')[0].split('?')[0]
+    try:
+        alternate_id = HTML.ElementFromURL(url).xpath('//span[@class="hdButton"]/a')[0].get('href').split('/')[-1].split('?')[0]
+    except: #No HD video_id found
+        alternate_id = video_id
+    
+    video_data_1 = GetVideoXML(video_id)
+    video_data_2 = GetVideoXML(alternate_id)
     
     bitrate_1 = video_data_1.xpath('//rendition')[0].get('bitrate')
     bitrate_2 = video_data_2.xpath('//rendition')[0].get('bitrate')
@@ -71,5 +85,18 @@ def PlayVideo(url, fmt):
             video_url = video_data_1.xpath('//src')[0].text
         else:
             video_url = video_data_2.xpath('//src')[0].text
-            
+    
+    video_url = String.Unquote(video_url)
+    
     return Redirect(video_url)
+    
+def GetVideoXML(id):
+    '''We sometimes get malformed XML back so we need to encase this in a try-block to catch and reform the bad XML'''
+    try:
+        video_data = XML.ElementFromURL(PLAYER_URL % id, errors='ignore')
+    except:
+        bad_xml = HTTP.Request(PLAYER_URL % id).content
+        xml_fix = bad_xml.split('<src>',1)[0] + '<src>' +String.Quote(bad_xml.split('<src>',1)[1].split('</src>',1)[0]) + '</src>' + bad_xml.split('<src>',1)[1].split('</src>',1)[1]
+        video_data = XML.ElementFromString(xml_fix)
+        ### Seems like these point to flash-only videos. Works fine for the plugin but may require further attention for myPlex when the bookmarklet supports user accounts ###
+    return video_data
