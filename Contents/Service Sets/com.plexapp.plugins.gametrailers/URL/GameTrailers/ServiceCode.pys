@@ -1,6 +1,5 @@
 DETAIL_URL = "http://www.gametrailers.com/neo/?page=xml.mediaplayer.Mrss&mgid=mgid:moses:video:gametrailers.com:%s&keyvalues={keyvalues}"
 PLAYER_URL = "http://www.gametrailers.com/neo/?page=xml.mediaplayer.Mediagen&movieId=%s&width=0&height=0&prerollOption=&siteNameInAdTags=&ssc=&impressiontype=24&swfserver=media.mtvnservices.com&testmode=&hd=1&um=0"
-#############"http://www.gametrailers.com/neo/?page=xml.mediaplayer.Mediagen&movieId=%s&width=0&height=0&prerollOption=&siteNameInAdTags=&ssc=&impressiontype=24&swfserver=media.mtvnservices.com&testmode=&hd=1&um=0
 
 def NormalizeURL(url):
     return url
@@ -16,13 +15,9 @@ def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(DETAIL_URL % video_id)
     
     title = data.xpath('//item/title')[0].text
-    #Log(title)
     summary = data.xpath('//item/description')[0].text
-    #Log(summary)
     thumb = data.xpath('//channel/image')[0].get('url')
-    #Log(thumb)
     duration = int(HTML.ElementFromURL(PLAYER_URL % video_id).xpath('//rendition')[0].get('duration'))*1000
-    #Log(duration)
     vc = VideoClipObject(
         title = title,
         summary = summary,
@@ -92,7 +87,6 @@ def PlayVideo(url, fmt):
             video_url = video_data_2.xpath('//src')[0].text
     
     video_url = String.Unquote(video_url)
-    Log(video_url)
     
     return Redirect(video_url)
     
@@ -102,8 +96,7 @@ def GetVideoXML(id):
         video_data = XML.ElementFromURL(PLAYER_URL % id, errors='ignore')
     except:
         bad_xml = HTTP.Request(PLAYER_URL % id).content
-        Log(bad_xml)
         xml_fix = bad_xml.split('<src>',1)[0] + '<src>' +String.Quote(bad_xml.split('<src>',1)[1].split('</src>',1)[0]) + '</src>' + bad_xml.split('<src>',1)[1].split('</src>',1)[1]
-        Log(xml_fix)
         video_data = XML.ElementFromString(xml_fix)
+        ### Seems like these point to flash-only videos. Works fine for the plugin but may require further attention for myPlex when the bookmarklet supports user accounts ###
     return video_data
