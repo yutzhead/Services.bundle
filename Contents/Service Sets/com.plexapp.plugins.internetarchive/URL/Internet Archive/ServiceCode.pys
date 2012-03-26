@@ -192,28 +192,28 @@ def GetTracks(url):
 def MediaObjectsForTrack(url):
     return [
         MediaObject(
-            parts = [PartObject(key=Callback(PlayAudio, url=url, fmt='Flac'))],
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='flac', fmt='Flac'))],
             container = Container.FLAC,
             bitrate = 256,
             audio_codec = AudioCodec.FLAC,
             audio_channels = 2
             ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayAudio, url=url, fmt='VBR MP3'))],
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='VBR MP3'))],
             container = Container.MP3,
             bitrate = 192,
             audio_codec = AudioCodec.MP3,
             audio_channels = 2
             ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayAudio, url=url, fmt='Ogg Vorbis'))],
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='ogg', fmt='Ogg Vorbis'))],
             container = Container.OGG,
             bitrate = 128,
             audio_codec = AudioCodec.VORBIS,
             audio_channels = 2
             ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayAudio, url=url, fmt='64Kbps MP3'))],
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='64Kbps MP3'))],
             container = Container.MP3,
             bitrate = 64,
             audio_codec = AudioCodec.MP3,
