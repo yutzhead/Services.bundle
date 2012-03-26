@@ -136,7 +136,7 @@ def GetTracks(url):
     tracks = []
     for file in track_list.xpath('//file'):
         try:
-            if file.xpath('./format')[0].text in ['text', 'metadata', 'Checksums', 'Flac FingerPrint']:
+            if file.xpath('./format')[0].text in ['text', 'metadata', 'Checksums', 'Flac FingerPrint', 'Unknown', 'Shorten', 'ISO Image', 'Derivation Rules']:
                 '''we don't care about non-audio files, so ignore them'''
                 continue
             else:
