@@ -95,11 +95,11 @@ def MediaObjectsForURL(url):
         making an http request to find out.'''
         page = HTML.ElementFromURL(url)
         media_type = page.xpath('.//div[@class="breadcrumbs"]/a')[0].get('href').split('/')[-1]
-        if media_type == 'audio':
-            '''return MediaObjects for the given Album, where each part is a track'''
-            return AudioObjectsForURL(url)
-        elif media_type == 'movies':
+        if media_type == 'movies':
             return VideoObjectsForURL(url)
+        elif media_type == 'audio':
+            '''return MediaObjects for the given Album, where each part is a track'''
+            Log('ERROR - This URL is an audio page which should have been caught and broken into tracks. ')
     return
     
 ####################################################################################################
