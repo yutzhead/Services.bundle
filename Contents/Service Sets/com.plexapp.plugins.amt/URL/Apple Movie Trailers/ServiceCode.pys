@@ -66,8 +66,11 @@ def MediaObjectsForURL(url):
       return items
 
   for video in videos.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS):
-    duration = video.xpath('./a:key[text()="duration"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
     video_url = video.xpath('./a:key[text()="previewURL"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+
+    duration = 0
+    try: duration = video.xpath('./a:key[text()="duration"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+    except: pass
 
     ipod, video_resolution = VideoInfo(video_url)
 
