@@ -135,6 +135,7 @@ def GetXML(url):
 @indirect
 def PlayVideo(url, fmt):
 
+	video_url = None
 	xml = GetXML(url)
 
 	if xml:
@@ -159,19 +160,23 @@ def PlayVideo(url, fmt):
 				if key in available:
 					video_url = available[key]
 					break
-			else:
-				key = QUALITY[-1]
-				video_url = available[key]
 
-		c = ObjectContainer()
+			if not video_url:
+				for i in reversed(range(0, start_index)):
+					key = QUALITY[i]
+					if key in available:
+						video_url = available[key]
+						break
 
-		c.add(VideoClipObject(
-			items = [
-				MediaObject(
-					parts = [PartObject(key=video_url)]
-				)
-			]
-		))
+	c = ObjectContainer()
 
-		c.http_headers = HTTP_HEADERS
-		return c
+	c.add(VideoClipObject(
+		items = [
+			MediaObject(
+				parts = [PartObject(key=video_url)]
+			)
+		]
+	))
+
+	c.http_headers = HTTP_HEADERS
+	return c
