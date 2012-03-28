@@ -132,20 +132,17 @@ def PlayVideo(url, fmt):
 				break
 
 	# Return the requested quality or figure out what the next best available quality is
-	if fmt in available:
-		return Redirect(available[fmt])
-	else:
-		start_index = QUALITY.index(fmt) + 1
-		end_index = len(QUALITY)
+	start_index = QUALITY.index(fmt)
+	end_index = len(QUALITY)
 
-		for i in range(start_index, end_index):
-			key = QUALITY[i]
-			if key in available:
-				return Redirect(available[key])
-				break
+	for i in range(start_index, end_index):
+		key = QUALITY[i]
+		if key in available:
+			return Redirect(available[key])
+			break
 
-		for i in reversed(range(0, start_index)):
-			key = QUALITY[i]
-			if key in available:
-				return Redirect(available[key])
-				break
+	for i in reversed(range(0, start_index)):
+		key = QUALITY[i]
+		if key in available:
+			return Redirect(available[key])
+			break
