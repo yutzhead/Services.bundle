@@ -143,6 +143,9 @@ def PlayVideo(url, fmt):
 			if key in available:
 				return Redirect(available[key])
 				break
-		else:
-			key = QUALITY[-1]
-			return Redirect(available[key])
+
+		for i in reversed(range(0, start_index)):
+			key = QUALITY[i]
+			if key in available:
+				return Redirect(available[key])
+				break
