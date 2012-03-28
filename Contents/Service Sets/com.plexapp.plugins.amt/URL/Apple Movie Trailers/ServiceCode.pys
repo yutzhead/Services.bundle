@@ -2,7 +2,7 @@ import re
 
 HTTP_HEADERS = {'User-Agent':'iTunes/10.6'}
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
-QUALITY = ('HD 1080p', 'HD 720p', 'HD 480p', 'Large', 'Medium', 'Small')
+QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large', 'Medium', 'Small']
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -149,24 +149,21 @@ def PlayVideo(url, fmt):
 				available[key] = video_url
 
 		# Find the requested video quality or figure out what the next best available quality is
-		if fmt in available:
-			video_url = available[fmt]
-		else:
-			start_index = QUALITY.index(fmt) + 1
-			end_index = len(QUALITY)
+		start_index = QUALITY.index(fmt)
+		end_index = len(QUALITY)
 
-			for i in range(start_index, end_index):
+		for i in range(start_index, end_index):
+			key = QUALITY[i]
+			if key in available:
+				video_url = available[key]
+				break
+
+		if not video_url:
+			for i in reversed(range(0, start_index)):
 				key = QUALITY[i]
 				if key in available:
 					video_url = available[key]
 					break
-
-			if not video_url:
-				for i in reversed(range(0, start_index)):
-					key = QUALITY[i]
-					if key in available:
-						video_url = available[key]
-						break
 
 	c = ObjectContainer()
 
