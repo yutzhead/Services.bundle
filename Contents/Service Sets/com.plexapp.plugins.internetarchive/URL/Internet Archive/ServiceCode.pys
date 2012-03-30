@@ -2,6 +2,7 @@ import re, string
 
 METADATA_BASE_URL = "http://archive.org"
 BASE_URL = "http://www.archive.org"
+INTERNET_ARCHIVE_LOGO = "http://archive.org/images/glogo.png"
 
 ####################################################################################################
 
@@ -71,10 +72,13 @@ def Thumb(url):
         else:
           pass
       except:
-        '''grab the list of files to find an appropriate thumbnail'''
-        files = XML.ElementFromURL(FileListURL(url))
-        '''take the first available jpeg thumbnail'''
-        thumb_url = DownloadURL(url) + files.xpath('//file[contains(@name, ".jpg")]')[0].get('name')
+        try:
+          '''grab the list of files to find an appropriate thumbnail'''
+          files = XML.ElementFromURL(FileListURL(url))
+          '''take the first available jpeg thumbnail'''
+          thumb_url = DownloadURL(url) + files.xpath('//file[contains(@name, ".jpg")]')[0].get('name')
+        except:
+          thumb_url = INTERNET_ARCHIVE_LOGO
   
   data = HTTP.Request(thumb_url, cacheTime=0).content
   return DataObject(data, 'image/jpeg')
