@@ -139,9 +139,13 @@ def GetTracks(url):
     track_list = XML.ElementFromURL(FileListURL(url))
     tracks = []
     count = 0
+    Flac_Available = False
     for file in track_list.xpath('//file'):
         file_format = file.xpath('./format')[0].text
-      
+        if file_format == 'Flac':
+          Flac_Available = True
+        else:
+          pass
         try:
             if file_format not in ['64Kbps MP3', 'Ogg Vorbis', 'VBR MP3', 'Flac']:
                 '''we don't care about non-audio files, so ignore them'''
@@ -209,6 +213,11 @@ def GetTracks(url):
                     '''format is float(s)'''
                     duration = int(float(length)*1000)
                 
+                if Flac_Available:
+                  '''include an ugly hackish pointer so that id FLAC files aren't available,
+                      the player won't try to grab them because falling back to a different format doesn't work'''
+                  url = url + "#FLAC_AVAILABLE#"
+                
                 '''build a custom url for each TrackObject since there isn't one except for the actual media files'''
                 track_url = url + '#Track%s' % index
                 
@@ -241,6 +250,7 @@ def GetTracks(url):
 ####################################################################################################
 
 def MediaObjectsForTrack(url):
+  if "#FLAC_AVAILABLE#" in url:
     return [
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='flac', fmt='Flac'))],
@@ -249,6 +259,30 @@ def MediaObjectsForTrack(url):
             audio_codec = AudioCodec.FLAC,
             audio_channels = 2
             ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='VBR MP3'))],
+            container = Container.MP3,
+            bitrate = 192,
+            audio_codec = AudioCodec.MP3,
+            audio_channels = 2
+            ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='ogg', fmt='Ogg Vorbis'))],
+            container = Container.OGG,
+            bitrate = 128,
+            audio_codec = AudioCodec.VORBIS,
+            audio_channels = 2
+            ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='64Kbps MP3'))],
+            container = Container.MP3,
+            bitrate = 64,
+            audio_codec = AudioCodec.MP3,
+            audio_channels = 2
+            )
+        ]
+  else:
+    return [
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='VBR MP3'))],
             container = Container.MP3,
@@ -376,10 +410,10 @@ def PlayAudio(url, fmt=None):
         else:
           pass
       
-    
     media_url = DownloadURL(url) + file_name
-    return Redirect(media_url)
     
+    return Redirect(media_url)
+
 ####################################################################################################
 
 def FileListURL(url):
