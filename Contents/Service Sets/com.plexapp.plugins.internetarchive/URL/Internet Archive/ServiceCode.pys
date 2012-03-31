@@ -168,6 +168,11 @@ def GetTracks(url):
                   except:
                     '''if there's no track number, use the title as reference instead'''
                     index = file.xpath('./title')[0].text
+                    '''try to grab a track number from the beginning of the title, so that we can keep the tracks in order'''
+                    try:
+                      count = int(re.search("^([0-9]+)", index).group(1))
+                    except:
+                      pass
                     if index in tracks:
                         '''don't add duplicates to the list'''
                         continue
@@ -180,12 +185,12 @@ def GetTracks(url):
                     title = file.get('name')
                     '''remove the extension'''
                     title = title.rsplit('\.',1)[0]
+                
                 try:
                     album = file.xpath('./album')[0].text
                 except:
-                    '''grab the album title from the object's parent?'''
                     album = None
-                  
+                
                 try:
                     artist = file.xpath('./creator')[0].text
                 except:
@@ -204,17 +209,18 @@ def GetTracks(url):
                     '''format is float(s)'''
                     duration = int(float(length)*1000)
                 
-                tracks.append(int(index))
-                count = count + 1
-                
                 '''build a custom url for each TrackObject since there isn't one except for the actual media files'''
                 track_url = url + '#Track%s' % index
                 
                 try:
-                    index=int(index)
+                  index=int(index)
+                  tracks.append(index)
                 except:
-                    index=int(count)
-                  
+                  tracks.append(index)
+                  index=int(count)
+                
+                count = count + 1
+                
                 oc.add(TrackObject(
                     url=track_url,
                     title=title, 
@@ -280,7 +286,7 @@ def PlayAudio(url, fmt=None):
     ''' if the "track" variable is a number, use the track number to find the right file, otherwise
       the track variable is actually the track title and we need to use the title to find the right file'''
     try:
-      track_num = int(track)
+      track = int(track)
       Track_Names = False
     except:
       Track_Names = True
@@ -291,25 +297,31 @@ def PlayAudio(url, fmt=None):
         '''only return ogg vorbis if it is specifically requested'''
         for file in track_list.xpath('//file'):
           if not Track_Names:
-            if file.xpath('./track')[0].text != track:
-              pass
-            else:
-              if file.xpath('./format')[0].text == "Ogg Vorbis":
-                file_name = file.get('name')
-                found = True
-                break
+            try:
+              if int(file.xpath('./track')[0].text) != track:
+                pass
               else:
-                continue
+                if file.xpath('./format')[0].text == "Ogg Vorbis":
+                  file_name = file.get('name')
+                  found = True
+                  break
+                else:
+                  continue
+            except:
+              continue
           else:
-            if file.xpath('./title')[0].text != track:
-              pass
-            else:
-              if file.xpath('./format')[0].text == "Ogg Vorbis":
-                file_name = file.get('name')
-                found = True
-                break
+            try:
+              if file.xpath('./title')[0].text != track:
+                pass
               else:
-                continue
+                if file.xpath('./format')[0].text == "Ogg Vorbis":
+                  file_name = file.get('name')
+                  found = True
+                  break
+                else:
+                  continue
+            except:
+              continue
 
         '''if ogg vorbis is requested but not found, return "64Kbps MP3" instead'''
         if not found:
@@ -319,28 +331,34 @@ def PlayAudio(url, fmt=None):
     
     '''iterate through the track files until the desired format (or a suitable alternative) is found'''
     while not found:
-      if fmt >= 0:
+      if fmt > -1:
         for file in track_list.xpath('//file'):
           if not Track_Names:
-            if file.xpath('./track')[0].text != track:
-              pass
-            else:
-              if file.xpath('./format')[0].text == FMTS[fmt]:
-                file_name = file.get('name')
-                found = True
-                break
+            try:
+              if int(file.xpath('./track')[0].text) != track:
+                pass
               else:
-                continue
+                if file.xpath('./format')[0].text == FMTS[fmt]:
+                  file_name = file.get('name')
+                  found = True
+                  break
+                else:
+                  continue
+            except:
+              continue
           else:
-            if file.xpath('./title')[0].text != track:
-              pass
-            else:
-              if file.xpath('./format')[0].text == FMTS[fmt]:
-                file_name = file.get('name')
-                found = True
-                break
+            try:
+              if file.xpath('./title')[0].text != track:
+                pass
               else:
-                continue
+                if file.xpath('./format')[0].text == FMTS[fmt]:
+                  file_name = file.get('name')
+                  found = True
+                  break
+                else:
+                  continue
+            except:
+              continue
 
         '''if the desired format isn't found, return the next available option'''
         if not found:
