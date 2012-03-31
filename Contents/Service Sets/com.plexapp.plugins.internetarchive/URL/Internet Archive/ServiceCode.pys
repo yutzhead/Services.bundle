@@ -2,7 +2,7 @@ import re, string
 
 METADATA_BASE_URL = "http://archive.org"
 BASE_URL = "http://www.archive.org"
-INTERNET_ARCHIVE_LOGO = "http://bib.archive.org/files/2011/09/archive-logo-notext-300x300.png"#"http://blog.archive.org/wp-content/uploads/2011/05/ialogo.png"
+INTERNET_ARCHIVE_LOGO = "http://bib.archive.org/files/2011/09/archive-logo-notext-300x300.png"
 
 ####################################################################################################
 
