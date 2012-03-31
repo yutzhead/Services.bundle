@@ -2,7 +2,7 @@ import re, string
 
 METADATA_BASE_URL = "http://archive.org"
 BASE_URL = "http://www.archive.org"
-INTERNET_ARCHIVE_LOGO = "http://blog.archive.org/wp-content/uploads/2011/05/ialogo.png"
+INTERNET_ARCHIVE_LOGO = "http://bib.archive.org/files/2011/09/archive-logo-notext-300x300.png"#"http://blog.archive.org/wp-content/uploads/2011/05/ialogo.png"
 
 ####################################################################################################
 
@@ -149,7 +149,7 @@ def GetTracks(url):
             else:
                 try:
                     index = file.xpath('./track')[0].text
-                    if index in tracks:
+                    if int(index) in tracks:
                         '''don't add duplicates to the list'''
                         continue
                     else:
@@ -159,7 +159,7 @@ def GetTracks(url):
                     '''parse the original filename to get the track number'''
                     original = str(file.xpath('./original')[0].text).rsplit('.', 1)[0]
                     index = original[-2:]
-                    if index in tracks:
+                    if int(index) in tracks:
                         '''don't add duplicates to the list'''
                         continue
                     else:
@@ -204,8 +204,7 @@ def GetTracks(url):
                     '''format is float(s)'''
                     duration = int(float(length)*1000)
                 
-                tracks.append(index)
-                Log(tracks)
+                tracks.append(int(index))
                 count = count + 1
                 
                 '''build a custom url for each TrackObject since there isn't one except for the actual media files'''
