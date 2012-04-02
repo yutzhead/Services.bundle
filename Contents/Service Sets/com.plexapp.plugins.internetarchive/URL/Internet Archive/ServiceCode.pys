@@ -214,8 +214,7 @@ def GetTracks(url):
                     duration = int(float(length)*1000)
                 
                 if Flac_Available:
-                  '''include an ugly hackish pointer so that id FLAC files aren't available,
-                      the player won't try to grab them because falling back to a different format doesn't work'''
+                    '''include an ugly hackish pointer so that id FLAC files aren't available, the player won't try to grab them because falling back to a different format doesn't work'''
                     track_url = url + "#FLAC_AVAILABLE#" + '#Track%s' % index
                 else:
                     '''build a custom url for each TrackObject since there isn't one except for the actual media files'''
