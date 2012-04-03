@@ -1,6 +1,8 @@
 import re
 
 CONFIG_URL = "%s.config?pagetype=mediavideoplayer&windowLocation=%s&page_url=%s&windowLocation=%s"
+BITRATES = ['500000','1000000','2500000','3000000']
+IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -48,7 +50,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='2500000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500000'))],
 			container = Container.MP4,
 			video_resolution = '540',
 			aspect_ratio = '1.77',
@@ -59,7 +61,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='1000000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1000000'))],
 			container = Container.MP4,
 			video_resolution = '360',
 			aspect_ratio = '1.77',
@@ -70,7 +72,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='500000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='500000'))],
 			container = Container.MP4,
 			video_resolution = '360',
 			aspect_ratio = '1.77',
@@ -84,23 +86,22 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, bitrate):
-    
-	data = JSON.ObjectFromURL(CONFIG_URL % (url,String.Quote(url, usePlus=False),String.Quote(url, usePlus=False),String.Quote(url, usePlus=False)))
+
+	data = JSON.ObjectFromURL(CONFIG_URL % (url, String.Quote(url, usePlus=False), String.Quote(url, usePlus=False), String.Quote(url, usePlus=False)))
 	smil = XML.ElementFromURL(data['playlist']['media']['url'])
-	BITRATES = ['500000','1000000','2500000','3000000']
 	bitrate = BITRATES.index(bitrate)
 
 	video_url = ''
 
 	while bitrate > -1:
 		try:
-			video_url = smil.xpath('//video[@system-bitrate="'+BITRATES[bitrate]+'"]')[0].get("src")
+			video_url = smil.xpath('//smil:video[@system-bitrate="'+BITRATES[bitrate]+'"]', namespaces=IGN_NS)[0].get("src")
 			break
 		except:
 			bitrate = bitrate -1
 
 	if video_url == '':
-		video_url = smil.xpath('//video')[0].get("src")
+		video_url = smil.xpath('//smil:video', namespaces=IGN_NS)[0].get("src")
 	else:
 		pass
 
