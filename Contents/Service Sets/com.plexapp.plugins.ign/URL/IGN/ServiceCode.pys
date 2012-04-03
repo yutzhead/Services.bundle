@@ -69,7 +69,7 @@ def MediaObjectsForURL(url):
 			audio_channels = 2,
 			optimized_for_streaming = True
 		),
-    	MediaObject(
+		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='500000'))],
 			container = Container.MP4,
 			video_resolution = '360',
@@ -85,25 +85,25 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate):
     
-    data = JSON.ObjectFromURL(CONFIG_URL % (url,String.Quote(url, usePlus=False),String.Quote(url, usePlus=False),String.Quote(url, usePlus=False)))
-    smil = XML.ElementFromURL(data['playlist']['media']['url'])
-    BITRATES = ['500000','1000000','2500000','3000000']
+	data = JSON.ObjectFromURL(CONFIG_URL % (url,String.Quote(url, usePlus=False),String.Quote(url, usePlus=False),String.Quote(url, usePlus=False)))
+	smil = XML.ElementFromURL(data['playlist']['media']['url'])
+	BITRATES = ['500000','1000000','2500000','3000000']
 	bitrate = BITRATES.index(bitrate)
-    
-    video_url = ''
-    
-    while bitrate > -1:
-        try:
-            video_url = smil.xpath('//video[@system-bitrate="'+BITRATES[bitrate]+'"]')[0].get("src")
-            break
-        except:
-            bitrate = bitrate -1
-    
-    if video_url == '':
-        video_url = smil.xpath('//video')[0].get("src")
-    else:
-        pass
-    
-    video_url = 'http://%s' % video_url
-    
-    return Redirect(video_url)
+
+	video_url = ''
+
+	while bitrate > -1:
+		try:
+			video_url = smil.xpath('//video[@system-bitrate="'+BITRATES[bitrate]+'"]')[0].get("src")
+			break
+		except:
+			bitrate = bitrate -1
+
+	if video_url == '':
+		video_url = smil.xpath('//video')[0].get("src")
+	else:
+		pass
+
+	video_url = 'http://%s' % video_url
+
+	return Redirect(video_url)
