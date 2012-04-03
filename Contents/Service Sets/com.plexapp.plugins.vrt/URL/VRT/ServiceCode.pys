@@ -31,7 +31,7 @@ def MetadataObjectForURL(url):
     summary = ''
 
   try:
-    thumb = re.search("\['thumb'\].+?'([^']+)", details).group(1)
+    thumb = re.search("\['thumb'\].+?'([^']+)", details).group(1).replace('\/', '/')
 
     if thumb[0:4] != 'http':
       thumb = 'http://%s%s' % (url.split('/')[2], thumb)
@@ -62,8 +62,8 @@ def PlayVideo(url):
   details = HTTP.Request(url, cacheTime=CACHE_1DAY).content
 
   try:
-    rtmpServer = re.search("\['rtmpServer'\].+?'([^']+)", details).group(1)
-    rtmpPath = re.search("\['rtmpPath'\].+?'([^']+)", details).group(1)
+    rtmpServer = re.search("\['rtmpServer'\].+?'([^']+)", details).group(1).replace('\/', '/')
+    rtmpPath = re.search("\['rtmpPath'\].+?'([^']+)", details).group(1).replace('\/', '/')
     rtmpPath = re.sub('\.flv$', '', rtmpPath)
 
     return Redirect(RTMPVideoURL(url=rtmpServer, clip=rtmpPath))
