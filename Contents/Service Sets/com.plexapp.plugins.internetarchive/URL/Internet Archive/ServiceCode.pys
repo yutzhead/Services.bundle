@@ -16,8 +16,11 @@ def MetadataObjectForURL(url):
     '''gather the metadata that doesn't vary between media types'''
     rating = GetRating(url)
     title = meta_xml.xpath('//title')[0].text
-    summary = meta_xml.xpath('//description')[0].text
-    
+    try:
+      summary = meta_xml.xpath('//description')[0].text
+    except:
+      summary = meta_xml.xpath('//notes')[0].text
+      
     '''gather the media-type specific metadata and return the appropriate object'''
     if meta_xml.xpath('//mediatype')[0].text in ['audio', 'etree']:
         return AlbumObject(
@@ -214,7 +217,8 @@ def GetTracks(url):
                     duration = int(float(length)*1000)
                 
                 if Flac_Available:
-                    '''include an ugly hackish pointer so that id FLAC files aren't available, the player won't try to grab them because falling back to a different format doesn't work'''
+                    '''include an ugly hackish pointer so that if FLAC files aren't available,
+                    the player won't try to grab them because falling back to a different format doesn't work'''
                     track_url = url + "#FLAC_AVAILABLE#" + '#Track%s' % index
                 else:
                     '''build a custom url for each TrackObject since there isn't one except for the actual media files'''
@@ -311,6 +315,7 @@ def PlayAudio(url, fmt=None):
     FMTS = ['64Kbps MP3', 'VBR MP3', 'Flac']
     track = url.split('#Track')[1]
     url = url.split('#Track')[0]
+    url = ''.join(url.split(("#FLAC_AVAILABLE#")))
     track_list = XML.ElementFromURL(FileListURL(url))
     
     file_name = ''
@@ -410,7 +415,6 @@ def PlayAudio(url, fmt=None):
           pass
       
     media_url = DownloadURL(url) + file_name
-    
     return Redirect(media_url)
 
 ####################################################################################################
