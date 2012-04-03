@@ -87,7 +87,7 @@ def PlayVideo(url, bitrate):
     
     data = JSON.ObjectFromURL(CONFIG_URL % (url,String.Quote(url, usePlus=False),String.Quote(url, usePlus=False),String.Quote(url, usePlus=False)))
     smil = XML.ElementFromURL(data['playlist']['media']['url'])
-    BITRATES = ['3000000','2500000','1000000','500000']
+    BITRATES = ['500000','1000000','2500000','3000000']
 	bitrate = BITRATES.index(bitrate)
     
     video_url = ''
