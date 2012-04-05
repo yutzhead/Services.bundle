@@ -10,11 +10,11 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url)
     title = data.xpath('//title')[0].text.split('|')[0]
-    #Log(title)
     summary = data.xpath('//meta[@name="description"]')[0].get('content')
-    #Log(summary)
-    thumb = BASE_URL + data.xpath('//div[@class="blipframe"]//img')[0].get('src')
-    #Log(thumb)
+    try:
+        thumb = BASE_URL + data.xpath('//div[@class="blipframe"]//img')[0].get('src')
+    except:
+        thumb = None
     duration = data.xpath('//div[@id="more-section"]//p')[-1].text.strip()
     dur_ms = 0
     durationParts = duration.split(' ')
@@ -28,8 +28,6 @@ def MetadataObjectForURL(url):
         else:
             ms = 0
         dur_ms += ms
-      
-    #Log(dur_ms)
   
     vc = VideoClipObject(
         title = title,
@@ -57,5 +55,4 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
     data = HTML.ElementFromURL(url)
     flv_url = data.xpath('//div[@id="dls-section"]//a')[0].get('href')
-    #Log(flv_url)
     return Redirect(flv_url)
