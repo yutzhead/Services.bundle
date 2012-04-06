@@ -43,6 +43,9 @@ def MetadataObjectForURL(url):
 			except:
 				thumb = None
 
+		if thumb is not None and not thumb.startswith('http'):
+			thumb = 'http://trailers.apple.com%s' % thumb
+
 		# Construct a metadata item
 		return VideoClipObject(
 			title = title,
