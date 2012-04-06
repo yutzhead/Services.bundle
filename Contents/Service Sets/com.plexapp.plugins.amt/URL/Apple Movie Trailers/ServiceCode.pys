@@ -131,6 +131,10 @@ def GetXML(url):
 		except:
 			pass
 
+	if title.startswith('the'):
+		url = 'http://trailers.apple.com/trailers/%s/%s/#%s' % (studio, title[3:], video)
+		return GetXML(url)
+
 	Log('Loading XML failed!')
 	return None
 
