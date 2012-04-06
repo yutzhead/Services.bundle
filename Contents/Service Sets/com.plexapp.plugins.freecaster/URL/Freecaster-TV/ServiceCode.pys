@@ -1,26 +1,19 @@
-import re
+import string
 
-IPAD_HTTP_HEADERS = { 'User-Agent' : 'Mozilla/5.0(iPad; U; CPU iPhone OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B314 Safari/531.21.10' }
-FREECASTER_INFO_URL	   = "http://freecaster.tv/player/info/%s?transaction_id=&source_url=%s&source=freecaster"
+FREECASTER_INFO_URL	   = "http://freecaster.tv/player/info/%s?source=freecaster"
+
+####################################################################################################
+
+def NormalizeURL(url):
+    new_url = url.replace("www.freecaster.tv","extreme.com")
+    return new_url
 
 ####################################################################################################
 
 def MetadataObjectForURL(url):
     try:
-        # Load the URL and extract the title identifier from the page.
-        if "freecaster.tv" in url:
-            flashVars = HTML.ElementFromURL(url).xpath('//param[@name="flashvars"]')[0].get("value")
-            id = flashVars.split(";")[0].split("&")[0].replace("id=","")
-        else:
-            flashVars = HTML.ElementFromURL(url).xpath('//link[@rel="video_src"]')[0].get('href')
-            id = flashVars.split('id=')[1].split('&')[0]
-
-        # We could extract the necessary information from the page, but this could potentially fail
-        # when the site changes. Instead, we will use the id and use the FREECASTER_INFO_URL so that
-        # get the title information in a more friendly way.
-        infoUrl = FREECASTER_INFO_URL % (id, String.Encode(url))
-        xmlInfo = XML.ElementFromURL(infoUrl)
-
+        xmlInfo = GetInfo(url)
+        
         # Extract the available meta data from the page
         title = xmlInfo.xpath("//title/text()")[0]
         description = xmlInfo.xpath("//description/text()")[0]
@@ -45,7 +38,7 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         container = Container.MP4,
         bitrate = 5120,
-        video_resolution = 1920,
+        video_resolution = 1080,
         audio_channels = 2,
         parts = [PartObject(key=Callback(PlayVideo, url=url, res='full-hd'))]
       ),
@@ -54,7 +47,7 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         container = Container.MP4,
         bitrate = 2560,
-        video_resolution = 1280,
+        video_resolution = 720,
         audio_channels = 2,
         parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
       ),
@@ -63,7 +56,7 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         container = Container.MP4,
         bitrate = 1280,
-        video_resolution = 640,
+        video_resolution = 360,
         audio_channels = 2,
         parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
       ),
@@ -72,21 +65,18 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         container = Container.MP4,
         bitrate = 640,
-        video_resolution = 320,
+        video_resolution = 180,
         audio_channels = 2,
         parts = [PartObject(key=Callback(PlayVideo, url=url, res='ld'))]
       )
     ]
 
 ####################################################################################################
+
 def PlayVideo(url, res):
-    # We'll start by requesting the title page but using the HTTP headers (and user-agent) associated with the iPad. The
-    # content provider is know to provide iPad specific pages which therefore might contain direct links to the MP4 streams.
-    titlePage = HTML.ElementFromURL(url, headers = IPAD_HTTP_HEADERS, cacheTime = 0)
-
-    # The page will contain a number of mp4 videos. 
-    mp4VideoElements = titlePage.xpath('//video[@id="fc_player_video"]//source[@type="video/mp4"]')
-
+    
+    info = GetInfo(url)
+    mp4Streams = info.xpath('//html_streams/stream')
     # Convert the requested resolution, into a suitable indexer into the mp4 list. It's possible that the requested quality
     # is not available. Therefore, we must clamp it to the size of the list.
     index = 0
@@ -96,7 +86,21 @@ def PlayVideo(url, res):
       index = 2
     elif res == 'full-hd':
       index = 3
-    index = max(0, min(index, len(mp4VideoElements)-1))
+    index = max(0, min(index, len(mp4Streams)-1))
 
     # Redirect to the appropriate stream.
-    return Redirect(mp4VideoElements[index].get('src'))
+    return Redirect(mp4Streams[index].text)
+    
+####################################################################################################
+
+def GetInfo(url):
+    # Load the URL and extract the title identifier from the page.
+    flashVars = HTML.ElementFromURL(url).xpath('//link[@rel="video_src"]')[0].get('href')
+    id = flashVars.split('id=')[1].split('&')[0]
+    # We could extract the necessary information from the page, but this could potentially fail
+    # when the site changes. Instead, we will use the id and use the FREECASTER_INFO_URL so that
+    # get the title information in a more friendly way.
+    infoUrl = FREECASTER_INFO_URL % (id)
+    xmlInfo = XML.ElementFromURL(infoUrl)
+    
+    return xmlInfo
