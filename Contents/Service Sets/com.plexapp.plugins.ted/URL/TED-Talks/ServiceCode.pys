@@ -10,7 +10,7 @@ def TestURLs():
   test_urls = []
 
   page = HTML.ElementFromURL(TED_BASE + '/talks', cacheTime = CACHE_1HOUR)
-  videos = page.xpath("//div[@id = 'content']//a")
+  videos = page.xpath('//div[@id="content"]//div[@class="col clearfix"]/a')
   for url in videos:
     url = TED_BASE + url.get('href')
     test_urls.append(url)
