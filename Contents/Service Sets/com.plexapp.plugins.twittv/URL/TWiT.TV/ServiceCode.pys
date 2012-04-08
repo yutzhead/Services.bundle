@@ -28,6 +28,8 @@ def MetadataObjectForURL(url):
 			# If there's just one text element in this div, then that's the summary (used for older episodes mostly)
 			if len( page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()') ) == 1:
 				summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()')[0].strip()
+			else:
+				summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]//p[1]/text()')[0].strip()
 		except:
 			try:
 				# Use the first paragraph as summary
