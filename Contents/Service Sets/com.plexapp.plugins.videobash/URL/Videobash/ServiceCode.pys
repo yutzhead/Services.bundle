@@ -1,3 +1,5 @@
+VIDEO_PATTERN = Regex("flashvars \+= .*file=. \+ 'http://' \+ '(.*\.mp4).*'")
+
 import re
 
 ####################################################################################################
@@ -40,8 +42,6 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-    page = HTML.ElementFromURL(url)
-
-    flashvars = page.xpath("//object/param[@name='flashvars']")[0].get('value')
-    video_url = re.search('video_url=([^&]+)&', flashvars).group(1)
+    content = HTTP.Request(url).content
+    video_url = "http://" + re.search(VIDEO_PATTERN, content).group(1)
     return Redirect(video_url)
