@@ -78,11 +78,12 @@ def GetJson(url):
 	html = HTTP.Request(url, headers=httpHeaders).content
 
 	# Extract the relevant JSON part
-	pattern = re.compile('data\s:\s(\{.+\})')
+	pattern = re.compile('("client_JSON":\{.+\})')
 	result = pattern.search(html)
 
 	if result:
-		json_string = result.group(1).replace("'client_JSON'", '"client_JSON"')
+		json_string = '{%s' % result.group(1)
+		json_string = re.sub('<iframe.+?/iframe>', '', json_string)
 		json = JSON.ObjectFromString(json_string)['client_JSON']['episode']
 		json['relatedShows'] = []
 
