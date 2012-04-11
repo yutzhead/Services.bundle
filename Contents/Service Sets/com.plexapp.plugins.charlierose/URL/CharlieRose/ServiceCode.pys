@@ -1,11 +1,11 @@
-import re
+FLV_URL_PATTERN = Regex('"url":"(http://charlierose\..+\.flv)"')
 
 def NormalizeURL(url):
     return url
     
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url)
-    title = data.xpath('//title')[0].text
+    title = data.xpath('//meta[@name="title"]')[0].get('content')
     thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
     mo = VideoClipObject(
         title = title,
@@ -26,5 +26,5 @@ def MediaObjectsForURL(url):
         
 def PlayVideo(url):
     content = HTTP.Request(url).content
-    flv_url = re.search('"url":"(http://charlierose\..+\.flv)"', content).group(1)
+    flv_url = FLV_URL_PATTERN.search(content).group(1)
     return Redirect(flv_url)
