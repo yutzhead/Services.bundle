@@ -1,10 +1,10 @@
-import re
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17' }
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0' }
+RE_ID_PATTERN = Regex('([0-9]{7})')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  find_id = re.search('([0-9]{7})', url)
+  find_id = RE_ID_PATTERN.search(url)
 
   if find_id:
     id = find_id.group(1)
