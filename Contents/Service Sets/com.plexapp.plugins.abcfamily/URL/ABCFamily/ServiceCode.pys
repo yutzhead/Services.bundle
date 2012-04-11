@@ -1,7 +1,7 @@
-import re
-
 FEED_URL = "http://cdn.abc.go.com/vp2/ws/s/contents/2000/utils/mov/13/9024/%s/432"
 BITRATES = ['500','700','1000','1600']
+
+RE_THUMB = Regex("var thumbnail = '(http://.+\.jpg)';")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
 			summary = data.xpath('//p[@class="tune-in-desc"]')[0].text
 			run_time = data.xpath('//ul[@class="tune-in-info"]/li')[4].text
 			duration = DurationMs(run_time)
-			thumb = re.search("var thumbnail = '(http://.+\.jpg)';", HTML.StringFromElement(data)).group(1)
+			thumb = RE_THUMB.search(HTML.StringFromElement(data)).group(1)
 
 			mo = MovieObject(
 				title = title,
