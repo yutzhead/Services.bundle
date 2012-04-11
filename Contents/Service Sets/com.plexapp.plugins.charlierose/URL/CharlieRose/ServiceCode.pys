@@ -1,4 +1,4 @@
-import re
+FLV_URL_PATTERN = Regex('"url":"(http://charlierose\..+\.flv)"')
 
 def NormalizeURL(url):
     return url
@@ -26,5 +26,5 @@ def MediaObjectsForURL(url):
         
 def PlayVideo(url):
     content = HTTP.Request(url).content
-    flv_url = re.search('"url":"(http://charlierose\..+\.flv)"', content).group(1)
+    flv_url = FLV_URL_PATTERN.search(content).group(1)
     return Redirect(flv_url)
