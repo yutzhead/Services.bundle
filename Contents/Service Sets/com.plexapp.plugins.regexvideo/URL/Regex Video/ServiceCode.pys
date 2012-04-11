@@ -6,7 +6,7 @@ valid_types = ['text/html', 'application/xhtml+xml']
 # only allow response sizes below a certain length for arbitrary types
 max_length = 1024
 
-pattern = '("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F)).+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)(\?.+?)?)("|\'|&quot;|%22)'
+PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F)).+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)')
 
 ####################################################################################################
 def FixUrl(parent_url, url):
@@ -51,7 +51,7 @@ def MetadataObjectForURL(url):
 
 	if ShouldParse(req):
 		doc = req.content
-		video = re.search(pattern, doc)
+		video = PATTERN.search(doc)
 
 		if not video:
 			return None
@@ -67,7 +67,7 @@ def MediaObjectsForURL(url):
 
 	if ShouldParse(req):
 		doc = req.content
-		video = re.search(pattern, doc)
+		video = PATTERN.search(doc)
 
 		if not video:
 			return None
