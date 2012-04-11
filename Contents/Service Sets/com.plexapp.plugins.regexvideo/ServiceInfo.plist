@@ -8,7 +8,7 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.apple.com/apple-events/education-january-2012/</string>
+				<string>http://events.apple.com.edgesuite.net/1201oihbafvpihboijhpihbasdouhbasv/event/index.html</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
