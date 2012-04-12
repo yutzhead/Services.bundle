@@ -1,6 +1,6 @@
-import re
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
 FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
+RE_VIDEO_ID = Regex('contentId=([0-9]+)')
 
 ####################################################################################################
 def TestURLs():
@@ -102,12 +102,12 @@ def GetVideoId(url):
 			object_param = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/object//param[@name="movie"]')
 			if len(object_param) > 0:
 				param = object_param[0].get('value')
-				videoId = re.search('videoId=([0-9]+)', param)
+				videoId = RE_VIDEO_ID.search(param)
 		except:
 			try:
 				object = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/text()')
 				if len(object) > 0:
-					videoId = re.search('videoId=([0-9]+)', object)
+					videoId = RE_VIDEO_ID.search(object)
 			except:
 				pass
 
