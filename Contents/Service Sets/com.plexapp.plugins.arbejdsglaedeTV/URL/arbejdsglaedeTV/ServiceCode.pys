@@ -1,32 +1,24 @@
-import re
-
 httpHeaders = {'Accept-Encoding' : 'deflate'}
+HTTP.CacheTime = CACHE_1HOUR
 
 BASE_URL = 'http://arbejdsglaede.23video.com'
 JSON_URL = 'http://arbejdsglaede.23video.com/api/photo/list?raw&format=json&photo_id=%s&token=%s&player_id=0'
 
+RE_PHOTO_ID = Regex(".+/video/(?P<id>[0-9]+)/")
+
 ####################################################################################################
 def MetadataObjectForURL(url):
-  
-  photo_id = re.match(".+/video/(?P<id>[0-9]+)/.+", url).groupdict()['id']
 
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore', headers=httpHeaders)
+  photo_id = RE_PHOTO_ID.match(url).groupdict()['id']
+  data = HTML.ElementFromURL(url, headers=httpHeaders)
 
   thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
-  #Log(thumbUrl)
-  
   token = thumbUrl.split('/')[-2]
-  #Log(token)
-  
   details = JSON.ObjectFromURL(JSON_URL % (photo_id, token))['photo']
-  
   title = details['title']
-  #Log(title)
   summary = details['content_text'].replace('\n', '')
-  #Log(summary)
-  
   postedDate = Datetime.ParseDate(details['original_date_ansi']).date()
-  
+
   # Construct a metadata item
   vc = VideoClipObject(
     title = title,
@@ -34,11 +26,14 @@ def MetadataObjectForURL(url):
     summary = summary,
     thumb = thumbUrl
   )
+
   return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [MediaObject(
+
+  return [
+    MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
       container = Container.MP4,
       video_codec = VideoCodec.H264,
@@ -47,28 +42,26 @@ def MediaObjectsForURL(url):
       video_resolution = 'sd',
       audio_codec = AudioCodec.AAC,
       optimized_for_streaming = True
-      ),
-      MediaObject(
+    ),
+    MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url))],
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       aspect_ratio = '1.77',
-      bitrate = '901',
+      bitrate = '900',
       video_resolution = 'sd',
       audio_codec = AudioCodec.AAC,
       optimized_for_streaming = True
-      )
+    )
   ]
 
 ####################################################################################################
-
 def PlayVideo(url, fmt=''):
-  photo_id = re.match(".+/video/(?P<id>[0-9]+)/.+", url).groupdict()['id']
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore', headers=httpHeaders)
+
+  photo_id = RE_PHOTO_ID.match(url).groupdict()['id']
+  data = HTML.ElementFromURL(url, headers=httpHeaders)
 
   token = (data.xpath('//link[@rel="image_src"]')[0].get('href')).split('/')[-2]
-  #Log(token)
-  
   details = JSON.ObjectFromURL(JSON_URL % (photo_id, token))['photo']
 
   if fmt == 'hd':
@@ -77,6 +70,5 @@ def PlayVideo(url, fmt=''):
     video = details['video_medium_download']
 
   video_url = BASE_URL + video
-  #Log(video_url)
-  
+
   return Redirect(video_url)
