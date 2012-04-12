@@ -1,4 +1,4 @@
-import re
+RE_ID = Regex(".*/video/(?P<id>[0-9]+)")
 
 ####################################################################################################
 
@@ -88,7 +88,7 @@ def GetExternalSource(url):
     # HTML information page. Therefore we must extract the video identifier before then re-constructing
     # an appropriate url.
     if video_source.startswith("http://player.vimeo.com/") == True:
-        video_id = re.match(".*/video/(?P<id>[0-9]+).*", video_source).groupdict()['id']
+        video_id = RE_ID.match(video_source).groupdict()['id']
         video_source = 'http://www.vimeo.com/' + video_id
 
     return video_source
