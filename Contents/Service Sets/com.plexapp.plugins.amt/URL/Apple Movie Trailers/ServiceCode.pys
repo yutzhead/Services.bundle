@@ -1,14 +1,14 @@
-import re
-
 HTTP_HEADERS = {'User-Agent':'iTunes/10.6'}
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
 QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large', 'Medium', 'Small']
+
+RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?/?$')
 
 ####################################################################################################
 def NormalizeURL(url):
 
 	url = url.replace('/iphone/', '/')
-	studio, title, video = re.findall('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?/?$', url)[0]
+	studio, title, video = RE_URL_INFO.findall(url)[0]
 	if not video: video = 'trailer'
 
 	return 'http://trailers.apple.com/trailers/%s/%s#%s' % (studio, title, video)
@@ -117,7 +117,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetXML(url):
 
-	studio, title, video = re.findall('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?(.+)?$', url)[0]
+	studio, title, video = RE_URL_INFO.findall(url)[0]
 	xml_url = 'http://trailers.apple.com/moviesxml/s/%s/%s/%s.xml' % (studio, title, video)
 
 	try:
