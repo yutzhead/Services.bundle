@@ -1,16 +1,26 @@
-import re
 TED_BASE = 'http://www.ted.com'
+
+RE_FILM_DATE = Regex('fd:"(.+?)",')
+RE_FILM_YEAR = Regex(';year=(.+?);')
+RE_EVENT = Regex('en:"(.+?)",')
+RE_EVENT_ALT = Regex(';event=(.+?);')
+RE_SLUG = Regex("\$\('#download_dialog'\)\.load\('([^']+)")
+RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
+RE_XML = Regex('file=([^&]*)')
 
 ####################################################################################################
 def NormalizeURL(url):
+
   return url.split('?')[0]
 
 ####################################################################################################
 def TestURLs():
+
   test_urls = []
 
   page = HTML.ElementFromURL(TED_BASE + '/talks', cacheTime = CACHE_1HOUR)
   videos = page.xpath('//div[@id="content"]//div[@class="col clearfix"]/a')
+
   for url in videos:
     url = TED_BASE + url.get('href')
     test_urls.append(url)
@@ -29,14 +39,14 @@ def MetadataObjectForURL(url):
   title = data.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
   summary = data.xpath('//meta[@name="description"]')[0].get('content')
 
-  try: filmDate = re.search('fd:"(.+?)",', content).group(1)
-  except: filmDate = re.search(';year=(.+?);', content).group(1)
+  try: filmDate = RE_FILM_DATE.search(content).group(1)
+  except: filmDate = RE_FILM_YEAR.search(content).group(1)
 
   postedDate = int(data.xpath('//meta[@property="video:release_date"]')[0].get('content'))
   postedDate = Datetime.FromTimestamp(postedDate)
 
-  try: event = re.search('en:"(.+?)",', content).group(1)
-  except: event = String.Unquote(re.search(';event=(.+?);', content).group(1), usePlus=True)
+  try: event = RE_EVENT.search(content).group(1)
+  except: event = String.Unquote(RE_EVENT_ALT.search(content).group(1), usePlus=True)
 
   thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
 
@@ -52,7 +62,8 @@ def MetadataObjectForURL(url):
   return vc
 
 ####################################################################################################
-def MediaObjectsForURL(url):    
+def MediaObjectsForURL(url):
+
   return [
     # YouTube
     MediaObject(
@@ -119,6 +130,7 @@ def PlayVideo(url, res, bitrate = None):
   most_appropriate = None
   resolutions = ["1080", "720", "480", "sd"]
   index = resolutions.index(res)
+
   for resolution_index in range(index, len(resolutions)):
     current_resolution = resolutions[resolution_index]
 
@@ -161,6 +173,7 @@ def PlayVideo(url, res, bitrate = None):
       )
     ]
   ))
+
   return c
 
 ####################################################################################################
@@ -168,11 +181,11 @@ def GetAvailableMediaObjectsForURL(url):
 
   page_content = HTTP.Request(url, cacheTime = CACHE_1WEEK).content
   page = HTML.ElementFromString(page_content)
-  slug = re.findall("\$\('#download_dialog'\)\.load\('([^']+)", page_content)
-  if slug:
+  slug = RE_SLUG.findall(page_content)
 
+  if slug:
     download_info = HTTP.Request(TED_BASE + slug[0], cacheTime = CACHE_1WEEK).content
-    download_url = re.findall("(http://download.ted.com/talks/.+{quality}{lang}\.mp4)", download_info)
+    download_url = RE_DOWNLOAD.findall(download_info)
 
     if download_url:
       download_url = download_url[0].replace('{lang}', '')
@@ -219,6 +232,7 @@ def GetAvailableMediaObjectsForURL(url):
   # If we've got to here without finding any movie, we will make one last attempt from the original
   # page.
   direct_links = page.xpath("//meta[@property = 'og:video']")
+
   if len(direct_links) > 0:
     return [
       MediaObject(
@@ -226,12 +240,13 @@ def GetAvailableMediaObjectsForURL(url):
         parts = [PartObject(key = direct_links[0].get('content'))]
       )
     ]
-    
+
   return None
 
 ####################################################################################################
 def FindBlip(url):
-  xml_url = re.findall("file=([^&]*)", url)[0]
+
+  xml_url = RE_XML.findall(url)[0]
   xml_details = XML.ElementFromURL(String.Unquote(xml_url))
   external_url = xml_details.xpath("//item/link/text()")[0]
   return external_url
