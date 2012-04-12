@@ -1,9 +1,8 @@
-import re
-
 BASE_URL = "http://www.nbc.com"
 VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
 
 CLIP_CONFIG_ID = "16009"
+RE_VIDEO_ID = Regex(".*(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.*/)?video/.*?/(?P<id>[0-9]{6,})")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,7 +14,7 @@ def MetadataObjectForURL(url):
 
         # The given url should contain the video ID. We need this in order to use a different
         # url to obtain the specific details in a sensible format.
-        matches = re.match(".*(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.*/)?video/.*?/(?P<id>[0-9]{6,})", url)
+        matches = RE_VIDEO_ID.match(url)
         id = matches.group('id')
         
         # Request the page that contains the details of the title.
