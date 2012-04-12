@@ -1,11 +1,11 @@
-import re
-
 DETAILS_URL = 'http://videos.arte.tv/fr/do_delegate/videos/arte_journal-%s,view,asPlayerXml.xml'
+
+RE_ID = Regex(".*-(?P<id>[0-9]+).html")
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    initial_id = re.match(".*-(?P<id>[0-9]+).html", url).groupdict()['id']
+    initial_id = RE_ID.match(url).groupdict()['id']
     details_descriptor_page = HTML.ElementFromURL(DETAILS_URL % initial_id)
 
     details_url = details_descriptor_page.xpath("//video")[0].get('ref')
