@@ -1,6 +1,5 @@
-import re
-
 DETAILS_URL = 'http://www.absoluteradio.co.uk/_ajax2/media_player.php?mode=flash&id=%s'
+RE_ID = Regex("/player.*/([0-9]+)/")
 
 ####################################################################################################
 
@@ -8,7 +7,7 @@ def MetadataObjectForURL(url):
     try:
        
         # Attempt to extract the video id from the url
-        video_id = re.match(".*/player.*/(?P<id>[0-9]+)/.*", url).groupdict()['id']
+        video_id = RE_ID.search(url).group(1)
  
         # Request the url and the details page
         page = HTML.ElementFromURL(url)
@@ -49,7 +48,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
     # Request the details pages.
-    video_id = re.match(".*/player.*/(?P<id>[0-9]+)/.*", url).groupdict()['id']
+    video_id = RE_ID.search(url).group(1)
     details_page = XML.ElementFromURL(DETAILS_URL % video_id)
 
     # Obtain the video's url and replace with the required resolution, if appropriate
