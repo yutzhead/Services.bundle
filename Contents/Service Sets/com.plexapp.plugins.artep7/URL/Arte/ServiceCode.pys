@@ -1,5 +1,4 @@
 DETAILS_URL = 'http://videos.arte.tv/fr/do_delegate/videos/arte_journal-%s,view,asPlayerXml.xml'
-
 RE_ID = Regex(".*-(?P<id>[0-9]+).html")
 
 ####################################################################################################
@@ -45,24 +44,25 @@ def MetadataObjectForURL(url):
         thumb = thumb,
         rating = rating,
         originally_available_at = date,
-        tags = tags)
+        tags = tags
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        parts = [PartObject(key=WebVideoURL(url))],
-        protocol = Protocol.WebKit
-      )
+        MediaObject(
+            parts = [PartObject(key=WebVideoURL(url))]
+        )
     ]
 
 ####################################################################################################
 def TestURLs():
+
     test_urls = []
-
     page = HTML.ElementFromURL("http://videos.arte.tv/en/videos")
-
     results = page.xpath("//a[contains(@href, '/en/videos/')]/img/parent::a")
+
     for index in range(2):
         item = results[index]
         url = "http://videos.arte.tv" + item.get('href')
