@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Regex Video</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://events.apple.com.edgesuite.net/1201oihbafvpihboijhpihbasdouhbasv/event/index.html</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>^$</string>
+			</array>
+			<key>Fallback</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>
