@@ -1,66 +1,58 @@
-import re
-
 BASE_URL = 'http://kelbytv.com'
+RE_EP_INDEX = Regex('Episode (?P<ep_index>[0-9]+)')
+RE_VIDEO_URL = Regex('file\s+:.+?(http.+?\.mp?4v?)')
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the url
-        page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
 
-        # Extract the details available from the various pages.
-        show = page.xpath("//title")[0].text.rsplit(' | ', 1)[1]
-        episode_title = page.xpath("//div[@class='show']//h2/span/text()")[0]
-        description = page.xpath("//meta[@name='description']")[0].get('content')
-        thumb = page.xpath("//video[@id='player']")[0].get('poster')
-        if thumb.startswith("http") == False:
-            thumb = BASE_URL + thumb
+	show = page.xpath('//title')[0].text.rsplit(' | ', 1)[1]
+	episode_title = page.xpath('//div[@class="show"]//h2/span/text()')[0]
+	description = page.xpath('//div[contains(@class, "showinfo")]//div[@class="quickabout"]')[0].text.strip()
+	thumb = page.xpath('//video[@id="player"]')[0].get('poster')
+	if thumb.startswith('http') == False:
+		thumb = BASE_URL + thumb
 
-        index = None
-        try:
-            full_title = page.xpath("//h2[@class='episodetitle']/span/text()")[0]
-            full_title_dict = re.match(".*Episode (?P<index>[0-9]+).*", full_title).groupdict()
-            index = int(full_title_dict['index'])
-        except: pass
+	try:
+		full_title = page.xpath('//h2[@class="episodetitle"]/span/text()')[0]
+		index = int(RE_EPISODE.search(full_title).group('ep_index'))
+	except:
+		index = None
 
-        published = page.xpath("//div[contains(@class, 'showinfo')]/p[@class='meta']/text()")[0].strip('Published:').strip()
-        date = Datetime.ParseDate(published)
+	published = page.xpath('//div[contains(@class, "showinfo")]/p[@class="meta"]/text()')[0].strip('Published:').strip()
+	date = Datetime.ParseDate(published)
 
-        return EpisodeObject(
-            show = show,
-            title = episode_title,
-            index = index,
-            summary = description,
-            thumb = thumb,
-            originally_available_at = date)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+	return EpisodeObject(
+		show = show,
+		title = episode_title,
+		index = index,
+		summary = description,
+		thumb = thumb,
+		originally_available_at = date
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        video_resolution = '480',
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        bitrate = 400,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url = url))],
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = Container.MP4,
+			video_resolution = '480',
+			audio_channels = 2,
+			optimized_for_streaming = True,
+			bitrate = 400
+		)
+	]
 
 ####################################################################################################
-
 def PlayVideo(url):
 
-    # Read the page associated with the url. We should find a number of video paths located within it.
-    content = HTTP.Request(url).content
-    video = re.findall('file\s+:.+?(http.+?\.mp?4v?)', content)[0]
+	# Read the page associated with the url. We should find a number of video paths located within it.
+	content = HTTP.Request(url).content
+	video = RE_VIDEO_URL.findall(content)[0]
 
-    return Redirect(video)
+	return Redirect(video)
