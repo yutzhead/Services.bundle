@@ -1,8 +1,8 @@
 BASE_URL = 'http://www.academicearth.org'
-YOU_TUBE_URL = 'http://www.youtube.com/watch?v=%s'
+YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
 
-RE_INDEX = Regex(" ([0-9]+) of ([0-9]+)")
-RE_YOUTUBE = Regex('flashVars.ytID = "([^"]*)"')
+RE_INDEX = Regex('.* (?P<index>[0-9]+) of (?P<total>[0-9]+)')
+RE_YOUTUBE = Regex('.*flashVars.ytID = "(?P<id>[^"]*)"')
 
 ####################################################################################################
 
@@ -24,7 +24,8 @@ def MetadataObjectForURL(url):
             thumb = BASE_URL + thumb
 
         episode_details = ''.join(page.xpath("//div[@id='lecture_number_link_box']/text()")).strip()
-        index = int( RE_INDEX.search(episode_details).group(1) )
+        episode_dict = RE_INDEX.match(episode_details).groupdict()
+        index = int(episode_dict['index'])
 
         return EpisodeObject(
             title = title,
@@ -60,9 +61,9 @@ def PlayVideo(url):
     # It appears that Academic Earth either uses YouTube or Blip to host their content. Therefore we
     # should be able to find what is appropriate to redirect to the necessary URL service.
     video_url = None
-    yt_match = RE_YOUTUBE.search(page_content)
+    yt_match = RE_YOUTUBE.match(page_content)
     if yt_match != None:
-        video_url = YOU_TUBE_URL % yt_match.group(1)
+        video_url = YOUTUBE_URL % yt_match.groupdict()['id']
         media = URLService.MediaObjectsForURL(video_url)
         return Redirect(media[-1].parts[0].key)
 
