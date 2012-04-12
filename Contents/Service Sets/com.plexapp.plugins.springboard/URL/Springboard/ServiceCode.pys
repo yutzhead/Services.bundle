@@ -1,5 +1,3 @@
-import re
-
 XML_URL = 'http://cms.springboard.gorillanation.com/xml_feeds_advanced/index/%s/rss3/%s/'
 XML_NS = {'media': 'http://search.yahoo.com/mrss/'}
 HTTP.CacheTime = CACHE_1DAY
