@@ -1,9 +1,9 @@
-import re
-
 VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
 
-####################################################################################################
+RE_DURATION = Regex("(?P<mins>[0-9]+):(?P<secs>[0-9]+)")
+RE_JSON = Regex('var experienceJSON = (.+)};')
 
+####################################################################################################
 def MetadataObjectForURL(url):
 
     page = HTML.ElementFromURL(url)
@@ -18,7 +18,7 @@ def MetadataObjectForURL(url):
     date = Datetime.ParseDate(date)
 
     duration_text = page.xpath("//div[@class = 'videoInfo']//span[@class = 'length']/text()")[0]
-    duration_dict = re.match("(?P<mins>[0-9]+):(?P<secs>[0-9]+) .+", duration_text).groupdict()
+    duration_dict = RE_DURATION.match(duration_text).groupdict()
     mins = int(duration_dict['mins'])
     secs = int(duration_dict['secs'])
     duration = ((mins * 60) + secs) * 1000
@@ -32,8 +32,8 @@ def MetadataObjectForURL(url):
         tags = tags)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         container = Container.MP4,
@@ -45,14 +45,14 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url):
+
     content = HTML.ElementFromURL(url)
     playerId = content.xpath("//param[@name='playerID']")[0].get('value')
     videoId = content.xpath("//param[@name='@videoPlayer']")[0].get('value')
 
     video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (playerId, videoId)).content
-    experience = re.search('var experienceJSON = (.+)};', video_details_page).group(1) + '}'
+    experience = RE_JSON.search(video_details_page).group(1) + '}'
     details = JSON.ObjectFromString(experience)
 
     video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
