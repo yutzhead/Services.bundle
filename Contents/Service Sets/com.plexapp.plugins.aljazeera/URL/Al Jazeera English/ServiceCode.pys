@@ -1,4 +1,4 @@
-import re
+RE_EXTERNAL = Regex('param name="flashvars" value="file=(http://www.youtube.com/watch.+)&amp;image.+"')
 
 ####################################################################################################
 
@@ -100,4 +100,4 @@ def PlayVideo(url, res):
 def GetExternalSource(url):
 
   data = HTTP.Request(url).content
-  return re.search('param name="flashvars" value="file=(http://www.youtube.com/watch.+)&amp;image.+"', data).group(1)
+  return RE_EXTERNAL.search(data).group(1)
