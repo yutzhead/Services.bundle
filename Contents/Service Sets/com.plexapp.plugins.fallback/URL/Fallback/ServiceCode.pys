@@ -94,6 +94,12 @@ def MetadataObjectForURL(url):
 	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
 
 	if ShouldParse(req):
+
+		# Embedded Video
+		source_url = FindExternalSource(req)
+		if source_url is not None:
+			return URLService.MetadataObjectForURL(source_url)
+
 		doc = HTML.ElementFromString(req.content)
 
 		# HTML5 Video
@@ -109,11 +115,6 @@ def MetadataObjectForURL(url):
 				title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
 				thumb = thumb
 			)
-
-		# Embedded Video
-		source_url = FindExternalSource(req)
-		if source_url is not None:
-			return URLService.MetadataObjectForURL(source_url)
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
@@ -131,6 +132,11 @@ def MediaObjectsForURL(url):
 	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
 
 	if ShouldParse(req):
+		# Embedded Video
+		source_url = FindExternalSource(req)
+		if source_url is not None:
+			return URLService.MetadataObjectForURL(source_url)
+
 		doc = HTML.ElementFromString(req.content)
 
 		# HTML5 Video
@@ -166,11 +172,6 @@ def MediaObjectsForURL(url):
 				result.append(MediaObject(**attrs))
 
 			return result
-
-		# Embedded Video
-		source_url = FindExternalSource(req)
-		if source_url is not None:
-			return URLService.MetadataObjectForURL(source_url)
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
