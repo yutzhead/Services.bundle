@@ -128,7 +128,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
 
 	if ShouldParse(req):
 		doc = HTML.ElementFromString(req.content)
