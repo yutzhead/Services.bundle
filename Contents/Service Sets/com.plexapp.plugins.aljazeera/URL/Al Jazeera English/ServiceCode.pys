@@ -1,4 +1,4 @@
-RE_EXTERNAL = Regex('param name="flashvars" value="file=(http://www.youtube.com/watch.+)&amp;image.+"')
+RE_EXTERNAL = Regex('param name="flashvars" value="file=(http://www.youtube.com/watch.+)&amp\;image.+"')
 
 ####################################################################################################
 
