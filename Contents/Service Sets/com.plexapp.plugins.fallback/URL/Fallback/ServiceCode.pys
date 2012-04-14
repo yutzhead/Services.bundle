@@ -132,6 +132,7 @@ def MediaObjectsForURL(url):
 	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
 
 	if ShouldParse(req):
+
 		# Embedded Video
 		source_url = FindExternalSource(req)
 		if source_url is not None:

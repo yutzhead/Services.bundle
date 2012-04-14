@@ -3,12 +3,12 @@ httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) A
 
 QUALITY = ['HD', 'Med', 'Low']
 
-RE_JSON = Regex("('client_JSON'( )?:( )?\{.+\})")
+RE_JSON = Regex("(?P<json>('|\")client_JSON('|\")(\s*):(\s*)\{.+\})")
 RE_IFRAMES = Regex('<iframe.+?/iframe>')
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
@@ -82,8 +82,9 @@ def GetJson(url):
 	result = RE_JSON.search(html)
 
 	if result:
-		json_string = '{%s' % result.group(1)
+		json_string = '{%s' % result.group('json')
 		json_string = RE_IFRAMES.sub('', json_string)
+		json_string = json_string.replace("'client_JSON'", '"client_JSON"')
 		json = JSON.ObjectFromString(json_string)['client_JSON']['episode']
 		json['relatedShows'] = []
 
