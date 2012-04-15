@@ -4,7 +4,7 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>TED-Talks</key>
+		<key>TED Talks</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>

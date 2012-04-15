@@ -4,7 +4,7 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Pitchfork-MusicVideos</key>
+		<key>Pitchfork MusicVideos</key>
 		<dict>
 			<key>TestURLs</key>
 			<array>
@@ -16,7 +16,7 @@
 				<string>http://(www.)?pitchfork.com/tv/musicvideos/.+</string>
 			</array>
 		</dict>
-		<key>Pitchfork-TV</key>
+		<key>Pitchfork TV</key>
 		<dict>
 			<key>TestURLs</key>
 			<array>
