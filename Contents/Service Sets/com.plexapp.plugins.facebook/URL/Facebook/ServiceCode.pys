@@ -1,9 +1,9 @@
 RE_TITLE    = Regex('\["video_title","(.+?)"\],')
 RE_THUMB    = Regex('\["thumb_url","(.+?)"\],')
 RE_DURATION = Regex('\["video_length","([0-9]+?)"\],')
-RE_VIDEO_URL= Regex('\["video_src",".+?"\],')
-RE_HIGH_QUAL= Regex('\["highqual_src",".+?"\],')
-RE_LOW_QUAL = Regex('\["lowqual_src",".+?"\],')
+RE_VIDEO_URL= Regex('\["video_src","(.+?)"\],')
+RE_HIGH_QUAL= Regex('\["highqual_src","(.+?)"\],')
+RE_LOW_QUAL = Regex('\["lowqual_src","(.+?)"\],')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -55,9 +55,9 @@ def PlayVideo(url, res):
     video_url = RE_VIDEO_URL.search(page_content).group(1)
     
     if res == "high":
-        desired_video = RE_HIGH_RES.search(page_content)
+        desired_video = RE_HIGH_QUAL.search(page_content)
     elif res == "low":
-        desired_video = RE_LOW_RES.search(page_content)
+        desired_video = RE_LOW_QUAL.search(page_content)
     else:
         desired_video = None
 
