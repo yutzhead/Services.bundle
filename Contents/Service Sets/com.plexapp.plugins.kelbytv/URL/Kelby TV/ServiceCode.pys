@@ -9,7 +9,7 @@ def MetadataObjectForURL(url):
 
 	show = page.xpath('//title')[0].text.rsplit(' | ', 1)[1]
 	episode_title = page.xpath('//div[@class="show"]//h2/span/text()')[0]
-	description = page.xpath('//div[contains(@class, "showinfo")]//div[@class="quickabout"]')[0].text.strip()
+	description = page.xpath('//div[contains(@class, "showinfo")]//div[@class="quickabout"]//strong')[0].text.strip()
 	thumb = page.xpath('//video[@id="player"]')[0].get('poster')
 	if thumb.startswith('http') == False:
 		thumb = BASE_URL + thumb
