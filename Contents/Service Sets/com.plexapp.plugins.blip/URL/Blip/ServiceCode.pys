@@ -89,7 +89,7 @@ def GetJsonURL(url):
     if 'url' in data:
       url = data['url']
 
-  return url + '?skin=json'
+  return url.split('?')[0] + '?skin=json&version=2'
 
 ####################################################################################################
 def GetJson(url):
