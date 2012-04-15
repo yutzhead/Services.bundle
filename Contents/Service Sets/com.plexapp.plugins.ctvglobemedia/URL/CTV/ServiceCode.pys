@@ -24,7 +24,6 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-
   try:
     data = HTML.ElementFromURL(url)
     
@@ -113,16 +112,20 @@ def TestURLs():
     
     for site in SITES:
         data = HTML.ElementFromURL('http://watch.%s' % site)
-        url = data.xpath('//div[@id="CatalogContainer"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
+        url = data.xpath('//div[@id="CatalogContainer"]//dl[@class="Item"]//a[@title="Play"]')[0].get('href')
 
         if '#clip' in url or '/clip' in url:
           test_urls.append(url)
         else:
-          next_page = HTML.ElementFromURL(url)
           try:
-            new_url = next_page.xpath('//div[@id="Level3"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
+            next_page = HTML.ElementFromURL(url)
+            try:
+              new_url = next_page.xpath('//div[@id="Level3"]//dl[@class="Item"]//a[@title="Play"]')[0].get('href')
+            except:
+              new_url = next_page.xpath('//div[@id="Level4"]//dl[@class="Item"]//a[@title="Play"]')[0].get('href')
+            if '#clip' in new_url or '/clip' in new_url:
+              test_urls.append(new_url)
           except:
-            new_url = next_page.xpath('//div[@id="Level4"]//dl[@class="Item"]//a[contains(@href, "http://")]')[0].get('href')
-          test_urls.append(new_url)
+            pass
         
     return test_urls
