@@ -4,7 +4,7 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>CNN-News</key>
+		<key>CNN News</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
