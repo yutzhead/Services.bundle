@@ -1,13 +1,23 @@
-import re
+RE_TITLE    = Regex('\["video_title","(.+?)"\],')
+RE_THUMB    = Regex('\["thumb_url","(.+?)"\],')
+RE_DURATION = Regex('\["video_length","([0-9]+?)"\],')
+RE_VIDEO_URL= Regex('\["video_src",".+?"\],')
+RE_HIGH_QUAL= Regex('\["highqual_src",".+?"\],')
+RE_LOW_QUAL = Regex('\["lowqual_src",".+?"\],')
+
+####################################################################################################
+def NormalizeURL(url):
+    Log("Normalizing url: %s" % url)
+    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
     try:
 
         page_content = HTTP.Request(url).content
-        title = re.search('addVariable\("video_title"\, "([^"]+)"\)', page_content).group(1)
-        thumb = re.search('addVariable\("thumb_url"\, "([^"]+)"\)', page_content).group(1)
-        duration_text = re.search('addVariable\("video_length"\, "([^"]+)"\)', page_content).group(1)
+        title = RE_TITLE.search(page_content).group(1)
+        thumb = RE_THUMB.search(page_content).group(1)
+        duration_text = RE_DURATION.search(page_content).group(1)
 
         return VideoClipObject(
             title = String.Unquote(title.decode('unicode_escape'), usePlus=True),
@@ -25,7 +35,7 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         video_resolution = '720',
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'highqual_src'))]
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'high'))]
       ),
       MediaObject(
         container = Container.MP4,
@@ -33,7 +43,7 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC,
         video_resolution = 'SD',
         audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'lowqual_src'))]
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'low'))]
       )
     ]
 
@@ -42,8 +52,16 @@ def PlayVideo(url, res):
 
     page_content = HTTP.Request(url, cacheTime = 0).content
 
-    video_url = re.search('addVariable\("video_src"\, "([^"]+)"\)', page_content).group(1)
-    desired_video = re.search('addVariable\("%s"\, "([^"]+)"\)' % res, page_content)
+    video_url = RE_VIDEO_URL.search(page_content).group(1)
+    
+    if res == "high":
+        desired_video = RE_HIGH_RES.search(page_content)
+    elif res == "low":
+        desired_video = RE_LOW_RES.search(page_content)
+    else:
+        desired_video = None
+
     if desired_video:
-      video_url = desired_video.group(1)
+        video_url = desired_video.group(1)
+
     return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True))
