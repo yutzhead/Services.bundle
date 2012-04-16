@@ -1,7 +1,8 @@
 import re
 
 CBS_URL = 'http://www.cbs.com'
-CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&pid=%s'
+CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
+SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -70,7 +71,6 @@ def MediaObjectsForURL(url):
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
       video_resolution = 360,
-      bitrate = 740280,
       audio_channels = 2,
       optimized_for_streaming = True,
       parts = [PartObject(key=Callback(PlayVideo, url = url, profile = 'WIFI-MED-16x9_30'))]
@@ -80,17 +80,6 @@ def MediaObjectsForURL(url):
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
       video_resolution = 224,
-      bitrate = 438942,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = 'WIFI-LOW-16x9_30'))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = 224,
-      bitrate = 238580,
       audio_channels = 2,
       optimized_for_streaming = True,
       parts = [PartObject(key=Callback(PlayVideo, url = url, profile = '3G-MED-16x9_30'))]
@@ -110,7 +99,7 @@ def PlayVideo(url, profile):
     pid = pid.group(1)
 
     smil = XML.ElementFromURL(CBS_SMIL % pid)
-    video_url = smil.xpath("//video[@profile = '%s']" % profile)[0].get('src')
+    video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
 
     return Redirect(video_url)
 

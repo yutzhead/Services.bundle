@@ -21,7 +21,7 @@ def MetadataObjectForURL(url):
 
         return VideoClipObject(
             title = String.Unquote(title.decode('unicode_escape'), usePlus=True),
-            thumb = String.Unquote(thumb.decode('unicode_escape'), usePlus=True),
+            thumb = String.Unquote(thumb.decode('unicode_escape'), usePlus=True).replace('https','http'),
             duration = int(String.Unquote(duration_text.decode('unicode_escape'), usePlus=True)))
     except:
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
@@ -64,4 +64,4 @@ def PlayVideo(url, res):
     if desired_video:
         video_url = desired_video.group(1)
 
-    return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True))
+    return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True).replace('https','http'))
