@@ -1,4 +1,4 @@
-httpHeaders = {'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'}
+httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'}
 
 RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 RE_FILE_ID = Regex('blip\.tv/file/([0-9]{6,7})')
@@ -47,7 +47,7 @@ def MediaObjectsForURL(url):
 
 		if video['archive_type'] == 'MPEG4':
 			media_objects.append(MediaObject(
-				parts = [PartObject(key = video['url'])],
+				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 				container = Container.MP4,
 				video_resolution = video['media_height'],
 				bitrate = video['video_bitrate'],
@@ -60,7 +60,7 @@ def MediaObjectsForURL(url):
 
 		elif video['archive_type'] == 'Flash':
 			media_objects.append(MediaObject(
-				parts = [PartObject(key = video['url'])],
+				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 				container = 'flv',
 				video_resolution = video['media_height'],
 				duration = int(video['media_length']) * 1000,
@@ -72,7 +72,7 @@ def MediaObjectsForURL(url):
 
 		elif video['archive_type'] == 'Quicktime':
 			media_objects.append(MediaObject(
-				parts = [PartObject(key = video['url'])],
+				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 				container = 'mov',
 				video_resolution = video['media_height'],
 				duration = int(video['media_length']) * 1000,
@@ -119,3 +119,20 @@ def GetJson(url):
 
 	except:
 		return {}
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	c = ObjectContainer()
+
+	c.add(VideoClipObject(
+		items = [
+			MediaObject(
+				parts = [PartObject(key=url)]
+			)
+		]
+	))
+
+	c.http_headers = {'User-Agent': ''}
+	return c
