@@ -1,7 +1,8 @@
-import re, string
+import string
 XML_URL = 'http://www.g4tv.com/xml/BroadbandPlayerService.asmx/GetEmbeddedVideo?videoKey=%s&strPlaylist=&playLargeVideo=true&excludedVideoKeys=&playlistType=normal&maxPlaylistSize=1&cb=1288569'
 HD_XML_URL = 'http://www.g4tv.com/xml/BroadbandPlayerService.asmx/GetEmbeddedHdVideo?videoKey=%s&strPlaylist=&playLargeVideo=true&excludedVideoKeys=&playlistType=normal&maxPlaylistSize=1&cb=1288569'
 
+RE_VID_ID = Regex('/(\d+?)/')
 ####################################################################################################
 def NormalizeURL(url):
   return url
@@ -9,7 +10,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  video_id = re.search('/(\d+?)/', url).group(1)
+  video_id = RE_VID_ID.search(url).group(1)
 
   try: data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
 
@@ -70,7 +71,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, HD=False):
 
-  video_id = re.search('/(\d+?)/', url).group(1)
+  video_id = RE_VID_ID.search(url).group(1)
 
   try: data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
   except:
