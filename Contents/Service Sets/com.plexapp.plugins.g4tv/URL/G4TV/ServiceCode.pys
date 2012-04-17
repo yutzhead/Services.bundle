@@ -9,15 +9,29 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  data = GetVideoData(url, False)
+  video_id = re.search('/(\d+?)/', url).group(1)
 
-  clip_title = data.xpath('//title')[0].text
-  clip_summary = data.xpath('//description')[0].text
-  date = data.xpath('//date')[0].text
-  thumb_url = data.xpath('//largeimage')[0].text
-  duration = data.xpath('//duration')[0].text
-  duration = int(duration)*1000
-  
+  try: data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
+
+    clip_title = data.xpath('//title')[0].text
+    clip_summary = data.xpath('//description')[0].text
+    date = data.xpath('//date')[0].text
+    thumb_url = data.xpath('//largeimage')[0].text
+    duration = data.xpath('//duration')[0].text
+    duration = int(duration)*1000
+    
+  except:
+    video_page = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+    video_id = video_page.xpath('//div[@class="video-player-wrap"]')[0].get('id').split('_')[1]
+    data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
+    
+    clip_title = data.xpath('//title')[0].text
+    clip_summary = data.xpath('//description')[0].text
+    date = data.xpath('//date')[0].text
+    thumb_url = data.xpath('//largeimage')[0].text
+    duration = data.xpath('//duration')[0].text
+    duration = int(duration)*1000
+    
   # Construct a metadata item
   vc = VideoClipObject(
     title = clip_title,
@@ -56,29 +70,23 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, HD=False):
 
-  data = GetVideoData(url, HD)
+  video_id = re.search('/(\d+?)/', url).group(1)
+
+  try: data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
+  except:
+    video_page = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+    video_id = video_page.xpath('//div[@class="video-player-wrap"]')[0].get('id').split('_')[1]
+    data = HTML.ElementFromURL(XML_URL % video_id, cacheTime=7200, errors='ignore')
 
   video_url = data.xpath('//filepath')[0].text
   video_url= String.Unquote(video_url.split('r=')[1])
 
-  return Redirect(video_url)
-
-####################################################################################################
-def GetVideoData(url, HD):
-
-  details_xml = XML_URL
   if HD:
-    details_xml = HD_XML_URL
+    try:
+      data = HTML.ElementFromURL(HD_XML_URL % video_id, cacheTime=7200, errors='ignore')
+      video_url = data.xpath('//filepath')[0].text
+      video_url= String.Unquote(video_url.split('r=')[1])
+    except:
+      pass
 
-  video_id = re.search('/(\d+?)/', url).group(1)
-
-  try: 
-    # We'll grab the details page, and also verify that it has information about some videos.
-    data = HTML.ElementFromURL(details_xml % video_id, cacheTime = 7200, errors = 'ignore')
-    data.xpath('//embeddedvideos')[0]
-  except:
-    video_page = HTML.ElementFromURL(url, cacheTime = 7200, errors = 'ignore')
-    video_id = video_page.xpath('//div[@class="video-player-wrap"]')[0].get('id').split('_')[1]
-    data = HTML.ElementFromURL(details_xml % video_id, cacheTime = 7200, errors = 'ignore')
-
-  return data
+  return Redirect(video_url)
