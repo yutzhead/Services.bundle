@@ -6,10 +6,6 @@
 	<dict>
 		<key>RaiTV</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.rai.tv/dl/RaiTV/programmi/media/ContentItem-f181f5cd-b3cd-4910-8b22-a157472cf5e4.html?refresh_ce#p=</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://(www\.)?rai.tv/.+</string>
