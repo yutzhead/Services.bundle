@@ -1,8 +1,8 @@
-import string
 XML_URL = 'http://www.g4tv.com/xml/BroadbandPlayerService.asmx/GetEmbeddedVideo?videoKey=%s&strPlaylist=&playLargeVideo=true&excludedVideoKeys=&playlistType=normal&maxPlaylistSize=1&cb=1288569'
 HD_XML_URL = 'http://www.g4tv.com/xml/BroadbandPlayerService.asmx/GetEmbeddedHdVideo?videoKey=%s&strPlaylist=&playLargeVideo=true&excludedVideoKeys=&playlistType=normal&maxPlaylistSize=1&cb=1288569'
 
 RE_VID_ID = Regex('/(\d+?)/')
+
 ####################################################################################################
 def NormalizeURL(url):
   return url
