@@ -67,7 +67,7 @@ def PlayVideo(url, HD=False):
   if HD:
     try:
       data = HTML.ElementFromURL(HD_XML_URL % video_id, cacheTime=7200)
-      video_url = data.xpath('//FilePath, namespaces=XML_NS')[0].text
+      video_url = data.xpath('//a:FilePath, namespaces=XML_NS')[0].text
       video_url= String.Unquote(video_url.split('r=')[1])
     except:
       pass
