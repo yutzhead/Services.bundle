@@ -1,6 +1,6 @@
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
 FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
-RE_VIDEO_ID = Regex('contentId=([0-9]+)')
+RE_VIDEO_ID = Regex('(contentId|videoId)=(?P<video_id>[0-9]+)')
 
 ####################################################################################################
 def TestURLs():
@@ -112,7 +112,7 @@ def GetVideoId(url):
 				pass
 
 		if videoId:
-			return int(videoId.group(1))
+			return int(videoId.group('video_id'))
 
 	return
 
