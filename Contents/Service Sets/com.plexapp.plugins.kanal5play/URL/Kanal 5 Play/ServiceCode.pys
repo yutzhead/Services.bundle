@@ -1,4 +1,5 @@
-import re
+RE_EP_INDEX = Regex('Avsnitt ([0-9]+)')
+RE_SE_INDEX = Regex('song ([0-9]+)')
 
 def NormalizeURL(url):
     return url
@@ -6,25 +7,15 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url)
     
-    episode_title = data.xpath('//h2[@class="video-info-description-header"]')[0].text
-    #Log(episode_title)
-    show_title = data.xpath('//h1[@class="video-info-stats-header"]/a')[0].text
-    #Log(show_title)
-    episode_summary = data.xpath('//p[@class="video-info-description-description"]')[0].text.strip()
-    #Log(episode_summary)
-    episode_duration = data.xpath('//div[@class="video-info-stats-time"]//span[@class="time"]')[0].text
-    episode_duration = DurationMilliseconds(episode_duration)
-    #Log(episode_duration)
-    air_date = data.xpath('//div[@class="video-info-stats-aired"]//span[@class="time"]')[0].text
-    #Log(air_date)
-    episode_thumb = data.xpath('//div[@class="video-info-description"]//img')[0].get('src')
-    #Log(episode_thumb)
-    season_episode = data.xpath('//div[@class="video-info-stats-season-episode"]')[0].text.strip()
-    #Log(season_episode)
-    season_index = re.search('song ([0-9]+)', season_episode).group(1)
-    #Log(season_index)
-    episode_index = re.search('Avsnitt ([0-9]+)', season_episode).group(1)
-    #Log(episode_index)
+    episode_title = data.xpath('//h2[@class="title"]')[0].text
+    show_title = data.xpath('//h1[@class="header"]/a')[0].text
+    episode_summary = data.xpath('//p[@class="description"]')[0].text.strip()
+    episode_duration = int(data.xpath('//div[@class="summary"]//div[@class="text"]')[1].text.split(' ')[0])*60*1000
+    air_date = data.xpath('//div[@class="summary"]//div[@class="text"]')[0].text
+    episode_thumb = data.xpath('//img[@class="poster"]')[0].get('src')
+    season_episode = data.xpath('//div[@class="sub-header"]')[0].text_content().strip()
+    season_index = RE_SE_INDEX.search(season_episode).group(1)
+    episode_index = RE_EP_INDEX.search(season_episode).group(1)
     
     mo = EpisodeObject(
         title = episode_title,
@@ -45,16 +36,3 @@ def MediaObjectsForURL(url):
             protocol = Protocol.WebKit
         )
     ]
-    
-def DurationMilliseconds(duration):
-    durationParts = duration.split(':')
-    if len(durationParts) == 3:
-        ms = (int(durationParts[0])*3600 + int(durationParts[1])*60 + int(durationParts[2]))*1000
-    elif len(durationParts) == 2:
-        ms = (int(durationParts[0])*60 + int(durationParts[1]))*1000
-    elif len(durationParts) == 1:
-        ms = int(durationParts[0])*1000
-    else:
-        ms = None
-        
-    return ms
