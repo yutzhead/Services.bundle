@@ -1,4 +1,5 @@
 RE_JSON_DATA = Regex('var q = ({.*});')
+RE_DEFAULT_MEDIA_JSON = Regex('args.default_media = ({.*});')
 
 ####################################################################################################
 
@@ -75,14 +76,20 @@ def PlayVideo(url, fmt=''):
   
   clip_details = GetClipJSON(url)
   try:
-    video_url = clip_details["media_urls"]["h264"]
+    try:
+      video_url = clip_details["media_urls"]["h264"]
+    except:
+      video_url = clip_details["media_urls"]["mov"]
+      
     if fmt == '720':
       try: video_url = clip_details["media_urls"]["mp4"]
       except: pass
     elif fmt == '544':
       try: video_url = clip_details["media_urls"]["m4v"]
       except: pass
-    elif fmt == 'sd': video_url = clip_details["media_urls"]["h264"]
+    elif fmt == 'sd':
+      try: video_url = clip_details["media_urls"]["h264"]
+      except: pass
   except:
     clip_xml = GetXML(url)
     video_url = clip_xml.guid
@@ -92,7 +99,10 @@ def PlayVideo(url, fmt=''):
 
 def GetJSON(url):
   content = HTTP.Request(url, cacheTime=7200, errors='ignore').content
-  data = RE_JSON_DATA.search(content).group(1)
+  try:
+    data = RE_DEFAULT_MEDIA_JSON.search(content).group(1)
+  except:
+    data = RE_JSON_DATA.search(content).group(1)
   details = JSON.ObjectFromString(data)
   return details
   
@@ -111,17 +121,23 @@ def GetClipJSON(url):
   
   clip_details = {}
   
-  for item in details["items"]:
-    if clip_id:
-      if item["media"]["id"] == clip_id:
-        clip_details = item["media"]
-      else:
-        pass
+  try:
+    if details['key_id'] == key_id:
+      return details
     else:
-      if item["media"]["key_id"] == key_id:
-        clip_details = item["media"]
+      raise Exception("clip_details not specific to clip.")
+  except:
+    for item in details["items"]:
+      if clip_id:
+        if item["media"]["id"] == clip_id:
+          clip_details = item["media"]
+        else:
+          pass
       else:
-        pass
+        if item["media"]["key_id"] == key_id:
+          clip_details = item["media"]
+        else:
+          pass
   
   return clip_details
 
