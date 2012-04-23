@@ -1,5 +1,3 @@
-import re
-
 BASE_URL = 'http://video.citytv.com/video/%s'
 VIDEO_URL = 'http://video.citytv.com%s'
 
