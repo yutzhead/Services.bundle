@@ -1,10 +1,11 @@
 import re
 
 IPAD_URL = 'http://video.nationalgeographic.com/video/player/media-mp4/%s/mp4/variant-playlist.m3u8'
+RE_VIDEO_ID = Regex(".*/([^/]+)")
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+  data = HTML.ElementFromURL(url, cacheTime=7200)
   
   if len(url.split('/full-episodes/')) > 1:
     full_episode = True
@@ -41,24 +42,19 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
   
-  video_id = re.search(".*/([^/]+)", url).group(1)
+  video_id = RE_VIDEO_ID.search(url).group(1)
   extension = video_id.find('.html')
   if extension > 0:
     video_id = video_id[:extension]
   
   return [
     MediaObject(
-      protocol = 'hls',
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, id=video_id))]
+      parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id)))],
+      audio_channels = 2
     )
   ]
 
 ####################################################################################################
-
 def PlayVideo(id):
+
   return Redirect(IPAD_URL % id)
