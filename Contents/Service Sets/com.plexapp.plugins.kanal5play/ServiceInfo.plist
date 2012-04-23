@@ -8,11 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.kanal5play.se/program/play/4stjarnorsmiddag-s01e17</string>
+				<string>www.kanal5play.se/play/program/232017/video/283027</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.kanal5play.se/program/play/.+</string>
+				<string>http://www.kanal5play.se/(program|play)/(program|play)/.+</string>
 			</array>
 		</dict>
 	</dict>
