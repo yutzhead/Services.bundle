@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
     title = page.xpath("//meta[@property='og:title']")[0].get('content')
     description = page.xpath("//meta[@property='og:description']")[0].get('content')
     thumb = page.xpath("//link[@rel='image_src']")[0].get('href').replace('Medium.jpg', 'Large.jpg')
-    duration = TimeToMs( page.xpath("//span[@itemprop='duration']")[0].text )
+    duration = TimeToMs( page.xpath("//span[@class='duration']")[0].text )
     tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
     tags = [ tag.strip() for tag in tags ]
 
