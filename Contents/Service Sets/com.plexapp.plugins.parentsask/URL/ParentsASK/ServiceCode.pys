@@ -1,10 +1,21 @@
 import re
 
+BASE_URL = 'http://www.parentsask.com/'
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 
 ####################################################################################################
+def TestURLs():
+    test_urls= []
+    data = HTML.ElementFromURL(BASE_URL)
+    for link in data.xpath('.//li[@class="contentItem"]/span[@class="lCol"]/a):
+        url = BASE_URL + link.get('href')
+        test_urls.append(url)
+        if len(test_urls) > 3: break
 
+    return test_urls
+
+####################################################################################################
 def MetadataObjectForURL(url):
     try:
 
