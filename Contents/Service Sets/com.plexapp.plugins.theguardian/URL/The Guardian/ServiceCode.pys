@@ -27,6 +27,7 @@ def MetadataObjectForURL(url):
             thumb = thumb_dict['thumb']
         except:
             thumb = page.xpath("//meta[@property = 'og:image']")[0].get('content')
+        thumb = thumb.replace('https://', 'http://')
 
         return VideoClipObject(
             title = title,
