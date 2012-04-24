@@ -61,6 +61,6 @@ def PlayVideo(url):
 
     # Find the src url
     video_dict = RE_VIDEO_DICT.match(page_content).groupdict()
-    video_url = video_dict['url']
+    video_url = video_dict['url'].replace('https://', 'http://')
 
     return Redirect(video_url)
