@@ -1,4 +1,6 @@
-import re
+RE_EMBED_CODE = Regex(".*embedCode=(?P<embed>[^&]*)&.*")
+RE_MOBILE_ARGS = Regex('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', re.DOTALL)
+RE_STREAM_JSON = Regex('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^}]+)}].*', re.DOTALL)
 
 BASE_URL = 'http://www.parentsask.com/'
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
@@ -59,7 +61,7 @@ def PlayVideo(url):
 
     # Determine the embed_code of the associated video
     video_src = page.xpath("//link[@rel='video_src']")[0].get('href')
-    embed_code = re.match(".*embedCode=(?P<embed>[^&]*)&.*", video_src).groupdict()['embed']
+    embed_code = RE_EMBED_CODE.match(video_src).groupdict()['embed']
 
     # Once we've got this, we can then request the main JS page to do with the actual player. Since it
     # only actually contains JS source, we simply obtain the content.
@@ -67,11 +69,11 @@ def PlayVideo(url):
     
     # The player page will contain a reference to the mobile JS page (including all required parameters).
     # We therefore search for the known url.
-    mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
+    mobile_player_page_args = RE_MOBILE_ARGS.match(player_page).groupdict()['args'] + 'ipad'
     mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime = 0).content
 
     # We now have the mobile JS player page. 
-    stream_json = re.match('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^}]+)}].*', mobile_player_page, re.DOTALL).groupdict()['json'] + "}]"
+    stream_json = RE_STREAM_JSON.match(mobile_player_page).groupdict()['json'] + "}]"
     stream_json = stream_json.decode('unicode_escape')[2:]
     stream_details = JSON.ObjectFromString(stream_json)
 
