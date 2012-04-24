@@ -9,13 +9,12 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.sporza.be/permalink/1.1068654</string>
-				<string>http://video.ketnet.be/cm/ketnet/ketnet-mediaplayer/MG_ketnet/2.15271/1.1001179</string>
 				<string>http://www.deredactie.be/cm/vrtnieuws/mediatheek/nieuws/buitenland/1.1068676</string>
 				<string>http://www.deredactie.be/permalink/1.1068302</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://((www|video)\.)?(deredactie|ketnet|sporza)\.be/(permalink|cm/vrtnieuws/mediatheek|cm/ketnet/ketnet-mediaplayer|cm/sporza/videozone)/</string>
+				<string>http://((www|video)\.)?(deredactie|sporza)\.be/(permalink|cm/vrtnieuws/mediatheek|cm/sporza/videozone)/</string>
 			</array>
 		</dict>
 	</dict>
