@@ -1,4 +1,4 @@
-import re
+RE_NORMALIZE = Regex('/video/[^/]+/video/')
 
 XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
 MEDIA_URL = 'http://ht.cdn.turner.com/%s'
@@ -8,7 +8,7 @@ NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 ####################################################################################################
 def NormalizeURL(url):
 
-	return re.sub('/video/[^/]+/video/', '/video/?/video/', url)
+	return RE_NORMALIZE.sub('/video/?/video/', url)
 
 ####################################################################################################
 def TestURLs():
