@@ -1,4 +1,4 @@
-import re
+RE_VIDEO_DICT = Regex(".*'src': '(?P<url>[^']+)'.*", Regex.DOTALL)
 
 ####################################################################################################
 
@@ -60,7 +60,7 @@ def PlayVideo(url):
     page_content = HTTP.Request(url).content
 
     # Find the src url
-    video_dict = re.match(".*'src': '(?P<url>[^']+)'.*", page_content, re.DOTALL).groupdict()
+    video_dict = RE_VIDEO_DICT.match(page_content).groupdict()
     video_url = video_dict['url']
 
     return Redirect(video_url)
