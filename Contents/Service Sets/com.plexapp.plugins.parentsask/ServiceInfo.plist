@@ -6,11 +6,6 @@
 	<dict>
 		<key>ParentsASK</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.parentsask.com/parents-ask/traveling-twins-what-you-need-know?featured=1</string>
-				<string>http://www.parentsask.com/expert-round-tables/mommy-over-daddy-when-your-toddler-prefers-one-parent-over-other</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.parentsask.com/.+</string>
