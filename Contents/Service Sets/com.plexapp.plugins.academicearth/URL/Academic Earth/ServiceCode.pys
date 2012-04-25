@@ -6,6 +6,17 @@ RE_YOUTUBE = Regex('.*flashVars.ytID = "(?P<id>[^"]*)"')
 
 ####################################################################################################
 
+def TestURLs():
+    test_urls = []
+    page = HTML.ElementFromURL(BASE_URL)
+    featured = page.xpath('div[@class="featured lectures"]')[0]
+    for lecture in featured.xpath('.//a[@class="thumb"]'):
+        test_urls.append(lecture.get('href')
+
+    return test_urls
+
+####################################################################################################
+
 def NormalizeURL(url):
     return url
 
