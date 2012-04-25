@@ -1,0 +1,39 @@
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    return VideoClipObject(title=url)
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(RTMPVideoURL(PlayVideo, url=url)))]
+      )
+    ]
+    
+def PlayVideo(url):
+    videosmil = HTTP.Request(url).content
+    player = videosmil.split("ref src")
+    player = player[2].split('"')
+
+    if ".mp4" in player[1]:
+        player = player[1].replace(".mp4", "")
+        try:
+            clip = player.split(";")
+            clip = "mp4:" + clip[4]
+        except:
+            clip = player.split("/video/")
+            player = player.split("/video/")[0]
+            clip = "mp4:/video/" + clip[-1]
+    else:
+        player = player[1].replace(".flv", "")
+        try:
+            clip = player.split(";")
+            clip = clip[4]
+        except:
+            clip = player.split("/video/")
+            player = player.split("/video/")[0]
+            clip = "/video/" + clip[-1]
+
+    return Redirect(RTMPVideoURl(player, clip))
