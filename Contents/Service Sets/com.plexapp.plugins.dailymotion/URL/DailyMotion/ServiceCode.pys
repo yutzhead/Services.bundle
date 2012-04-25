@@ -77,6 +77,7 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, fmt):
 
   video = JSON.ObjectFromURL(url)
@@ -94,4 +95,14 @@ def PlayVideo(url, fmt):
   else:
     video_url = video['stream_h264_sd_url']
 
-  return Redirect(video_url)
+  c = ObjectContainer()
+  c.add(VideoClipObject(
+    items = [
+      MediaObject(
+        parts = [
+          PartObject(key = video_url)
+        ]
+      )
+    ]
+  ))
+  return c
