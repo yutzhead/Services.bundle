@@ -57,36 +57,10 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-  api_address = "http://www.hulu.com/api/oembed.json?url="+url
-  Log(api_address)
-  try:
-    jsonObj = JSON.ObjectFromURL(api_address, cacheTime=CACHE_INTERVAL)
-  except: 
-    jsonObj = JSON.ObjectFromURL(api_address.rsplit('/',1)[0], cacheTime=CACHE_INTERVAL)
-		  
-  eid = jsonObj['embed_url'].split('embed/')[1].split('/')[0]
-		
-  details = XML.ElementFromURL(HULU_ASSETS %eid, cacheTime=CACHE_INTERVAL)
-
-  hd =  details.xpath('//video/show/has-hd')[0].text
-  if (hd == 'true'):
-     video_resolution = '480'
-  else:
-     video_resolution = 'sd'
-
-  return [(MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.WebKit,
-      video_resolution = video_resolution,
-      audio_channels = 2
-        )
+    return [
+      MediaObject(
+        parts = [PartObject(key = WebVideoURL(url))],
+        protocol = 'webkit',
+        audio_channels = 2
       )
     ]
-
-
-####################################################################################################
-
-def PlayVideo(url):
-
-  return Redirect(WebVideoURL(url))
