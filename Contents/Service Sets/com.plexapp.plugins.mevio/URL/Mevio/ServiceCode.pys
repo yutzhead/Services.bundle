@@ -124,6 +124,8 @@ def GetClipJSON(url):
   try:
     if details['key_id'] == key_id:
       return details
+    elif details['id'] == clip_id:
+      return details
     else:
       raise Exception("clip_details not specific to clip.")
   except:
