@@ -1,3 +1,5 @@
+SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+
 def NormalizeURL(url):
     return url
 
@@ -37,3 +39,13 @@ def PlayVideo(url):
             clip = "/video/" + clip[-1]
 
     return Redirect(RTMPVideoURl(player, clip))
+
+def GetSMIL(url):
+    try:
+        pID = url.split('?pid=')[1]
+    except:
+        pID = url.split('?releasePID=')[1]
+
+    smil = XML.ElementFromURL(SMIL_URL % pID)
+
+    return smil
