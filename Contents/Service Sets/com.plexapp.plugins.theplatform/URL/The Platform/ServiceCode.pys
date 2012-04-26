@@ -50,6 +50,18 @@ def GetSMIL(url):
 
     return smil
 
+def GetSRC(smil):
+    src_list = smil.xpath('//ref')
+    if len(src_list) == 1:
+        return src_list[0]
+    else:
+        for ref in src_list:
+            if "pfadx///video" in ref.get('src'):
+                pass
+            else:
+                return ref
+    return None
+
 ### EXAMPLE SMIL FROM FOODNETWORKCANADA ###
 #<smil xmlns="http://www.w3.org/2001/SMIL20/Language" xmlns:tp="http://xml.theplatform.com/mps/metadata/content/custom">
 #    <head>
