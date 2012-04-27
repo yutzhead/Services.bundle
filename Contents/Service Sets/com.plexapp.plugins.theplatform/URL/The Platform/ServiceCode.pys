@@ -47,11 +47,23 @@ def MediaObjectsForURL(url):
         video_resolution = '360'
       )
     ]
-    
+
+@indirect
 def PlayVideo(url):
-    videosmil = HTTP.Request(url).content
-    player = videosmil.split("ref src")
-    player = player[2].split('"')
+    smil = GetSMIL(url)
+    source = GetSRC(smil).get('src')
+
+    if source.startswith("rtmp"):
+        try:    
+            player = source.split('&lt;break&gt;')[0]
+            clip = source.split('&lt;break&gt;')[1]
+        except:
+            player = source.split('{break}')[0]
+            clip = source.split('{break}')[1]
+    else:
+        base = smil.xpath('//meta')[0].get('base')
+        player = base.split('{break}')[0]
+        clip = base.split('{break}')[1] + source
 
     if ".mp4" in player[1]:
         player = player[1].replace(".mp4", "")
@@ -71,8 +83,13 @@ def PlayVideo(url):
             clip = player.split("/video/")
             player = player.split("/video/")[0]
             clip = "/video/" + clip[-1]
+    
+    if player.startswith('rtmpe://'):
+        ### this video probably requires swf-verification which isn't supported quite yet ###
+    else:
+        pass
 
-    return Redirect(RTMPVideoURl(player, clip))
+    return RTMPVideoURL(player, clip)
 
 def GetSMIL(url):
     try:
