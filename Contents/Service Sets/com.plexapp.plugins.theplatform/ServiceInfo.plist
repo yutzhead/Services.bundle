@@ -8,10 +8,13 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
+                <string>http://tvone.tv/unsung-videos?pid=UsS7AjXhkZPYzYCYFq8fpH_eqSkiKibJ</string>
+                <string>http://www.foodnetwork.ca/topchefcanada/video/index.html?releasePID=eyvAlXXju87mO3hnH23dbHBIsURVngwY</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://release\.theplatform\.com/content\.select\?format=SMIL&pid=.+</string>
+				<string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
+                <string>http://(www\.)foodnetwork.ca/.+(/video)?(/index.html)?\?releasePID=.+</string>
 			</array>
 		</dict>
 	</dict>
