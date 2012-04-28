@@ -1,7 +1,10 @@
+RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
+
 NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
-
+#Bf7EgkV70_5ap5n1IPp2wHSdJkCLtvwm
+#http://release.theplatform.com/content.select?format=SMIL&pid=Bf7EgkV70_5ap5n1IPp2wHSdJkCLtvwm&Embedded=True&Tracking=True
 def NormalizeURL(url):
     return url
 
@@ -86,16 +89,20 @@ def PlayVideo(url):
     
     if player.startswith('rtmpe://'):
         ### this video probably requires swf-verification which isn't supported quite yet ###
+        Log('This video requires swf-verification.')
     else:
         pass
 
     return RTMPVideoURL(player, clip)
 
 def GetSMIL(url):
-    try:
+    if '?pid=' in url:
         pID = url.split('?pid=')[1]
-    except:
+    elif '?releasesPID=' in url:
         pID = url.split('?releasePID=')[1]
+    else:
+        data = HTTP.Request(url).content
+        pID = RE_PID.search(data).group(1)
 
     smil = XML.ElementFromURL(SMIL_URL % pID)
 
