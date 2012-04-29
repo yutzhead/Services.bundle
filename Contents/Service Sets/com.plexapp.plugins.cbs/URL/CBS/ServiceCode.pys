@@ -110,7 +110,7 @@ def MetadataObjectFromPAGE(url):
       summary = summary,
       originally_available_at = originally_available_at,
       duration = duration, 
-      thumb = thumb
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
     return eo
 
@@ -120,7 +120,7 @@ def MetadataObjectFromPAGE(url):
     co = EpisodeObject(
       title = ' - '.join([show_title, episode_title]),
       summary = summary,
-      thumb = thumb
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
     return co
   
