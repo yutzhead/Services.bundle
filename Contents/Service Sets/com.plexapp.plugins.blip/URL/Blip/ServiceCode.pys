@@ -58,29 +58,37 @@ def MediaObjectsForURL(url):
 				audio_channels = 2
 			))
 
-		elif video['archive_type'] == 'Flash':
-			media_objects.append(MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
-				container = 'flv',
-				video_resolution = video['media_height'],
-				duration = int(video['media_length']) * 1000,
-				video_codec = video['video_codec'],
-				audio_codec = video['audio_codec'],
-				optimized_for_streaming = True,
-				audio_channels = 2
-			))
+	if len(media_objects) == 0:
 
-		elif video['archive_type'] == 'Quicktime':
-			media_objects.append(MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
-				container = 'mov',
-				video_resolution = video['media_height'],
-				duration = int(video['media_length']) * 1000,
-				video_codec = video['video_codec'],
-				audio_codec = video['audio_codec'],
-				optimized_for_streaming = True,
-				audio_channels = 2
-			))
+		for video in data['additionalMedia']:
+
+			if video['archive_type'] == 'Flash':
+				media_objects.append(MediaObject(
+					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
+					container = 'flv',
+					video_resolution = video['media_height'],
+					duration = int(video['media_length']) * 1000,
+					video_codec = video['video_codec'],
+					audio_codec = video['audio_codec'],
+					optimized_for_streaming = True,
+					audio_channels = 2
+				))
+
+	if len(media_objects) == 0:
+
+		for video in data['additionalMedia']:
+
+			if video['archive_type'] == 'Quicktime':
+				media_objects.append(MediaObject(
+					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
+					container = 'mov',
+					video_resolution = video['media_height'],
+					duration = int(video['media_length']) * 1000,
+					video_codec = video['video_codec'],
+					audio_codec = video['audio_codec'],
+					optimized_for_streaming = True,
+					audio_channels = 2
+				))
 
 	return media_objects
 
