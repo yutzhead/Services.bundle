@@ -1,8 +1,17 @@
-import re
+RE_PID = Regex('pid=([^&]+)')
+RE_VIDEO_ID = Regex('CBSVideo.setVideoId\("([0-9]+)"\);')
+RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
+RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
+
+IPAD_HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU iPhone OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B314 Safari/531.21.10'}
+API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast%2Clowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
+
+CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
+SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
-SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
+
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -10,6 +19,59 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+  if ClipData(url):
+    return MetadataObjectFromAPI(url)
+  else:
+    return MetadataObjectFromPAGE(url)
+
+####################################################################################################
+def MetadataObjectFromAPI(url):
+  details = ClipData(url)
+  
+  if details != None:
+    pass
+  
+  title = details.xpath('//title')[0].text
+  originally_available_at = Datetime.ParseDate(details.xpath('//ProductionDate')[0].text).date()
+  summary = details.xpath('//Description')[0].text
+  duration = int(details.xpath('//LengthSecs')[0])*1000
+  images = details.xpath('//Images/Image')
+  thumbs = SortImages(images)
+  
+  if details.xpath('//Feature')[0].text == "full_episodes":
+    show = details.xpath('//FranchiseName')[0].text
+    content_rating = details.xpath('//ContentRatingOverall')[0].text
+    season = int(details.xpath('//SeasonNumber')[0].text)
+    index = int(details.xpath('//EpisodeNumber')[0].text)
+  
+    eo = EpisodeObject(
+      title = title,
+      show = show,
+      summary = summary,
+      originally_available_at = originally_available_at,
+      duration = duration,
+      content_rating = content_rating,
+      season = season,
+      index = index,
+      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+    )
+    return eo
+
+  else:
+    
+    # Construct a metadata item
+    co = EpisodeObject(
+      title = title,
+      originally_available_at = originally_available_at,
+      duration = duration,
+      content_rating = content_rating,
+      summary = summary,
+      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+    )
+    return co
+  
+####################################################################################################
+def MetadataObjectFromPAGE(url):
   page = HTTP.Request(url, cacheTime=7200).content
   data = HTML.ElementFromString(page)
 
@@ -23,7 +85,7 @@ def MetadataObjectForURL(url):
   summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
 
   try:
-    thumb = re.search('videoImagePlatform="([^"]+)', page).group(1)
+    thumb = RE_VIDEO_PLATFORM.search(page).group(1)
   except:
     thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
 
@@ -36,8 +98,8 @@ def MetadataObjectForURL(url):
 
     try:
       timecode = data.xpath('//div[@id="video-metadata-display-container"]//b[contains(text(), "Full Episode")]/parent::p/text()')[0].strip()
-      duration = re.search('([0-9]+):([0-9]{2})', timecode)
-      duration = ( (int(duration.group(1))*60) + int(duration.group(2)) ) * 1000
+      duration = RE_DURATION.search(timecode)
+      duration = ( (int(duration.group(minutes))*60) + int(duration.group(seconds)) ) * 1000
     except:
       duration = None
 
@@ -48,7 +110,7 @@ def MetadataObjectForURL(url):
       summary = summary,
       originally_available_at = originally_available_at,
       duration = duration, 
-      thumb = thumb
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
     return eo
 
@@ -58,51 +120,119 @@ def MetadataObjectForURL(url):
     co = EpisodeObject(
       title = ' - '.join([show_title, episode_title]),
       summary = summary,
-      thumb = thumb
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
     return co
   
 ####################################################################################################
 def MediaObjectsForURL(url):
- 
   return [
     MediaObject(
       container = Container.MP4,
+      video_resolution = '720',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
-      video_resolution = 360,
       audio_channels = 2,
       optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = 'WIFI-MED-16x9_30'))]
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 720))],
     ),
     MediaObject(
       container = Container.MP4,
+      video_resolution = '480',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
-      video_resolution = 224,
       audio_channels = 2,
       optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, profile = '3G-MED-16x9_30'))]
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))],
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_resolution = 'sd',
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 360))],
     )
   ]
-
+  
 ####################################################################################################
-def PlayVideo(url, profile):
+def PlayVideo(url, res):
+  if ClipData(url):
+    return VideoFromAPI(url, res)
+  else:
+    return VideoFromSMIL(url, res)
+    
+####################################################################################################
+def VideoFromAPI(url, res):
+  details = ClipData(url)
+  
+  video_dict = {}
+  for video in deatils.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
+    format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
+    player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
+    if format == "quicktime" and player == "Download":
+      res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
+      url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
+      video_dict[res] = url
+    else:
+      pass
+    
+  resolutions = video_dict.keys()
+  resolutions.sort()
+  resolutions.reverse()
+  
+  # Find the best match.
+  for resolution in resolutions:
+    if resolution <= res:
+      return Redirect(video_dict[resolution])
+  
+  # Return the first match.
+  return Redirect(video_dict[0])
+  
+####################################################################################################
+def VideoFromSMIL(url, res):
 
   if url.find('pid=') == -1:
     page = HTML.ElementFromURL(url)
     url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
 
-  pid = re.search('pid=([^&]+)', url)
+  pid = RE_PID.search(url)
 
   if pid:
     pid = pid.group(1)
 
     smil = XML.ElementFromURL(CBS_SMIL % pid)
-    video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
+    video_url = smil.xpath("//a:video[@profile = 'WIFI-MED-16x9_30']", namespaces = SMIL_NAMESPACE)[0].get('src')
 
     return Redirect(video_url)
 
+####################################################################################################
+def ClipData(url):    
+  page = HTTP.Request(url, headers=IPAD_HTTP_HEADERS).content
+  try:
+    video_id = RE_VIDEO_ID.search(page).group(1)
+    video_data = XML.ElementFromURL(API_URL % video_id)
+  except:
+    video_data = None
+  return video_data
+  
+####################################################################################################
+def SortImages(images=[]):
+  
+  thumbs = []
+  for image in images:
+      height = image.get('height')
+      url = image.xpath('./l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
+      thumbs.append({'height':height, 'url':url})
+
+  sorted_thumbs = sorted(thumbs, key=lambda thumb : int(thumb['height']), reverse=True)
+  thumb_list = []
+  for thumb in sorted_thumbs:
+      thumb_list.append(thumb['url'])
+
+  return thumb_list
+  
 ####################################################################################################
 def TestURLs():
   test_urls = []
