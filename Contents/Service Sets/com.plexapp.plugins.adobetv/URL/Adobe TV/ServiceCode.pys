@@ -29,8 +29,8 @@ def MetadataObjectForURL(url):
 		if 'duration' in json:
 			video.duration = TimeToMs(json['duration'])
 
-		if 'rating_cache' in json:
-			video.rating = json['rating_cache'] * 2
+		if 'rating_cache' in json and json['rating_cache'] != '':
+			video.rating = float(json['rating_cache']) * 2
 
 		tags = []
 		if 'keywords' in json:
