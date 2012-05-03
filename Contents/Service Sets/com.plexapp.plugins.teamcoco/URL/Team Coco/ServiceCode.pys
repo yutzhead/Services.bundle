@@ -1,6 +1,5 @@
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
 FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
-RE_VIDEO_ID = Regex('(contentId|videoId)=(?P<video_id>[0-9]+)')
 
 ####################################################################################################
 def TestURLs():
@@ -17,7 +16,7 @@ def MetadataObjectForURL(url):
 	try:
 		xml_url = VIDEO_INFO % GetVideoId(url)
 	except:
-		Log.Exception("Could not retrieve videoId in MetadataObjectForURL function")
+		Log.Exception("Could not retrieve video_id in MetadataObjectForURL function")
 		return None
 
 	info = XML.ElementFromURL(xml_url)
@@ -80,7 +79,7 @@ def PlayVideo(url):
 	try:
 		video_id = GetVideoId(url)
 	except:
-		Log.Exception("Could not retrieve videoId in PlayVideo function")
+		Log.Exception("Could not retrieve video_id in PlayVideo function")
 		return None
 
 	if 'full-episode' in url:
@@ -99,22 +98,10 @@ def GetVideoId(url):
 		return int(part[4])
 	else:
 		try:
-			object_param = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/object//param[@name="movie"]')
-			if len(object_param) > 0:
-				param = object_param[0].get('value')
-				videoId = RE_VIDEO_ID.search(param)
+			video_id = HTML.ElementFromURL(url).xpath('//article')[0].get('data-id')
+			return int(video_id)
 		except:
-			try:
-				object = HTML.ElementFromURL(url).xpath('//textarea[@onclick]/text()')
-				if len(object) > 0:
-					videoId = RE_VIDEO_ID.search(object)
-			except:
-				pass
-
-		if videoId:
-			return int(videoId.group('video_id'))
-
-	return
+			return None
 
 ####################################################################################################
 def Duration(timecode):
