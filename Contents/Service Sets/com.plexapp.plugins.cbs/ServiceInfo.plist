@@ -11,7 +11,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?cbs\.com/.+</string>
+				<string>http://(.+\.)?cbs(news)?\.com/.+</string>
 			</array>
 		</dict>
 	</dict>
