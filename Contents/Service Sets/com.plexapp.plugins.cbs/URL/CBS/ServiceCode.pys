@@ -4,7 +4,7 @@ RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
 RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
 
 IPAD_HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU iPhone OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B314 Safari/531.21.10'}
-API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast%2Clowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
+API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast,lowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
 
 CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
 SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
@@ -206,10 +206,13 @@ def VideoFromSMIL(url, res):
     smil = XML.ElementFromURL(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS)
     video_url = None
     for profile in PROFILES:
+      Log('looking of profile: %s' % profile)
       try:
         video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
+        Log("found: %s" % video_url)
         break
       except:
+        Log("not found")
         pass
     
     return Redirect(video_url)
