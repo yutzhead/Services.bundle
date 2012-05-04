@@ -169,7 +169,7 @@ def VideoFromAPI(url, res):
   details = ClipData(url)
   
   video_dict = {}
-  for video in deatils.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
+  for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
     format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
     player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
     if format == "quicktime" and player == "Download":
