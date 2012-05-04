@@ -60,7 +60,7 @@ def MetadataObjectFromAPI(url):
   else:
     
     # Construct a metadata item
-    co = EpisodeObject(
+    co = VideoClipObject(
       title = title,
       originally_available_at = originally_available_at,
       duration = duration,
