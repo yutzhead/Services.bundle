@@ -12,7 +12,9 @@ SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
 
-PROFILES = ["WIFI-MED-16x9_30", "WIFI-LOW-16x9_30", "3G-MED-16x9_30"]
+CBS_SWF = "http://www.cbs.com/thunder/player/1_0/partner/cbs/beta/cbs_beta.swf" #"http://www.cbs.com/thunder/canplayer/canplayer.swf"
+
+PROFILES = ["WIFI-MED", "WIFI-LOW", "3G-MED"]
 ####################################################################################################
 def NormalizeURL(url):
   return url
@@ -157,7 +159,7 @@ def MediaObjectsForURL(url):
   ]
   
 ####################################################################################################
-
+@indirect
 def PlayVideo(url, res):
   if ClipData(url):
     return VideoFromAPI(url, res)
@@ -169,6 +171,7 @@ def VideoFromAPI(url, res):
   details = ClipData(url)
   
   video_dict = {}
+  video_url = None
   for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
     format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
     player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
@@ -186,36 +189,50 @@ def VideoFromAPI(url, res):
   # Find the best match.
   for resolution in resolutions:
     if resolution <= res:
-      return Redirect(video_dict[resolution])
+      video_url = video_dict[resolution]
+      break
   
   # Return the first match.
-  return Redirect(video_dict[0])
+  if not video_url:
+    video_url = video_dict[0]
+    
+  return IndirectResponse(VideoClipObject, key=video_url)
   
 ####################################################################################################
 def VideoFromSMIL(url, res):
 
   if url.find('pid=') == -1:
-    page = HTML.ElementFromURL(url)
+    page = HTML.ElementFromURL(url, headers=IPAD_HTTP_HEADERS)
     url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
 
   pid = RE_PID.search(url)
 
   if pid:
     pid = pid.group(1)
-
+    
     smil = XML.ElementFromURL(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS)
     video_url = None
     for profile in PROFILES:
-      Log('looking of profile: %s' % profile)
       try:
-        video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
-        Log("found: %s" % video_url)
+        video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
+        Log(video_url)
         break
       except:
-        Log("not found")
         pass
+    if video_url:
+      return IndirectResponse(VideoClipObject, key = video_url)
+    else:
+      Log(HTTP.Request(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS).content)
+      rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('src')
+      Log(rtmp_url)
+      rtmp_params = rtmp_url.split('<break>')
+      rtmp_url = rtmp_params[0]
+      clip = rtmp_params[1]
+      if clip[-4:] == '.mp4':
+        clip = 'MP4:' + clip[:-4]
+      Log(clip)
     
-    return Redirect(video_url)
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
 ####################################################################################################
 def ClipData(url):    
