@@ -12,7 +12,7 @@ SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
 
-
+PROFILES = ["WIFI-MED-16x9_30", "WIFI-LOW-16x9_30", "3G-MED-16x9_30"]
 ####################################################################################################
 def NormalizeURL(url):
   return url
@@ -31,18 +31,18 @@ def MetadataObjectFromAPI(url):
   if details != None:
     pass
   
-  title = details.xpath('//title')[0].text
-  originally_available_at = Datetime.ParseDate(details.xpath('//ProductionDate')[0].text).date()
-  summary = details.xpath('//Description')[0].text
-  duration = int(details.xpath('//LengthSecs')[0])*1000
-  images = details.xpath('//Images/Image')
+  title = details.xpath('//l:Title', namespaces=CNET_NAMESPACE)[0].text
+  originally_available_at = Datetime.ParseDate(details.xpath('//l:ProductionDate', namespaces=CNET_NAMESPACE)[0].text).date()
+  summary = details.xpath('//l:Description', namespaces=CNET_NAMESPACE)[0].text
+  duration = int(details.xpath('//l:LengthSecs', namespaces=CNET_NAMESPACE)[0].text)*1000
+  images = details.xpath('//l:Images/l:Image', namespaces=CNET_NAMESPACE)
   thumbs = SortImages(images)
   
-  if details.xpath('//Feature')[0].text == "full_episodes":
-    show = details.xpath('//FranchiseName')[0].text
-    content_rating = details.xpath('//ContentRatingOverall')[0].text
-    season = int(details.xpath('//SeasonNumber')[0].text)
-    index = int(details.xpath('//EpisodeNumber')[0].text)
+  if details.xpath('//l:Feature', namespaces=CNET_NAMESPACE)[0].text == "full_episodes":
+    show = details.xpath('//l:FranchiseName', namespaces=CNET_NAMESPACE)[0].text
+    content_rating = details.xpath('//l:ContentRatingOverall', namespaces=CNET_NAMESPACE)[0].text
+    season = int(details.xpath('//l:SeasonNumber', namespaces=CNET_NAMESPACE)[0].text)
+    index = int(details.xpath('//l:EpisodeNumber', namespaces=CNET_NAMESPACE)[0].text)
   
     eo = EpisodeObject(
       title = title,
@@ -60,7 +60,7 @@ def MetadataObjectFromAPI(url):
   else:
     
     # Construct a metadata item
-    co = EpisodeObject(
+    co = VideoClipObject(
       title = title,
       originally_available_at = originally_available_at,
       duration = duration,
@@ -157,6 +157,7 @@ def MediaObjectsForURL(url):
   ]
   
 ####################################################################################################
+
 def PlayVideo(url, res):
   if ClipData(url):
     return VideoFromAPI(url, res)
@@ -168,7 +169,7 @@ def VideoFromAPI(url, res):
   details = ClipData(url)
   
   video_dict = {}
-  for video in deatils.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
+  for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
     format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
     player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
     if format == "quicktime" and player == "Download":
@@ -202,9 +203,15 @@ def VideoFromSMIL(url, res):
   if pid:
     pid = pid.group(1)
 
-    smil = XML.ElementFromURL(CBS_SMIL % pid)
-    video_url = smil.xpath("//a:video[@profile = 'WIFI-MED-16x9_30']", namespaces = SMIL_NAMESPACE)[0].get('src')
-
+    smil = XML.ElementFromURL(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS)
+    video_url = None
+    for profile in PROFILES:
+      try:
+        video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
+        break
+      except:
+        pass
+    
     return Redirect(video_url)
 
 ####################################################################################################
