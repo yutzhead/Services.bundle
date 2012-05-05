@@ -1,4 +1,4 @@
-import re
+RE_NORMALIZE = Regex('/video/[^/]+/video/')
 
 XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
 MEDIA_URL = 'http://ht.cdn.turner.com/%s'
@@ -8,7 +8,7 @@ NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 ####################################################################################################
 def NormalizeURL(url):
 
-	return re.sub('/video/[^/]+/video/', '/video/?/video/', url)
+	return RE_NORMALIZE.sub('/video/?/video/', url)
 
 ####################################################################################################
 def TestURLs():
@@ -34,7 +34,8 @@ def MetadataObjectForURL(url):
 	data_url = XML_URL % url.split('/?/video/')[1]
 	data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
 
-	thumbUrl = data.xpath('//image[@name="640x480"]')[0].text
+	thumb_list = data.xpath('//image')
+	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb.get("height")), reverse=True)
 	summary = data.xpath('//description')[0].text
 	date = data.xpath('//dateCreated')[0].text
 	duration = data.xpath('//length')[0].text
@@ -57,7 +58,7 @@ def MetadataObjectForURL(url):
 		duration = duration,
 		summary = summary,
 		tags = [show],
-		thumb = thumbUrl,
+		thumb = Resource.ContentsOfURLWithFallback([thumb.text for thumb in thumb_list], fallback="icon-default.png"),
 		source_title = 'CNN.com'
 	)
 
