@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PlexFrameworkFlags</key>
+    <array>
+	<string>UseRealRTMP</string>
+    </array>
+    <key>URL</key>
+	<dict>
+		<key>The Platform</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+			    <string>http://tvone.tv/unsung-videos?pid=UsS7AjXhkZPYzYCYFq8fpH_eqSkiKibJ</string>
+			    <string>http://www.foodnetwork.ca/topchefcanada/video/index.html?releasePID=eyvAlXXju87mO3hnH23dbHBIsURVngwY</string>
+			    <string>http://www.history.ca/video/default.aspx?releasePID=9Bs0C4_0LDbU8XADrFYFVWVDtAhMFIZt</string>
+			    <string>http://www.showcase.ca/video/shine+a+light/video.html?v=2225822196</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+			    <string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
+			    <string>http://(www\.)?(foodnetwork\.ca|history\.ca)/.+(/video)?(/index.html|/default.aspx)?\?releasePID=.+</string>
+			    <string>http://(www\.)?showcase.ca/(video/)?.+/(video.html)?\?v=.+</string>
+			    <string>http://link.theplatform.com/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

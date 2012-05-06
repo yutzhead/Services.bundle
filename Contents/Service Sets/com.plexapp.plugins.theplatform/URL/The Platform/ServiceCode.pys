@@ -1,0 +1,190 @@
+RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
+
+NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
+
+SMIL_NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
+SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+SMIL_PREFIXES = ["http://release.theplatform.com/content.select", "http://link.theplatform.com/"]
+
+RES_MAP = ['360', '504', '720']
+
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    smil = GetSMIL(url)
+    details = GetSRC(smil)
+    
+    title = details.get('title')
+    summary = details.get('abstract')
+    duration = int(details.get('dur').strip('ms'))
+    try:
+        source = details.get('author')
+    except:
+        source = details.get('provider')
+    
+    try:
+        show_title = details.get('Show', namespaces=NAMESPACES)
+        season = int(details.get('Season', namespaces=NAMESPACES))
+        episode = int(details.get('Episode', namespaces=NAMESPACES))
+
+        return EpisodeObject(
+            title = title,
+            summary = summary,
+            duration = duration,
+            show = show,
+            season = season, 
+            index = episode,
+            source_title = source)
+    except:
+        pass
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        duration = duration,
+        source_title = source)
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "504",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="504"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "360",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
+        )
+    ]
+
+@indirect
+def PlayVideo(url, res):
+    smil = GetSMIL(url)
+    
+    res_index = RES_MAP.index(res)
+    
+    video_url = None
+    
+    try: ### try to grab direct MP4 urls first if they're available, otherwise fallback to RTMP streams ###
+        video_list = smil.xpath('.//a:video[contains(@src, "http://")]', namespaces=SMIL_NAMESPACES)
+        while res_index > -1:
+            for video in video_list:
+                if video.get('height') == RES_MAP[res_index]:
+                    video_url = video.get('src')
+                    res_index = -1
+                    break
+                else:
+                    res_index = res_index - 1
+                    
+        if video_url:
+            return IndirectResponse(VideoClipObject, key=video_url)
+        else:
+            pass
+    except:
+        pass
+                    
+    source = GetSRC(smil).get('src')
+    if source.startswith("rtmp"):
+        try:    
+            player = source.split('&lt;break&gt;')[0]
+            clip = source.split('&lt;break&gt;')[1]
+        except:
+            player = source.split('{break}')[0]
+            clip = source.split('{break}')[1]
+    else:
+        base = smil.xpath('//meta')[0].get('base')
+        player = base.split('{break}')[0]
+        clip = base.split('{break}')[1] + source
+
+    if ".mp4" in player[1]:
+        player = player[1].replace(".mp4", "")
+        try:
+            clip = player.split(";")
+            clip = "mp4:" + clip[4]
+        except:
+            clip = player.split("/video/")
+            player = player.split("/video/")[0]
+            clip = "mp4:/video/" + clip[-1]
+    else:
+        player = player[1].replace(".flv", "")
+        try:
+            clip = player.split(";")
+            clip = clip[4]
+        except:
+            clip = player.split("/video/")
+            player = player.split("/video/")[0]
+            clip = "/video/" + clip[-1]
+    
+    if player.startswith('rtmpe://'):
+        swf_url = GetSwfURL(url)### this video probably requires swf-verification which isn't supported quite yet ###
+        Log('This video requires swf-verification.')
+        
+    else:
+        pass
+
+    return RTMPVideoURL(player, clip)
+
+def GetSMIL(url):
+
+    if URLisSMIL(url):
+        return XML.ElementFromURL(url)
+
+    if '?pid=' in url:
+        pID = url.split('?pid=')[1]
+    elif '?releasesPID=' in url:
+        pID = url.split('?releasePID=')[1]
+    else:
+        data = HTTP.Request(url).content
+        pID = RE_PID.search(data).group(1)
+
+    smil = XML.ElementFromURL(SMIL_URL % pID)
+
+    return smil
+
+def GetSRC(smil):
+    src_list = smil.xpath('//ref')
+    if len(src_list) == 1:
+        return src_list[0]
+    else:
+        for ref in src_list:
+            if "pfadx///video" in ref.get('src'):
+                pass
+            else:
+                return ref
+    return None
+
+def URLisSMIL(url):
+    for prefix in SMIL_PREFIXES:
+        if url.startswith(prefix):
+            Log("Given URL points to SMIL")
+            return True
+        else:
+            pass
+    return False
+    
+def GetSwfURL(url):
+    swf_url = None
+    if '#SWF_URL=' in url:
+        swf_url = url.split('#SWF_URL=')[1]
+    else:
+        pass #hopefully we can find a reliable way to grab the swf url or if necessary build a database of swf urls
+    return swf_url
