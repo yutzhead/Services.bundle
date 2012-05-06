@@ -47,11 +47,6 @@ def MetadataObjectForURL(url):
 
 def MediaObjectsForURL(url):
     return [
-      #MediaObject(
-      #  audio_channels = 2,
-      #  parts = [PartObject(key=Callback(RTMPVideoURL(PlayVideo, url=url)))],
-      #  video_resolution = '360'
-      #)
         MediaObject(
             container = Container.MP4,
             video_codec = VideoCodec.H264,
@@ -80,18 +75,6 @@ def MediaObjectsForURL(url):
             parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
         )
     ]
-    
-    '''
-        <video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_1696.mp4" system-bitrate="1697774" height="720" width="1280"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_1296.mp4" system-bitrate="1297803" height="504" width="896"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0896.mp4" system-bitrate="897829" height="360" width="640"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0696.mp4" system-bitrate="696730" height="360" width="640"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0496.mp4" system-bitrate="496713" height="224" width="400"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0306.mp4" system-bitrate="306735" height="224" width="400"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0240.mp4" system-bitrate="240085" height="224" width="400"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0150.mp4" system-bitrate="150067" height="224" width="400"/>
-	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0064.mp4" system-bitrate="64563" height="136" width="240"/>
-    '''
 
 @indirect
 def PlayVideo(url, res):
