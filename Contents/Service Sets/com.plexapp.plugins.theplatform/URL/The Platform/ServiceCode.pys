@@ -2,9 +2,12 @@ RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
 
 NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
+SMIL_NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
-#Bf7EgkV70_5ap5n1IPp2wHSdJkCLtvwm
-#http://release.theplatform.com/content.select?format=SMIL&pid=Bf7EgkV70_5ap5n1IPp2wHSdJkCLtvwm&Embedded=True&Tracking=True
+SMIL_PREFIXES = ["http://release.theplatform.com/content.select", "http://link.theplatform.com/"]
+
+RES_MAP = ['360', '504', '720']
+
 def NormalizeURL(url):
     return url
 
@@ -44,18 +47,79 @@ def MetadataObjectForURL(url):
 
 def MediaObjectsForURL(url):
     return [
-      MediaObject(
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(RTMPVideoURL(PlayVideo, url=url)))],
-        video_resolution = '360'
-      )
+      #MediaObject(
+      #  audio_channels = 2,
+      #  parts = [PartObject(key=Callback(RTMPVideoURL(PlayVideo, url=url)))],
+      #  video_resolution = '360'
+      #)
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "504",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="504"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "360",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
+        )
     ]
+    
+    '''
+        <video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_1696.mp4" system-bitrate="1697774" height="720" width="1280"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_1296.mp4" system-bitrate="1297803" height="504" width="896"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0896.mp4" system-bitrate="897829" height="360" width="640"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0696.mp4" system-bitrate="696730" height="360" width="640"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0496.mp4" system-bitrate="496713" height="224" width="400"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0306.mp4" system-bitrate="306735" height="224" width="400"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0240.mp4" system-bitrate="240085" height="224" width="400"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0150.mp4" system-bitrate="150067" height="224" width="400"/>
+	<video src="http://usahls-i.akamaihd.net/NBCU_USA_Network/14/342/USA_PSYCH_6009_901_0064.mp4" system-bitrate="64563" height="136" width="240"/>
+    '''
 
 @indirect
-def PlayVideo(url):
+def PlayVideo(url, res):
     smil = GetSMIL(url)
+    
+    res_index = RES_MAP.index(res)
+    
+    video_url = None
+    
+    try: ### try to grab direct MP4 urls first if they're available, otherwise fallback to RTMP streams ###
+        video_list = smil.xpath('.//a:video[contains(@src, "http://")]', namespaces=SMIL_NAMESPACES)
+        while res_index > -1:
+            for video in video_list:
+                if video.get('height') == RES_MAP[res_index]:
+                    video_url = video.get('src')
+                    res_index = -1
+                    break
+                else:
+                    res_index = res_index - 1
+                    
+        if video_url:
+            return IndirectResponse(VideoClipObject, key=video_url)
+        else:
+            pass
+    except:
+        pass
+                    
     source = GetSRC(smil).get('src')
-
     if source.startswith("rtmp"):
         try:    
             player = source.split('&lt;break&gt;')[0]
@@ -88,14 +152,19 @@ def PlayVideo(url):
             clip = "/video/" + clip[-1]
     
     if player.startswith('rtmpe://'):
-        ### this video probably requires swf-verification which isn't supported quite yet ###
+        swf_url = GetSwfURL(url)### this video probably requires swf-verification which isn't supported quite yet ###
         Log('This video requires swf-verification.')
+        
     else:
         pass
 
     return RTMPVideoURL(player, clip)
 
 def GetSMIL(url):
+
+    if URLisSMIL(url):
+        return XML.ElementFromURL(url)
+
     if '?pid=' in url:
         pID = url.split('?pid=')[1]
     elif '?releasesPID=' in url:
@@ -120,30 +189,19 @@ def GetSRC(smil):
                 return ref
     return None
 
-### EXAMPLE SMIL FROM FOODNETWORKCANADA ###
-#<smil xmlns="http://www.w3.org/2001/SMIL20/Language" xmlns:tp="http://xml.theplatform.com/mps/metadata/content/custom">
-#    <head>
-#		<meta base="http://ad.ca.doubleclick.net/N6872/" />
-#	</head>
-#	<body>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=pre1;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Pre 1" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=1|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" no-skip="true" tags="pre" guid="ykevm0CRcDFen5kRh47Hj_jDU9OynQOK" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="rtmp://cp68811.edgefcs.net/ondemand/?auth=dbEakaMdAazaEdpcBbocGd9aKamdodacwcy-bpMDiq-4q-d9i-1ntGGnPnwF2O8&amp;aifp=1234&amp;slist=Canwest_Broadcast_Entertainment/&lt;break&gt;Canwest_Broadcast_Entertainment/FOOD_BakeWithAnnaOlson_E1002.mp4" title="Chiffon Cake" author="Food Network" abstract="Light and airy, chiffon cakes combine the richness of a butter cake with the light spring of a sponge cake and they are the foundation for many favorite desserts." copyright="(c) Shaw Media|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=2|b=850491|cc=CA|rc=SK|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" dur="1329273ms" width="640" height="360" guid="jPTOxDC0CaYPKCJC5q7xB0kwWtD_YPuG" provider="Canwest Broadcast Entertainment" categories="FOODNETVC/Most Recent/Most Recent,FOODNETVC/TV Shows/Bake with Anna Olson/Season 1,FoodTV,z/FOODNET Player - Video Centre" keywords="Entertainment;Programming;Bake With Anna Olson" tp:ChapterEndTimes="00:06:18,00:12:39,00:18:36" tp:ChapterStartTimes="00:06:18,00:12:39,00:18:36" tp:Clip_Type="episode" tp:Episode="3" tp:MobileRotatorActionType="Show" tp:Network="Food Network" tp:Season="1" tp:Show="Bake With Anna Olson" tp:Subject="Entertainment" tp:Web_Exclusive="No" tp:allowsAirplay="true" tp:dpcjobid="212220"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=mid1;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Mid 1" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=3|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" no-skip="true" tags="mid" guid="NnTTxmv42sQCmAFlXsJ50x4GQHwuesij" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=mid2;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Mid 2" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=4|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" no-skip="true" tags="mid" guid="Nx978LUVjr0S8uJCh2p2ozeXAmp2VvHH" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=mid3;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Mid 3" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=5|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" tags="mid" guid="2wL2yf_9LJ7aWIdTPHeZFfCDiW1kuCmv" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=mid4;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Mid 4" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=6|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" tags="mid" guid="Whgc5qrJB58HpTt7o4tBV69yGbhy115w" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=mid5;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Mid 5" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=7|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" tags="mid" guid="BhYPUkMh3uBEdTb8CwAMRLY8yh8qasDA" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#		<ref src="pfadx///video;sz=320x240,480x360,912x342;tile=1;loc=top;pos=post1;exp=no;!c=iframe;show=;episode=;network=;season=;clipLength=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;;" title="InStream - Post 1" copyright="(c) Canwest Broadcast Entertainment|d=1335480848387|l=0,1329273,0,0,0,0,0,0|prid=2224994052|rid=1337320538,2224994053,1337320539,1341047138,1341047137,1454578556,1454578555,1337320540|ci=8|b=0|cc=CA|rc=SK|a=|br=Chrome 18|os=Windows XP|cid=1168581901,2224704578,1168583853,1168584586,1341044897,1454574347,1454576813,1168585776" no-skip="true" tags="post" guid="4v8_YcB_32KZxILXuclBvjIPx6cCXaIh" provider="Canwest Broadcast Entertainment" tp:MobileRotatorActionType="Show" tp:Web_Exclusive="No"/>
-#	</body>
-#</smil>
-
-
-### EXAMPLE SMIL FROM TVONE ###
-#<smil xmlns="http://www.w3.org/2001/SMIL20/Language">
-#    <head>
-#		<meta base="rtmp://flash.streamingmediahosting.com/tvone{break}TV_One/" />
-#	</head>
-#	<body>
-#		<ref src="57/603/unsung_ep503_4.flv" title="Unsung: Clips: &quot;Friends&quot;" abstract="See how Whodini&apos;s classic &quot;Friends&quot; came to life." copyright="(c) TV One|d=1335478889065|l=69530|rid=2207554044|ci=1|b=864000|a=|cid=2206820597" dur="69530ms" width="640" height="360" guid="2JEUTNNfVo_ZAtfDsNZLq_xdSE_obbLa" provider="TV One" categories="Show Clips:Unsung Show Clips,Latest:Video Latest" keywords="Unsung, tv one, whodini"/>
-#	</body>
-#</smil>
+def URLisSMIL(url):
+    for prefix in SMIL_PREFIXES:
+        if url.startswith(prefix):
+            Log("Given URL points to SMIL")
+            return True
+        else:
+            pass
+    return False
+    
+def GetSwfURL(url):
+    swf_url = None
+    if '#SWF_URL=' in url:
+        swf_url = url.split('#SWF_URL=')[1]
+    else:
+        pass #hopefully we can find a reliable way to grab the swf url or if necessary build a database of swf urls
+    return swf_url
