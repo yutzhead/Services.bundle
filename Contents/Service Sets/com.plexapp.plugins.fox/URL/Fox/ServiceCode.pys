@@ -1,5 +1,8 @@
 RE_VIDEO_DETAILS = Regex('video: ({"id":.+?"}),', Regex.DOTALL)
+RE_COOKIE_STRING = Regex('hdnea=ip=.+?~st=[0-9]+~(?P<expiry>exp=[0-9]+~acl=.+)~id=.+(?P<hmac>~hmac=.+)')
 SMIL_NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
+
+IPAD_HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU iPhone OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B314 Safari/531.21.10'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -21,25 +24,216 @@ def MetadataObjectForURL(url):
       
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-  return [
-    MediaObject(
-      parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
-      audio_channels = 2
-    )
-  ]
+    return [
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "576",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="576"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "360",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
+        )
+    ]
 
 ####################################################################################################
-def PlayVideo():
+@indirect
+def PlayVideo(url, res):
     video = GetDetails(url)
     smil_url = video['videoURL']
-    smil = XML.ElementFromURL(smil_url)
+    smil = XML.ElementFromURL(smil_url, headers=IPAD_HTTP_HEADERS)
     media_url = smil.xpath('//a:video', namespaces=SMIL_NAMESPACES)[0].get('src')
-    return Redirect(media_url)
-    
+    http_cookies = HTTP.CookiesForURL(url)
+    Log(http_cookies)
+    c = ObjectContainer()
+    c.add(VideoClipObject(
+        items = [
+                MediaObject(
+                    parts=[PartObject(key=media_url)]
+                )
+            ]
+        )
+    )
+    c.http_cookies = http_cookies
+    c.http_headers = IPAD_HTTP_HEADERS
+    return c
+
 ####################################################################################################
 def GetDetails(url):
-    content = HTTP.Request(url).content
+    content = HTTP.Request(url, headers=IPAD_HTTP_HEADERS).content
     video = JSON.ObjectFromString(RE_VIDEO_DETAILS.search(content).group(1))
     
     return video
+
+####################################################################################################
+def SignedURL(url):
+    return
+
+    
+#public function generateToken(_arg1:String, _arg2:uint, _arg3:Boolean=true):String{
+#            return ((((this.getFlags(_arg3) + this.getExpirationDate(_arg2).toString(16)) + this.getCheckSum(_arg1, _arg2, _arg3)) + Hex.fromString(SECRET_NAME)));
+#        }
+### Evaluates to >>> ("00" + (Now+60s).toString(16)) + ... 
+
+#_arg1 = url (eg. http://link.theplatform.com/s/fox.com/pTuZM9H_pKjg?mbr=true&feed=Fox.com%20Metadata%20Feed&format=SMIL&Tracking=true&Embedded=true)
+#_arg2 = 60 >>> 60 second lifespan of signature
+#_arg3 = false >>> _includeQueryStringInChecksum
+#SECRET_NAME:String = "FoxKey";
+
+#private function getFlags(_arg1:Boolean):String{
+#            if (_arg1){
+#                return ("10");
+#            };
+#            return ("00");
+#        }
+### Evaluates to >>> "00"
+
+#protected function getExpirationDate(_arg1:uint):uint{
+#            var _local2:Date = new Date(); >>> timestamp for NOW
+#            var _local3:uint = uint((_local2.valueOf() / 1000)); >>>divide timestamp by 1000
+#            return ((_local3 + _arg1)); >>> timestamp plus 60 seconds
+#        }
+### Evaluates to timestamp for Now+60seconds
+
+#public function toString(_arg1:Number=16):String{
+#            var _local2:int;
+#            var _local3:int;
+#            var _local4:int;
+#            var _local5:Boolean;
+#            var _local6:String;
+#            var _local7:int;
+#            var _local8:int;
+#            if (s < 0){
+#                return (("-" + negate().toString(_arg1)));
+#            };
+#            switch (_arg1){
+#                case 2:
+#                    _local2 = 1;
+#                    break;
+#                case 4:
+#                    _local2 = 2;
+#                    break;
+#                case 8:
+#                    _local2 = 3;
+#                    break;
+#                case 16:
+#                    _local2 = 4;
+#                    break;
+#                case 32:
+#                    _local2 = 5;
+#                    break;
+#            };
+#            _local3 = ((1 << _local2) - 1);
+#            _local4 = 0;
+#            _local5 = false;
+#            _local6 = "";
+#            _local7 = t;
+#            _local8 = (DB - ((_local7 * DB) % _local2));
+#            var _temp1 = _local7;
+#            _local7 = (_local7 - 1);
+#            if (_temp1 > 0){
+#                if ((((_local8 < DB)) && (((_local4 = (a[_local7] >> _local8)) > 0)))){
+#                    _local5 = true;
+#                    _local6 = _local4.toString(36);
+#                };
+#                while (_local7 >= 0) {
+#                    if (_local8 < _local2){
+#                        _local4 = ((a[_local7] & ((1 << _local8) - 1)) << (_local2 - _local8));
+#                        var _temp2 = _local4;
+#                        _local7 = (_local7 - 1);
+#                        _local8 = (_local8 + (DB - _local2));
+#                        _local4 = (_temp2 | (a[_local7] >> _local8));
+#                    } else {
+#                        _local8 = (_local8 - _local2);
+#                        _local4 = ((a[_local7] >> _local8) & _local3);
+#                        if (_local8 <= 0){
+#                            _local8 = (_local8 + DB);
+#                            _local7--;
+#                        };
+#                    };
+#                    if (_local4 > 0){
+#                        _local5 = true;
+#                    };
+#                    if (_local5){
+#                        _local6 = (_local6 + _local4.toString(36));
+#                    };
+#                };
+#            };
+#            return (((_local5) ? _local6 : "0"));
+#        }
+### I am completely lost on this one
+
+# protected function getCheckSum(_arg1:String, _arg2:uint, _arg3:Boolean):String{
+#            var _local4:HMAC = Crypto.getHMAC("sha1");
+#            var _local5:ByteArray = Hex.toArray(this.getClearText(_arg1, _arg2, _arg3));
+#            var _local6:ByteArray = Hex.toArray(Hex.fromString(this.a));
+#            var _local7:ByteArray = _local4.compute(_local6, _local5);
+#            return (Hex.fromArray(_local7));
+#        }
+
+#public static function getHMAC(_arg1:String):HMAC{
+#            var _local2:Array;
+#            var _local3:uint;
+#            _local2 = _arg1.split("-");
+#            if (_local2[0] == "hmac"){
+#                _local2.shift();
+#            };
+#            _local3 = 0;
+#            if (_local2.length > 1){
+#                _local3 = parseInt(_local2[1]);
+#            };
+#            return (new HMAC(getHash(_local2[0]), _local3));
+#        }
+
+#public static function getHash(_arg1:String):IHash{
+#            switch (_arg1){
+#                case "md2":
+#                    return (new MD2());
+#                case "md5":
+#                    return (new MD5());
+#                case "sha":
+#                case "sha1":
+#                    return (new SHA1());
+#                case "sha224":
+#                    return (new SHA224());
+#                case "sha256":
+#                    return (new SHA256());
+#            };
+#            return (null);
+#        }
+
+#public static function fromString(_arg1:String, _arg2:Boolean=false):String{
+#            var _local3:ByteArray;
+#            _local3 = new ByteArray();
+#            _local3.writeUTFBytes(_arg1);
+#            return (fromArray(_local3, _arg2));
+#        }
+
+#private var a:String = "#100FoxLock";
+
+#private function getClearText(_arg1:String, _arg2:uint, _arg3:Boolean):String{
+#            var _local4:String;
+#            if (_arg3){
+#                _local4 = (((this.getFlags(_arg3) + this.getExpirationDate(_arg2).toString(16)) + Hex.fromString(this.getRelativePath(_arg1))) + Hex.fromString(this.getQueryString(_arg1)));
+#            } else {
+#                _local4 = ((this.getFlags(_arg3) + this.getExpirationDate(_arg2).toString(16)) + Hex.fromString(this.getRelativePath(_arg1)));
+#            };
+#            return (_local4);
