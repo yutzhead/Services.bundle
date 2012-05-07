@@ -11,7 +11,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>www.fox.com/.+?/full-episodes/[0-9]+/.*</string>
+				<string>http://www.fox.com/.+?/full-episodes/[0-9]+/.*</string>
 			</array>
 		</dict>
 	</dict>
