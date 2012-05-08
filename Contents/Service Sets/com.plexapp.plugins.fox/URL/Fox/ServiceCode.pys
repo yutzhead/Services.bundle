@@ -92,20 +92,32 @@ def SignedURL(url):
     expiry = int(Datetime.TimestampFromDatetime(Datetime.Now())) + 60*1000
     relativeURL = url.split('link.theplatform.com/s/')[1].split('?')[0]
     checksum = CheckSum(lead, expiry, relativeURL)
-    tokn = GenerateToken(lead, expiry, checksum, foxSecret) 
+    token = GenerateToken(lead, expiry, checksum, foxSecret)
     signed_url = url + "&sig=" + token
     return
 
 def CheckSum(expiry, relativeURL, lead="00"):
-    _local4 = ((this.getFlags(_arg3) + this.getExpirationDate(_arg2).toString(16)) + Hex.fromString(this.getRelativePath(_arg1)));
     check_sum = lead + expiry + FromString(relativeURL)
     return check_sum
 
 def FromString(s):
-    return
+    a = bytearray(s, encoding="UTF8")
+    return FromArray(a)
+
+def FromArray(a):
+    i = 0
+    s = ''
+    while i < len(a):
+        q = '%8x' % a[i]
+        s = s + "0" + q[-2:]
+        i = i+1
+    return s
     
 def GenerateToken(lead, expiry, checksum, secret):
-    return
+    token = lead + expiry + checksum + FromString(secret)
+    return token
+
+####################################################################################################
 
 #http://link.theplatform.com/s/fox.com/pTuZM9H_pKjg?mbr=true&feed=Fox.com%20Metadata%20Feed&format=SMIL&Tracking=true&Embedded=true
 
