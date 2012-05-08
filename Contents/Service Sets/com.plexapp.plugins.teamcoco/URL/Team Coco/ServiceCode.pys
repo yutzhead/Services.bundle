@@ -86,7 +86,11 @@ def PlayVideo(url):
 		return Redirect(WebVideoURL(FULL_EPISODE % video_id))
 
 	else:
-		video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
+		try:
+			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
+		except:
+			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@type="Standard"]')[0].text
+
 		return Redirect(video_url)
 
 ####################################################################################################
