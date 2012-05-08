@@ -1,4 +1,4 @@
-import re, urlparse
+import urlparse
 
 # Allow any length for these content types
 VALID_TYPES = ['text/html', 'application/xhtml+xml']
@@ -19,6 +19,7 @@ HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; 
 HTTP.CacheTime = CACHE_1HOUR
 
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)')
+RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>http.+?youtu\.?be(.com)?.+?)("|\'|&quot;|%22)')
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
 
@@ -71,7 +72,7 @@ def FindExternalSource(req):
 				node_url = video.get(node)
 				for sources_check in URLService.AllPatterns:
 					try: 
-						if len(re.findall(sources_check, node_url)) > 0:
+						if len(Regex(sources_check).findall(node_url)) > 0:
 							return node_url
 					except: pass
 			except: pass
@@ -91,7 +92,13 @@ def CodecsForVideoTypeValue(value):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
+	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+
+	try:
+		req.headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return URLService.MetadataObjectForURL(e.headers['Location'])
 
 	if ShouldParse(req):
 
@@ -124,19 +131,32 @@ def MetadataObjectForURL(url):
 				title = doc.xpath('//title')[0].text.strip()
 			)
 
+		# Regex Video YouTube
+		youtube = RE_YOUTUBE.search(req.content)
+
+		if youtube:
+			youtube_url = youtube.group('vid').replace('\\', '')
+			return URLService.MetadataObjectForURL(youtube_url)
+
 	return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	req = HTTP.Request(url, headers=HTTP_IPAD_UA)
+	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+
+	try:
+		req.headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return URLService.MediaObjectsForURL(e.headers['Location'])
 
 	if ShouldParse(req):
 
 		# Embedded Video
 		source_url = FindExternalSource(req)
 		if source_url is not None:
-			return URLService.MetadataObjectForURL(source_url)
+			return URLService.MediaObjectsForURL(source_url)
 
 		doc = HTML.ElementFromString(req.content)
 
@@ -194,5 +214,12 @@ def MediaObjectsForURL(url):
 						parts = [PartObject(key=src)]
 					)
 				]
+
+		# Regex Video YouTube
+		youtube = RE_YOUTUBE.search(req.content)
+
+		if youtube:
+			youtube_url = youtube.group('vid').replace('\\', '')
+			return URLService.MediaObjectsForURL(youtube_url)
 
 	return None
