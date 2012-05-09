@@ -12,7 +12,7 @@ SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
 
-CBS_SWF = "http://www.cbs.com/thunder/player/1_0/partner/cbs/beta/cbs_beta.swf" #"http://www.cbs.com/thunder/canplayer/canplayer.swf"
+CBS_SWF = "http://www.cbs.com/thunder/player/1_0/chromeless/1_5_1/CAN.swf"
 
 PROFILES = ["WIFI-MED", "WIFI-LOW", "3G-MED"]
 ####################################################################################################
@@ -118,8 +118,7 @@ def MetadataObjectFromPAGE(url):
 
   elif video_type == "Clip":
     
-    # Construct a metadata item
-    co = EpisodeObject(
+    co = VideoClipObject(
       title = ' - '.join([show_title, episode_title]),
       summary = summary,
       thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
@@ -215,22 +214,18 @@ def VideoFromSMIL(url, res):
     for profile in PROFILES:
       try:
         video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
-        Log(video_url)
         break
       except:
         pass
     if video_url:
       return IndirectResponse(VideoClipObject, key = video_url)
     else:
-      Log(HTTP.Request(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS).content)
       rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('src')
-      Log(rtmp_url)
       rtmp_params = rtmp_url.split('<break>')
       rtmp_url = rtmp_params[0]
       clip = rtmp_params[1]
       if clip[-4:] == '.mp4':
         clip = 'MP4:' + clip[:-4]
-      Log(clip)
     
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
