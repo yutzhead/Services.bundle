@@ -9,9 +9,12 @@ RE_YOUTUBE = Regex('.*flashVars.ytID = "(?P<id>[^"]*)"')
 def TestURLs():
     test_urls = []
     page = HTML.ElementFromURL(BASE_URL)
-    featured = page.xpath('div[@class="featured lectures"]')[0]
+    featured = page.xpath('//div[@class="featured lectures"]')[0]
     for lecture in featured.xpath('.//a[@class="thumb"]'):
-        test_urls.append(lecture.get('href')
+        test_urls.append(BASE_URL + lecture.get('href'))
+
+        if len(test_urls) >=3:
+            break
 
     return test_urls
 
@@ -88,6 +91,4 @@ def PlayVideo(url):
         video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')  
         media = URLService.MediaObjectsForURL(video_url)
 
-        c = ObjectContainer()
-        c.add(VideoClipObject(key = media[-1].parts[0].key))
-        return c
+        return IndirectResponse(VideoClipObject, key = media[-1].parts[0].key)
