@@ -1,94 +1,90 @@
 BASE_URL = 'http://www.academicearth.org'
 YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
 
-RE_INDEX = Regex('.* (?P<index>[0-9]+) of (?P<total>[0-9]+)')
-RE_YOUTUBE = Regex('.*flashVars.ytID = "(?P<id>[^"]*)"')
+RE_INDEX = Regex('(?P<index>[0-9]+) of (?P<total>[0-9]+)')
+RE_YOUTUBE = Regex('flashVars.ytID = "(?P<id>[^"]+)"')
 
 ####################################################################################################
-
 def TestURLs():
-    test_urls = []
-    page = HTML.ElementFromURL(BASE_URL)
-    featured = page.xpath('//div[@class="featured lectures"]')[0]
-    for lecture in featured.xpath('.//a[@class="thumb"]'):
-        test_urls.append(BASE_URL + lecture.get('href'))
 
-        if len(test_urls) >=3:
-            break
+	test_urls = []
+	page = HTML.ElementFromURL(BASE_URL)
+	featured = page.xpath('//div[@class="featured lectures"]')[0]
 
-    return test_urls
+	for lecture in featured.xpath('.//a[@class="thumb"]'):
+		test_urls.append(BASE_URL + lecture.get('href'))
+
+		if len(test_urls) >=3:
+			break
+
+	return test_urls
 
 ####################################################################################################
-
 def NormalizeURL(url):
-    return url
+
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page
-        page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
 
-        # Extract the elements from the page
-        title = page.xpath("//h1[@class='pagetitledetails']/text()")[0]
-        description = page.xpath("//meta[@name='description']")[0].get('content')
-        show = page.xpath("//div[@id='lecture_number_link_box']/a/text()")[0]
-        tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-        tags = [tag.strip() for tag in tags]
+	# Extract the elements from the page
+	title = page.xpath("//h1[@class='pagetitledetails']/text()")[0]
+	description = page.xpath("//meta[@name='description']")[0].get('content')
+	show = page.xpath("//div[@id='lecture_number_link_box']/a/text()")[0]
+	tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+	tags = [tag.strip() for tag in tags]
 
-        thumb = page.xpath("//div[@id='video_thumb']//img")[0].get('src')
-        if thumb.startswith("http://") == False:
-            thumb = BASE_URL + thumb
+	thumb = page.xpath("//div[@id='video_thumb']//img")[0].get('src')
+	if thumb.startswith("http://") == False:
+		thumb = BASE_URL + thumb
 
-        episode_details = ''.join(page.xpath("//div[@id='lecture_number_link_box']/text()")).strip()
-        episode_dict = RE_INDEX.match(episode_details).groupdict()
-        index = int(episode_dict['index'])
+	episode_details = ''.join(page.xpath("//div[@id='lecture_number_link_box']/text()")).strip()
 
-        return EpisodeObject(
-            title = title,
-            show = show,
-            summary = description,
-            index = index,
-            thumb = thumb,
-            tags = tags)
+	try: index = int(RE_INDEX.search(episode_details).group('index'))
+	except: index = None
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+	return EpisodeObject(
+		title = title,
+		show = show,
+		summary = description,
+		index = index,
+		thumb = thumb,
+		tags = tags
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url))]
-    )
-  ]
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url):
 
-    # Request the page
-    page_content = HTTP.Request(url).content
+	page_content = HTTP.Request(url).content
 
-    # It appears that Academic Earth either uses YouTube or Blip to host their content. Therefore we
-    # should be able to find what is appropriate to redirect to the necessary URL service.
-    video_url = None
-    yt_match = RE_YOUTUBE.match(page_content)
-    if yt_match != None:
-        video_url = YOUTUBE_URL % yt_match.groupdict()['id']
-        media = URLService.MediaObjectsForURL(video_url)
-        return Redirect(media[-1].parts[0].key)
+	# It appears that Academic Earth either uses YouTube or Blip to host their content. Therefore we
+	# should be able to find what is appropriate to redirect to the necessary URL service.
+	video_url = None
+	yt_match = RE_YOUTUBE.search(page_content)
 
-    else:
-        page = HTML.ElementFromString(page_content)
-        video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')  
-        media = URLService.MediaObjectsForURL(video_url)
-
-        return IndirectResponse(VideoClipObject, key = media[-1].parts[0].key)
+	if yt_match != None:
+		video_url = YOUTUBE_URL % yt_match.group('id')
+		media = URLService.MediaObjectsForURL(video_url)
+		return Redirect(media[-1].parts[0].key)
+	else:
+		page = HTML.ElementFromString(page_content)
+		video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')
+		media = URLService.MediaObjectsForURL(video_url)
+		return IndirectResponse(VideoClipObject, key = media[-1].parts[0].key)
