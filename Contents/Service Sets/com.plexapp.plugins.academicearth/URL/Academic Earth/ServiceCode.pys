@@ -82,9 +82,9 @@ def PlayVideo(url):
 	if yt_match != None:
 		video_url = YOUTUBE_URL % yt_match.group('id')
 		media = URLService.MediaObjectsForURL(video_url)
-		return Redirect(media[-1].parts[0].key)
+		return Redirect(media[0].parts[0].key)
 	else:
 		page = HTML.ElementFromString(page_content)
 		video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')
 		media = URLService.MediaObjectsForURL(video_url)
-		return IndirectResponse(VideoClipObject, key = media[-1].parts[0].key)
+		return IndirectResponse(VideoClipObject, key = media[0].parts[0].key)
