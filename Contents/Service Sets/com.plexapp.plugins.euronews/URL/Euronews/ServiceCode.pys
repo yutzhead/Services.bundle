@@ -54,7 +54,7 @@ def PlayVideo(url):
 def TestURLs():
 
 	test_urls = []
-	page = HTML.ElementFromURL('http://www.euronews.co/')
+	page = HTML.ElementFromURL('http://www.euronews.com/')
 
 	for link in page.xpath("//span[@class='vid']/.."):
 		if len(test_urls) < 3:
