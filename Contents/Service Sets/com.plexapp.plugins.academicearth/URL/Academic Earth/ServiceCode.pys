@@ -32,13 +32,24 @@ def MetadataObjectForURL(url):
 	# Extract the elements from the page
 	title = page.xpath("//h1[@class='pagetitledetails']/text()")[0]
 	description = page.xpath("//meta[@name='description']")[0].get('content')
-	show = page.xpath("//div[@id='lecture_number_link_box']/a/text()")[0]
-	tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-	tags = [tag.strip() for tag in tags]
 
-	thumb = page.xpath("//div[@id='video_thumb']//img")[0].get('src')
-	if thumb.startswith("http://") == False:
-		thumb = BASE_URL + thumb
+	try: show = page.xpath("//div[@id='lecture_number_link_box']/a/text()")[0]
+	except: show = None
+
+	all_tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+	tags = []
+
+	for tag in all_tags:
+		tag = tag.strip()
+		if tag != '' and tag not in tags:
+			tags.append(tag)
+
+	try:
+		thumb = page.xpath("//div[@id='video_thumb']//img")[0].get('src')
+		if thumb.startswith("http://") == False:
+			thumb = BASE_URL + thumb
+	except:
+		thumb = None
 
 	episode_details = ''.join(page.xpath("//div[@id='lecture_number_link_box']/text()")).strip()
 
@@ -83,8 +94,9 @@ def PlayVideo(url):
 		video_url = YOUTUBE_URL % yt_match.group('id')
 		media = URLService.MediaObjectsForURL(video_url)
 		return Redirect(media[0].parts[0].key)
+
 	else:
 		page = HTML.ElementFromString(page_content)
 		video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')
 		media = URLService.MediaObjectsForURL(video_url)
-		return IndirectResponse(VideoClipObject, key = media[0].parts[0].key)
+		return Redirect(media[0].parts[0].key)
