@@ -1,9 +1,10 @@
 RE_NORMALIZE = Regex('/video/[^/]+/video/')
 
 XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
-MEDIA_URL = 'http://ht.cdn.turner.com/%s'
+MEDIA_URL = 'http://ht.cdn.turner.com/cnn/big/%s'
 CNN_URL = 'http://www.cnn.com/video/'
 NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
+RESOLUTIONS = ['512x288','640x360','768x432','896x504','1280x720']
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -66,12 +67,11 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='1280x720'))],
 			container = 'mp4',
-			optimized_for_streaming = True,
+			#optimized_for_streaming = True,
 			aspect_ratio = "1.78",
 			video_resolution = '720',
 			video_codec = VideoCodec.H264,
@@ -81,7 +81,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='896x504'))],
 			container = 'mp4',
-			optimized_for_streaming = True,
+			#optimized_for_streaming = True,
 			aspect_ratio = "1.78",
 			video_resolution = '504',
 			video_codec = VideoCodec.H264,
@@ -91,7 +91,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='768x432'))],
 			container = 'mp4',
-			optimized_for_streaming = True,
+			#optimized_for_streaming = True,
 			aspect_ratio = "1.78",
 			video_resolution = '432',
 			video_codec = VideoCodec.H264,
@@ -101,7 +101,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='640x360'))],
 			container = 'mp4',
-			optimized_for_streaming = True,
+			#optimized_for_streaming = True,
 			aspect_ratio = "1.78",
 			video_resolution = '360',
 			video_codec = VideoCodec.H264,
@@ -111,7 +111,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='512x288'))],
 			container = 'mp4',
-			optimized_for_streaming = True,
+			#optimized_for_streaming = True,
 			aspect_ratio = "1.78",
 			video_resolution = 'sd',
 			video_codec = VideoCodec.H264,
@@ -121,34 +121,49 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, resolution):
-
-	data_url = XML_URL % url.split('/?/video/')[1]
-	data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
-
-	video = None
-	try:
-		other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
-		smil = XML.ElementFromURL(other_source)
-		base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
-		clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
-		video = base + clip
-	except: pass
-
-	if video is None:
-		videos = data.xpath("//file[contains(@bitrate, '%s')]/text()" % resolution)
-		if len(videos) > 0:
-			svideo = videos[0]
-
-	# Some videos do not have the appropriate base URL
-	if video != None and video.startswith("http://") == False:
-		video = MEDIA_URL % video
-
-	if video is None:
-		other_videos = data.xpath("//groupFiles/file[contains(text(), '%s')]/text()" % resolution)
-		if len(other_videos) > 0:
-			base = data.xpath("//groupFiles/baseUrl/text()")[0]
-			clip = other-videos[0]
+	def PlayVideo(url, resolution):
+	
+		data_url = XML_URL % url.split('/?/video/')[1]
+		data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
+	
+		video = None
+		try:
+			other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
+			smil = XML.ElementFromURL(other_source)
+			base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+			clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
 			video = base + clip
-
-	return Redirect(video)
+		except: pass
+	
+		if video is None:
+			videos = data.xpath("//file")
+			found = False
+			res = RESOLUTIONS.index(resolution)
+			i = 0
+			while not found:
+				if i == len(RESOLUTIONS):
+					break
+				for video in videos:
+					if video.text.endswith('.mp4'):
+						if video.get('bitrate') == RESOLUTIONS[(res - i)]:
+							video = video.text
+							found = True
+							break
+						else:
+							pass
+					else:
+						continue
+				i = i+1
+			
+		# Some videos do not have the appropriate base URL
+		if video != None and video.startswith("http://") == False:
+			video = MEDIA_URL % video
+	
+		if video is None:
+			other_videos = data.xpath("//groupFiles/file[contains(text(), '%s')]/text()" % resolution)
+			if len(other_videos) > 0:
+				base = data.xpath("//groupFiles/baseUrl/text()")[0]
+				clip = other-videos[0]
+				video = base + clip
+	
+		return Redirect(video)
