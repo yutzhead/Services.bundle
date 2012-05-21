@@ -4,7 +4,7 @@ RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
 RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
 
 IPAD_HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU iPhone OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B314 Safari/531.21.10'}
-API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast%2Clowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
+API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast,lowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
 
 CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
 SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
@@ -12,7 +12,9 @@ SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
 
-PROFILES = ["WIFI-MED-16x9_30", "WIFI-LOW-16x9_30", "3G-MED-16x9_30"]
+CBS_SWF = "http://www.cbs.com/thunder/player/1_0/chromeless/1_5_1/CAN.swf"
+
+PROFILES = ["WIFI-MED", "WIFI-LOW", "3G-MED"]
 ####################################################################################################
 def NormalizeURL(url):
   return url
@@ -116,8 +118,7 @@ def MetadataObjectFromPAGE(url):
 
   elif video_type == "Clip":
     
-    # Construct a metadata item
-    co = EpisodeObject(
+    co = VideoClipObject(
       title = ' - '.join([show_title, episode_title]),
       summary = summary,
       thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
@@ -157,7 +158,7 @@ def MediaObjectsForURL(url):
   ]
   
 ####################################################################################################
-
+@indirect
 def PlayVideo(url, res):
   if ClipData(url):
     return VideoFromAPI(url, res)
@@ -169,6 +170,7 @@ def VideoFromAPI(url, res):
   details = ClipData(url)
   
   video_dict = {}
+  video_url = None
   for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
     format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
     player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
@@ -186,33 +188,46 @@ def VideoFromAPI(url, res):
   # Find the best match.
   for resolution in resolutions:
     if resolution <= res:
-      return Redirect(video_dict[resolution])
+      video_url = video_dict[resolution]
+      break
   
   # Return the first match.
-  return Redirect(video_dict[0])
+  if not video_url:
+    video_url = video_dict[0]
+    
+  return IndirectResponse(VideoClipObject, key=video_url)
   
 ####################################################################################################
 def VideoFromSMIL(url, res):
 
   if url.find('pid=') == -1:
-    page = HTML.ElementFromURL(url)
+    page = HTML.ElementFromURL(url, headers=IPAD_HTTP_HEADERS)
     url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
 
   pid = RE_PID.search(url)
 
   if pid:
     pid = pid.group(1)
-
+    
     smil = XML.ElementFromURL(CBS_SMIL % pid, headers=IPAD_HTTP_HEADERS)
     video_url = None
     for profile in PROFILES:
       try:
-        video_url = smil.xpath("//a:video[@profile = '%s']" % profile, namespaces = SMIL_NAMESPACE)[0].get('src')
+        video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
         break
       except:
         pass
+    if video_url:
+      return IndirectResponse(VideoClipObject, key = video_url)
+    else:
+      rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('src')
+      rtmp_params = rtmp_url.split('<break>')
+      rtmp_url = rtmp_params[0]
+      clip = rtmp_params[1]
+      if clip[-4:] == '.mp4':
+        clip = 'MP4:' + clip[:-4]
     
-    return Redirect(video_url)
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
 ####################################################################################################
 def ClipData(url):    
