@@ -20,9 +20,10 @@ def NormalizeURL(url):
   if re.match(".*/(\d+)$", url.path):
     video_id = url.path[url.path.rfind('/')+1:]
 
-  #http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
-  if re.search("clip_id=(\d+)&", url.query):
-    video_id = re.search("clip_id=(\d+)&", url.query).group(1)
+  # http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
+  # http://vimeo.com/moogaloop.swf?clip_id=31856894
+  if re.search("clip_id=(\d+)", url.query):
+    video_id = re.search("clip_id=(\d+)", url.query).group(1)
 
   if video_id is None:
     return None
