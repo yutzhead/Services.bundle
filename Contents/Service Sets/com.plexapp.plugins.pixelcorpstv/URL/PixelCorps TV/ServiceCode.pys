@@ -1,0 +1,42 @@
+BASE_URL = "http://www.pixelcorps.tv"
+
+####################################################################################################
+def TestURLs():
+    test_urls= []
+    return test_urls
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
+    details = data.xpath('//div[@id="content"]')[0]
+    title = details.xpath('.//h2[@class="page-title"]')[0].text
+    clip_title = details.xpath('.//h2[@class="title podcast"]')[0].text
+    title = "%s - %s" % (title, clip_title)
+    #runtime = details.xpath('.//div[@class="running-time"]/text()') #make sure to grab just the mm:ss
+    date = Datetime.ParseDate(details.xpath('.//h3[@class="podcast-date"]')[0].text).date
+    summary = details.xpath('.//p')[1].text
+
+    return
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '540',
+        optimized_for_streaming = True,
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      )
+    ]
+
+####################################################################################################
+def PlayVideo(url):
+    return
+
+####################################################################################################
+def GetMediaType(url):
+    ### compare url to list of known media types for the different shows on PixelCorps ###
+    return
