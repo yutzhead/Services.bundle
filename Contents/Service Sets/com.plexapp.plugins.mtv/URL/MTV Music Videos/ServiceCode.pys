@@ -1,0 +1,125 @@
+import string
+
+SMIL_NAMESPACE = {"a":"http://www.w3.org/2001/SMIL20/Language"}
+
+RE_URI = Regex('MTVN.Player.videoUri = "mgid:uma:video:mtv.com:([0-9]+)"')
+RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)"')
+STREAMERS = ['rtmpe://cp10740.edgefcs.net/ondemand/', 'rtmpe://viacommtvstrmfs.fplive.net/viacommtvstrm/']
+
+SMIL_URL = "http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%s.smil"
+RTMPE_PLAYLIST = "http://www.mtv.com/player/includes/mediaGen.jhtml?uri=mgid:uma:video:mtv.com:%s"
+
+MTV_SWF = "http://media.mtvnservices.com/player/prime/mediaplayerprime.1.12.1.swf"
+
+####################################################################################################
+
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+  data = HTML.ElementFromURL(url)
+  video_title = data.xpath('//meta[@name="mtvn_title"]')[0].get('content')
+  artist = data.xpath('//meta[@name="mtvn_artist"]')[0].get('content')
+  title = '%s - %s' % (artist, video_title)
+  date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
+  thumb = data.xpath('//meta[@name="thumbnail"]')
+  
+  oc = VideoClipObject(
+    title = title,
+    originally_available_at = date,
+    thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+  )
+  
+  return oc
+  
+####################################################################################################
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='5392000'))],
+      bitrate = '5392',
+      video_resolution = '1080',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='4392000'))],
+      bitrate = '4392',
+      video_resolution = '1080',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='3328000'))],
+      bitrate = '3328',
+      video_resolution = '720',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2528000'))],
+      bitrate = '2528',
+      video_resolution = '720',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1728000'))],
+      bitrate = '1728',
+      video_resolution = '432',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1328000'))],
+      bitrate = '1328',
+      video_resolution = '432',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='864000'))],
+      bitrate = '864',
+      video_resolution = '264',
+      audio_channels = 2
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='564000'))],
+      bitrate = '564',
+      video_resolution = '264',
+      audio_channels = 2
+    )
+  ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, bitrate=''):
+  content = HTTP.Request(url).content
+  try:
+    vevoId = RE_VEVO_ID.search(content).group(1)
+  except:
+    vevoId = None
+  
+  if vevoId:
+    smil = XML.ElementFromURL(SMIL_URL % (vevoId, string.lower(vevoId)))
+    player_url = smil.xpath('//a:meta', namespaces=SMIL_NAMESPACE)[0].get('base')
+    Log(player_url)
+    playpath = smil.xpath('//a:video[@system-bitrate="%s"]' % bitrate, namespaces=SMIL_NAMESPACE)[0].get('src')
+    Log(playpath)
+    return RTMPVideoURL(player_url, playpath)
+  else:
+    video_uri = RE_URI.search(content).group(1)
+    smil = XML.ElementFromURL(RTMPE_PLAYLIST % video_uri)
+    video_url = smil.xpath('//rendition/src')[-1].text
+    Log(video_url)
+    for streamer in STREAMERS:
+      if video_url.startswith(streamer):
+        player = streamer
+        playpath = video_url.split(streamer)[1]
+        break
+      else:
+        pass
+    if playpath.endswith('.mp4'):
+      playpath = "MP4:" + playpath
+    Log(player)
+    Log(playpath)
+  return RTMPVideoURL(player, playpath, swf_url=MTV_SWF)
+  
+
+####################################################################################################
