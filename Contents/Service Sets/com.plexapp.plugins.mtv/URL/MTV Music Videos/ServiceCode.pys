@@ -1,3 +1,5 @@
+MTV_VIDEOS = "http://www.mtv.com/music/videos/"
+
 ####################################################################################################
 
 def NormalizeURL(url):
@@ -30,3 +32,22 @@ def MediaObjectsForURL(url):
       )
     )
   ]
+
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL(MTV_VIDEOS)
+  for video in data.xpath('//item'):
+    try:
+      link = video.xpath('.//img')[0].get('src')
+      test_urls.append(link)
+    except:
+      continue
+    if len(test_urls) > 3:
+      break
+    else:
+      pass
+  return test_urls
+
+
+####################################################################################################
