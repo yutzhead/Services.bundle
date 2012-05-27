@@ -199,10 +199,8 @@ def VideoFromAPI(url, res):
   
 ####################################################################################################
 def VideoFromSMIL(url, res):
-  Log("Attempting to grab video from SMIL file.")
 
   if url.find('pid=') == -1:
-    Log(HTTP.Request(url, headers=HTTP_HEADERS).content)
     page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
     url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
 
@@ -215,7 +213,6 @@ def VideoFromSMIL(url, res):
     for profile in PROFILES:
       try:
         video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
-        Log(video_url)
         break
       except:
         pass
@@ -223,7 +220,6 @@ def VideoFromSMIL(url, res):
       return IndirectResponse(VideoClipObject, key = video_url)
     else:
       rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[-1].get('src')
-      Log(rtmp_url)
       rtmp_params = rtmp_url.split('<break>')
       rtmp_url = rtmp_params[0]
       clip = rtmp_params[1]
