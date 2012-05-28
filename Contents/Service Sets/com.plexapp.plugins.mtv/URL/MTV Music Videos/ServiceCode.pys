@@ -14,22 +14,20 @@ def MetadataObjectForURL(url):
   title = '%s - %s' % (artist, video_title)
   date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
   thumb = data.xpath('//meta[@name="thumbnail"]')
-  
-  oc = VideoClipObject(
+
+  vc = VideoClipObject(
     title = title,
     originally_available_at = date,
     thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
   )
-  
-  return oc
-  
+
+  return vc
+
 ####################################################################################################
 def MediaObjectsForURL(url):
   return [
-    (
-      MediaObject(
-        parts = [PartObject(key=WebVideoURL(url))]
-      )
+    MediaObject(
+      parts = [PartObject(key=WebVideoURL(url))]
     )
   ]
 
@@ -48,6 +46,3 @@ def TestURLs():
     else:
       pass
   return test_urls
-
-
-####################################################################################################
