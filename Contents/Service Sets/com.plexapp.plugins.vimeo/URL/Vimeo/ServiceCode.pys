@@ -85,7 +85,7 @@ def MediaObjectsForURL(url):
       audio_codec = AudioCodec.AAC,
       audio_channels = 2,
       optimized_for_streaming = True
-    ),
+    )
   ]
 
   return items
