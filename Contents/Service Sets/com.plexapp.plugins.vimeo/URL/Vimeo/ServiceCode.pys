@@ -16,11 +16,8 @@ def NormalizeURL(url):
   if re.match("^/(\d+)$", url.path):
     video_id = url.path[1:]
 
-  # http://player.vimeo.com/video/42601218
-  if re.match("^/video/(\d+)($|\?)", url.path):
-    video_id = re.match("^/video/(\d+)($|\?)", url.path).group(1)
-
   # http://vimeo.com/groups/5dmkii/videos/26352235
+  # http://player.vimeo.com/video/42601218
   if re.search("/(\d+)$", url.path):
     video_id = url.path[url.path.rfind('/')+1:]
 
