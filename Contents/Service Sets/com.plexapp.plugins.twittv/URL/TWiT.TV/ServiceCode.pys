@@ -112,17 +112,6 @@ def MediaObjectsForURL(url):
 		)
 	)
 
-	# Audio mp3
-#	mediaobjects.append(
-#		MediaObject(
-#			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='audio'))],
-#			container = 'mp3',
-#			audio_codec = AudioCodec.MP3,
-#			audio_channels = 2,
-#			optimized_for_streaming = True
-#		)
-#	)
-
 	return mediaobjects
 
 ####################################################################################################
@@ -152,8 +141,9 @@ def PlayMedia(url, fmt):
 		url = page.xpath('//a[@class="sd download"]')[0].get('href')
 	elif fmt == 'sd':
 		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
-	elif fmt == 'audio':
-		url = page.xpath('//a[@class="audio download"]')[0].get('href')
+
+	if 'twit.mediafly.com' in url:
+		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
 
 	return Redirect(url)
 
