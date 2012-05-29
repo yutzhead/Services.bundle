@@ -10,9 +10,6 @@
 	<dict>
 		<key>CBS</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://(.+\.)?cbs(news)?\.com/.+</string>
