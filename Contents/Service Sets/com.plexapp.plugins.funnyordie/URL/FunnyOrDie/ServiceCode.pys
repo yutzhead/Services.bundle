@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 		title = title,
 		summary = description,
 		thumb = thumb
-		)
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
