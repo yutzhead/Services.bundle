@@ -10,10 +10,11 @@
 			<array>
 				<string>http://www.funnyordie.com/videos/ed64755ab1/her-first-period?playlist=featured_videos</string>
 				<string>http://www.funnyordie.com/videos/37627e30b8/swords-from-middlekid-josh-simpson-brad-and-scott-rodgers</string>
+				<string>http://www.funnyordie.com/embed/2fbed587d7</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.funnyordie.com/videos/[^/].+/.+</string>
+				<string>http://www.funnyordie.com/(embed|videos)/[0-9a-f]{10}</string>
 			</array>
 		</dict>
 	</dict>
