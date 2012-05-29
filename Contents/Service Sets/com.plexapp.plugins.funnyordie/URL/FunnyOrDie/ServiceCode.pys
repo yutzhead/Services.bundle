@@ -24,10 +24,16 @@ def MetadataObjectForURL(url):
 	description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
 	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
 
+	try:
+		duration = int(page.xpath("//head//meta[@property='video:duration']")[0].get('content'))*1000
+	except:
+		duartion = None
+
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb
+		thumb = thumb,
+		duration = duration
 	)
 
 ####################################################################################################
