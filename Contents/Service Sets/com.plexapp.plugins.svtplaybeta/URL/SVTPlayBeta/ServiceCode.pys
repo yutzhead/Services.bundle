@@ -1,6 +1,7 @@
 import re
 import datetime
 
+BASE_URL = "http://beta.svtplay.se"
 
 ####################################################################################################
 
@@ -41,8 +42,24 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
 
+    JSON_ARG = "?output=json"
+    mediaObjs = []
     # Request the page
     page = HTML.ElementFromURL(url)
+    jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
+    videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
+    Log(videos["video"]["videoReferences"][0]["url"])
+    for v in videos["video"]["videoReferences"]:
+        Log(v["url"])
+        if v["url"].find("rtmp") > -1:
+            mo = MediaObject(
+                protocol = Protocol.RTMP,
+                bitrate = int(v["bitrate"]),
+                parts = [PartObject(key = Callback(PlayVideo, rtmp_url = v["url"]))]
+                )
+            mediaObjs.append(mo)
+
+    return mediaObjs
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -50,5 +67,4 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def PlayVideo(rtmp_url):
-    rtmp_stream_details = rtmp_url.split('_definst_')
-    return Redirect(RTMPVideoItem(rtmp_stream_details[0], clip = "mp4:" + rtmp_stream_details[1]))
+    return RTMPVideoUrl(url=rtmp_url)
