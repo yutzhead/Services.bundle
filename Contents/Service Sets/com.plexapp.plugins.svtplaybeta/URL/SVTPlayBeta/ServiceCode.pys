@@ -7,7 +7,6 @@ BASE_URL = "http://beta.svtplay.se"
 
 def MetadataObjectForURL(url):
     try:
-
         # Request the page
         page = HTML.ElementFromURL(url)
         show = page.xpath("//div[@class='playVideoBox']/h1/text()")[0]
@@ -41,16 +40,14 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
-
     JSON_ARG = "?output=json"
     mediaObjs = []
+
     # Request the page
     page = HTML.ElementFromURL(url)
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
-    Log(videos["video"]["videoReferences"][0]["url"])
     for v in videos["video"]["videoReferences"]:
-        Log(v["url"])
         if v["url"].find("rtmp") > -1:
             mo = MediaObject(
                 protocol = Protocol.RTMP,
