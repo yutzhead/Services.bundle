@@ -38,7 +38,6 @@ def MetadataObjectForURL(url):
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
     JSON_ARG = "?output=json"
     mediaObjs = []
@@ -50,7 +49,6 @@ def MediaObjectsForURL(url):
     for v in videos["video"]["videoReferences"]:
         if v["url"].find("rtmp") > -1:
             mo = MediaObject(
-                protocol = Protocol.RTMP,
                 bitrate = int(v["bitrate"]),
                 parts = [PartObject(key = Callback(PlayVideo, rtmp_url = v["url"]))]
                 )
@@ -63,5 +61,6 @@ def NormalizeURL(url):
     return url
 ####################################################################################################
 
+@indirect
 def PlayVideo(rtmp_url):
-    return RTMPVideoUrl(url=rtmp_url)
+    return IndirectResponse(key = RTMPVideoUrl(url=rtmp_url))
