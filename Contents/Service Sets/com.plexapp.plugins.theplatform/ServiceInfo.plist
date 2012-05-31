@@ -21,7 +21,7 @@
 			<key>URLPatterns</key>
 			<array>
 			    <string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
-			    <string>http://(www\.)?(foodnetwork\.ca|history\.ca)/.+(/video)?(/index.html|/default.aspx)?\?releasePID=.+</string>
+			    <string>http://(www\.)?(foodnetwork\.ca|history\.ca|hgtv\.ca)/.+(/video)?(/index.html|/default.aspx)?\?releasePID=.+</string>
 			    <string>http://(www\.)?showcase.ca/(video/)?.+/(video.html)?\?v=.+</string>
                 <string>http://www.tou.tv/.+</string>
 			    <string>http://link.theplatform.com/.+</string>
