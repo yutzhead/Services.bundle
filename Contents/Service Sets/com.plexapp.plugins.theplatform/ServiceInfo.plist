@@ -16,12 +16,14 @@
 			    <string>http://www.foodnetwork.ca/topchefcanada/video/index.html?releasePID=eyvAlXXju87mO3hnH23dbHBIsURVngwY</string>
 			    <string>http://www.history.ca/video/default.aspx?releasePID=9Bs0C4_0LDbU8XADrFYFVWVDtAhMFIZt</string>
 			    <string>http://www.showcase.ca/video/shine+a+light/video.html?v=2225822196</string>
+                <string>http://www.tou.tv/decouverte/S2011E28</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
 			    <string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
 			    <string>http://(www\.)?(foodnetwork\.ca|history\.ca)/.+(/video)?(/index.html|/default.aspx)?\?releasePID=.+</string>
 			    <string>http://(www\.)?showcase.ca/(video/)?.+/(video.html)?\?v=.+</string>
+                <string>http://www.tou.tv/.+</string>
 			    <string>http://link.theplatform.com/.+</string>
 			</array>
 		</dict>
