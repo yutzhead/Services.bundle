@@ -240,7 +240,16 @@ def GetThumbs(details):
 
 def GetFallback(url):
     '''use the domain to decide which fallback icon to use'''
-    if "www.tou.tv" in url:
+    if url.startswith("http://www.tou.tv"):
         return "icon-toutv.png"
-    else
+    elif url.startswith("http://www.hgtv.ca"):
+        return "icon-hgtv_ca.png"
+    elif "url.startswith("http://www.foodnetwork.ca"):
+        return "icon-foodnetwork_ca.png"
+    elif "url.startswith("http://www.history.ca"):
+        return "icon-history_ca.png"
+    elif "url.startswith("http://www.showcase.ca"):
+        return "icon-showcase_ca.png"
+    else:
         pass
+    return
