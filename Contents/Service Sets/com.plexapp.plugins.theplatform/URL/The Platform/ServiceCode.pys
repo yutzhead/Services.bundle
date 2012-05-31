@@ -1,4 +1,5 @@
 RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
+RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
 
 NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
@@ -154,7 +155,16 @@ def GetSMIL(url):
         pID = url.split('?releasePID=')[1]
     else:
         data = HTTP.Request(url).content
-        pID = RE_PID.search(data).group(1)
+        pID = RE_PID.search(data)
+        if pID:
+            pID = pID.group(1)
+        else:
+            pID = RE_EPISODE_ID.search(data)
+            if pID:
+                pID = pID.group(1)
+            else:
+                #I hope there's another way to find the pid#
+                pass
 
     smil = XML.ElementFromURL(SMIL_URL % pID)
 
