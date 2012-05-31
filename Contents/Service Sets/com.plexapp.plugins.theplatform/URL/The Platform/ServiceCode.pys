@@ -32,6 +32,7 @@ def MetadataObjectForURL(url):
                 source = ''
     
     thumbs = GetThumbs(details)
+    fallback = GetFallback(url)
     
     try:
         show_title = details.get('tp:Show', namespaces=NAMESPACES)
@@ -236,3 +237,10 @@ def GetThumbs(details):
     for image in images:
         thumbs.append(image['url'])
     return thumbs
+
+def GetFallback(url):
+    '''use the domain to decide which fallback icon to use'''
+    if "www.tou.tv" in url:
+        return "icon-toutv.png"
+    else
+        pass
