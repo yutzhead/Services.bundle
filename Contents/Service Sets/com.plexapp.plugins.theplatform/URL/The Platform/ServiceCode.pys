@@ -1,5 +1,6 @@
 RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
 RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
+RE_THUMBS = Regex('(?P<title>tp:image.+?)="(?P<url>.+?)"')
 
 NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
@@ -20,14 +21,40 @@ def MetadataObjectForURL(url):
     summary = details.get('abstract')
     duration = int(details.get('dur').strip('ms'))
     try:
-        source = details.get('author')
+        source = details.get('tp:Network', namespaces=NAMESPACES)
     except:
-        source = details.get('provider')
+        try:
+            source = details.get(provider')
+        except:
+            try:
+                source = details.get('author')
+            except:
+                source = ''
+    
+    thumbs = GetThumbs(details)
     
     try:
-        show_title = details.get('Show', namespaces=NAMESPACES)
-        season = int(details.get('Season', namespaces=NAMESPACES))
-        episode = int(details.get('Episode', namespaces=NAMESPACES))
+        show_title = details.get('tp:Show', namespaces=NAMESPACES)
+        try:
+            season = int(details.get('tp:SeasonNumber', namespaces=NAMESPACES))
+        except:
+            season = int(details.get('tp:Season', namespaces=NAMESPACES))
+        try:
+            episode = int(details.get('tp:EpisodeNumber', namespaces=NAMESPACES))
+        except:
+            episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
+        try:
+            date = Datetime.ParseDate(details.get('tp:OriginalAirDate', namespaces=NAMESPACES))
+        except:
+            date = None
+        try:
+            directors = [details.get('tp:PeopleDirector', namespaces=NAMESPACES)]
+        except:
+            directors = []
+    	try:
+            writers = [details.get('tp:PeopleWriter', namespaces=NAMESPACES)]
+        except:
+            writers = []
 
         return EpisodeObject(
             title = title,
@@ -36,6 +63,9 @@ def MetadataObjectForURL(url):
             show = show,
             season = season, 
             index = episode,
+            originally_available_at = date,
+            directors = directors,
+            writers = writers,
             source_title = source)
     except:
         pass
@@ -198,3 +228,11 @@ def GetSwfURL(url):
     else:
         pass #hopefully we can find a reliable way to grab the swf url or if necessary build a database of swf urls
     return swf_url
+
+def GetThumbs(details):
+    thumbs = []
+    data = XML.StringFromElement(details)
+    images = RE_THUMBS.search(data).groupdict()
+    for image in images:
+        thumbs.append(image['url'])
+    return thumbs
