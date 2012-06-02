@@ -14,7 +14,7 @@ def MetadataObjectForURL(url):
     title = details.get('title')
     summary = details.get('abstract')
     duration = int(details.get('dur').strip('ms'))
-    thumbs = GetThumbs(details)
+
     try:
 	show_title = details.get('tp:Show', namespaces=NAMESPACES)
 	season = int(details.get('tp:Season', namespaces=NAMESPACES))
@@ -27,12 +27,14 @@ def MetadataObjectForURL(url):
             show = show_title,
             season = season, 
             index = episode,
+	    thumb = R('icon-default.png')
         )
     except:
 	return VideoClipObject(
 	    title = title,
             summary = summary,
-            duration = duration
+            duration = duration,
+	    thumb = R('icon-default.png')
 	)
     
 def MediaObjectsForURL(url):
@@ -86,14 +88,6 @@ def GetSRC(smil):
             else:
                 return ref
     return None
-
-def GetThumbs(details):
-    thumbs = []
-    data = XML.StringFromElement(details)
-    images = RE_THUMBS.search(data).groupdict()
-    for image in images:
-        thumbs.append(image['url'])
-    return thumbs
 
 def TestURLs():
     test_urls = []
