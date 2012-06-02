@@ -15,8 +15,8 @@ def MetadataObjectForURL(url):
             id = id_in_url.groupdict()['id']
         else:
              page = HTML.ElementFromURL(url)
-             embed_url = page.xpath("//meta[@name='embed_video_url']")[0].get('content')
-             id = re.match(".*/(?P<id>[0-9]+)", embed_url).groupdict()['id']
+             voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
+             id = voting_button.get('contentid')
 
         details_page = XML.ElementFromURL(DETAILS_URL % id)
 
@@ -83,8 +83,8 @@ def PlayVideo(url, res):
         id = id_in_url.groupdict()['id']
     else:
         page = HTML.ElementFromURL(url)
-        embed_url = page.xpath("//meta[@name='embed_video_url']")[0].get('content')
-        id = re.match(".*/(?P<id>[0-9]+)", embed_url).groupdict()['id']
+        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
+        id = voting_button.get('contentid')
 
     details_page = XML.ElementFromURL(DETAILS_URL % id)
 
