@@ -51,7 +51,6 @@ def PlayVideo(url):
     smil = GetSMIL(url)
     
     source = GetSRC(smil).get('src')
-    Log(source)
     
     try:
         clip = source.split("<break>")[1]
@@ -66,8 +65,6 @@ def PlayVideo(url):
     else:
         clip = clip.replace(".flv", "")
     
-    Log(player)
-    Log(clip)
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
 def GetSMIL(url):
