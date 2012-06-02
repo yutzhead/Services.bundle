@@ -10,12 +10,9 @@
 	<dict>
 		<key>USA Network</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-			    <string>http://link.theplatform.com/.+</string>
+			    <string>http://www.usanetwork.com/videos/.+</string>
 			</array>
 		</dict>
 	</dict>
