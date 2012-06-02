@@ -1,8 +1,8 @@
 RE_EMBED_CODE = Regex(".*embedCode=(?P<embed>[^&]*)&.*")
-RE_MOBILE_ARGS = Regex('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', re.DOTALL)
-RE_STREAM_JSON = Regex('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^}]+)}].*', re.DOTALL)
+RE_MOBILE_ARGS = Regex('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', Regex.DOTALL)
+RE_STREAM_JSON = Regex('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^}]+)}].*', Regex.DOTALL)
 
-BASE_URL = 'http://www.parentsask.com/'
+BASE_URL = 'http://www.parentsask.com'
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 
@@ -10,7 +10,7 @@ MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 def TestURLs():
     test_urls= []
     data = HTML.ElementFromURL(BASE_URL)
-    for link in data.xpath('.//li[@class="contentItem"]/span[@class="lCol"]/a):
+    for link in data.xpath('//li[@class="contentItem"]/span[@class="lCol"]/a'):
         url = BASE_URL + link.get('href')
         test_urls.append(url)
         if len(test_urls) > 3: break
@@ -19,25 +19,24 @@ def TestURLs():
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page.
-        page = HTML.ElementFromURL(url)
+    # Request the page.
+    page = HTML.ElementFromURL(url)
 
-        title = page.xpath("//meta[@name='title']")[0].get('content')
-        description = page.xpath("//meta[@name='description']")[0].get('content')
-        thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
-        tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-        tags = [ tag.strip() for tag in tags ]
+    title = page.xpath("//meta[@name='title']")[0].get('content')
+    description = page.xpath("//meta[@name='description']")[0].get('content')
+    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+    tags = [ tag.strip() for tag in tags ]
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            tags = tags)
+    thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
+    if thumb.startswith("/") == True:
+        thumb = BASE_URL + thumb
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        tags = tags)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
