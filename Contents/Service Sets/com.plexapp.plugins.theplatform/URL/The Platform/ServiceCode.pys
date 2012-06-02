@@ -2,13 +2,14 @@ RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
 RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
 RE_THUMBS = Regex('(?P<title>tp:image.+?)="(?P<url>.+?)"')
 
-NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
+NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language", "l":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
-SMIL_NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 SMIL_PREFIXES = ["http://release.theplatform.com/content.select", "http://link.theplatform.com/"]
 
 RES_MAP = ['360', '504', '720']
+
+GREAT_TV_URLS = ['http://www.hgtv.ca', 'http://www.history.ca']
 
 def NormalizeURL(url):
     return url
@@ -24,7 +25,7 @@ def MetadataObjectForURL(url):
         source = details.get('tp:Network', namespaces=NAMESPACES)
     except:
         try:
-            source = details.get(provider')
+            source = details.get('provider')
         except:
             try:
                 source = details.get('author')
@@ -115,65 +116,66 @@ def PlayVideo(url, res):
     res_index = RES_MAP.index(res)
     
     video_url = None
-    
-    try: ### try to grab direct MP4 urls first if they're available, otherwise fallback to RTMP streams ###
-        video_list = smil.xpath('.//a:video[contains(@src, "http://")]', namespaces=SMIL_NAMESPACES)
-        while res_index > -1:
-            for video in video_list:
-                if video.get('height') == RES_MAP[res_index]:
-                    video_url = video.get('src')
-                    res_index = -1
-                    break
-                else:
-                    res_index = res_index - 1
-                    
-        if video_url:
-            return IndirectResponse(VideoClipObject, key=video_url)
-        else:
-            pass
-    except:
-        pass
                     
     source = GetSRC(smil).get('src')
-    if source.startswith("rtmp"):
-        try:    
-            player = source.split('&lt;break&gt;')[0]
-            clip = source.split('&lt;break&gt;')[1]
+    Log(source)
+    if GreatTVURL(url):
+        if ".mp4" in source:
+            player = source.replace(".mp4", "")
+            try:
+                clip = player.split("<break>")[1]
+            except:
+                clip = player.split("/video/")
+                player = player.split("/video/")[0]
+                clip = "mp4:/video/" + clip[-1]
+        else:
+            player = source.replace(".flv", "")
+            try:
+                clip = player.split("<break>")[1]
+            except:
+                clip = player.split("/video/")
+                player = player.split("/video/")[0]
+                clip = "/video/" + clip[-1]
+    elif URLisSMIL(url):
+        try: ### try to grab direct MP4 urls first if they're available, otherwise fallback to RTMP streams ###
+            video_list = smil.xpath('.//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
+            while res_index > -1:
+                for video in video_list:
+                    if video.get('height') == RES_MAP[res_index]:
+                        video_url = video.get('src')
+                        res_index = -1
+                        break
+                    else:
+                        res_index = res_index - 1
+                        
+            if video_url:
+                return IndirectResponse(VideoClipObject, key=video_url)
+            else:
+                pass
         except:
-            player = source.split('{break}')[0]
-            clip = source.split('{break}')[1]
+            pass
     else:
-        base = smil.xpath('//meta')[0].get('base')
-        player = base.split('{break}')[0]
-        clip = base.split('{break}')[1] + source
-
-    if ".mp4" in player[1]:
-        player = player[1].replace(".mp4", "")
-        try:
-            clip = player.split(";")
-            clip = "mp4:" + clip[4]
-        except:
-            clip = player.split("/video/")
-            player = player.split("/video/")[0]
-            clip = "mp4:/video/" + clip[-1]
-    else:
-        player = player[1].replace(".flv", "")
-        try:
-            clip = player.split(";")
-            clip = clip[4]
-        except:
-            clip = player.split("/video/")
-            player = player.split("/video/")[0]
-            clip = "/video/" + clip[-1]
+        if source.startswith("rtmp"):
+            try:    
+                player = source.split('&lt;break&gt;')[0]
+                clip = source.split('&lt;break&gt;')[1]
+            except:
+                player = source.split('{break}')[0]
+                clip = source.split('{break}')[1]
+        else:
+            base = smil.xpath('//meta')[0].get('base')
+            player = base.split('{break}')[0]
+            clip = base.split('{break}')[1] + source
     
-    if player.startswith('rtmpe://'):
-        swf_url = GetSwfURL(url)### this video probably requires swf-verification which isn't supported quite yet ###
-        Log('This video requires swf-verification.')
-        
-    else:
-        pass
-
-    return RTMPVideoURL(player, clip)
+        if player.startswith('rtmpe://'):
+            swf_url = GetSwfURL(url)### this video probably requires swf-verification which isn't supported quite yet ###
+            Log('This video requires swf-verification.')
+        else:
+            pass
+    
+    Log(player)
+    Log(clip)
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
 def GetSMIL(url):
 
@@ -182,7 +184,7 @@ def GetSMIL(url):
 
     if '?pid=' in url:
         pID = url.split('?pid=')[1]
-    elif '?releasesPID=' in url:
+    elif '?releasePID=' in url:
         pID = url.split('?releasePID=')[1]
     else:
         data = HTTP.Request(url).content
@@ -198,17 +200,18 @@ def GetSMIL(url):
                 pass
 
     smil = XML.ElementFromURL(SMIL_URL % pID)
-
     return smil
 
 def GetSRC(smil):
-    src_list = smil.xpath('//ref')
+    src_list = smil.xpath('//l:ref', namespaces=NAMESPACES)
     if len(src_list) == 1:
         return src_list[0]
     else:
         for ref in src_list:
             if "pfadx///video" in ref.get('src'):
                 pass
+            elif ref.get('src').startswith('rtmp'):
+                return ref
             else:
                 return ref
     return None
@@ -244,12 +247,19 @@ def GetFallback(url):
         return "icon-toutv.png"
     elif url.startswith("http://www.hgtv.ca"):
         return "icon-hgtv_ca.png"
-    elif "url.startswith("http://www.foodnetwork.ca"):
+    elif url.startswith("http://www.foodnetwork.ca"):
         return "icon-foodnetwork_ca.png"
-    elif "url.startswith("http://www.history.ca"):
+    elif url.startswith("http://www.history.ca"):
         return "icon-history_ca.png"
-    elif "url.startswith("http://www.showcase.ca"):
+    elif url.startswith("http://www.showcase.ca"):
         return "icon-showcase_ca.png"
     else:
         pass
     return
+
+def GreatTVURL(url):
+    for base_url in GREAT_TV_URLS:
+        if url.startswith(base_url):
+            return True
+        else:
+            pass
