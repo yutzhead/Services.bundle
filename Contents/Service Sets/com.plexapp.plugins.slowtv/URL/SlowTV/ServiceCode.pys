@@ -39,20 +39,10 @@ def MetadataObjectForURL(url):
     return vc
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-    return [
-    MediaObject(
-        parts = [PartObject(key=Callback(PlayVideo, url=url))],
-        container = 'flv',
-        video_resolution = '576',
-        aspect_ratio = '1.77',
-        video_codec = VideoCodec.VP6,
-        audio_codec = AudioCodec.MP3
-        )
-    ]
+    data = HTML.ElementFromURL(url, errors='ignore')
+    external_url = data.xpath('//iframe[contains(@src, "blip.tv")]')[0].get('src')
+    external_url = String.Unquote(external_url)
 
-####################################################################################################
-def PlayVideo(url):
-    data = HTML.ElementFromURL(url)
-    flv_url = data.xpath('//div[@id="dls-section"]//a')[0].get('href')
-    return Redirect(flv_url)
+    return URLService.MediaObjectsForURL(external_url)

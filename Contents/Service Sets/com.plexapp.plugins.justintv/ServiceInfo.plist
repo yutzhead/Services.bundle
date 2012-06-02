@@ -6,11 +6,6 @@
 	<dict>
 		<key>JustinTV</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.justin.tv/hazerjr3/b/311466653</string>
-				<string>http://www.justin.tv/donkeyotay1/b/311758488</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.justin.tv/[^/]+/b/[0-9]+</string>

@@ -47,3 +47,25 @@ def VideoFromURL(url):
             return video
 
     return None
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    users = ['hazerjr3', 'nl_kripp']
+    for user in users:
+
+        user_test_urls = []
+        page = HTML.ElementFromURL('http://www.justin.tv/%s/videos' % user)
+        for item in page.xpath('//ul[@id = "broadcasts_list"]/li//p[@class = "title"]/a'):
+            video_url = 'http://www.justin.tv' + item.get('href')
+
+            if video_url.find('/b/') > -1:
+                user_test_urls.append(video_url)
+
+            if len(user_test_urls) >= 2:
+                break
+
+        test_urls = test_urls + user_test_urls
+
+    return test_urls
