@@ -1,4 +1,6 @@
 RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
+RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
+RE_THUMBS = Regex('(?P<title>tp:image.+?)="(?P<url>.+?)"')
 
 NAMESPACES = {"tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
@@ -19,14 +21,41 @@ def MetadataObjectForURL(url):
     summary = details.get('abstract')
     duration = int(details.get('dur').strip('ms'))
     try:
-        source = details.get('author')
+        source = details.get('tp:Network', namespaces=NAMESPACES)
     except:
-        source = details.get('provider')
+        try:
+            source = details.get(provider')
+        except:
+            try:
+                source = details.get('author')
+            except:
+                source = ''
+    
+    thumbs = GetThumbs(details)
+    fallback = GetFallback(url)
     
     try:
-        show_title = details.get('Show', namespaces=NAMESPACES)
-        season = int(details.get('Season', namespaces=NAMESPACES))
-        episode = int(details.get('Episode', namespaces=NAMESPACES))
+        show_title = details.get('tp:Show', namespaces=NAMESPACES)
+        try:
+            season = int(details.get('tp:SeasonNumber', namespaces=NAMESPACES))
+        except:
+            season = int(details.get('tp:Season', namespaces=NAMESPACES))
+        try:
+            episode = int(details.get('tp:EpisodeNumber', namespaces=NAMESPACES))
+        except:
+            episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
+        try:
+            date = Datetime.ParseDate(details.get('tp:OriginalAirDate', namespaces=NAMESPACES))
+        except:
+            date = None
+        try:
+            directors = [details.get('tp:PeopleDirector', namespaces=NAMESPACES)]
+        except:
+            directors = []
+    	try:
+            writers = [details.get('tp:PeopleWriter', namespaces=NAMESPACES)]
+        except:
+            writers = []
 
         return EpisodeObject(
             title = title,
@@ -35,6 +64,9 @@ def MetadataObjectForURL(url):
             show = show,
             season = season, 
             index = episode,
+            originally_available_at = date,
+            directors = directors,
+            writers = writers,
             source_title = source)
     except:
         pass
@@ -154,7 +186,16 @@ def GetSMIL(url):
         pID = url.split('?releasePID=')[1]
     else:
         data = HTTP.Request(url).content
-        pID = RE_PID.search(data).group(1)
+        pID = RE_PID.search(data)
+        if pID:
+            pID = pID.group(1)
+        else:
+            pID = RE_EPISODE_ID.search(data)
+            if pID:
+                pID = pID.group(1)
+            else:
+                #I hope there's another way to find the pid#
+                pass
 
     smil = XML.ElementFromURL(SMIL_URL % pID)
 
@@ -188,3 +229,27 @@ def GetSwfURL(url):
     else:
         pass #hopefully we can find a reliable way to grab the swf url or if necessary build a database of swf urls
     return swf_url
+
+def GetThumbs(details):
+    thumbs = []
+    data = XML.StringFromElement(details)
+    images = RE_THUMBS.search(data).groupdict()
+    for image in images:
+        thumbs.append(image['url'])
+    return thumbs
+
+def GetFallback(url):
+    '''use the domain to decide which fallback icon to use'''
+    if url.startswith("http://www.tou.tv"):
+        return "icon-toutv.png"
+    elif url.startswith("http://www.hgtv.ca"):
+        return "icon-hgtv_ca.png"
+    elif "url.startswith("http://www.foodnetwork.ca"):
+        return "icon-foodnetwork_ca.png"
+    elif "url.startswith("http://www.history.ca"):
+        return "icon-history_ca.png"
+    elif "url.startswith("http://www.showcase.ca"):
+        return "icon-showcase_ca.png"
+    else:
+        pass
+    return
