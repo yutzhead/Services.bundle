@@ -16,6 +16,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
+			    <string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
 			</array>
 		</dict>
 	</dict>
