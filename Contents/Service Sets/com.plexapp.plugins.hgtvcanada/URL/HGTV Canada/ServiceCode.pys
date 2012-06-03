@@ -16,26 +16,26 @@ def MetadataObjectForURL(url):
 	duration = int(details.get('dur').strip('ms'))
 
 	try:
-	show_title = details.get('tp:Show', namespaces=NAMESPACES)
-	season = int(details.get('tp:Season', namespaces=NAMESPACES))
-	episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
+		show_title = details.get('tp:Show', namespaces=NAMESPACES)
+		season = int(details.get('tp:Season', namespaces=NAMESPACES))
+		episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
 
-	return EpisodeObject(
-			title = title,
-			summary = summary,
-			duration = duration,
-			show = show_title,
-			season = season, 
-			index = episode,
-		thumb = R('icon-default.png')
-		)
+		return EpisodeObject(
+				title = title,
+				summary = summary,
+				duration = duration,
+				show = show_title,
+				season = season, 
+				index = episode,
+			thumb = R('icon-default.png')
+			)
 	except:
-	return VideoClipObject(
-		title = title,
-			summary = summary,
-			duration = duration,
-		thumb = R('icon-default.png')
-	)
+		return VideoClipObject(
+			title = title,
+				summary = summary,
+				duration = duration,
+			thumb = R('icon-default.png')
+		)
 	
 #########################################################################################
 def MediaObjectsForURL(url):
@@ -56,14 +56,14 @@ def PlayVideo(url):
 	
 	try:
 		clip = source.split("<break>")[1]
-	player = source.split("<break>")[0]
+		player = source.split("<break>")[0]
 	except:
 		clip = player.split("/video/")
 		player = player.split("/video/")[0]
 		clip = "/video/" + clip[-1]
 	
 	if clip.endswith(".mp4"):
-	clip = "MP4:" + clip
+		clip = "MP4:" + clip
 	else:
 		clip = clip.replace(".flv", "")
 	
