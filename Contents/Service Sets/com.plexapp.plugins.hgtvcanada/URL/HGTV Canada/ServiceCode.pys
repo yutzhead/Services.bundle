@@ -27,7 +27,7 @@ def MetadataObjectForURL(url):
 				show = show_title,
 				season = season, 
 				index = episode,
-			thumb = R('icon-default.png')
+				thumb = R('icon-default.png')
 			)
 	except:
 		return VideoClipObject(
