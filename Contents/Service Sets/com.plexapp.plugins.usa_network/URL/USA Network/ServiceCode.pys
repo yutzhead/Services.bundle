@@ -17,17 +17,25 @@ def MetadataObjectForURL(url):
         
     video_title = episode['title']
     summary = episode['description']
-    show = String.Unquote(show_name)
     thumbs = SortImages(episode['media$thumbnails'])
     duration = int(float(episode['media$content'][0]['plfile$duration'])*1000)
+    try:
+	show = episode['categories'].split('Series/')[1]
 
-    return EpisodeObject(
-        title = video_title,
-        summary = summary,
-        duration = duration,
-        show = show,
-	thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
-    )
+	return EpisodeObject(
+	    title = video_title,
+	    summary = summary,
+	    duration = duration,
+	    show = show,
+	    thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+	)
+    except:
+	return VideoClipObject(
+	    title = video_title,
+	    summary = summary,
+	    duration = duration,
+	    thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+	)
     
 ####################################################################################################
 def MediaObjectsForURL(url):
