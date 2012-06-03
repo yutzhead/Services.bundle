@@ -5,104 +5,101 @@ NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.the
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
 def NormalizeURL(url):
-    return url
+	return url
 
 def MetadataObjectForURL(url):
-    smil = GetSMIL(url)
-    details = GetSRC(smil)
-    
-    title = details.get('title')
-    summary = details.get('abstract')
-    duration = int(details.get('dur').strip('ms'))
-    thumbs = GetThumbs(details)
-    try:
+	smil = GetSMIL(url)
+	details = GetSRC(smil)
+	
+	title = details.get('title')
+	summary = details.get('abstract')
+	duration = int(details.get('dur').strip('ms'))
+	thumbs = GetThumbs(details)
+	try:
 	show_title = details.get('tp:Show', namespaces=NAMESPACES)
 	season = int(details.get('tp:Season', namespaces=NAMESPACES))
 	episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
 
 	return EpisodeObject(
-            title = title,
-            summary = summary,
-            duration = duration,
-            show = show_title,
-            season = season, 
-            index = episode,
-        )
-    except:
+			title = title,
+			summary = summary,
+			duration = duration,
+			show = show_title,
+			season = season, 
+			index = episode,
+		)
+	except:
 	return VideoClipObject(
-	    title = title,
-            summary = summary,
-            duration = duration
+		title = title,
+			summary = summary,
+			duration = duration
 	)
-    
+	
 def MediaObjectsForURL(url):
-    return [
-        MediaObject(
-	    video_resolution = "480",
-            audio_channels = 2,
-            parts = [PartObject(key=Callback(PlayVideo, url=url))]
-        )
-    ]
+	return [
+		MediaObject(
+		video_resolution = "480",
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
 
 @indirect
 def PlayVideo(url):
-    smil = GetSMIL(url)
-    
-    source = GetSRC(smil).get('src')
-    Log(source)
-    
-    try:
-        clip = source.split("<break>")[1]
+	smil = GetSMIL(url)
+	
+	source = GetSRC(smil).get('src')
+	
+	try:
+		clip = source.split("<break>")[1]
 	player = source.split("<break>")[0]
-    except:
-        clip = player.split("/video/")
-        player = player.split("/video/")[0]
-        clip = "/video/" + clip[-1]
-    
-    if clip.endswith(".mp4"):
+	except:
+		clip = player.split("/video/")
+		player = player.split("/video/")[0]
+		clip = "/video/" + clip[-1]
+	
+	if clip.endswith(".mp4"):
 	clip = "MP4:" + clip
-    else:
-        clip = clip.replace(".flv", "")
-    
-    Log(player)
-    Log(clip)
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
+	else:
+		clip = clip.replace(".flv", "")
+	
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
 def GetSMIL(url):
-    pID = url.split('?releasePID=')[1]
-    smil = XML.ElementFromURL(SMIL_URL % pID)
-    return smil
+	pID = url.split('?releasePID=')[1]
+	smil = XML.ElementFromURL(SMIL_URL % pID)
+	return smil
 
 def GetSRC(smil):
-    src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-    if len(src_list) == 1:
-        return src_list[0]
-    else:
-        for ref in src_list:
-            if "pfadx///video" in ref.get('src'):
-                pass
-            elif ref.get('src').startswith('rtmp'):
-                return ref
-            else:
-                return ref
-    return None
+	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+	if len(src_list) == 1:
+		return src_list[0]
+	else:
+		for ref in src_list:
+			if "pfadx///video" in ref.get('src'):
+				pass
+			elif ref.get('src').startswith('rtmp'):
+				return ref
+			else:
+				return ref
+	return None
 
 def GetThumbs(details):
-    thumbs = []
-    data = XML.StringFromElement(details)
-    images = RE_THUMBS.search(data).groupdict()
-    for image in images:
-        thumbs.append(image['url'])
-    return thumbs
+	thumbs = []
+	data = XML.StringFromElement(details)
+	images = RE_THUMBS.search(data).groupdict()
+	for image in images:
+		thumbs.append(image['url'])
+	return thumbs
 
 def TestURLs():
-    test_urls = []
-    entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=IX_AH1EK64oFyEbbwbGHX2Y_2A_ca8pk&startIndex=1&endIndex=500&query=hasReleases&query=CustomText|PlayerTag|z/History%20Player%20-%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&field=ID&field=parent")
-    for entry in entries['items']:
+	test_urls = []
+	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=IX_AH1EK64oFyEbbwbGHX2Y_2A_ca8pk&startIndex=1&endIndex=500&query=hasReleases&query=CustomText|PlayerTag|z/History%20Player%20-%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&field=ID&field=parent")
+	for entry in entries['items']:
 	id = entry['ID']
 	data = JSON.ObjectFromURL('http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getReleaseList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=1&query=categoryIDs|%s&sortField=airdate&sortDescending=true&field=airdate&field=author&field=description&field=length&field=PID&field=thumbnailURL&field=title&contentCustomField=title&contentCustomField=Episode&contentCustomField=Season' % id)
 	for item in data['items']:
-	    PID = item['PID']
-	    test_urls.append('http://www.history.ca/video/?releasePID=%s' % PID)
-    
-    return test_urls
+		PID = item['PID']
+		test_urls.append('http://www.history.ca/video/?releasePID=%s' % PID)
+	
+	return test_urls
