@@ -1,12 +1,12 @@
-RE_THUMBS = Regex('(?P<title>tp:image.+?)="(?P<url>.+?)"')
-
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
+#########################################################################################
 def NormalizeURL(url):
     return url
 
+#########################################################################################
 def MetadataObjectForURL(url):
     smil = GetSMIL(url)
     details = GetSRC(smil)
@@ -36,7 +36,7 @@ def MetadataObjectForURL(url):
             duration = duration,
 	    thumb = R('icon-default.png')
 	)
-    
+ 	#########################################################################################   
 def MediaObjectsForURL(url):
     return [
         MediaObject(
@@ -47,6 +47,7 @@ def MediaObjectsForURL(url):
     ]
 
 @indirect
+#########################################################################################
 def PlayVideo(url):
     smil = GetSMIL(url)
     
@@ -67,6 +68,7 @@ def PlayVideo(url):
     
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
+#########################################################################################
 def GetSMIL(url):
     pID = url.split('?releasePID=')[1]
     smil = XML.ElementFromURL(SMIL_URL % pID)
@@ -86,6 +88,7 @@ def GetSRC(smil):
                 return ref
     return None
 
+#########################################################################################
 def TestURLs():
     test_urls = []
     entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=EJZUqE_dB8XeUUgiJBDE37WER48uEQCY&startIndex=1&endIndex=500&query=hasReleases&query=CustomText|PlayerTag|z/Slice%20Player%20-%20New%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&&contentCustomField=PID&field=ID&field=parent")
