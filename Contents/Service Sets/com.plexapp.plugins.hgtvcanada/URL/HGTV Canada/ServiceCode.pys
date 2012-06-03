@@ -34,7 +34,7 @@ def MetadataObjectForURL(url):
 			title = title,
 				summary = summary,
 				duration = duration,
-			thumb = R('icon-default.png')
+				thumb = R('icon-default.png')
 		)
 	
 #########################################################################################
