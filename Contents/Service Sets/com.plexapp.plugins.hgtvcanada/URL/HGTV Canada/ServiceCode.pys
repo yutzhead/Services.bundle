@@ -47,8 +47,8 @@ def MediaObjectsForURL(url):
 		)
 	]
 
-@indirect
 #########################################################################################
+@indirect
 def PlayVideo(url):
 	smil = GetSMIL(url)
 	
@@ -93,11 +93,19 @@ def GetSRC(smil):
 def TestURLs():
 	test_urls = []
 	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=5&query=hasReleases&query=CustomText|PlayerTag|z/HGTV%20Player%20-%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&field=ID&field=parent")
+
 	for entry in entries['items']:
 		id = entry['ID']
 		data = JSON.ObjectFromURL('http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getReleaseList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=1&query=categoryIDs|%s&sortField=airdate&sortDescending=true&field=airdate&field=author&field=description&field=length&field=PID&field=thumbnailURL&field=title&contentCustomField=title&contentCustomField=Episode&contentCustomField=Season' % id)
-	for item in data['items']:
-		PID = item['PID']
-		test_urls.append('http://www.hgtv.ca/video/?releasePID=%s' % PID)
-	
+
+		for item in data['items']:
+			PID = item['PID']
+			test_urls.append('http://www.hgtv.ca/video/?releasePID=%s' % PID)
+
+			if len(test_urls) > 2:
+				break
+
+		if len(test_urls) > 2:
+			break
+
 	return test_urls
