@@ -47,8 +47,8 @@ def MediaObjectsForURL(url):
 		)
 	]
 
-@indirect
 #########################################################################################
+@indirect
 def PlayVideo(url):
 	smil = GetSMIL(url)
 	
