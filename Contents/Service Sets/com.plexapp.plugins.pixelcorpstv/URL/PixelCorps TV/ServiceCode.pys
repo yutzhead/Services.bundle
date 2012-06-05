@@ -13,6 +13,8 @@ def TestURLs():
     for podcast in recent.xpath('.//div[@class="podcast-navigation clearfix"]'):
         link = podcast.xpath('.//a')[0].get('href')
         test_urls.append(BASE_URL + link)
+        if len(test_urls) > 2:
+            break
     return test_urls
 
 ####################################################################################################
