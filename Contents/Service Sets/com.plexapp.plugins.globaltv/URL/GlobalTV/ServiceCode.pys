@@ -1,6 +1,6 @@
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s"
-VIDEO_URL = 'http://www.globaltv.com/video/%s/video.html?v=%s#%s/video/full+episodes'
+VIDEO_URL = 'http://www.globaltv.com/video/%s/video.html?v=%s&pid=%s#%s/video/full+episodes'
 
 #########################################################################################
 def NormalizeURL(url):
@@ -15,7 +15,7 @@ def MetadataObjectForURL(url):
 	title = details.get('title')
 	summary = details.get('abstract')
 	duration = int(details.get('dur').strip('ms'))
-	thumb = details.get('imagePlayerLargeA')
+# 	thumb = details.get('imagePlayerLargeA')
 
 	try:
 		show_title = details.get('tp:Show', namespaces=NAMESPACES)
@@ -29,14 +29,14 @@ def MetadataObjectForURL(url):
 			show = show_title,
 			season = season, 
 			index = episode,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+			thumb = R('icon-default.png')
 		)
 	except:
 		return VideoClipObject(
 			title = title,
 			summary = summary,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+			thumb = R('icon-default.png')
 		)
 	
 #########################################################################################
@@ -72,24 +72,35 @@ def GetSRC(smil):
 #########################################################################################
 def TestURLs():
 	# NB:  We are limiting the amount of entries in the JSON items via the URL query
-	# 20 for the main list (we have to make sure we get at least one or two Full Episodes)
-	# and 5 for the actual show queries (Some shows have the first 4 as the same PID we
+	# 10 for the main list (we have to make sure we get at least one or two Full Episodes)
+	# and 20 for the actual show queries (Some shows have the first 4 as the same PID we
 	# we want at least 2 separate PIDs for shows to return -- Gerk - 2012/06/05
 	test_urls = []
-	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=W_qa_mi18Zxv8T8yFwmc8FIOolo_tp_g&startIndex=1&endIndex=20&query=hasReleases&query=CustomText|PlayerTag|z/Global%20Video%20Centre&field=fullTitle&field=PID&field=title&field=ID")
+	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=W_qa_mi18Zxv8T8yFwmc8FIOolo_tp_g&startIndex=1&endIndex=10&query=hasReleases&query=CustomText|PlayerTag|z/Global%20Video%20Centre&field=fullTitle&field=PID&field=title&field=ID")
+
 	for entry in entries['items']:
 		# don't try to parse non Full Episode items
 		if not('Full Episodes' in entry['fullTitle']):
 			continue
+
 		iid = entry['ID']
 		data = JSON.ObjectFromURL('http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getReleaseList?PID=W_qa_mi18Zxv8T8yFwmc8FIOolo_tp_g&startIndex=1&endIndex=5&query=categoryIDs|%s&field=PID&field=contentId&contentCustomField=Show' % iid)
+
 		for item in data['items']:
 			PID = item['PID']
 			iid = item['contentID']
-			test_urls.append(VIDEO_URL % (show, iid, PID, show))
-			if len(test_urls) > 2:
+			showtitle = item['contentCustomData'][0]['value']
+
+			# remove spaces for URL purposes for this provider
+			showtitle=showtitle.replace(' ','')
+			# corner case for "Who's the Boss?" (they strip out the ? instead of encoding it)
+			# -- Gerk - 2012/06/04
+			showtitle = showtitle.replace('?', '')
+
+			test_urls.append(VIDEO_URL % (showtitle, iid, PID, showtitle))
+			if len(test_urls) > 5:
 				break
-		if len(test_urls) > 2:
+		if len(test_urls) > 5:
 			break
 	
 	return test_urls
