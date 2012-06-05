@@ -65,14 +65,14 @@ def MediaObjectsForURL(url):
                 container = Container.MP3,
                 audio_codec = AudioCodec.MP3,
                 audio_channels = 2,
-                parts = [PartObject(key=Callback(PlayMedia, url = url))]
+                parts = [PartObject(key=Callback(PlayMedia, url = url, ext='mp3'))]
                 )
             ]
 
 ####################################################################################################
 def PlayMedia(url):
     data = HTML.ElementFromURL(url)
-    media_url = data.xpath('//div[@class="download"]/a)[0].get('href')
+    media_url = data.xpath('//div[@class="download"]/a')[0].get('href')
     return Redirect(media_url)
 
 ####################################################################################################
