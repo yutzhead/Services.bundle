@@ -11,11 +11,21 @@ def MetadataObjectForURL(url):
 
     data = HTML.ElementFromURL(url)
     details = data.xpath('//div[@id="content"]')[0]
-    title = details.xpath('.//h2[@class="page-title"]')[0].text
     clip_title = details.xpath('.//h2[@class="title podcast"]')[0].text
-    title = "%s - %s" % (title, clip_title)
-    runtime = details.xpath('.//div[@class="running-time"]/text()')[0].split(':') #make sure to grab just the mm:ss
-    duration = (int(runtime[0])*60 + int(runtime[1]))*1000
+    try:
+        title = details.xpath('.//h2[@class="page-title"]')[0].text
+        title = "%s - %s" % (title, clip_title)    
+    except:
+        title = clip_title
+    runtime = details.xpath('.//div[@class="running-time"]/text()')[0].split(':')
+    if len(runtime) == 3:
+        duration = (int(runtime[0])*3600 + int(runtime[1])*60 + int(runtime[2]))*1000
+    elif len(runtime) == 2:
+        duration = (int(runtime[0])*60 + int(runtime[1]))*1000
+    elif len(runtime) == 1:
+        duration = (int(runtime[1]))*1000
+    else:
+        duration = None
     date = Datetime.ParseDate(details.xpath('.//h3[@class="podcast-date"]')[0].text).date()
     summary = details.xpath('.//p')[1].text
 
@@ -30,8 +40,9 @@ def MetadataObjectForURL(url):
             title = title,
             duration = duration,
             #originally_available_at = date,
-            summary = summary)
-    return
+            summary = summary
+            )
+    return c
 
 ####################################################################################################
 def MediaObjectsForURL(url):
