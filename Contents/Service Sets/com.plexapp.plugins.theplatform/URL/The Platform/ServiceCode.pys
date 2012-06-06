@@ -1,0 +1,265 @@
+RE_PID = Regex('var embed_vars = .+?{pid: "(.+?)",', Regex.DOTALL)
+RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
+RE_THUMBS = Regex('(?P<title>tp:image.+?)="(?P<url>.+?)"')
+
+NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language", "l":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
+
+SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+SMIL_PREFIXES = ["http://release.theplatform.com/content.select", "http://link.theplatform.com/"]
+
+RES_MAP = ['360', '504', '720']
+
+GREAT_TV_URLS = ['http://www.hgtv.ca', 'http://www.history.ca']
+
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    smil = GetSMIL(url)
+    details = GetSRC(smil)
+    
+    title = details.get('title')
+    summary = details.get('abstract')
+    duration = int(details.get('dur').strip('ms'))
+    try:
+        source = details.get('tp:Network', namespaces=NAMESPACES)
+    except:
+        try:
+            source = details.get('provider')
+        except:
+            try:
+                source = details.get('author')
+            except:
+                source = ''
+    
+    thumbs = GetThumbs(details)
+    fallback = GetFallback(url)
+    
+    try:
+        show_title = details.get('tp:Show', namespaces=NAMESPACES)
+        try:
+            season = int(details.get('tp:SeasonNumber', namespaces=NAMESPACES))
+        except:
+            season = int(details.get('tp:Season', namespaces=NAMESPACES))
+        try:
+            episode = int(details.get('tp:EpisodeNumber', namespaces=NAMESPACES))
+        except:
+            episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
+        try:
+            date = Datetime.ParseDate(details.get('tp:OriginalAirDate', namespaces=NAMESPACES))
+        except:
+            date = None
+        try:
+            directors = [details.get('tp:PeopleDirector', namespaces=NAMESPACES)]
+        except:
+            directors = []
+    	try:
+            writers = [details.get('tp:PeopleWriter', namespaces=NAMESPACES)]
+        except:
+            writers = []
+
+        return EpisodeObject(
+            title = title,
+            summary = summary,
+            duration = duration,
+            show = show,
+            season = season, 
+            index = episode,
+            originally_available_at = date,
+            directors = directors,
+            writers = writers,
+            source_title = source)
+    except:
+        pass
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        duration = duration,
+        source_title = source)
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "504",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="504"))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "360",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
+        )
+    ]
+
+@indirect
+def PlayVideo(url, res):
+    smil = GetSMIL(url)
+    
+    res_index = RES_MAP.index(res)
+    
+    video_url = None
+                    
+    source = GetSRC(smil).get('src')
+    Log(source)
+    if GreatTVURL(url):
+        if ".mp4" in source:
+            player = source.replace(".mp4", "")
+            try:
+                clip = player.split("<break>")[1]
+            except:
+                clip = player.split("/video/")
+                player = player.split("/video/")[0]
+                clip = "mp4:/video/" + clip[-1]
+        else:
+            player = source.replace(".flv", "")
+            try:
+                clip = player.split("<break>")[1]
+            except:
+                clip = player.split("/video/")
+                player = player.split("/video/")[0]
+                clip = "/video/" + clip[-1]
+    elif URLisSMIL(url):
+        try: ### try to grab direct MP4 urls first if they're available, otherwise fallback to RTMP streams ###
+            video_list = smil.xpath('.//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
+            while res_index > -1:
+                for video in video_list:
+                    if video.get('height') == RES_MAP[res_index]:
+                        video_url = video.get('src')
+                        res_index = -1
+                        break
+                    else:
+                        res_index = res_index - 1
+                        
+            if video_url:
+                return IndirectResponse(VideoClipObject, key=video_url)
+            else:
+                pass
+        except:
+            pass
+    else:
+        if source.startswith("rtmp"):
+            try:    
+                player = source.split('&lt;break&gt;')[0]
+                clip = source.split('&lt;break&gt;')[1]
+            except:
+                player = source.split('{break}')[0]
+                clip = source.split('{break}')[1]
+        else:
+            base = smil.xpath('//meta')[0].get('base')
+            player = base.split('{break}')[0]
+            clip = base.split('{break}')[1] + source
+    
+        if player.startswith('rtmpe://'):
+            swf_url = GetSwfURL(url)### this video probably requires swf-verification which isn't supported quite yet ###
+            Log('This video requires swf-verification.')
+        else:
+            pass
+    
+    Log(player)
+    Log(clip)
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
+
+def GetSMIL(url):
+
+    if URLisSMIL(url):
+        return XML.ElementFromURL(url)
+
+    if '?pid=' in url:
+        pID = url.split('?pid=')[1]
+    elif '?releasePID=' in url:
+        pID = url.split('?releasePID=')[1]
+    else:
+        data = HTTP.Request(url).content
+        pID = RE_PID.search(data)
+        if pID:
+            pID = pID.group(1)
+        else:
+            pID = RE_EPISODE_ID.search(data)
+            if pID:
+                pID = pID.group(1)
+            else:
+                #I hope there's another way to find the pid#
+                pass
+
+    smil = XML.ElementFromURL(SMIL_URL % pID)
+    return smil
+
+def GetSRC(smil):
+    src_list = smil.xpath('//l:ref', namespaces=NAMESPACES)
+    if len(src_list) == 1:
+        return src_list[0]
+    else:
+        for ref in src_list:
+            if "pfadx///video" in ref.get('src'):
+                pass
+            elif ref.get('src').startswith('rtmp'):
+                return ref
+            else:
+                return ref
+    return None
+
+def URLisSMIL(url):
+    for prefix in SMIL_PREFIXES:
+        if url.startswith(prefix):
+            Log("Given URL points to SMIL")
+            return True
+        else:
+            pass
+    return False
+    
+def GetSwfURL(url):
+    swf_url = None
+    if '#SWF_URL=' in url:
+        swf_url = url.split('#SWF_URL=')[1]
+    else:
+        pass #hopefully we can find a reliable way to grab the swf url or if necessary build a database of swf urls
+    return swf_url
+
+def GetThumbs(details):
+    thumbs = []
+    data = XML.StringFromElement(details)
+    images = RE_THUMBS.search(data).groupdict()
+    for image in images:
+        thumbs.append(image['url'])
+    return thumbs
+
+def GetFallback(url):
+    '''use the domain to decide which fallback icon to use'''
+    if url.startswith("http://www.tou.tv"):
+        return "icon-toutv.png"
+    elif url.startswith("http://www.hgtv.ca"):
+        return "icon-hgtv_ca.png"
+    elif url.startswith("http://www.foodnetwork.ca"):
+        return "icon-foodnetwork_ca.png"
+    elif url.startswith("http://www.history.ca"):
+        return "icon-history_ca.png"
+    elif url.startswith("http://www.showcase.ca"):
+        return "icon-showcase_ca.png"
+    else:
+        pass
+    return
+
+def GreatTVURL(url):
+    for base_url in GREAT_TV_URLS:
+        if url.startswith(base_url):
+            return True
+        else:
+            pass

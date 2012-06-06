@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>ViralVideoChart</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://viralvideochart.unrulymedia.com/youtube/The_Force%3A_Volkswagen_Commercial?id=R55e-uHQna0</string>
+				<string>http://viralvideochart.unrulymedia.com/youtube/Florence_%2B_The_Machine_-_What_The_Water_Gave_Me?id=am6rArVPip8</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://viralvideochart.unrulymedia.com/youtube/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

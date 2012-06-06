@@ -1,0 +1,90 @@
+import re
+import urllib2
+
+VIDEO_PLAYER_URL_HD = 'http://videos.ordienetworks.com/videos/%s/ipad.mp4'
+VIDEO_PLAYER_URL_SD = 'http://videos.ordienetworks.com/videos/%s/iphone_wifi.mp4'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	url = url.split('?',1)[0]
+
+	if '/embed/' in url:
+		url = url.replace('/embed/', '/videos/')
+
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+
+	# Extract the details available directly form the page.
+	title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
+	description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
+	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+
+	try:
+		duration = int(page.xpath("//head//meta[@property='video:duration']")[0].get('content'))*1000
+	except:
+		duartion = None
+
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+		duration = duration
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = Container.MP4,
+			video_resolution = '720',
+			optimized_for_streaming = True,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))]
+		),
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = Container.MP4,
+			video_resolution = 'sd',
+			optimized_for_streaming = True,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, res):
+
+	# Extract the identifier of the video
+	video_id = re.search('/videos/(?P<video_id>[^/]+)', url).group('video_id')
+
+	# If the user has requested the HD stream, we need to also check to see if it's available. 
+	# It appears that sometimes it is not referenced by the actual page, but is yet it is still 
+	# possible to find it.
+	content_url = VIDEO_PLAYER_URL_SD % video_id
+
+	if res == 'hd':
+		hd_url = VIDEO_PLAYER_URL_HD % video_id
+		if IsAvailable(hd_url) == True:
+			content_url = hd_url
+
+	return Redirect(content_url)
+
+####################################################################################################
+class HeadRequest(urllib2.Request):
+	def get_method(self):
+		return "HEAD"
+
+####################################################################################################
+def IsAvailable(url):
+	try:
+		response = urllib2.urlopen(HeadRequest(url))
+		return True
+	except:
+		return False

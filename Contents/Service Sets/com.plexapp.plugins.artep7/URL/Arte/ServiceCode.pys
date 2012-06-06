@@ -1,0 +1,71 @@
+DETAILS_URL = 'http://videos.arte.tv/fr/do_delegate/videos/arte_journal-%s,view,asPlayerXml.xml'
+RE_ID = Regex(".*-(?P<id>[0-9]+).html")
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+    initial_id = RE_ID.match(url).groupdict()['id']
+    details_descriptor_page = HTML.ElementFromURL(DETAILS_URL % initial_id)
+
+    details_url = details_descriptor_page.xpath("//video")[0].get('ref')
+    if url.startswith("http://videos.arte.tv/de") == True:
+        de_details = details_descriptor_page.xpath("//video[@lang='de']")
+        if len(de_details) > 0:
+            details_url = de_details[0].get('ref')
+    elif url.startswith("http://videos.arte.tv/fr") == True:
+        fr_details = details_descriptor_page.xpath("//video[@lang='fr']")
+        if len(fr_details) > 0:
+            details_url = fr_details[0].get('ref')
+
+    details_page = HTML.ElementFromURL(details_url)
+
+    # Extract the information from the pages...
+    title = details_page.xpath("//name/text()")[0]
+    thumb = details_page.xpath("//firstthumbnailurl/text()")[0]
+    date = details_page.xpath("//datevideo/text()")[0]
+    date = Datetime.ParseDate(date)
+    duration = int(details_page.xpath("//duration/text()")[0]) * 1000
+    rating = float(details_page.xpath("//rating/text()")[0]) * 2
+
+    # Unfortunately, the details page does not contain an actual summary. For that, we will need
+    # to visit the actual page.
+    page = HTML.ElementFromURL(url)
+    summary = page.xpath("//div[@class='recentTracksCont']//p/text()")[0]
+
+    # [Optional] - The tags
+    tags = None
+    try:
+        tags = page.xpath("//ul[@class='tags']//li[contains(text(), 'Tags:')]/..//a/text()")
+    except: pass
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb,
+        rating = rating,
+        originally_available_at = date,
+        tags = tags
+    )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+    return [
+        MediaObject(
+            parts = [PartObject(key=WebVideoURL(url))]
+        )
+    ]
+
+####################################################################################################
+def TestURLs():
+
+    test_urls = []
+    page = HTML.ElementFromURL("http://videos.arte.tv/en/videos")
+    results = page.xpath("//a[contains(@href, '/en/videos/')]/img/parent::a")
+
+    for index in range(2):
+        item = results[index]
+        url = "http://videos.arte.tv" + item.get('href')
+        test_urls.append(url)
+
+    return test_urls

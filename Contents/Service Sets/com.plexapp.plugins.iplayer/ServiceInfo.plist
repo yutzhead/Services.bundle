@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>BBC iPlayer</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.bbc.co.uk/iplayer/episode/b012m668/Top_Gear_Series_17_Episode_3/</string>
+				<string>http://www.bbc.co.uk/iplayer/episode/b012g0gm/The_Apprentice_Series_7_The_Final_Five/</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www\.bbc\.co\.uk/iplayer/episode/[^/$]{8}</string>
+			</array>
+		</dict>
+		<key>BBC News</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.bbc.co.uk/news/science-environment-15873206</string>
+				<string>http://news.bbc.co.uk/1/hi/england/8124666.stm</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(www.bbc.co.uk/news|news.bbc.co.uk)/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

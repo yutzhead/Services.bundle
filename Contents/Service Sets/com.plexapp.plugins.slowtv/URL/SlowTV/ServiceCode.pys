@@ -1,0 +1,48 @@
+BASE_URL = "http://www.themonthly.com.au/"
+
+import re
+
+####################################################################################################
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
+    title = data.xpath('//title')[0].text.split('|')[0]
+    summary = data.xpath('//meta[@name="description"]')[0].get('content')
+    try:
+        thumb = BASE_URL + data.xpath('//div[@class="blipframe"]//img')[0].get('src')
+    except:
+        thumb = None
+    duration = data.xpath('//div[@id="more-section"]//p')[-1].text.strip()
+    dur_ms = 0
+    durationParts = duration.split(' ')
+    for part in durationParts:
+        if part[-1] == 'h':
+            ms = int(part[:-1])*60*60*1000
+        elif part[-1] == 'm':
+            ms = int(part[:-1])*60*1000
+        elif part[-1] == 's':
+            ms = int(part[:-1])*1000
+        else:
+            ms = 0
+        dur_ms += ms
+  
+    vc = VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb,
+        duration = dur_ms
+    )
+  
+    return vc
+
+####################################################################################################
+@deferred
+def MediaObjectsForURL(url):
+    data = HTML.ElementFromURL(url, errors='ignore')
+    external_url = data.xpath('//iframe[contains(@src, "blip.tv")]')[0].get('src')
+    external_url = String.Unquote(external_url)
+
+    return URLService.MediaObjectsForURL(external_url)

@@ -1,0 +1,60 @@
+import re
+
+IPAD_URL = 'http://video.nationalgeographic.com/video/player/media-mp4/%s/mp4/variant-playlist.m3u8'
+RE_VIDEO_ID = Regex(".*/([^/]+)")
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  data = HTML.ElementFromURL(url, cacheTime=7200)
+  
+  if len(url.split('/full-episodes/')) > 1:
+    full_episode = True
+    show_title = (url.split('/full-episodes/')[1].split('/')[0].replace('-', ' ')).title()
+    Log(show_title)
+  else:
+    full_episode = False
+  
+  title = data.xpath('//title')[0].text.split(' -- ')[1]
+  thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
+  description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
+  keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
+  
+  if full_episode:
+    # Construct a metadata item
+    eo = EpisodeObject(
+      title = title,
+      show = show_title,
+      summary = description,
+      thumb = thumbUrl,
+      #tags = keywords
+      )
+    return eo
+  else:
+    # Construct a metadata item
+    vc = VideoClipObject(
+      title = title,
+      summary = description,
+      thumb = thumbUrl,
+      tags = keywords
+      )
+    return vc
+  
+####################################################################################################
+def MediaObjectsForURL(url):
+  
+  video_id = RE_VIDEO_ID.search(url).group(1)
+  extension = video_id.find('.html')
+  if extension > 0:
+    video_id = video_id[:extension]
+  
+  return [
+    MediaObject(
+      parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id)))],
+      audio_channels = 2
+    )
+  ]
+
+####################################################################################################
+def PlayVideo(id):
+
+  return Redirect(IPAD_URL % id)

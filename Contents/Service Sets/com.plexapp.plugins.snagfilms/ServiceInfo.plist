@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Snag Films</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.snagfilms.com/films/title/inside_islam_what_a_billion_muslims_really_think/</string>
+				<string>http://www.snagfilms.com/films/title/guns_n_roses_destructive_appetite/</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.snagfilms.com/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

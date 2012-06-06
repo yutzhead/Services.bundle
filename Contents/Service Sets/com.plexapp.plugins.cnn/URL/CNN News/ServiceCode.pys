@@ -1,0 +1,169 @@
+RE_NORMALIZE = Regex('/video/[^/]+/video/')
+
+XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
+MEDIA_URL = 'http://ht.cdn.turner.com/cnn/big/%s'
+CNN_URL = 'http://www.cnn.com/video/'
+NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
+RESOLUTIONS = ['512x288','640x360','768x432','896x504','1280x720']
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return RE_NORMALIZE.sub('/video/?/video/', url)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	cnn = XML.ElementFromURL('http://www.cnn.com/.element/ssi/www/auto/2.0/video/xml/by_section_world.xml')
+
+	for video in cnn.xpath('//video'):
+		if len(test_urls) < 3:
+			video_id = video.xpath('./video_id')[0].text
+			video_url = CNN_URL + '?' + video_id
+
+			if video_url not in test_urls:
+				test_urls.append(video_url)
+		else:
+			break
+
+	return test_urls
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data_url = XML_URL % url.split('/?/video/')[1]
+	data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
+
+	thumb_list = data.xpath('//image')
+	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb.get("height")), reverse=True)
+	summary = data.xpath('//description')[0].text
+	date = data.xpath('//dateCreated')[0].text
+	duration = data.xpath('//length')[0].text
+	durationParts = duration.split(':')
+
+	if durationParts[0] == '':
+		duration = int(durationParts[1])*1000
+	else:
+		duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
+
+	try: show = data.xpath('//branding')[0].text
+	except: show = ''
+
+	clip_title = data.xpath('//headline')[0].text
+
+	# Construct a metadata item
+	co = EpisodeObject(
+		title = clip_title,
+		originally_available_at = Datetime.ParseDate(date).date(),
+		duration = duration,
+		summary = summary,
+		tags = [show],
+		thumb = Resource.ContentsOfURLWithFallback([thumb.text for thumb in thumb_list], fallback="icon-default.png"),
+		source_title = 'CNN.com'
+	)
+
+	return co
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='1280x720'))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			aspect_ratio = "1.78",
+			video_resolution = '720',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='896x504'))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			aspect_ratio = "1.78",
+			video_resolution = '504',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='768x432'))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			aspect_ratio = "1.78",
+			video_resolution = '432',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='640x360'))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			aspect_ratio = "1.78",
+			video_resolution = '360',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, resolution='512x288'))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			aspect_ratio = "1.78",
+			video_resolution = 'sd',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, resolution):
+	
+	data_url = XML_URL % url.split('/?/video/')[1]
+	data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
+	
+	video = None
+	try:
+		other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
+		smil = XML.ElementFromURL(other_source)
+		base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+		clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
+		video = base + clip
+	except: pass
+	
+	if video is None:
+		videos = data.xpath("//file")
+		found = False
+		res = RESOLUTIONS.index(resolution)
+		i = 0
+		while not found:
+			if i == len(RESOLUTIONS):
+				break
+			for video in videos:
+				if video.text.endswith('.mp4'):
+					if video.get('bitrate') == RESOLUTIONS[(res - i)]:
+						video = video.text
+						found = True
+						break
+					else:
+						pass
+				else:
+					continue
+			i = i+1
+			
+	# Some videos do not have the appropriate base URL
+	if video != None and video.startswith("http://") == False:
+		video = MEDIA_URL % video
+	
+	if video is None:
+		other_videos = data.xpath("//groupFiles/file[contains(text(), '%s')]/text()" % resolution)
+		if len(other_videos) > 0:
+			base = data.xpath("//groupFiles/baseUrl/text()")[0]
+			clip = other-videos[0]
+			video = base + clip
+	
+	return Redirect(video)

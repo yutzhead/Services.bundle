@@ -1,0 +1,17 @@
+import re
+
+def NormalizeURL(url):
+  return url
+ 
+def MetadataObjectForURL(url):
+  data = HTML.ElementFromURL(url)
+  blip_url = data.xpath('//div[@class="podcast-player"]/iframe')[0].get('src')
+  #Log(blip_url)
+  return URLService.MetadataObjectForURL(blip_url)
+ 
+@deferred
+def MediaObjectsForURL(url):
+  data = HTML.ElementFromURL(url)
+  blip_url = data.xpath('//div[@class="podcast-player"]/iframe')[0].get('src')
+  #Log(blip_url)
+  return URLService.MediaObjectsForURL(blip_url)

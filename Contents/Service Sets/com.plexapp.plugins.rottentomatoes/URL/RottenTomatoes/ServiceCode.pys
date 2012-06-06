@@ -1,0 +1,78 @@
+import re
+
+RSS_URL = 'http://www.videodetective.net/flash/players/mrssplaylist.aspx?videokbrate=2500&version=5.2&customerid=300120&fmt=4&publishedid=%s&sub=RTO'
+
+def NormalizeURL(url):
+    return url
+    
+def MetadataObjectForURL(url):
+    feed = RSS.FeedFromURL(GetRSS(url))
+    video = feed['items'][0]
+    title = video['title']
+    summary = video['description']
+    thumb = video['media_thumbnail'][0]['url']
+    duration = video['media_content'][0]['duration']
+    duration = int(float(duration)*1000)
+    
+    mo = VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb,
+        duration = duration
+    )
+    return mo
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        container = Container.MP4,
+        video_resolution = '720',
+        optimized_for_streaming = True,
+        audio_channels = 2,
+        bitrate = '2500',
+        parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500'))]
+      ),
+      MediaObject(
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        container = Container.MP4,
+        video_resolution = '304',
+        optimized_for_streaming = True,
+        audio_channels = 2,
+        bitrate = '1500',
+        parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate='1500'))]
+      ),
+      MediaObject(
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        container = Container.MP4,
+        video_resolution = '208',
+        optimized_for_streaming = True,
+        audio_channels = 2,
+        bitrate = '750',
+        parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='750'))]
+      )
+    ]
+
+def GetRSS(url):
+    content = HTTP.Request(url).content
+    published_id = re.search('&publishedid=([0-9]+)&playlistid=', content).group(1)
+    rss_url = RSS_URL % published_id
+    return rss_url
+
+def PlayVideo(url, bitrate):
+
+    BITRATES = ['2500', '1500', '750', '450', '250', '212']
+    feed = RSS.FeedFromURL(GetRSS(url), cacheTime=0)
+    video = feed['items'][0]
+
+    index = BITRATES.index(bitrate)
+    for bitrate_index in range(index, len(BITRATES)):
+        current_bitrate = BITRATES[bitrate_index]
+        for media_element in video['media_content']:
+            if current_bitrate == media_element['bitrate']:
+                return Redirect(media_element['url'])
+    
+    return Redirect(video['media_content'][-1]['url'])

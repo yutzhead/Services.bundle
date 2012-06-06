@@ -1,0 +1,123 @@
+VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
+FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+
+	for url in HTML.ElementFromURL('http://teamcoco.com/video').xpath('//ul[contains(@class,"videos")]/li[position() < 4]/a'):
+		test_urls.append( url.get('href') )
+
+	return test_urls
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	try:
+		xml_url = VIDEO_INFO % GetVideoId(url)
+	except:
+		Log.Exception("Could not retrieve video_id in MetadataObjectForURL function")
+		return None
+
+	info = XML.ElementFromURL(xml_url)
+	title = info.xpath('//headline')[0].text.strip()
+	summary = String.StripTags( info.xpath('//description')[0].text ).strip()
+
+	duration = info.xpath('//length')
+	if duration:
+		duration = Duration( duration[0].text )
+	else:
+		duration = None
+
+	try:
+		thumb = info.xpath('//image[@width="640"]')[0].text
+	except:
+		try:
+			thumb = info.xpath('//image')[-1].text
+		except:
+			thumb = None
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration,
+		thumb = thumb
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	if 'full-episode' in url:
+
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url = url))],
+				protocol = Protocol.WebKit,
+				video_codec = None,
+				audio_codec = None
+			)
+		]
+
+	else:
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url = url))],
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				container = Container.MP4,
+				video_resolution = 'sd',
+				aspect_ratio = '1.78',
+				audio_channels = 2,
+				optimized_for_streaming = True,
+				bitrate = 1000
+			)
+		]
+
+####################################################################################################
+def PlayVideo(url):
+
+	try:
+		video_id = GetVideoId(url)
+	except:
+		Log.Exception("Could not retrieve video_id in PlayVideo function")
+		return None
+
+	if 'full-episode' in url:
+		return Redirect(WebVideoURL(FULL_EPISODE % video_id))
+
+	else:
+		try:
+			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
+		except:
+			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@type="Standard"]')[0].text
+
+		return Redirect(video_url)
+
+####################################################################################################
+def GetVideoId(url):
+
+	part = url.split('/')
+
+	if len(part) > 4 and part[4].isdigit():
+		return int(part[4])
+	else:
+		try:
+			video_id = HTML.ElementFromURL(url).xpath('//article')[0].get('data-id')
+			return int(video_id)
+		except:
+			return None
+
+####################################################################################################
+def Duration(timecode):
+
+	if timecode == None or timecode == '':
+		return None
+
+	seconds = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000

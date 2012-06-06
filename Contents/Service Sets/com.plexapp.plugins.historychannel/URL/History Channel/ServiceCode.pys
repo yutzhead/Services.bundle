@@ -1,0 +1,86 @@
+import re
+from base64 import b64decode
+
+SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+  item = GetVideoItem(url)
+  page = HTML.ElementFromURL(url)
+
+  show_title = page.xpath('//div[@class="show-heading"]/h2/text()')[0]
+  episode_title = item.xpath(".//title/text()")[0]
+  summary = item.xpath(".//media-description/text()")[0]
+  duration = int(item.xpath(".//media-content")[0].get('duration')) * 1000
+  thumb = item.xpath(".//media-thumbnail")[-1].get('url')
+
+  return EpisodeObject(
+    title = episode_title,
+    show = show_title,
+    duration = duration,
+    summary = summary,
+    thumb = thumb
+  )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = '360',
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url))]
+    )
+  ]
+
+####################################################################################################
+def PlayVideo(url):
+
+  item = GetVideoItem(url)
+
+  video_link = item.xpath(".//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
+  video_id = video_link[video_link.find('/s/') + 3:]
+
+  auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime = 0).content
+  video_url = video_link + '?format=redirect&sig=' + auth_token
+
+  return Redirect(video_url)
+
+####################################################################################################
+
+def GetVideoItem(url):
+  page_content = HTTP.Request(url).content
+  page = HTML.ElementFromString(page_content)
+  mrssdata = re.search('mrssData =[ ]+"([^"]+)', page_content).group(1)
+  mrssdata =  String.Unquote(b64decode(mrssdata)).replace('media:','media-')
+  data = XML.ElementFromString(mrssdata)
+
+  item = data.xpath("//item")[0]
+  if url.find('#') != -1:
+    video_name = url[url.find('#') + 1:]
+    item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
+  
+  return item
+
+####################################################################################################
+def TestURLs():
+    test_urls = []
+
+    page = HTML.ElementFromURL('http://www.history.com/shows#')
+
+    for link in page.xpath("//a[@class='watch more']"):
+        if len(test_urls) < 3:
+            url = link.get('href')
+            url = "http://www.history.com" + url
+
+            if url not in test_urls:
+                test_urls.append(url)
+
+        else:
+            break
+
+    return test_urls

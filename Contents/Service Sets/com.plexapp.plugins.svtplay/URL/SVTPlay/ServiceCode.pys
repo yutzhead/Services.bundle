@@ -1,0 +1,124 @@
+import re
+
+DETAILS_URL = 'http://xml.svtplay.se/v1/videos/%s'
+NS_SVT = { 'svtplay': 'http://xml.svtplay.se/ns/playrss', 'media': 'http://search.yahoo.com/mrss/' }
+
+CATEGORY_EPISODES = [ '96240', '96241', '96244', '96247' ]
+CATEGORY_MOVIES = [ '96242' ]
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        # Request the page
+        page = HTML.ElementFromURL(url)
+
+        # If this page contains a video element, we should be able to extract out the video id
+        # associated with the content.
+        player_details = page.xpath("//div[@id = 'player']")[0].get('class')
+        video_id = re.match(".*'(?P<id>[0-9]+)'.*", player_details).groupdict()['id']
+
+        # Using the known video id, we can now obtain an XML page which contains all of the details
+        # associated with the title.
+        details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+
+        root = details_page.xpath("//item", namespaces = NS_SVT)[0]
+        title = root.xpath("//media:title/text()", namespaces = NS_SVT)[0]
+        thumb = root.xpath("//media:content[@medium='image']", namespaces = NS_SVT)[0].get('url')
+        date = root.xpath("//pubDate/text()", namespaces = NS_SVT)[0]
+        date = Datetime.ParseDate(date)
+
+        description = None
+        try: description = root.xpath("//description/text()", namespaces = NS_SVT)[0]
+        except: pass
+
+        duration = None
+        duration_nodes = root.xpath("//media:content[string-length(@duration) > 0]", namespaces = NS_SVT)
+        if len(duration_nodes) > 0:
+            duration = int(duration_nodes[0].get('duration'))
+
+        # If the found title is an episode, we should be able to extract more information and return
+        # the suitable EpisodeObject.
+        category = root.xpath("//svtplay:category/text()", namespaces = NS_SVT)[0]
+        program_info = root.xpath("//svtplay:programInfo", namespaces = NS_SVT)
+        if category in CATEGORY_EPISODES and len(program_info) > 0:
+
+            title = root.xpath("//channel/title/text()", namespaces = NS_SVT)[0]
+            show = root.xpath("//svtplay:titleName/text()", namespaces = NS_SVT)[0]
+            episode_number = int(program_info[0].get('episodeNo'))
+
+            return EpisodeObject(
+                show = show,
+                title = title,
+                index = episode_number,
+                summary = description,
+                thumb = thumb,
+                duration = duration,
+                originally_available_at = date)
+                
+        # If the found title is a move, we should simply return the appropriate MovieObject
+        if category in CATEGORY_MOVIES:
+
+            return MovieObject(
+                title = title,
+                summary = description,
+                thumb = thumb,
+                duration = duration,
+                originally_available_at = date)
+
+        # We've not identified a specific category for the associated title. Therefore we should
+        # simply return a generic VideoClipObject.
+        return VideoClipObject(
+            title = title,
+            summary = description,
+            thumb = thumb,
+            duration = duration,
+            originally_available_at = date)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+@deferred
+def MediaObjectsForURL(url):
+
+    # Request the page
+    page = HTML.ElementFromURL(url)
+
+    # If this page contains a video element, we should be able to extract out the video id
+    # associated with the content.
+    player_details = page.xpath("//div[@id = 'player']")[0].get('class')
+    video_id = re.match(".*'(?P<id>[0-9]+)'.*", player_details).groupdict()['id']
+
+    # Using the known video id, we can now obtain an XML page which contains all of the details
+    # associated with the title.
+    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+
+    # Find all the m3u8 streams available.
+    media_objects = []
+    mpeg_streams = details_page.xpath("//media:content[@type = 'application/vnd.apple.mpegurl']", namespaces = NS_SVT)
+    for mpeg_stream in mpeg_streams:
+        media_objects.append(MediaObject(
+            video_resolution = mpeg_stream.get('height'),
+            bitrate = mpeg_stream.get('bitrate'),
+            parts = [PartObject(key = HTTPLiveStreamURL(mpeg_stream.get('url')))])
+        )
+
+    # Find all the RTMP streams available
+    rtmp_streams = details_page.xpath("//media:content[@type = 'video/mp4' and contains(@url, 'rtmp://')]", namespaces = NS_SVT)
+    for rtmp_stream in rtmp_streams:
+        media_objects.append(MediaObject(
+            protocol = Protocol.RTMP,
+            video_resolution = rtmp_stream.get('height'),
+            bitrate = rtmp_stream.get('bitrate'),
+            parts = [PartObject(key = Callback(PlayVideo, rtmp_url = rtmp_stream.get('url')))])
+        )
+
+    return media_objects
+
+####################################################################################################
+
+def PlayVideo(rtmp_url):
+    rtmp_stream_details = rtmp_url.split('_definst_')
+    return Redirect(RTMPVideoItem(rtmp_stream_details[0], clip = "mp4:" + rtmp_stream_details[1]))

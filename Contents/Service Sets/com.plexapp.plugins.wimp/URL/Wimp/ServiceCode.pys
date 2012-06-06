@@ -1,0 +1,45 @@
+import re
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//title')[0].text.strip(' [VIDEO]')
+
+	vc = VideoClipObject(
+		title = title
+	)
+
+	return vc
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url):
+
+	url = url.replace('http://www.', 'http://m.')
+
+	headers = {
+		'User-Agent': 'Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5'
+	}
+
+	video = HTML.ElementFromURL(url, cacheTime=0, headers=headers).xpath('//video')[0].get('src')
+	return Redirect(video)

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>New York Times</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://video.nytimes.com/video/2011/05/24/multimedia/100000000833684/timescast-benjamin-netanyahus-speech.html</string>
+				<string>http://video.nytimes.com/video/2010/09/20/magazine/1248068907356/jelena-jankovic-serbia.html</string>
+				<string>http://video.nytimes.com/video/2011/05/26/theater/100000000833871/excerpt-the-best-is-yet-to-come.html</string>
+				<string>http://video.nytimes.com/video/2011/02/28/theater/100000000672072/timon.html</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://video.nytimes.com/video/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

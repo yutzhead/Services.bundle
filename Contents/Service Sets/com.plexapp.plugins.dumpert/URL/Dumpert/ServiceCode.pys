@@ -1,0 +1,70 @@
+DEFAULT_AUDIO_THUMB = 'http://www.dumpert.nl/gfx/thumb_audio.png'
+THUMB_URL = 'http://static.dumpert.nl/sq_thumbs/%s_%s.jpg'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    page = HTML.ElementFromURL(url)
+
+    title = page.xpath('//meta[@name="title"]')[0].get('content')
+    summary = page.xpath('//meta[@name="description"]')[0].get('content')
+    video = page.xpath('//div[@class="video" and @data-vidurl]')
+    audio = page.xpath('//div[@class="audio" and @data-audurl]')
+
+    # Video
+    if len(video) > 0:
+        thumb = page.xpath('//link[@rel="image_src"]')[0].get('href')
+
+        return VideoClipObject(
+            title = title,
+            summary = summary,
+            thumb = thumb)
+
+    # Audio
+    elif len(audio) > 0:
+
+        return TrackObject(
+            title = title,
+            thumb = DEFAULT_AUDIO_THUMB)
+
+    else:
+        Log.Exception('An error occurred while attempting to retrieve the required meta data.')
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    page = HTML.ElementFromURL(url)
+
+    video = page.xpath('//div[@class="video" and @data-vidurl]')
+    audio = page.xpath('//div[@class="audio" and @data-audurl]')
+
+    # Video
+    if len(video) > 0:
+        video_url = video[0].get('data-vidurl')
+
+        if video_url.endswith('.mp4'):
+            container = Container.MP4
+            audio_codec = AudioCodec.AAC
+            video_codec = VideoCodec.H264
+        else:
+            container = 'flv'
+            audio_codec = AudioCodec.MP3
+            video_codec = VideoCodec.H263
+
+        return [
+          MediaObject(
+            container = container,
+            audio_codec = audio_codec,
+            video_codec = video_codec,
+            parts = [PartObject(key=video_url)]
+          )
+        ]
+
+    # Audio
+    elif len(audio) > 0:
+        audio_url = audio[0].get('data-audurl')
+
+        return [
+          MediaObject(
+            audio_codec = AudioCodec.MP3,
+            parts = [PartObject(key=audio_url)]
+          )
+        ]

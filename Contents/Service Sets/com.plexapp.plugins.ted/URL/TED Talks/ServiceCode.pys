@@ -1,0 +1,252 @@
+TED_BASE = 'http://www.ted.com'
+
+RE_FILM_DATE = Regex('fd:"(.+?)",')
+RE_FILM_YEAR = Regex(';year=(.+?);')
+RE_EVENT = Regex('en:"(.+?)",')
+RE_EVENT_ALT = Regex(';event=(.+?);')
+RE_SLUG = Regex("\$\('#download_dialog'\)\.load\('([^']+)")
+RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
+RE_XML = Regex('file=([^&]*)')
+
+####################################################################################################
+def NormalizeURL(url):
+
+  return url.split('?')[0]
+
+####################################################################################################
+def TestURLs():
+
+  test_urls = []
+
+  page = HTML.ElementFromURL(TED_BASE + '/talks', cacheTime = CACHE_1HOUR)
+  videos = page.xpath('//div[@id="content"]//div[@class="col clearfix"]/a')
+
+  for url in videos:
+    url = TED_BASE + url.get('href')
+    test_urls.append(url)
+
+    if len(test_urls) > 5:
+      break
+
+  return test_urls
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+  content = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
+  data = HTML.ElementFromString(content)
+
+  title = data.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
+  summary = data.xpath('//meta[@name="description"]')[0].get('content')
+
+  try: filmDate = RE_FILM_DATE.search(content).group(1)
+  except: filmDate = RE_FILM_YEAR.search(content).group(1)
+
+  postedDate = int(data.xpath('//meta[@property="video:release_date"]')[0].get('content'))
+  postedDate = Datetime.FromTimestamp(postedDate)
+
+  try: event = RE_EVENT.search(content).group(1)
+  except: event = String.Unquote(RE_EVENT_ALT.search(content).group(1), usePlus=True)
+
+  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+
+  # Construct a metadata item
+  vc = VideoClipObject(
+    title = title,
+    tagline = '%s : %s' % (event, filmDate),
+    originally_available_at = postedDate,
+    summary = summary,
+    thumb = thumbUrl
+  )
+
+  return vc
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+  return [
+    # YouTube
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = "1080",
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1080"))]
+    ),
+    # YouTube, Vimeo
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = "720",
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))]
+    ),
+    # TED, YouTube, Vimeo
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = '480',
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res ="480"))]
+    ),
+    # TED, YouTube
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 'sd',
+      bitrate = '400',
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd", bitrate = 400))]
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 'sd',
+      bitrate = '40',
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd", bitrate = 40))]
+    )
+  ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, res, bitrate = None):
+
+  # Obtain the collection of MediaObjects which are actually availalbe.
+  media = GetAvailableMediaObjectsForURL(url)
+
+  # Iterate through the collection of known offered video resolutions. We will start at the desired
+  # and progress to lower qualities.
+  most_appropriate = None
+  resolutions = ["1080", "720", "480", "sd"]
+  index = resolutions.index(res)
+
+  for resolution_index in range(index, len(resolutions)):
+    current_resolution = resolutions[resolution_index]
+
+    for video in media:
+      if str(video.video_resolution) == current_resolution:
+        if bitrate is None:
+          most_appropriate = video.parts[0].key
+          break
+        else:
+          available_bitrate = video.bitrate
+          if available_bitrate is None or available_bitrate >= bitrate:
+            most_appropriate = video.parts[0].key
+            break
+
+    # We have found a video at this resolution, therefore we will stop.
+    if most_appropriate is not None:
+      break
+
+  # If no video was found, we will simply use the lowest quality available.
+  if most_appropriate is None:
+    most_appropriate = media[-1].parts[0].key
+
+  # HACK
+  # This is particularly nasty. Ideally I wouldn't need to do this but it appears that Laika doesn't
+  # like when an @indirect points to another @indirect. Since we only support MP4s, and we know that
+  # all direct URLs will end with this, we can check if the located media doesn't have the extension
+  # and assume its already @indirect.
+  if most_appropriate.endswith(".mp4") == False:
+    return Redirect(most_appropriate)
+
+  # Construct the ObjectContainer to return the details of the located media
+  c = ObjectContainer()
+  c.add(VideoClipObject(
+    key = URLService.LookupURLForMediaURL(url),
+    items = [
+      MediaObject(
+        parts = [
+          PartObject(key = most_appropriate)
+        ]
+      )
+    ]
+  ))
+
+  return c
+
+####################################################################################################
+def GetAvailableMediaObjectsForURL(url):
+
+  page_content = HTTP.Request(url, cacheTime = CACHE_1WEEK).content
+  page = HTML.ElementFromString(page_content)
+  slug = RE_SLUG.findall(page_content)
+
+  if slug:
+    download_info = HTTP.Request(TED_BASE + slug[0], cacheTime = CACHE_1WEEK).content
+    download_url = RE_DOWNLOAD.findall(download_info)
+
+    if download_url:
+      download_url = download_url[0].replace('{lang}', '')
+
+      # Return the MediObjects which are known to be available from TED. We could populate
+      # it with more metadata, but this isn't required. The video_resolution and bitrate 
+      # should be sufficient for the called to select the appropriate one.
+      return [
+        MediaObject(
+          video_resolution = '480',
+          bitrate = '800',
+          parts = [PartObject(key = download_url.replace('{quality}', '-480p'))]
+        ),
+        MediaObject(
+          video_resolution = 'sd',
+          bitrate = '400',
+          parts = [PartObject(key = download_url.replace('{quality}', ''))],
+        ),
+        MediaObject(
+          video_resolution = 'sd',
+          bitrate = '40',
+          parts = [PartObject(key = download_url.replace('{quality}', '-light'))],
+        )
+      ]
+
+  else:
+
+    external_sources = [
+      ('//embed[contains(@src, "youtube.com")]', 'src', None, False),
+      ('//embed[contains(@src, "vimeo.com")]', 'src', None, False),
+      ('//object[contains(@data, "blip.tv")]', 'data', FindBlip, True)
+    ]
+
+    for (select, node, find_url, make_indirect) in external_sources:
+      try:
+        external_url = page.xpath(select)[0].get(node)
+
+        if find_url != None:
+          external_url = find_url(external_url)
+
+        return URLService.MediaObjectsForURL(external_url)
+      except: pass
+
+  # If we've got to here without finding any movie, we will make one last attempt from the original
+  # page.
+  direct_links = page.xpath("//meta[@property = 'og:video']")
+
+  if len(direct_links) > 0:
+    return [
+      MediaObject(
+        video_resolution = 'sd',
+        parts = [PartObject(key = direct_links[0].get('content'))]
+      )
+    ]
+
+  return None
+
+####################################################################################################
+def FindBlip(url):
+
+  xml_url = RE_XML.findall(url)[0]
+  xml_details = XML.ElementFromURL(String.Unquote(xml_url))
+  external_url = xml_details.xpath("//item/link/text()")[0]
+  return external_url

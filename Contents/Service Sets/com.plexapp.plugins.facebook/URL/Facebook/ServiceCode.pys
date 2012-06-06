@@ -1,0 +1,67 @@
+RE_TITLE    = Regex('\["video_title","(.+?)"\],')
+RE_THUMB    = Regex('\["thumb_url","(.+?)"\],')
+RE_DURATION = Regex('\["video_length","([0-9]+?)"\],')
+RE_VIDEO_URL= Regex('\["video_src","(.+?)"\],')
+RE_HIGH_QUAL= Regex('\["highqual_src","(.+?)"\],')
+RE_LOW_QUAL = Regex('\["lowqual_src","(.+?)"\],')
+
+####################################################################################################
+def NormalizeURL(url):
+    Log("Normalizing url: %s" % url)
+    return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    try:
+
+        page_content = HTTP.Request(url).content
+        title = RE_TITLE.search(page_content).group(1)
+        thumb = RE_THUMB.search(page_content).group(1)
+        duration_text = RE_DURATION.search(page_content).group(1)
+
+        return VideoClipObject(
+            title = String.Unquote(title.decode('unicode_escape'), usePlus=True),
+            thumb = String.Unquote(thumb.decode('unicode_escape'), usePlus=True).replace('https','http'),
+            duration = int(String.Unquote(duration_text.decode('unicode_escape'), usePlus=True)))
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = '720',
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'high'))]
+      ),
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        video_resolution = 'SD',
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'low'))]
+      )
+    ]
+
+####################################################################################################
+def PlayVideo(url, res):
+
+    page_content = HTTP.Request(url, cacheTime = 0).content
+
+    video_url = RE_VIDEO_URL.search(page_content).group(1)
+    
+    if res == "high":
+        desired_video = RE_HIGH_QUAL.search(page_content)
+    elif res == "low":
+        desired_video = RE_LOW_QUAL.search(page_content)
+    else:
+        desired_video = None
+
+    if desired_video:
+        video_url = desired_video.group(1)
+
+    return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True).replace('https','http'))

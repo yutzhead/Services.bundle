@@ -1,0 +1,112 @@
+RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
+
+NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
+
+SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    smil = GetSMIL(url)
+    details = GetSRC(smil)
+    
+    title = details.get('title')
+    summary = details.get('abstract')
+    runtime = details.get('dur')
+    duration = int(runtime.strip('ms'))
+    
+    thumb = details.get('imagePlayerLargeA')
+    
+    try:
+        show_title = details.get('Show')
+        season = int(details.get('SeasonNumber'))
+        episode = int(details.get('EpisodeNumber'))
+        date = Datetime.ParseDate(details.get('OriginalAirDate')).date()
+        try:
+            directors = details.get('PeopleDirector')
+	    if directors:
+		directors = directors.split(', ')
+	    else:
+		directors = []
+        except:
+            directors = []
+    	try:
+            writers = details.get('PeopleWriter')
+	    if writers:
+		writers = writers.split(', ')
+	    else:
+		writers = []
+        except:
+            writers = []
+
+        return EpisodeObject(
+            title = title,
+            summary = summary,
+            duration = duration,
+            show = show_title,
+            season = season, 
+            index = episode,
+            originally_available_at = date,
+            directors = directors,
+            writers = writers,
+	    thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+	    )
+    except:
+        pass
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        duration = duration,
+	thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+    )
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            video_resolution = "480",
+            audio_channels = 2,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+        )
+    ]
+
+@indirect
+def PlayVideo(url, res):
+    smil = GetSMIL(url)
+    
+    res_index = RES_MAP.index(res)
+    
+    video_url = None
+                    
+    source = GetSRC(smil).get('src')
+    
+    try:    
+        player = source.split('&lt;break&gt;')[0]
+        clip = source.split('&lt;break&gt;')[1]
+    except:
+        player = source.split('{break}')[0]
+        clip = source.split('{break}')[1]
+    
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
+
+def GetSMIL(url):
+    data = HTTP.Request(url).content
+    pID = RE_EPISODE_ID.search(data).group(1)
+    content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
+    smil = XML.ElementFromString(content)
+    return smil
+
+def GetSRC(smil):
+    src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+    if len(src_list) == 1:
+        return src_list[0]
+    else:
+        for ref in src_list:
+            if "raca.tou.tv" in ref.get('src'):
+                pass
+            elif ref.get('src').startswith('rtmp'):
+                return ref
+            else:
+                return ref
+    return None

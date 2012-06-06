@@ -1,0 +1,225 @@
+import urlparse
+
+# Allow any length for these content types
+VALID_TYPES = ['text/html', 'application/xhtml+xml']
+
+# Only allow response sizes below a certain length for arbitrary types
+MAX_LENGTH = 1024
+
+EMBEDDED_VIDEO = [
+	("//iframe", "src"), 
+	("//embed", "src"), 
+	("//object", "data"), 
+	("//param[@name = 'flashvars']", "value")
+]
+
+# Use the iPad user agent to try to make websites give us <video> instead of Flash
+HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10'}
+
+HTTP.CacheTime = CACHE_1HOUR
+
+RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)')
+RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>http.+?youtu\.?be(.com)?.+?)("|\'|&quot;|%22)')
+RE_CODECS = Regex('codecs="([^"]+)"')
+RE_WHITESPACE = Regex('\s*,\s*')
+
+####################################################################################################
+def FixUrl(parent_url, url):
+
+	parent_url = urlparse.urlparse(parent_url)
+
+	if url and url[0] == '/':
+		# Absolute path
+		final_url = '%s://%s%s' % (parent_url.scheme, parent_url.netloc, url)
+	elif url and url.find('://') == -1:
+		# Relative path
+		final_url = '%s://%s%s/%s' % (parent_url.scheme, parent_url.netloc, parent_url.path.rsplit('/',1)[0], url)
+	else:
+		final_url = url
+
+	return final_url
+
+####################################################################################################
+def ShouldParse(req):
+
+	# Check the content type and content length headers
+	try:
+		content_type = req.headers['content-type'].split(';')[0].strip()
+	except:
+		content_type = 'Unknown'
+	try:
+		content_length = int(req.headers['content-length'])
+	except:
+		content_length = 0
+
+	Log("Length: %d  Type: %s", content_length, content_type)
+	if (content_length <= 0 or content_length > MAX_LENGTH) and content_type not in VALID_TYPES:
+		Log("Content length for unknown type %s is invalid - aborting", content_type)
+		return False
+
+	return True
+
+####################################################################################################
+def FindExternalSource(req):
+
+	doc = HTML.ElementFromString(req.content)
+
+	# We're going to search through the HTML for known embedded video types. If we find any, 
+	# then we can check their validity using the currently supported regular expressions.
+	for (select, node) in EMBEDDED_VIDEO:
+		for video in doc.xpath(select):
+			try:
+				node_url = video.get(node)
+				for sources_check in URLService.AllPatterns:
+					try: 
+						if len(Regex(sources_check).findall(node_url)) > 0:
+							return node_url
+					except: pass
+			except: pass
+
+	return None
+
+####################################################################################################
+def CodecsForVideoTypeValue(value):
+
+	if value == None:
+		return None
+
+	match = RE_CODECS.search(value)
+	if match:
+		return RE_WHITESPACE.split(match.groups()[0])
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+
+	try:
+		req.headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return URLService.MetadataObjectForURL(e.headers['Location'])
+
+	if ShouldParse(req):
+
+		# Embedded Video
+		source_url = FindExternalSource(req)
+		if source_url is not None:
+			return URLService.MetadataObjectForURL(source_url)
+
+		doc = HTML.ElementFromString(req.content)
+
+		# HTML5 Video
+		videos = doc.xpath('//video')
+
+		if len(videos) > 0:
+			tag = videos[0]
+
+			try: thumb = FixUrl(url, tag.get('poster'))
+			except: thumb = None
+
+			return VideoClipObject(
+				title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
+				thumb = thumb
+			)
+
+		# Regex Video
+		video = RE_PATTERN.search(req.content)
+
+		if video:
+			return VideoClipObject(
+				title = doc.xpath('//title')[0].text.strip()
+			)
+
+		# Regex Video YouTube
+		youtube = RE_YOUTUBE.search(req.content)
+
+		if youtube:
+			youtube_url = youtube.group('vid').replace('\\', '')
+			return URLService.MetadataObjectForURL(youtube_url)
+
+	return None
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+
+	try:
+		req.headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return URLService.MediaObjectsForURL(e.headers['Location'])
+
+	if ShouldParse(req):
+
+		# Embedded Video
+		source_url = FindExternalSource(req)
+		if source_url is not None:
+			return URLService.MediaObjectsForURL(source_url)
+
+		doc = HTML.ElementFromString(req.content)
+
+		# HTML5 Video
+		videos = doc.xpath('//video')
+
+		if len(videos) > 0:
+			tag = videos[0]
+
+			result = []
+			sources = tag.xpath('./source')
+			sources.insert(0, tag)
+
+			for source in sources:
+				src = source.get('src')
+
+				if src == None:
+					continue
+
+				src = FixUrl(url, src)
+				videoType = source.get('type')
+				codecs = CodecsForVideoTypeValue(videoType)
+
+				attrs = {
+					'parts': [PartObject(key=src)]
+				}
+
+				if codecs and len(codecs) > 0:
+					attrs['video_codec'] = codecs[0]
+
+				if codecs and len(codecs) > 1:
+					attrs['audio_codec'] = codecs[1]
+
+				result.append(MediaObject(**attrs))
+
+			return result
+
+		# Regex Video
+		video = RE_PATTERN.search(req.content)
+
+		if video:
+			src = video.group('vid')
+			src = String.Unquote(src)
+			src = FixUrl(url, src)
+
+			if src.find('.m3u8') != -1:
+				return [
+					MediaObject(
+						parts = [PartObject(key=HTTPLiveStreamURL(src))]
+					)
+				]
+			else:
+				return [
+					MediaObject(
+						parts = [PartObject(key=src)]
+					)
+				]
+
+		# Regex Video YouTube
+		youtube = RE_YOUTUBE.search(req.content)
+
+		if youtube:
+			youtube_url = youtube.group('vid').replace('\\', '')
+			return URLService.MediaObjectsForURL(youtube_url)
+
+	return None

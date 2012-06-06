@@ -1,0 +1,51 @@
+import re
+
+XML_URL = 'http://www.tvkultura.ru/v.xml?vid=%s'
+
+####################################################################################################
+
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+
+    data = HTML.ElementFromURL(url)
+    
+    title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+    summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
+    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+
+    vc = VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb
+        )
+
+    return vc
+  
+####################################################################################################
+
+def MediaObjectsForURL(url):
+
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url))],
+            container = 'flv',
+            video_resolution = 'sd',
+            video_codec = 'h264',
+            audio_codec = 'aac',
+            audio_channels = 2
+            )
+        ]
+
+####################################################################################################
+def PlayVideo(url):
+    data = HTML.ElementFromURL(url)
+    vid = data.xpath('//link[@rel="video_src"]')[0].get('href').split('vid=')[1]
+    vid_xml = XML.ElementFromURL(XML_URL % vid).xpath('video_item')[0]
+    flv_url = vid_xml.xpath('.//video')[0].text
+     
+    return Redirect(flv_url)
+  

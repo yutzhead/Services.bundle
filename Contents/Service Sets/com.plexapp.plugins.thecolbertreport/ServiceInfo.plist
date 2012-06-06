@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>The Colbert Report</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.colbertnation.com/the-colbert-report-videos/393167/july-26-2011/herman-cain-cancels</string>
+				<string>http://www.colbertnation.com/full-episodes/wed-july-27-2011-missy-cummings</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.colbertnation.com/.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

@@ -1,0 +1,162 @@
+HTTP.CacheTime = CACHE_1DAY
+RE_EPISODE = Regex('[0-9]$')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+
+	show = page.xpath('//title')[0].text.split(' | ')[0].rsplit(' ',1)[0]
+	absolute_index = int( page.xpath('//title')[0].text.split(' | ')[0].rsplit(' ',1)[1] )
+
+	try:
+		title = page.xpath('//h3[@class="field-content"]/text()')[0]
+	except:
+		title = '%s %d' % (show, absolute_index)
+
+	try:
+		# Get the paragraph following the paragraph listing the show's host(s)
+		summary = page.xpath('//p[starts-with(text(),"Host:") or starts-with(text(),"Hosts:")]/following-sibling::p[1]')[0].text.strip()
+	except:
+		try:
+			# If there's just one text element in this div, then that's the summary (used for older episodes mostly)
+			if len( page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()') ) == 1:
+				summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()')[0].strip()
+			else:
+				summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]//p[1]/text()')[0].strip()
+		except:
+			try:
+				# Use the first paragraph as summary
+				summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]//p[1]/text()')[0].strip()
+			except:
+				summary = None
+
+	try:
+		duration = page.xpath('//p[starts-with(text(), "Running time:")]')[0].text.split(': ',1)[1]
+		duration = TimeToMs(duration)
+	except:
+		duration = None
+
+	try:
+		originally_available_at = page.xpath('//div[@class="views-field views-field-created"]/*/text()')[0]
+		originally_available_at = Datetime.ParseDate(originally_available_at).date()
+	except:
+		originally_available_at = None
+
+	try:
+		thumb = page.xpath('//video//img')[0].get('src')
+	except:
+		thumb = None
+
+	video = EpisodeObject(
+		show = show,
+		title = title,
+		absolute_index = absolute_index,
+		summary = summary,
+		originally_available_at = originally_available_at,
+		thumb = thumb
+	)
+
+	return video
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	mediaobjects = []
+
+	# This Week in Tech has 720p videos available
+	if '/show/this-week-in-tech/' in url or 'twit.tv/twit' in url:
+		mediaobjects.append(
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
+				video_resolution = '720',
+				aspect_ratio = '1.78',
+				container = Container.MP4,
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		)
+
+	# 480p
+	mediaobjects.append(
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='480p'))],
+			video_resolution = '480',
+			aspect_ratio = '1.78',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	)
+
+	# sd
+	mediaobjects.append(
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='sd'))],
+			video_resolution = 'sd',
+			aspect_ratio = '1.78',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	)
+
+	return mediaobjects
+
+####################################################################################################
+def TimeToMs(timecode):
+
+	seconds = 0
+
+	try:
+		duration = timecode.split(':')
+		duration.reverse()
+
+		for i in range(0, len(duration)):
+			seconds += int(duration[i]) * (60**i)
+	except:
+		pass
+
+	return seconds * 1000
+
+####################################################################################################
+def PlayMedia(url, fmt):
+
+	page = HTML.ElementFromURL(url)
+
+	if fmt == '720p':
+		url = page.xpath('//a[@class="hd download"]')[0].get('href')
+	elif fmt == '480p':
+		url = page.xpath('//a[@class="sd download"]')[0].get('href')
+	elif fmt == 'sd':
+		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
+
+	if 'twit.mediafly.com' in url:
+		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
+
+	return Redirect(url)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+
+	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item/link/text()'):
+		if len(test_urls) < 3:
+			if url not in test_urls and RE_EPISODE.search(url):
+				test_urls.append(url)
+		else:
+			break
+
+	return test_urls

@@ -1,0 +1,54 @@
+import re
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+
+        # Attempt to extract the details from the page.
+        page = HTML.ElementFromURL(url)
+
+        title = page.xpath("//div[@class='heading']//h2/text()")[0]
+        thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
+
+        summary = None
+        try: summary = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[1]
+        except: pass
+
+        duration = None
+        try:
+            duration_text = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[0]
+            duration_dict = re.match(".* Time: (?P<mins>[0-9]+) minutes (?P<secs>[0-9]+) seconds.*", duration_text).groupdict()
+            mins = int(duration_dict['mins'])
+            secs = int(duration_dict['secs'])
+            duration = ((mins * 60) + secs) * 1000
+        except:  Log.Exception("Error attempting to determine duration")
+
+        return VideoClipObject(
+            title = title,
+            summary = summary,
+            thumb = thumb,
+            duration = duration)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))],
+        audio_channels = 2
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url):
+    page = HTML.ElementFromURL(url)
+    video_url = page.xpath("//div[@class='video-player-container']//video")[0].get('src')
+    return Redirect(video_url)

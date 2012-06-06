@@ -1,0 +1,106 @@
+import re
+
+VIDEO_DETAILS = "http://www.vgtv.no/api/?do=feed&action=id&value=%s"
+NAMESPACES = {'x': 'http://www.aptoma.no/produkt/tv/xmlns'}
+
+VIDEO_STATUS = 'http://www.vgtv.no/data/actions/videostatus/?id=%s'
+
+TEST_URLS = "http://www.vgtv.no/data/actions/videolist/?limit=50&callback=portal.jsonp.latest"
+TEST_URL = "http://www.vgtv.no/#!id=%s"
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+        
+        # Obtain the XML which details the associated url.
+        id = GetIDFromURL(url)
+        details = XML.ElementFromURL(VIDEO_DETAILS % id)
+
+        # Extract the available information
+        title = details.xpath("//item/title/text()")[0]
+        summary = details.xpath("//item/description/text()")[0]
+        thumb = details.xpath("//x:image[@width = '512']", namespaces = NAMESPACES)[0].get('url')
+        date = details.xpath("//item/pubDate/text()")[0]
+        date = Datetime.ParseDate(date)
+
+        return VideoClipObject(
+            title = title,
+            summary = summary,
+            thumb = thumb,
+            originally_available_at = date)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_resolution = '468',
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url):
+
+    # Obtain the JSON page which contain the status of the available videos
+    id = GetIDFromURL(url)
+    details = JSON.ObjectFromURL(VIDEO_STATUS % id)
+
+    # We'll only use the 'best' mp4 format available. There are likely to be smaller ones also 
+    # available, but they're pretty small. Also, there are multiple links to the same video but some
+    # might not work. Therefore we need to validate the URL before returning it.
+    video_url = None
+    for video_path in details['formats']['http']['mp4'][0]['paths']:
+        address = video_path['address']
+        port = video_path['port']
+        path = video_path['path']
+        filename = video_path['filename']
+
+        video_url = "http://%s:%s/%s/%s" % (address, port, path, filename)
+        try: 
+            # If we can access the header, then the URL must be good.
+            HTTP.Request(video_url).header
+            break
+        except: pass
+
+    return Redirect("http://%s:%s/%s/%s" % (address, port, path, filename))
+
+####################################################################################################
+
+def GetIDFromURL(url):
+    id = None
+    id_index = url.find('!id=')
+    if id_index > 0:
+        id = url[id_index + 4:]
+    else:
+        id = id
+
+    return id
+
+####################################################################################################
+
+def TestURLs():
+    test_urls = []
+
+    test_page_content = HTTP.Request(TEST_URLS).content
+    start = test_page_content.find('(') + 1
+    end = test_page_content.rfind(')')
+
+    test_json = JSON.ObjectFromString(test_page_content[start:end])
+    for item in test_json['videos']:
+        if len(test_urls) < 3:
+            url = TEST_URL % item['id']
+            test_urls.append(url)
+        else:
+            break
+    
+    return test_urls

@@ -1,0 +1,68 @@
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0' }
+RE_ID_PATTERN = Regex('([0-9]{7})')
+
+####################################################################################################
+def NormalizeURL(url):
+
+  find_id = RE_ID_PATTERN.search(url)
+
+  if find_id:
+    id = find_id.group(1)
+    url = url.rsplit('4od', 1)[0]
+    url = url + '4od/player/' + id
+
+  return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+  (url, id) = url.rsplit('/player/', 1)
+
+  xpath = '//li[@data-assetid="%s"]' % id
+  ep = HTML.ElementFromURL(url, headers=httpHeaders).xpath(xpath)[0]
+
+  try:
+    broadcast = ep.get('data-txDate')
+    originally_available_at = Datetime.ParseDate(broadcast).date()
+  except:
+    originally_available_at = None
+
+  thumb = ep.get('data-image-url')
+  if thumb.startswith('/'):
+    thumb = 'http://www.channel4.com' + thumb
+
+  show_title = ep.get('data-episodetitle') # Attribute name in lowercase only
+  episode_title = ep.get('data-episodeinfo') # Attribute name in lowercase only
+  summary = String.StripTags(ep.get('data-episodesynopsis')) # Attribute name in lowercase only
+
+  try:
+    season = int(ep.get('data-series-number'))
+  except:
+    season = None
+
+  try:
+    episode = int(ep.get('data-episode-number'))
+  except:
+    episode = None
+
+  video = EpisodeObject(
+    show = show_title,
+    title = episode_title,
+    season = season,
+    index = episode,
+    summary = summary,
+    originally_available_at = originally_available_at,
+    thumb = thumb
+  )
+
+  return video
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+  return [
+    MediaObject(
+      parts = [PartObject(key=WebVideoURL(url))],
+      protocol = Protocol.WebKit
+    )
+  ]

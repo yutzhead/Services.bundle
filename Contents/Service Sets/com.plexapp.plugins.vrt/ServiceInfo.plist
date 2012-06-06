@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>VRT</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.sporza.be/permalink/1.1068654</string>
+				<string>http://www.deredactie.be/cm/vrtnieuws/mediatheek/nieuws/buitenland/1.1068676</string>
+				<string>http://www.deredactie.be/permalink/1.1068302</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://((www|video)\.)?(deredactie|sporza)\.be/(permalink|cm/vrtnieuws/mediatheek|cm/sporza/videozone)/</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

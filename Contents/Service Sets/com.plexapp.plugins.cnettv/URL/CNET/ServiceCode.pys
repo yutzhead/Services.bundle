@@ -1,0 +1,130 @@
+import re
+
+CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
+API_URL = "http://api.cnet.com/restApi/v1.0/video?videoId=%s&orderBy=productionDate~desc,createDate~desc&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,&partTag=cntv&showBroadcast=true"
+
+####################################################################################################
+def NormalizeURL(url):
+  if url.find('?') != -1:
+    return url[0:url.find('?')]
+  return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  video_id = video_id = GetVideoIdFromUrl(url)
+  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200, errors='ignore')
+
+  episode_title = data.xpath("//l:Title", namespaces=CNET_NAMESPACE)[0].text
+  summary = data.xpath("//l:Description", namespaces=CNET_NAMESPACE)[0].text
+  date = Datetime.ParseDate(data.xpath("//l:CreateDate", namespaces=CNET_NAMESPACE)[0].text).date()
+  duration = int(data.xpath("//l:LengthSecs", namespaces=CNET_NAMESPACE)[0].text) * 1000
+  show_title = data.xpath("//l:Category/l:Title", namespaces=CNET_NAMESPACE)[0].text
+
+  try: 
+    thumb_dict_169 = {}
+    thumb_dict_43 = {}
+    
+    for thumb in data.xpath("//l:Images/l:Image", namespaces=CNET_NAMESPACE):
+      res = int(thumb.get('width'))
+      url = thumb.xpath('l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
+      asp = thumb.get('aspectRatio')
+      if asp == '16:9':
+        thumb_dict_169[res] = url
+      else:
+        thumb_dict_43[res] = url
+      
+    thumb_dict = thumb_dict_43  
+    if len(thumb_dict_169) > 0:
+      thumb_dict = thumb_dict_169
+      
+    keys = thumb_dict.keys()
+    keys.sort()
+    keys.reverse()
+    
+    thumbUrl = thumb_dict[keys[0]]
+  except:
+    raise
+    thumbUrl = None
+  
+  # Construct a metadata item
+  ec = EpisodeObject(
+    title = episode_title,
+    show = show_title,
+    duration = duration,
+    originally_available_at = date,
+    summary = summary,
+    thumb = thumbUrl
+  )
+  
+  return ec
+
+####################################################################################################
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      container = Container.MP4,
+      video_resolution = '720',
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 720))],
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_resolution = '480',
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))],
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_resolution = 'sd',
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 360))],
+    )
+  ]
+  
+####################################################################################################
+def PlayVideo(url, res):
+  video_id = GetVideoIdFromUrl(url)
+  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200, errors='ignore')
+  videos = data.xpath("//l:VideoMedia", namespaces=CNET_NAMESPACE)
+  
+  video_dict = {}
+  for video in videos:
+    res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
+    url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
+    video_dict[res] = url
+    
+  resolutions = video_dict.keys()
+  resolutions.sort()
+  resolutions.reverse()
+  
+  # Find the best match.
+  for resolution in resolutions:
+    if resolution <= res:
+      return Redirect(video_dict[resolution])
+  
+  # Return the first match.
+  return Redirect(video_dict[0])
+  
+####################################################################################################
+def GetVideoIdFromUrl(url):
+
+  if url.find('cnettv') != -1:
+    video_id = url.split('-')[-1].strip('.html')
+  else:
+    data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+    try:
+      video_id = data.xpath('//div[@id="universalVideo"]')[0].get('videoid')
+    except:
+      video_id = data.xpath('//div[@class="playButton"]')[0].get("data-vid")
+    
+  return video_id
+  

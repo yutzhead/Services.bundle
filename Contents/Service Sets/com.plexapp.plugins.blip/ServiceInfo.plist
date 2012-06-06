@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Blip</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://blip.tv/file/5205726</string>
+				<string>http://blip.tv/play/hp9ggrvEfAI</string>
+				<string>http://blip.tv/moviesense/michael-madsen-interview-part-1-5255959</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(.+\.)?blip\.tv/(((file|play)/([A-Za-z0-9%_+]){7,11}(\.html)?)|([^/]+/.+\-([0-9]{7})))</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

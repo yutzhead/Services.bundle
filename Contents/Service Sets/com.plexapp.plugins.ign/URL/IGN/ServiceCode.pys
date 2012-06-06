@@ -1,0 +1,110 @@
+import re
+
+CONFIG_URL = "%s.config?pagetype=mediavideoplayer&windowLocation=%s&page_url=%s&windowLocation=%s"
+BITRATES = ['500000','1000000','2500000','3000000']
+IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+ 
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
+	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')[0]
+	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+
+	try:
+		date = data.xpath('//ul[@class="video-details"]/li')
+		if len(date) > 0:
+			date = re.search('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', date[0].text, re.IGNORECASE)
+			if date:
+				originally_available_at = Datetime.ParseDate(date.group(1)).date()
+	except:
+		originally_available_at = None
+
+	vc = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		originally_available_at = originally_available_at
+	)
+
+	return vc
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='3000000'))],
+			container = Container.MP4,
+			video_resolution = '720',
+			aspect_ratio = '1.77',
+			bitrate = 3000,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500000'))],
+			container = Container.MP4,
+			video_resolution = '540',
+			aspect_ratio = '1.77',
+			bitrate = 2500,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1000000'))],
+			container = Container.MP4,
+			video_resolution = '360',
+			aspect_ratio = '1.77',
+			bitrate = 1000,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='500000'))],
+			container = Container.MP4,
+			video_resolution = '360',
+			aspect_ratio = '1.77',
+			bitrate = 500,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, bitrate):
+
+	data = JSON.ObjectFromURL(CONFIG_URL % (url, String.Quote(url, usePlus=False), String.Quote(url, usePlus=False), String.Quote(url, usePlus=False)))
+	smil = XML.ElementFromURL(data['playlist']['media']['url'])
+	bitrate = BITRATES.index(bitrate)
+
+	video_url = ''
+
+	while bitrate > -1:
+		try:
+			video_url = smil.xpath('//smil:video[@system-bitrate="'+BITRATES[bitrate]+'"]', namespaces=IGN_NS)[0].get("src")
+			break
+		except:
+			bitrate = bitrate -1
+
+	if video_url == '':
+		video_url = smil.xpath('//smil:video', namespaces=IGN_NS)[0].get("src")
+	else:
+		pass
+
+	video_url = 'http://%s' % video_url
+
+	return Redirect(video_url)

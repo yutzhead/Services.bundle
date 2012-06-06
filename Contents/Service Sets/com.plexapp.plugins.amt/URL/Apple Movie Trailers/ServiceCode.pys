@@ -1,0 +1,186 @@
+HTTP_HEADERS = {'User-Agent':'iTunes/10.6'}
+AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
+QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large', 'Medium', 'Small']
+
+RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?/?$')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	url = url.replace('/iphone/', '/')
+	studio, title, video = RE_URL_INFO.findall(url)[0]
+	if not video: video = 'trailer'
+
+	return 'http://trailers.apple.com/trailers/%s/%s#%s' % (studio, title, video)
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	xml = GetXML(url)
+
+	if xml:
+		movie = xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS)[0]
+
+		movie_title = movie.xpath('./a:key[text()="playlistName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+		subtitle = movie.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[0]
+		title = movie_title + ' (' + subtitle + ')'
+
+		summary = xml.xpath('//a:ScrollView//comment()[contains(.,"DESCRIPTION")]/following-sibling::a:TextView[1]/a:SetFontStyle', namespaces=AMT_VIDEOS_NS)[0].text.strip()
+
+		# Duration
+		try:
+			duration = movie.xpath('./a:key[text()="duration"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+			duration = int(duration)
+		except:
+			duration = None
+
+		# Poster
+		try:
+			thumb = xml.xpath('//a:PictureView[contains(@url, "poster.jpg") or contains(@url, "poster-large.jpg")]', namespaces=AMT_VIDEOS_NS)[0].get('url')
+		except:
+			try:
+				thumb = xml.xpath('//a:PictureView[contains(@url, "poster") and contains(@url, ".jpg")]', namespaces=AMT_VIDEOS_NS)[0].get('url')
+			except:
+				thumb = None
+
+		if thumb is not None and not thumb.startswith('http'):
+			thumb = 'http://trailers.apple.com%s' % thumb
+
+		# Construct a metadata item
+		return VideoClipObject(
+			title = title,
+			summary = summary,
+			duration = duration,
+			thumb = Resource.ContentsOfURLWithFallback(thumb, fallback='icon-default.png')
+		)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 1080p'))],
+			video_resolution = '1080',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 720p'))],
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 480p'))],
+			video_resolution = '480',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Large'))],
+			video_resolution = 'sd',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Medium'))],
+			video_resolution = 'sd',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Small'))],
+			video_resolution = 'sd',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def GetXML(url):
+
+	studio, title, video = RE_URL_INFO.findall(url)[0]
+	xml_url = 'http://trailers.apple.com/moviesxml/s/%s/%s/%s.xml' % (studio, title, video)
+
+	try:
+		xml = XML.ElementFromURL(xml_url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+		return xml
+	except:
+		try:
+			if 'trailer.xml' in xml_url:
+				xml = XML.ElementFromURL(xml_url.replace('trailer.xml', 'index.xml'), headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+				return xml
+		except:
+			pass
+
+	if title.startswith('the'):
+		url = 'http://trailers.apple.com/trailers/%s/%s/#%s' % (studio, title[3:], video)
+		return GetXML(url)
+
+	Log('Loading XML failed!')
+	return None
+
+####################################################################################################
+@indirect
+def PlayVideo(url, fmt):
+
+	video_url = None
+	xml = GetXML(url)
+
+	if xml:
+		available = {}
+
+		for video in xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS):
+			key = video.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[1][:-1]
+
+			if key in QUALITY:
+				video_url = video.xpath('./a:key[text()="previewURL"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+				available[key] = video_url
+
+		# Find the requested video quality or figure out what the next best available quality is
+		start_index = QUALITY.index(fmt)
+		end_index = len(QUALITY)
+
+		for i in range(start_index, end_index):
+			key = QUALITY[i]
+			if key in available:
+				video_url = available[key]
+				break
+
+		if not video_url:
+			for i in reversed(range(0, start_index)):
+				key = QUALITY[i]
+				if key in available:
+					video_url = available[key]
+					break
+
+	c = ObjectContainer()
+
+	c.add(VideoClipObject(
+		items = [
+			MediaObject(
+				parts = [PartObject(key=video_url)]
+			)
+		]
+	))
+
+	c.http_headers = HTTP_HEADERS
+	return c

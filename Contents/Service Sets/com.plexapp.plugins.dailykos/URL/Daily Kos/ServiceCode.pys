@@ -1,0 +1,47 @@
+import re
+
+MEDIA_URL = 'http://view.dailykostv.com/w/%s/video.flv'
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+        
+        # Request the url
+        page = HTML.ElementFromURL(url)
+
+        # Extract the details available directly form the page.
+        title = page.xpath("//head//meta[@name='title']")[0].get('content')
+        description = page.xpath("//head//meta[@name='description']")[0].get('content')
+        thumb = page.xpath("//head//link[@rel='image_src']")[0].get('href')
+        thumb_params = thumb.find('?')
+        if thumb_params > 0:
+            thumb = thumb[:thumb_params]
+
+        return VideoClipObject(
+            title = title,
+            summary = description,
+            thumb = thumb)
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        video_resolution = 'sd',
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 1,
+        optimized_for_streaming = True,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url):
+    return Redirect(MEDIA_URL % url.split('/')[-2])

@@ -1,0 +1,160 @@
+import re, urlparse, urllib2, httplib
+
+####################################################################################################
+def NormalizeURL(url):
+
+  video_id = None
+
+  if isinstance(url, basestring):
+    url = urlparse.urlparse(url)
+
+  # http://vimeo.com/staffpicks#24002628
+  if re.match("^\d+$", url.fragment):
+    video_id = url.fragment
+
+  # http://vimeo.com/23864381
+  if re.match("^/(\d+)$", url.path):
+    video_id = url.path[1:]
+
+  # http://vimeo.com/groups/5dmkii/videos/26352235
+  # http://player.vimeo.com/video/42601218
+  if re.search("/(\d+)$", url.path):
+    video_id = url.path[url.path.rfind('/')+1:]
+
+  # http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
+  # http://vimeo.com/moogaloop.swf?clip_id=31856894
+  if re.search("clip_id=(\d+)", url.query):
+    video_id = re.search("clip_id=(\d+)", url.query).group(1)
+
+  if video_id is None:
+    return None
+
+  return "http://vimeo.com/%s" % video_id
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  
+  # Figure out the URL to call.
+  vimeo_video_id       = re.findall('vimeo.com\/(\d+)\/?', url)[0]                 # extract the video id
+  vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id  # API call
+
+  # Fetch the page. Private videos return a HTTP 404 error.
+  try:
+    json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
+  except:
+    Log('This is a private video.')
+    return
+
+  # Construct a metadata item.
+  try:
+    summary = String.StripTags(json['description'])
+  except:
+    summary = None
+
+  originally_available_at = Datetime.ParseDate(json['upload_date'])
+
+  return VideoClipObject(
+    title = json['title'],
+    summary = summary,
+    duration = int(json['duration'])*1000,
+    thumb = json['thumbnail_large'],
+    originally_available_at = originally_available_at.date(),
+    year = originally_available_at.year,
+    tags = json['tags'].split(', '),
+    directors = [json['user_name']]
+  )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+  items = [
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='hd', codecs='H264'))],
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      video_resolution = '720',
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='sd', codecs='H264'))],
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      video_resolution = '480',
+      audio_codec = AudioCodec.AAC,
+      audio_channels = 2,
+      optimized_for_streaming = True
+    )
+  ]
+
+  return items
+
+####################################################################################################
+class SmartRedirectHandler(urllib2.HTTPRedirectHandler):     
+  def http_error_301(self, req, fp, code, msg, headers):
+    result = urllib2.HTTPRedirectHandler.http_error_301(self, req, fp, code, msg, headers)              
+    result.status = code
+    return result                                       
+
+  def http_error_302(self, req, fp, code, msg, headers):   
+    result = urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)              
+    result.status = code                                
+    return result
+
+####################################################################################################
+def GetVideoURL(url, format=None, codecs=None):
+  key = url[url.rfind('/')+1:]
+  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
+  video = HTTP.Request(url, cacheTime=1, headers=headers).content
+
+  m1 = re.search('"hd":([0-9])', video)
+  m2 = re.search('"signature":"([0-9a-f]+)","timestamp":([0-9]+)', video)
+
+  if m1 and m2:
+    hd = int(m1.groups()[0])
+
+    if hd == True and format == 'hd':
+      format = 'hd'
+    else:
+      format = 'sd'
+
+    if codecs != None:
+      codecs = '&codecs=' + codecs
+    else:
+      codecs = ''
+
+    (sig, time) = m2.groups()
+    url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
+    request = urllib2.Request(url, None, headers)
+    opener = urllib2.build_opener(SmartRedirectHandler)
+    f = opener.open(request)
+    if f.status == 301 or f.status == 302:
+      return f.url
+
+####################################################################################################
+@indirect
+def PlayVideoIndirect(url, format=None, codecs=None):
+  HTTP.ClearCookies()
+
+  try:
+    video_url = GetVideoURL(url, format, codecs)
+  except:
+    video_url = GetVideoURL(url, None, 'H264,VP8,VP6')
+
+  if video_url is None:
+    return None
+
+  c = ObjectContainer()
+  c.add(VideoClipObject(
+    key = URLService.LookupURLForMediaURL(url),
+    items = [
+      MediaObject(
+        parts = [
+          PartObject(key = video_url)
+        ]
+      )
+    ]
+  ))
+  c.http_cookies = HTTP.CookiesForURL('http://vimeo.com/')
+  return c

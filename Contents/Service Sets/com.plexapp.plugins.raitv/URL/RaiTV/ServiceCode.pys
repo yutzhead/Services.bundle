@@ -1,0 +1,68 @@
+import re
+
+BASE_URL = 'http://www.rai.tv'
+
+def NormalizeURL(url):
+    return url
+    
+def MetadataObjectForURL(url):
+
+    data = HTML.ElementFromURL(url)
+
+    title = data.xpath("//meta[@property='og:title']")[0].get('content')
+    summary = data.xpath("//meta[@property='og:description']")[0].get('content')
+    thumb_url = data.xpath('//link[@rel="image_src"]')[0].get('href')
+    if 'www.rai.tv' not in thumb_url:
+        thumb = BASE_URL + thumb_url
+    else:
+        thumb = thumb_url
+
+    try: date = Datetime.ParseDate(data.xpath('//meta[@name="item-date"]')[0].get('content')).date()
+    except:
+        try: date = Datetime.ParseDate(data.xpath('//meta[@name="itemDate"]')[0].get('content')).date()
+        except:
+            try: date = Datetime.ParseDate(data.xpath('//meta[@name="pdate"]')[0].get('content')).date()
+            except: date = None
+    
+    vc = VideoClipObject(
+        title = title,
+        summary = summary,
+        originally_available_at = date,
+        thumb = thumb)
+    return vc
+    
+def MediaObjectsForURL(url):
+    return [
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url))],
+      container = 'wmv',
+      video_resolution = 'sd',
+      video_codec = VideoCodec.WVC1,
+      audio_codec = AudioCodec.WMAP,
+      audio_channels = 2
+    )
+  ]
+
+def PlayVideo(url):
+    data = HTML.ElementFromURL(url)
+    video_url = data.xpath("//meta[@name='videourl']")[0].get('content')
+    return Redirect(video_url)
+
+def TestURLs():
+    test_urls = []
+
+    # Request a page which should contain a collection of videos
+    page = HTML.ElementFromURL(BASE_URL)
+    results = page.xpath("//div[@class='videoContainer']//li[contains(@id, 'ContentItem')]")
+    for item in results:
+
+        url = item.xpath(".//a")[0].get('href')
+        if url.startswith("http://") == False:
+            url = BASE_URL + url
+
+        test_urls.append(url)
+
+        if len(test_urls) >= 2:
+            break
+
+    return test_urls
