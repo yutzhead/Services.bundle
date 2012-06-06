@@ -6,18 +6,6 @@ SHOWS_MOV = ["gear_media_tech", "gmt", "ITBB", "itbb", "macbreak", "macbreak_dev
                 "macbreak_work", "modoshop", "the_grip_guide"]
 
 ####################################################################################################
-def TestURLs():
-    test_urls= []
-    data = HTML.ElementFromURL(BASE_URL)
-    recent = data.xpath('//div[@id="content-sidebar"]')[0]
-    for podcast in recent.xpath('.//div[@class="podcast-navigation clearfix"]'):
-        link = podcast.xpath('.//a')[0].get('href')
-        test_urls.append(BASE_URL + link)
-        if len(test_urls) > 2:
-            break
-    return test_urls
-
-####################################################################################################
 def MetadataObjectForURL(url):
     media_type = GetMediaType(url)
 
@@ -26,22 +14,22 @@ def MetadataObjectForURL(url):
     title = details.xpath('.//h2[@class="page-title"]')[0].text
     clip_title = details.xpath('.//h2[@class="title podcast"]')[0].text
     title = "%s - %s" % (title, clip_title)
-    #runtime = details.xpath('.//div[@class="running-time"]/text()').split(':') #make sure to grab just the mm:ss
-    #duration = (int(runtime[0])*60 + int(runtime[1]))*1000
-    date = Datetime.ParseDate(details.xpath('.//h3[@class="podcast-date"]')[0].text).date
+    runtime = details.xpath('.//div[@class="running-time"]/text()')[0].split(':') #make sure to grab just the mm:ss
+    duration = (int(runtime[0])*60 + int(runtime[1]))*1000
+    date = Datetime.ParseDate(details.xpath('.//h3[@class="podcast-date"]')[0].text).date()
     summary = details.xpath('.//p')[1].text
 
     if media_type == "MOV":
         c = VideoClipObject(
             title = title,
-            #duration = duration,
+            duration = duration,
             originally_available_at = date,
             summary = summary)
     elif media_type == "MP3":
         c = TrackObject(
             title = title,
-            #duration = duration,
-            originally_available_at = date,
+            duration = duration,
+            #originally_available_at = date,
             summary = summary)
     return
 

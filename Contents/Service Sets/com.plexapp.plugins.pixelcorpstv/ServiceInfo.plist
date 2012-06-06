@@ -6,6 +6,11 @@
 	<dict>
 		<key>PixelCorps TV</key>
 		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.pixelcorps.tv/twip_257</string>
+				<string>http://www.pixelcorps.tv/gmt44</string>
+			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.pixelcorps.tv/.+</string>
