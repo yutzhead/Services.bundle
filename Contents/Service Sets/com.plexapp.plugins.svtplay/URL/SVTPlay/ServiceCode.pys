@@ -7,7 +7,7 @@ SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
 
 ####################################################################################################
 
-def getPlayerUrl(pageUrl):
+def getPlayerUrl(url):
     page = HTML.ElementFromURL(url)
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     jspage = None
@@ -19,8 +19,10 @@ def getPlayerUrl(pageUrl):
             ext = jspage.find(";", ind)
             url = jspage[ind + len(SWF_TAG): ext]
             url = BASE_URL + url
+            Log("Player url: " + url)
             return url
 
+    Log(" no player found, using fallback: " + SWF_PLAYER)
     return SWF_PLAYER
 
 def MetadataObjectForURL(url):
@@ -58,7 +60,6 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    JSON_ARG = "?output=json"
     mediaObjs = []
 
     return [
@@ -87,6 +88,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, bitrate):
+    JSON_ARG = "?output=json"
     playerurl = getPlayerUrl(url)
     page = HTML.ElementFromURL(url)
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
