@@ -2,6 +2,7 @@ TED_BASE = 'http://www.ted.com'
 
 RE_FILM_DATE = Regex('fd:"(.+?)",')
 RE_FILM_YEAR = Regex(';year=(.+?);')
+RE_POST_DATE = Regex('pd:"(.+?)",')
 RE_EVENT = Regex('en:"(.+?)",')
 RE_EVENT_ALT = Regex(';event=(.+?);')
 RE_SLUG = Regex("\$\('#download_dialog'\)\.load\('([^']+)")
@@ -42,8 +43,10 @@ def MetadataObjectForURL(url):
   try: filmDate = RE_FILM_DATE.search(content).group(1)
   except: filmDate = RE_FILM_YEAR.search(content).group(1)
 
-  postedDate = int(data.xpath('//meta[@property="video:release_date"]')[0].get('content'))
-  postedDate = Datetime.FromTimestamp(postedDate)
+  try: postedDate = RE_POST_DATE.search(content).group(1)
+  except: postedDate = RE_FILM_YEAR.search(content).group(1)
+
+  Log(postedDate)
 
   try: event = RE_EVENT.search(content).group(1)
   except: event = String.Unquote(RE_EVENT_ALT.search(content).group(1), usePlus=True)
@@ -54,7 +57,7 @@ def MetadataObjectForURL(url):
   vc = VideoClipObject(
     title = title,
     tagline = '%s : %s' % (event, filmDate),
-    originally_available_at = postedDate,
+    originally_available_at = Datetime.ParseDate(postedDate).date(),
     summary = summary,
     thumb = thumbUrl
   )
