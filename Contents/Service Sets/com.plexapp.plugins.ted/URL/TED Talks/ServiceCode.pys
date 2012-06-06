@@ -46,8 +46,6 @@ def MetadataObjectForURL(url):
   try: postedDate = RE_POST_DATE.search(content).group(1)
   except: postedDate = RE_FILM_YEAR.search(content).group(1)
 
-  Log(postedDate)
-
   try: event = RE_EVENT.search(content).group(1)
   except: event = String.Unquote(RE_EVENT_ALT.search(content).group(1), usePlus=True)
 
