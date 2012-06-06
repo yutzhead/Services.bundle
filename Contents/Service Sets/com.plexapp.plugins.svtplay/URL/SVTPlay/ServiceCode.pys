@@ -1,7 +1,7 @@
 BASE_URL = "http://www.svtplay.se"
 SWF_TAG = "PLAYER_SWF="
 SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
-
+BITRATES = [2400, 1400, 850, 320]
 ####################################################################################################
 
 def MetadataObjectForURL(url):
@@ -18,8 +18,6 @@ def MetadataObjectForURL(url):
         Log.Exception("Error converting airdate: " + air_date)
         air_date = Datetime.Now()
 
-    #Get time from <time> tag instead
-    #duration = page.xpath("//div[@class='playVideoBox']//time/text()")
     duration = page.xpath("//div[@class='playVideoInfo']//span//strong/../text()")[3].split()[0]
     duration = int(duration) * 60 * 1000 #millisecs
 
@@ -40,25 +38,25 @@ def MediaObjectsForURL(url):
 
     return [
         MediaObject(
-            video_resolution = "360",
+            video_resolution = "1280",
             audio_channels = 2,
             bitrate = 2400,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="2400"))]),
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=2400))]),
         MediaObject(
-            video_resolution = "360",
+            video_resolution = "1024",
             audio_channels = 2,
             bitrate = 1400,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="1400"))]),
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=1400))]),
         MediaObject(
-            video_resolution = "360",
+            video_resolution = "640",
             audio_channels = 2,
             bitrate = 850,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="850"))]),
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=850))]),
         MediaObject(
-            video_resolution = "360",
+            video_resolution = "640",
             audio_channels = 2,
             bitrate = 320,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="320"))]),
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=320))]),
         ]
 
 ####################################################################################################
@@ -69,25 +67,26 @@ def PlayVideo(url, bitrate):
     page = HTML.ElementFromURL(url)
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
-    
-    for v in videos["video"]["videoReferences"]:
-        if str(v["bitrate"]) == str(bitrate):
-            Log("MATCH")
-            longurl = v["url"]
-            url = v["url"].split("_definst_")
-            clip = url[1]
-            url = url[0] + "_definst_"
-    
-    Log("url: " + url)
-    Log("clip: " + clip)
-    Log("player: " + playerurl)
 
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=longurl, swf_url=playerurl))
+    urls = getContentBitrateURLs(videos)
+    rtmpurl = urls[int(bitrate)] 
+
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmpurl, swf_url=playerurl))
 
 ####################################################################################################
 def NormalizeURL(url):
     return url
 ####################################################################################################
+def getContentBitrateURLs(json):
+    d = dict()
+    for bitrate in BITRATES:
+        for v in json["video"]["videoReferences"]:
+            if(int(v["bitrate"]) == int(bitrate)): 
+                if(v["url"].find("rtmp") > -1):
+                    d[bitrate] = v["url"]
+                    break;
+    return d
+
 def getPlayerUrl(url):
     page = HTML.ElementFromURL(url)
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
