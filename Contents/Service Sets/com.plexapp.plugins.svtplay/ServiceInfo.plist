@@ -8,12 +8,12 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://svtplay.se/t/103300/gavledala</string>
-				<string>http://svtplay.se/t/102774/fraga_doktorn</string>
+				<string>http://www.svtplay.se/abc</string>
+				<string>http://www.svtplay.se/abcd</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://svtplay.se/(t|v)/[0-9]+/.+</string>
+				<string>http://www.svtplay.se/.+</string>
 			</array>
 		</dict>
 	</dict>

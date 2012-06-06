@@ -1,124 +1,106 @@
 import re
+import datetime
 
-DETAILS_URL = 'http://xml.svtplay.se/v1/videos/%s'
-NS_SVT = { 'svtplay': 'http://xml.svtplay.se/ns/playrss', 'media': 'http://search.yahoo.com/mrss/' }
-
-CATEGORY_EPISODES = [ '96240', '96241', '96244', '96247' ]
-CATEGORY_MOVIES = [ '96242' ]
+BASE_URL = "http://www.svtplay.se"
+SWF_TAG = "PLAYER_SWF="
+SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
 
 ####################################################################################################
 
+def getPlayerUrl(pageUrl):
+    page = HTML.ElementFromURL(url)
+    jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
+    jspage = None
+    for sp in page.xpath("//script/@src"):
+        Log("sp:"  + sp)
+        if(sp.find("script-built") > -1):
+            jspage = HTTP.Request(BASE_URL + sp).content
+            ind = jspage.rfind(SWF_TAG)
+            ext = jspage.find(";", ind)
+            url = jspage[ind + len(SWF_TAG): ext]
+            url = BASE_URL + url
+            return url
+
+    return SWF_PLAYER
+
 def MetadataObjectForURL(url):
     try:
-
         # Request the page
         page = HTML.ElementFromURL(url)
+        show = page.xpath("//div[@class='playVideoBox']/h1/text()")[0]
+        title = page.xpath("//div[@class='playVideoInfo']//h1/text()")[0]
+        description = page.xpath("//div[@class='playVideoInfo']//p/text()")[0]
+        try:
+            air_date = page.xpath("//div[@class='playVideoInfo']//time")[0].get("datetime")
+            air_date = air_date.split('+')[0] #cut off timezone info as python can't parse this
+            air_date = datetime.datetime.strptime(air_date, '%Y-%m-%dT%H:%M')
+        except:
+            Log.Exception("Error converting airdate: " + air_date)
 
-        # If this page contains a video element, we should be able to extract out the video id
-        # associated with the content.
-        player_details = page.xpath("//div[@id = 'player']")[0].get('class')
-        video_id = re.match(".*'(?P<id>[0-9]+)'.*", player_details).groupdict()['id']
+        #Get time from <time> tag instead
+        #duration = page.xpath("//div[@class='playVideoBox']//time/text()")
+        duration = page.xpath("//div[@class='playVideoInfo']//span//strong/../text()")[3].split()[0]
+        duration = int(duration) * 60 * 1000 #millisecs
 
-        # Using the known video id, we can now obtain an XML page which contains all of the details
-        # associated with the title.
-        details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+        thumb =  page.xpath("//div[@class='playVideoBox']//a[@id='player']//img/@src")[0]
 
-        root = details_page.xpath("//item", namespaces = NS_SVT)[0]
-        title = root.xpath("//media:title/text()", namespaces = NS_SVT)[0]
-        thumb = root.xpath("//media:content[@medium='image']", namespaces = NS_SVT)[0].get('url')
-        date = root.xpath("//pubDate/text()", namespaces = NS_SVT)[0]
-        date = Datetime.ParseDate(date)
-
-        description = None
-        try: description = root.xpath("//description/text()", namespaces = NS_SVT)[0]
-        except: pass
-
-        duration = None
-        duration_nodes = root.xpath("//media:content[string-length(@duration) > 0]", namespaces = NS_SVT)
-        if len(duration_nodes) > 0:
-            duration = int(duration_nodes[0].get('duration'))
-
-        # If the found title is an episode, we should be able to extract more information and return
-        # the suitable EpisodeObject.
-        category = root.xpath("//svtplay:category/text()", namespaces = NS_SVT)[0]
-        program_info = root.xpath("//svtplay:programInfo", namespaces = NS_SVT)
-        if category in CATEGORY_EPISODES and len(program_info) > 0:
-
-            title = root.xpath("//channel/title/text()", namespaces = NS_SVT)[0]
-            show = root.xpath("//svtplay:titleName/text()", namespaces = NS_SVT)[0]
-            episode_number = int(program_info[0].get('episodeNo'))
-
-            return EpisodeObject(
+        return EpisodeObject(
                 show = show,
                 title = title,
-                index = episode_number,
                 summary = description,
-                thumb = thumb,
                 duration = duration,
-                originally_available_at = date)
-                
-        # If the found title is a move, we should simply return the appropriate MovieObject
-        if category in CATEGORY_MOVIES:
-
-            return MovieObject(
-                title = title,
-                summary = description,
                 thumb = thumb,
-                duration = duration,
-                originally_available_at = date)
-
-        # We've not identified a specific category for the associated title. Therefore we should
-        # simply return a generic VideoClipObject.
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            duration = duration,
-            originally_available_at = date)
+                art = thumb,
+                originally_available_at = air_date)
 
     except:
         Log.Exception("An error occurred while attempting to retrieve the required meta data.")
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
+    JSON_ARG = "?output=json"
+    mediaObjs = []
 
-    # Request the page
-    page = HTML.ElementFromURL(url)
-
-    # If this page contains a video element, we should be able to extract out the video id
-    # associated with the content.
-    player_details = page.xpath("//div[@id = 'player']")[0].get('class')
-    video_id = re.match(".*'(?P<id>[0-9]+)'.*", player_details).groupdict()['id']
-
-    # Using the known video id, we can now obtain an XML page which contains all of the details
-    # associated with the title.
-    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
-
-    # Find all the m3u8 streams available.
-    media_objects = []
-    mpeg_streams = details_page.xpath("//media:content[@type = 'application/vnd.apple.mpegurl']", namespaces = NS_SVT)
-    for mpeg_stream in mpeg_streams:
-        media_objects.append(MediaObject(
-            video_resolution = mpeg_stream.get('height'),
-            bitrate = mpeg_stream.get('bitrate'),
-            parts = [PartObject(key = HTTPLiveStreamURL(mpeg_stream.get('url')))])
-        )
-
-    # Find all the RTMP streams available
-    rtmp_streams = details_page.xpath("//media:content[@type = 'video/mp4' and contains(@url, 'rtmp://')]", namespaces = NS_SVT)
-    for rtmp_stream in rtmp_streams:
-        media_objects.append(MediaObject(
-            protocol = Protocol.RTMP,
-            video_resolution = rtmp_stream.get('height'),
-            bitrate = rtmp_stream.get('bitrate'),
-            parts = [PartObject(key = Callback(PlayVideo, rtmp_url = rtmp_stream.get('url')))])
-        )
-
-    return media_objects
+    return [
+        MediaObject(
+            video_resolution = "360",
+            audio_channels = 2,
+            bitrate = 2400,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="2400"))]),
+        MediaObject(
+            video_resolution = "360",
+            audio_channels = 2,
+            bitrate = 1400,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="1400"))]),
+        MediaObject(
+            video_resolution = "360",
+            audio_channels = 2,
+            bitrate = 850,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="850"))]),
+        MediaObject(
+            video_resolution = "360",
+            audio_channels = 2,
+            bitrate = 320,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate="320"))]),
+        ]
 
 ####################################################################################################
+@indirect
+def PlayVideo(url, bitrate):
+    playerurl = getPlayerUrl(url)
+    page = HTML.ElementFromURL(url)
+    jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
+    videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
+    
+    for v in videos["video"]["videoReferences"]:
+        if v["bitrate"] == bitrate:
+            url = v["url"].split("_definst_")
+            clip = url[1]
+            url = url[0] + "_definst_"
 
-def PlayVideo(rtmp_url):
-    rtmp_stream_details = rtmp_url.split('_definst_')
-    return Redirect(RTMPVideoItem(rtmp_stream_details[0], clip = "mp4:" + rtmp_stream_details[1]))
+    return IndirectResponse(key = RTMPVideoUrl(url=url, clip=clip, swf_url=playerurl))
+
+####################################################################################################
+def NormalizeURL(url):
+    return url
+####################################################################################################
