@@ -1,7 +1,11 @@
 BASE_URL = "http://www.svtplay.se"
 SWF_TAG = "PLAYER_SWF="
 SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
-BITRATES = [2400, 1400, 850, 320]
+QUAL_HD = 2400
+QUAL_HIGH = 1400
+QUAL_MED = 850
+QUAL_LOW = 320
+BITRATES = [QUAL_HD, QUAL_HIGH, QUAL_MED, QUAL_LOW]
 ####################################################################################################
 
 def MetadataObjectForURL(url):
@@ -40,23 +44,23 @@ def MediaObjectsForURL(url):
         MediaObject(
             video_resolution = "1280",
             audio_channels = 2,
-            bitrate = 2400,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=2400))]),
+            bitrate = QUAL_HD,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_HD))]),
         MediaObject(
             video_resolution = "1024",
             audio_channels = 2,
-            bitrate = 1400,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=1400))]),
+            bitrate = QUAL_HIGH,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_HIGH))]),
         MediaObject(
             video_resolution = "640",
             audio_channels = 2,
-            bitrate = 850,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=850))]),
+            bitrate = QUAL_MED,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_MED))]),
         MediaObject(
             video_resolution = "640",
             audio_channels = 2,
-            bitrate = 320,
-            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=320))]),
+            bitrate = QUAL_LOW,
+            parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_LOW))]),
         ]
 
 ####################################################################################################
@@ -68,8 +72,8 @@ def PlayVideo(url, bitrate):
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
 
-    urls = getContentBitrateURLs(videos)
-    rtmpurl = urls[int(bitrate)] 
+    d = extractContentURLS(videos)
+    rtmpurl = getContentBitrateURLs(d, bitrate)
 
     return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmpurl, swf_url=playerurl))
 
@@ -77,7 +81,7 @@ def PlayVideo(url, bitrate):
 def NormalizeURL(url):
     return url
 ####################################################################################################
-def getContentBitrateURLs(json):
+def extractContentURLS(json):
     d = dict()
     for bitrate in BITRATES:
         for v in json["video"]["videoReferences"]:
@@ -86,6 +90,36 @@ def getContentBitrateURLs(json):
                     d[bitrate] = v["url"]
                     break;
     return d
+ 
+def getContentBitrateURLs(d, bitrate):
+    try:
+        url = d[bitrate]
+        return url
+    except KeyError:
+        pass 
+
+   #Bitrate not found, try fallback
+    if(bitrate > QUAL_HIGH):
+        try:
+            url = d[QUAL_HIGH]
+            return url
+        except KeyError:
+            pass
+    if(bitrate > QUAL_MED):
+        try: 
+            url = d[QUAL_MED]
+            return url
+        except KeyError:
+            pass
+    if(bitrate >= QUAL_LOW):
+        try:
+            url = d[QUAL_LOW]
+            return url
+        except KeyError:
+            pass
+    
+    Log.Exception("No stream found") 
+    return ""
 
 def getPlayerUrl(url):
     page = HTML.ElementFromURL(url)
