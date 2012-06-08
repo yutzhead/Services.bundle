@@ -12,8 +12,8 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.svtplay.se/abc</string>
-				<string>http://www.svtplay.se/abcd</string>
+				<string>http://www.svtplay.se/aktuellt</string>
+				<string>http://www.svtplay.se/rapport</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
