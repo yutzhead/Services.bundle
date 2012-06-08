@@ -12,154 +12,160 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
     
-    feed = GetRSS(url)
-    title = feed.entries[0].title
-    summary = feed.entries[0].summary
-    date = feed.entries[0].published
-    thumb = feed.entries[0].media_content[0].media_thumbnail['url']
+	feed = GetRSS(url)
+	title = feed.entries[0].title
+	Log(title)
+	summary = feed.entries[0].summary
+	Log(summary)
+	date = feed.entries[0].updated
+	Log(date)
+	thumb = feed.entries[0].media_thumbnail[0]['url']
+	Log(thumb)
 
-    if "fullepisodes" in url:
-        runtime = feed.entries[0].media_scenes[-1].sceneEndTime
-        duration = GetDur(runtime)
-        show = title.split(': ')[0]
-        title = show = title.split(': ')[1]
-        season_and_episode = RE_SEASON_EPISODE.search(summary).groupdict
-        season = int(season_and_episode['season'])
-        index = int(season_and_episode['episode'])
-        mo = EpisodeObject(
-            title = title,
-            show = show,
-            season = season,
-            index = index,
-            summary = summary,
-            duration = duration,
-            originally_available_at = Datetime.ParseDate(date).date()
-            thumb = thumb
-        )
-    else:
-        runtime = feed.entries[0].media_content['duration']
-        duration = GetDur(runtime)
-        mo = VideoClipObject(
-            title = title,
-            summary = summary,
-            duration = duration,
-            originally_available_at = Datetime.ParseDate(date).date(),
-            thumb = thumb
-        )
+	if "fullepisodes" in url:
+		runtime = feed.entries[0].media_scenes[-1].sceneEndTime
+		duration = GetDur(runtime)
+		show = title.split(': ')[0]
+		title = show = title.split(': ')[1]
+		season_and_episode = RE_SEASON_EPISODE.search(summary).groupdict()
+		season = int(season_and_episode['season'])
+		index = int(season_and_episode['episode'])
+		mo = EpisodeObject(
+			title = title,
+			show = show,
+			season = season,
+			index = index,
+			summary = summary,
+			duration = duration,
+			originally_available_at = Datetime.ParseDate(date).date(),
+			thumb = thumb
+			)
+	else:
+		runtime = feed.entries[0].media_content[0]['duration']
+		duration = GetDur(runtime)
+		mo = VideoClipObject(
+			title = title,
+			summary = summary,
+			duration = duration,
+			originally_available_at = Datetime.ParseDate(date).date(),
+			thumb = thumb
+			)
 
 	return mo
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    if "fullepisodes" in url: #use known resolutions/bitrates with multiple PartObjects
-	    return [
-		    MediaObject(
-			    parts = [
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='0')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='1')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='2')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='3'))
-                ],
-			    video_resolution = '360',
-                bitrate = '1400',
-			    audio_channels = 2
-		    ),
-    	    MediaObject(
-			    parts = [
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='0')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='1')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='2')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='3'))
-                ],
-			    video_resolution = '360',
-                bitrate = '900',
-			    audio_channels = 2
-		    )
-    	    MediaObject(
-			    parts = [
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='0')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='1')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='2')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='3'))
-                ],
-			    video_resolution = '288',
-                bitrate = '650',
-			    audio_channels = 2
-		    )
-    	    MediaObject(
-			    parts = [
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='0')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='1')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='2')),
-                    PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='3'))
-                ],
-			    video_resolution = '288',
-                bitrate = '350',
-			    audio_channels = 2
-		    )
-	    ]
-    else: #use known resolutions/bitrates with a single PartObject
-        return [
-    	    MediaObject(
-			    parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2600000'))],
-			    video_resolution = '352',
-                bitrate = '2600',
-			    audio_channels = 2
-		    ),
-            MediaObject(
-			    parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1800000'))],
-			    video_resolution = '360',
-                bitrate = '1800',
-			    audio_channels = 2
-		    ),
-            MediaObject(
-			    parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1200000'))],
-			    video_resolution = '360',
-                bitrate = '1200',
-			    audio_channels = 2
-		    ),
-            MediaObject(
-			    parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='800000'))],
-			    video_resolution = '720',
-                bitrate = '800',
-			    audio_channels = 2
-		    )
-	    ]
+	if "fullepisodes" in url: #use known resolutions/bitrates with multiple PartObjects
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='0')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='1')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='2')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='1400000', index='3'))
+				],
+				video_resolution = '360',
+				bitrate = '1400',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='0')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='1')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='2')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='900000', index='3'))
+				],
+				video_resolution = '360',
+				bitrate = '900',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='0')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='1')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='2')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='650000', index='3'))
+				],
+				video_resolution = '288',
+				bitrate = '650',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='0')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='1')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='2')),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate='350000', index='3'))
+				],
+				video_resolution = '288',
+				bitrate = '350',
+				audio_channels = 2
+			)
+		]
+	else: #use known resolutions/bitrates with a single PartObject
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2600000'))],
+				video_resolution = '352',
+				bitrate = '2600',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1800000'))],
+				video_resolution = '360',
+				bitrate = '1800',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1200000'))],
+				video_resolution = '360',
+				bitrate = '1200',
+				audio_channels = 2
+			),
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='800000'))],
+				video_resolution = '720',
+				bitrate = '800',
+				audio_channels = 2
+			)
+		]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, bitrate, index=None):
-    feed = GetRSS(url)
-    if not index: #grab the appropriate smil for the video clip
-        smil_url = feed.entries[0].media_content['url']
-    else:
-        smil_url = feed.entries[0].media_scenes[index].ka_sceneUri
-    smil = XML.ElementFromURL(smil_url)
-    player = smil.xpath('//meta')[0].get('base')
-    playpath = smil.xpath('//video[@system-bitrate="'+bitrate+'"')[0].get('src')
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
+	feed = GetRSS(url)	
+	if not index: #grab the appropriate smil for the video clip
+		smil_url = feed.entries[0].media_content[0]['url']
+	else:
+		smil_url = feed.entries[0].media_scenes[index].ka_sceneUri
+	smil = XML.ElementFromURL(smil_url)
+	player = smil.xpath('//meta')[0].get('base')
+	playpath = smil.xpath('//video[@system-bitrate="'+bitrate+'"]')[0].get('src')
+	
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 ####################################################################################################
 def GetRSS(url):
-    url_path = RE_URL_PATH.search(url).group(1)
-    data = RSS.FeedFromURL(MRSS_URL % url_path)
-    return data
+	url_path = RE_URL_PATH.search(url).group(1)
+	data = RSS.FeedFromURL(MRSS_URL % url_path)
+	return data
 
 ####################################################################################################
 def GetDur(runtime):
-    duration_parts = RE_RUNTIME.search(runtime).groupdict
-    if duration_parts['minutes']:
-        duration = (int(duration_parts['minutes'])*60 + int(duration_parts['seconds']))*1000
-    else:
-        duration = int(duration_parts['minutes'])*1000
-    return duration
+	duration_parts = RE_RUNTIME.search(runtime).groupdict()
+	Log(duration_parts)
+	if duration_parts['minutes']:
+		duration = (int(duration_parts['minutes'])*60 + int(duration_parts['seconds']))*1000
+	else:
+		duration = int(duration_parts['minutes'])*1000
+	return duration
 ####################################################################################################
 def TestURLs():
-    test_urls = []
-    data = HTML.ElementFromURL(BASE_URL)
-    for video in data.xpath('//div[@class="featuredcontent section"]//a[@class="bq_icon bq_iconPlayS"]'):
-        test_urls.append(video.get('href'))
-        if len(test_urls) > 2:
-            break
+	test_urls = []
+	data = HTML.ElementFromURL(BASE_URL)
+	for video in data.xpath('//div[@class="featuredcontent section"]//a[@class="bq_icon bq_iconPlayS"]'):
+		test_urls.append(video.get('href'))
+		if len(test_urls) > 2:
+			break
 	return test_urls
 
