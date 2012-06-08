@@ -6,9 +6,10 @@
 	<dict>
 		<key>Goal</key>
 		<dict>
-            <key>TestURLs</key>
-            <array>
-                <string>http://www.goal.com/en/news/2898/euro-2012/2012/05/29/3111724/video-profile-germanys-defence-splitting-heartbeat-mesut</string>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.goal.com/en/news/2898/euro-2012/2012/05/29/3111724/video-profile-germanys-defence-splitting-heartbeat-mesut</string>
+			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.goal.com/.+</string>
