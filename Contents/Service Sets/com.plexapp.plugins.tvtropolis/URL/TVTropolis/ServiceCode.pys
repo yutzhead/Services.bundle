@@ -96,7 +96,7 @@ def TestURLs():
 
 	for entry in entries['items']:
 		id = entry['ID']
-		data = JSON.ObjectFromURL('http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getReleaseList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=1&query=categoryIDs|%s&sortField=airdate&sortDescending=true&field=airdate&field=author&field=description&field=length&field=PID&field=thumbnailURL&field=title&contentCustomField=title&contentCustomField=Episode&contentCustomField=Season' % id)
+		data = JSON.ObjectFromURL('http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getReleaseList?PID=3i9zvO0c6HSlP7Fz848a0DvzBM0jUWcC&startIndex=1&endIndex=1&query=categoryIDs|%s&sortField=airdate&sortDescending=true&field=airdate&field=author&field=description&field=length&field=PID&field=thumbnailURL&field=title&contentCustomField=title&contentCustomField=Episode&contentCustomField=Season' % id)
 
 		for item in data['items']:
 			PID = item['PID']
