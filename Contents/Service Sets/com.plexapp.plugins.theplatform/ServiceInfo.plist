@@ -12,11 +12,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-			    <string>http://tvone.tv/unsung-videos?pid=UsS7AjXhkZPYzYCYFq8fpH_eqSkiKibJ</string>
+			    <!-- No test URLs included since this is just a Template for use as a starting point for sites that use thePlatform -->
 			</array>
 			<key>URLPatterns</key>
 			<array>
-			    <string>http://(www\.)?tvone.tv/.+\?pid=.+</string>
+			    <!-- No URL patterns included since this is just a Template for use as a starting point for sites that use thePlatform -->
 			</array>
 		</dict>
 	</dict>
