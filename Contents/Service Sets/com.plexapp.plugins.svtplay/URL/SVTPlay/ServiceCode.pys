@@ -74,8 +74,13 @@ def PlayVideo(url, bitrate):
 
     d = extractContentURLS(videos)
     rtmpurl = getContentBitrateURLs(d, bitrate)
+    Log(rtmpurl)
+    live = False
+    if videos["video"]["live"] == True:
+        live = True
 
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmpurl, swf_url=playerurl))
+    Log(live)
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmpurl, swf_url=playerurl, live=live))
 
 ####################################################################################################
 def NormalizeURL(url):
