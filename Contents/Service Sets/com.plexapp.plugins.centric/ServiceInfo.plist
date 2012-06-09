@@ -6,10 +6,6 @@
 	<dict>
 		<key>Centric</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.centrictv.com/videos/the-hot-10/1669178/</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.centrictv.com/videos/.+</string>
