@@ -73,14 +73,15 @@ def PlayVideo(url, bitrate):
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
 
-    d = extractContentURLS(videos)
-    rtmpurl = getContentBitrateURLs(d, bitrate)
-    Log(rtmpurl)
     live = False
     if videos["video"]["live"] == True:
         live = True
+        if bitrate == QUAL_HD:
+            bitrate = QUAL_HIGH #Live HD streams won't play in Plex for some reason
 
-    Log(live)
+    d = extractContentURLS(videos)
+    rtmpurl = getContentBitrateURLs(d, bitrate)
+    Log(rtmpurl)
     return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmpurl, swf_url=playerurl, live=live))
 
 ####################################################################################################
@@ -152,7 +153,6 @@ def getPlayerUrl(url):
             Log("Player url: " + url)
             return url
 
-    Log(" no player found, using fallback: " + SWF_PLAYER)
+    Log("No player found, using fallback: " + SWF_PLAYER)
     return SWF_PLAYER
-
 
