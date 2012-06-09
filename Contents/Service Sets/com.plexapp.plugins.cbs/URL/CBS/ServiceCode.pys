@@ -3,7 +3,6 @@ RE_VIDEO_ID = Regex('CBSVideo.setVideoId\("([0-9]+)"\);')
 RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
 RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
 
-HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:6.0.2) Gecko/20100101 Firefox/6.0.2" }
 API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast,lowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
 
 CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
@@ -229,8 +228,10 @@ def VideoFromSMIL(url, res):
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
 ####################################################################################################
-def ClipData(url):    
-  page = HTTP.Request(url, headers=HTTP_HEADERS).content
+def ClipData(url):
+  if 'pid=' in url:
+    return False
+  page = HTTP.Request(url).content
   try:
     video_id = RE_VIDEO_ID.search(page).group(1)
     video_data = XML.ElementFromURL(API_URL % video_id)
