@@ -75,18 +75,11 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
     smil = GetSMIL(url)
     
-    res_index = RES_MAP.index(res)
-    
     video_url = None
-                    
     source = GetSRC(smil).get('src')
     
-    try:    
-        player = source.split('&lt;break&gt;')[0]
-        clip = source.split('&lt;break&gt;')[1]
-    except:
-        player = source.split('{break}')[0]
-        clip = source.split('{break}')[1]
+    player = source.split('<break>')[0]
+    clip = source.split('<break>')[1]
     
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
