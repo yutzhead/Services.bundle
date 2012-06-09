@@ -4,8 +4,9 @@ SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
 QUAL_HD = 2400
 QUAL_HIGH = 1400
 QUAL_MED = 850
+QUAL_LOW_H = 340
 QUAL_LOW = 320
-BITRATES = [QUAL_HD, QUAL_HIGH, QUAL_MED, QUAL_LOW]
+BITRATES = [QUAL_HD, QUAL_HIGH, QUAL_MED, QUAL_LOW_H, QUAL_LOW]
 ####################################################################################################
 
 def MetadataObjectForURL(url):
@@ -57,7 +58,7 @@ def MediaObjectsForURL(url):
             bitrate = QUAL_MED,
             parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_MED))]),
         MediaObject(
-            video_resolution = "640",
+            video_resolution = "480",
             audio_channels = 2,
             bitrate = QUAL_LOW,
             parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_LOW))]),
@@ -122,6 +123,15 @@ def getContentBitrateURLs(d, bitrate):
             return url
         except KeyError:
             pass
+
+    #The four previous one are the default ones
+    #SVT sometimes changes things up a bit and let 340 be the lowest
+    #So if nothing has been found, try that one as well
+    try:
+        url = d[QUAL_LOW_H]
+        return url
+    except KeyError:
+        pass
     
     Log.Exception("No stream found") 
     return ""
