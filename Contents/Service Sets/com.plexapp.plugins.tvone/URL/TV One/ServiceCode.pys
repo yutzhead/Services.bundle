@@ -21,8 +21,8 @@ def MetadataObjectForURL(url):
         title = title,
         summary = summary,
         duration = duration,
-        thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='thumbnail-default.jpg')
-        )
+        thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+    )
 
 def MediaObjectsForURL(url):
     return [
