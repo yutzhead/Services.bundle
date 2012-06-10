@@ -1,24 +1,6 @@
 BASE_URL = 'http://video.citytv.com/video/%s'
 VIDEO_URL = 'http://video.citytv.com%s'
-
-class ContentOverride(object):
-  def __init__ (self, videoId=None):
-    self.contentType = int(0)
-    self.contentIds = None
-    self.target = 'videoPlayer'
-    self.contentId = int(videoId)
-    self.featuredRefId = None
-    self.contentRefIds = None
-    self.featuredId = float('nan')
-    self.contentRefId = None
-
-class ViewerExperienceRequest(object):
-  def __init__ (self, playerId=None, video=None):
-    self.experienceId = int(playerId)
-    self.contentOverrides = []
-    self.contentOverrides.append(video)
-    self.TTLToken = ''
-    self.URL = ''
+AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 
 ####################################################################################################
 
@@ -90,25 +72,55 @@ def PlayVideo(url):
 ####################################################################################################
 
 def DoAmfRequest(url):
-  data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
-  playerId = data.xpath('./param[@name="playerID"]')[0].get('value')
-  videoId = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
+    data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
+    playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
+    videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
  
-  client = AMF.RemotingService('http://c.brightcove.com/services/messagebroker/amf', user_agent='', client_type=3)
-  service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
-
-  AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
-  AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
-
-  video = ContentOverride(videoId)
-  experience = ViewerExperienceRequest(playerId, video)
-
-  result = service.getDataForExperience('', experience)
-  data = result['programmedContent']['videoPlayer']['mediaDTO']
-  return data
+    return AmfRequest(url=url, playerID=playerID, videoPlayer=videoPlayer)
 
 ####################################################################################################
+def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 
+    endpoint = AMF_URL
+    if playerKey:
+        endpoint += '?playerKey=%s' % playerKey
+
+    client = AMF.RemotingService(url=endpoint, user_agent='', client_type=3)
+    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
+
+    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
+    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
+
+    video_obj = ContentOverride(videoPlayer)
+    experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
+    
+    result = service.getDataForExperience('', experience)
+
+    return result['programmedContent']['videoPlayer']['mediaDTO']
+
+####################################################################################################
+class ContentOverride(object):
+  def __init__ (self, videoPlayer=None):
+    self.contentType = int(0)
+    self.contentIds = None
+    self.target = 'videoPlayer'
+    self.contentId = int(videoPlayer)
+    self.featuredRefId = None
+    self.contentRefIds = None
+    self.featuredId = float('nan')
+    self.contentRefId = None
+
+class ViewerExperienceRequest(object):
+  def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
+    self.experienceId = int(playerID)
+    self.playerKey = playerKey
+    self.contentOverrides = []
+    self.contentOverrides.append(video_obj)
+    self.TTLToken = ''
+    self.URL = url
+    self.deliveryType = float('nan')
+    
+####################################################################################################
 def TestURLs():
     
     test_urls = []
