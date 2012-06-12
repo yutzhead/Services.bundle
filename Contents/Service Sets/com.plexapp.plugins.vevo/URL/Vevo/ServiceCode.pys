@@ -20,11 +20,92 @@ def MetadataObjectForURL(url):
         genres = details['genres'])
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
     id = url.split('/')[-1]
     return [
       MediaObject(
-        parts = [PartObject(key=HTTPLiveStreamURL(url = STREAM_URL % id))]
-      )
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "5392",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "4392",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "3328",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "2528",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1728",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1328",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "864",
+            audio_channels = 2
+        ),MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))]
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "564",
+            audio_channels = 2
+        )
     ]
+
+####################################################################################################
+'''
+      <video src="v1/smil/GBW961200001/gbw961200001_564k_512x288_x264_500_quicktime_64.mp4" system-bitrate="564000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_864k_512x288_x264_800_quicktime_64.mp4" system-bitrate="864000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_1328k_768x432_x264_1200_quicktime_128.mp4" system-bitrate="1328000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_1728k_768x432_x264_1600_quicktime_128.mp4" system-bitrate="1728000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_2528k_1280x720_x264_2400_quicktime_128.mp4" system-bitrate="2528000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_3328k_1280x720_x264_3200_quicktime_128.mp4" system-bitrate="3328000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_4392k_1920x1080_x264_4200_quicktime_192.mp4" system-bitrate="4392000" />
+      <video src="v1/smil/GBW961200001/gbw961200001_5392k_1920x1080_x264_5200_quicktime_192.mp4" system-bitrate="5392000" />
+'''
