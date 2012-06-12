@@ -1,5 +1,3 @@
-import re
-
 DETAILS_URL = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
 STREAM_URL = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
 
