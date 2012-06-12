@@ -1,5 +1,5 @@
 DETAILS_URL = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
-STREAM_URL = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
+SMIL_URL = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
 
 ####################################################################################################
 def NormalizeURL(url):
