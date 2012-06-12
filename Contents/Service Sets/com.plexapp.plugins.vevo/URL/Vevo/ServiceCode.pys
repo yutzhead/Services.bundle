@@ -3,6 +3,8 @@ SMIL_URL = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 
+BITRATES = ["564000", "864000", "1328000", "1728000", "2528000", "3328000", "4392000", "5392000"]
+
 ####################################################################################################
 def NormalizeURL(url):
     return url.split('?')[0]
@@ -23,7 +25,6 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    id = url.split('/')[-1]
     return [
       MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))]
@@ -101,13 +102,19 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-'''
-      <video src="v1/smil/GBW961200001/gbw961200001_564k_512x288_x264_500_quicktime_64.mp4" system-bitrate="564000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_864k_512x288_x264_800_quicktime_64.mp4" system-bitrate="864000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_1328k_768x432_x264_1200_quicktime_128.mp4" system-bitrate="1328000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_1728k_768x432_x264_1600_quicktime_128.mp4" system-bitrate="1728000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_2528k_1280x720_x264_2400_quicktime_128.mp4" system-bitrate="2528000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_3328k_1280x720_x264_3200_quicktime_128.mp4" system-bitrate="3328000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_4392k_1920x1080_x264_4200_quicktime_192.mp4" system-bitrate="4392000" />
-      <video src="v1/smil/GBW961200001/gbw961200001_5392k_1920x1080_x264_5200_quicktime_192.mp4" system-bitrate="5392000" />
-'''
+def PlayVideo(url, bitrate):
+    id = url.split('/')[-1]
+    video_url = ''
+    index = BITRATES.index(bitrate)
+    smil = XML.ElementFromURL(SMIL_URL % (id, id.lower()))
+    while index > -1:
+        try:
+            video_url = smil.xpath('//video[@system-bitrate="'+BITRATES[index]+'"]')[0].get('src')
+            break
+        except:
+            index = index -1
+        if index == 0:
+            if video_url == '':
+                video_url = smil.xpath('//video')[0].get('src')
+    
+    return Redirect("http://vstream.vevo.com/" + video_url)
