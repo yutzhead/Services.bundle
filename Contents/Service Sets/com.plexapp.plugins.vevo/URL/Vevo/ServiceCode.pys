@@ -2,24 +2,18 @@ DETAILS_URL = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
 STREAM_URL = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
-
-        # Obtain the id of the title, and request the associated details page.
-        id = url.split('/')[-1]
-        details = JSON.ObjectFromURL(DETAILS_URL % id)['result']
+    # Obtain the id of the title, and request the associated details page.
+    id = url.split('/')[-1]
+    details = JSON.ObjectFromURL(DETAILS_URL % id)['result']
         
-        return VideoClipObject(
-            title = details['title'],
-            summary = details['description'],
-            thumb = details['image_url'],
-            duration = int(details['duration_in_seconds']) * 1000,
-            originally_available_at = Datetime.ParseDate(details['created_at'].split('T')[0]),
-            genres = details['genres'])
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = details['title'],
+        summary = details['description'],
+        thumb = details['image_url'],
+        duration = int(details['duration_in_seconds']) * 1000,
+        originally_available_at = Datetime.ParseDate(details['created_at'].split('T')[0]),
+        genres = details['genres'])
 
 ####################################################################################################
 
