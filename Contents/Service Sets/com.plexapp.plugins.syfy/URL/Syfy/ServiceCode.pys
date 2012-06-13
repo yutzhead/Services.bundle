@@ -1,0 +1,55 @@
+NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
+
+#########################################################################################
+def NormalizeURL(url):
+	return url
+
+
+#########################################################################################
+def MetadataObjectForURL(url):
+	smil = GetSMIL(url)
+
+	title = smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@abstract", namespaces=NAMESPACES)[0]
+	summary = smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@abstract", namespaces=NAMESPACES)[0]
+	duration = int(smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@dur", namespaces=NAMESPACES)[0].split('ms')[0])
+	
+	return EpisodeObject(
+		title = title,
+		summary = summary,
+		duration = duration
+	)
+
+
+#########################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_resolution = "720",
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
+
+
+#########################################################################################
+def GetSMIL(url):
+	guid = url.split(':')[2]
+	infourl = "http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?&form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode,:disallowSharing%20&fileFields=url,duration,width,height,contentType,fileSize,format&byGuid="+guid	
+	data = JSON.ObjectFromURL(infourl)
+	
+	# only adding in the 720p video, provider is very wishy-washy on actually having
+	# other resolutions in place and working, even though they advertise a lot of them ...
+	# many times the others advertised don't exist when it comes down to actually trying to play them ...
+	for item in data['entries']:
+		for v in item['media$content']:
+			if v['plfile$format']=="MPEG4" and v['plfile$height']==720:
+				smilurl=v['plfile$url']	
+	
+	smil = XML.ElementFromURL(smilurl)
+	return smil
+
+def PlayVideo(url):
+	smil = GetSMIL(url)
+	video_url = smil.xpath("//a:video[1]/@src", namespaces=NAMESPACES)[0]
+	return Redirect(video_url)
+
