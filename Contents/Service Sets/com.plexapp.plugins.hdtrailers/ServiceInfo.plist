@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>URL</key>
+  	<dict>
+    	<key>HD-Trailers</key>
+    	<dict>
+      	<key>URLPatterns</key>
+      		<array>
+        		<string>http://([^.]+.)?hd-trailers.net/.+</string>
+      		</array>
+      	<key>TestURLs</key>
+      		<array>
+        		<string>http://www.hd-trailers.net/movie/battleship/</string>
+            <string>http://www.hd-trailers.net/movie/abraham-lincoln-vampire-hunter/</string>
+            <string>http://www.hd-trailers.net/movie/the-hurt-locker/</string>
+      		</array>
+    	</dict>
+  	</dict>
+</dict>
+</plist>
