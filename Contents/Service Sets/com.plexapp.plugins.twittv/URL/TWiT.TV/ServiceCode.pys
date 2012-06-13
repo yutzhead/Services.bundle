@@ -145,6 +145,9 @@ def PlayMedia(url, fmt):
 	if 'twit.mediafly.com' in url:
 		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
 
+	if ' ' in url:
+		url = url.split(' ')[0]
+
 	return Redirect(url)
 
 ####################################################################################################
