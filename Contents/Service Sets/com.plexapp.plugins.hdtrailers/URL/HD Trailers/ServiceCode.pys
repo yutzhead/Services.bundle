@@ -1,9 +1,14 @@
-HEADERS = HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.54 Safari/536.5" }
+HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.54 Safari/536.5"}
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	
-	html = HTML.ElementFromURL(url, headers = HEADERS)
+
+	html = HTML.ElementFromURL(url, headers = HTTP_HEADERS)
 
 	title = html.xpath('//h1[@class="previewTitle"]')[0].text
 	summary = html.xpath('//span[@itemprop="description"]')[0].text
@@ -17,11 +22,11 @@ def MetadataObjectForURL(url):
 		clip_url = trailers['Trailers'][0]['item_urls'].itervalues().next()
 
 	return VideoClipObject(
-			 url = clip_url,
-			 title = title,
-			 summary = summary,
-			 thumb = thumb)
-	
+				url = clip_url,
+				title = title,
+				summary = summary,
+				thumb = thumb
+			)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -55,7 +60,6 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		)
 	]
-		
 
 ####################################################################################################
 def PlayVideo(url, fmt=''):
@@ -69,23 +73,18 @@ def PlayVideo(url, fmt=''):
 
 	return Redirect(clip_url)
 
-
-####################################################################################################
-def NormalizeURL(url):
-	return url
-
-
 ####################################################################################################
 # BuildTrailerDic builds a dictionary of clips parsed from the page.  
 # Probably reasonable to assume there will always be at least one (latest) Trailer.
 
 def BuildTrailerDict(html):
-	
+
 	trailers = { 'Trailers': [], 'Clips': [] } 
 	trailers['description'] = html.xpath('//span[@itemprop="description"]')[0].text
-	
+
 	current_section = 'Trailers'
 	rows = html.xpath('//table[@class="bottomTable"]/tr')
+
 	for row in rows:
 		if 'Trailers' in row.xpath('.//text()')[0]:
 			pass
@@ -104,5 +103,5 @@ def BuildTrailerDict(html):
 			trailers[current_section].append(trailer)
 		else:
 			pass
-		
+
 	return trailers
