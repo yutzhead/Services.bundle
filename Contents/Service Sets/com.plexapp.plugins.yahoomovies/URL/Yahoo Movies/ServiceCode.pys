@@ -1,0 +1,91 @@
+HTTP.CacheTime = CACHE_1DAY
+
+HTML_NS = {'og': 'http://ogp.me/ns#'}
+
+POPS_URL = 'http://cosmos.bcst.yahoo.com/rest/v2/pops;element=stream;bw=%d;tech=mp4;id=%s'
+VIDEO_URL = 'http://playlist.yahoo.com/makeplaylist.dll?sdm=web&pt=rd&sid=%s'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split(';', 1)[0]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	html = HTML.ElementFromURL(url)
+
+	title = html.xpath('//meta[@property="og:title"]', namespaces=HTML_NS)[0].get('content')
+
+	try:
+		summary = html.xpath('//meta[@property="og:description"]', namespaces=HTML_NS)[0].get('content')
+	except:
+		summary = ''
+
+	thumb = html.xpath('//meta[@property="og:image"]', namespaces=HTML_NS)[0].get('content')
+
+	if '/http:' in thumb:
+		thumb = 'http:%s' % thumb.rsplit('/http:', 1)[1]
+
+	video = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb
+	)
+
+	return video
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=4000))],
+			bitrate = 4000,
+			video_resolution = '1080',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=3008))],
+			bitrate = 3008,
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=2000))],
+			bitrate = 2000,
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1504))],
+			bitrate = 1504,
+			video_resolution = '480',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, bitrate):
+
+	id = url.rsplit('-', 1)[1].split('.', 1)[0]
+	xml = XML.ElementFromURL(POPS_URL % (bitrate, id))
+	sid = xml.xpath('//*[@sid]')[0].get('sid')
+
+	return Redirect(VIDEO_URL % sid)
