@@ -8,7 +8,13 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//h1[@class="previewTitle"]')[0].text
 	summary = html.xpath('//span[@itemprop="description"]')[0].text
 	thumb = html.xpath('//span[@class="topTableImage"]/img')[0].get('src')
-	clip_url = html.xpath('//a[@class="playLatest"]')[0].get('href')
+	#clip_url = html.xpath('//a[@class="playLatest"]')[0].get('href')
+
+	trailers = BuildTrailerDict(html)
+	try:
+		clip_url = trailers['Trailers'][0]['item_urls']['1080p']
+	except:
+		clip_url = trailers['Trailers'][0]['item_urls'].itervalues().next()
 
 	return VideoClipObject(
 			 url = clip_url,
@@ -22,7 +28,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h1080p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='1080p'))],
 			video_resolution = '1080',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
@@ -31,7 +37,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h720p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720p'))],
 			video_resolution = '720',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
@@ -40,7 +46,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h480p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='480p'))],
 			video_resolution = '480',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
@@ -54,9 +60,49 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, fmt=''):
 
-	return Redirect(url)	
+	if 'playlist.yahoo.com' in clip_url:
+		try:
+			r = HTTP.Request(url, follow_redirects=False).content
+		except Ex.RedirectError, e:
+			if e.headers.has_key('Location'):
+				clip_url = e.headers['Location']
+
+	return Redirect(clip_url)
 
 
 ####################################################################################################
 def NormalizeURL(url):
 	return url
+
+
+####################################################################################################
+# BuildTrailerDic builds a dictionary of clips parsed from the page.  
+# Probably reasonable to assume there will always be at least one (latest) Trailer.
+
+def BuildTrailerDict(html):
+	
+	trailers = { 'Trailers': [], 'Clips': [] } 
+	trailers['description'] = html.xpath('//span[@itemprop="description"]')[0].text
+	
+	current_section = 'Trailers'
+	rows = html.xpath('//table[@class="bottomTable"]/tr')
+	for row in rows:
+		if 'Trailers' in row.xpath('.//text()')[0]:
+			pass
+		elif 'Clips' in row.xpath('.//text()')[0]:
+			current_section = 'Clips'
+		elif row.xpath('.//@itemprop="trailer"'):
+			item_urls = {}
+			for res in row.xpath('./td[@class="bottomTableResolution"]/a'):
+				item_urls[res.text] = res.get('href')
+			item_urls['source_url'] = row.xpath('./td[@class="bottomTableIcon"]/a')[0].get('href')
+			trailer = {
+				'item_title' : row.xpath('./td[@class="bottomTableName"]/span')[0].text,
+				'item_date' : Datetime.ParseDate(row.xpath('./td[@class="bottomTableDate"]')[0].text).date(),
+				'item_urls' : item_urls
+			}
+			trailers[current_section].append(trailer)
+		else:
+			pass
+		
+	return trailers
