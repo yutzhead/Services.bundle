@@ -9,11 +9,11 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://movies.yahoo.com/movie/battleship-2012/trailers/battleship-theatrical-trailer-27565489.html</string>
-				<string>http://movies.yahoo.com/video/ymovies-6393699/resident-evil-retribution-theatrical-trailer-29662855.html</string>
+				<string>http://movies.yahoo.com/movie/resident-evil-retribution/</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://movies\.yahoo\.com/.+\-[0-9]+\.html</string>
+				<string>http://movies\.yahoo\.com/(movie|video)/.+</string>
 			</array>
 		</dict>
 	</dict>
