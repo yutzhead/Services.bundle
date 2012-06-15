@@ -27,7 +27,7 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -36,7 +36,7 @@ def MediaObjectsForURL(url):
             bitrate = "5392",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -45,7 +45,7 @@ def MediaObjectsForURL(url):
             bitrate = "4392",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -54,7 +54,7 @@ def MediaObjectsForURL(url):
             bitrate = "3328",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -63,7 +63,7 @@ def MediaObjectsForURL(url):
             bitrate = "2528",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -72,7 +72,7 @@ def MediaObjectsForURL(url):
             bitrate = "1728",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -81,7 +81,7 @@ def MediaObjectsForURL(url):
             bitrate = "1328",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -90,7 +90,7 @@ def MediaObjectsForURL(url):
             bitrate = "864",
             audio_channels = 2
         ),MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -109,12 +109,12 @@ def PlayVideo(url, bitrate):
     smil = XML.ElementFromURL(SMIL_URL % (id, id.lower()))
     while index > -1:
         try:
-            video_url = smil.xpath('//video[@system-bitrate="'+BITRATES[index]+'"]')[0].get('src')
+            video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
             break
         except:
             index = index -1
         if index == 0:
             if video_url == '':
-                video_url = smil.xpath('//video')[0].get('src')
+                video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
     
     return Redirect("http://vstream.vevo.com/" + video_url)
