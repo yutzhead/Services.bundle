@@ -1,59 +1,61 @@
-def MetadataObjectForURL(url):
-  
-  html = HTML.ElementFromURL(url)
+def NormalizeURL(url):
 
-  return VideoClipObject(
-       title = html.xpath('//div[@id="movie-nav-title"]/h1')[0].text.strip(),
-       summary = ''.join(html.xpath('//div[@id="movie-main-synopsis"]//text()')).replace('Read More','').strip(),
-       thumb = html.xpath('//img[@class="movie-poster"]')[0].get('href')
-       )
-
-def MediaObjectsForURL(url):
-
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 1080p'))],
-      video_resolution = '1080',
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 720p'))],
-      video_resolution = '720',
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 480p'))],
-      video_resolution = '480',
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    )
-  ]
-
-def PlayVideo(url, fmt):
-
-    html = HTML.ElementFromURL(url)
-
-    if fmt == 'HD 1080p':
-      url = html.xpath('//span[@class="butoneshd hd1080"]/a')[0].get('href')
-    elif fmt == 'HD 720p':
-      url = html.xpath('//span[@class="butoneshd hd720"]/a')[0].get('href')
-    elif fmt == 'HD 480p':
-      url = html.xpath('//span[@class="butoneshd hd480"]/a')[0].get('href')
-
-    return Redirect(url)
+	return url
 
 ####################################################################################################
+def MetadataObjectForURL(url):
 
-def NormalizeURL(url):
-  return url
+	html = HTML.ElementFromURL(url)
+
+	return VideoClipObject(
+		title = html.xpath('//div[@id="movie-nav-title"]/h1')[0].text.strip(),
+		summary = ''.join(html.xpath('//div[@id="movie-main-synopsis"]//text()')).replace('Read More','').strip(),
+		thumb = html.xpath('//img[@class="movie-poster"]')[0].get('href')
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 1080p'))],
+			video_resolution = '1080',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 720p'))],
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 480p'))],
+			video_resolution = '480',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, fmt):
+
+	html = HTML.ElementFromURL(url)
+
+	if fmt == 'HD 1080p':
+		url = html.xpath('//span[@class="butoneshd hd1080"]/a')[0].get('href')
+	elif fmt == 'HD 720p':
+		url = html.xpath('//span[@class="butoneshd hd720"]/a')[0].get('href')
+	elif fmt == 'HD 480p':
+		url = html.xpath('//span[@class="butoneshd hd480"]/a')[0].get('href')
+
+	return Redirect(url)
