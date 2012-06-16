@@ -35,7 +35,7 @@ def MetadataObjectForURL(url):
     except:
         date = None
     
-    if episode.get('episodeType') == 'EPI':
+    if episode.get('episodeType') in ['EPI', 'TVE']:
         return EpisodeObject(
             title = title,
             show = show,
