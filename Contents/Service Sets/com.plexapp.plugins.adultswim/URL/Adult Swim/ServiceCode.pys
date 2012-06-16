@@ -79,9 +79,20 @@ def PlayVideo(url):
     parts = []
     for id in stream_ids:
         playlist = XML.ElementFromURL(PLAYLIST_URL % id)
-        stream_url = playlist.xpath('//ref')[0].get('href')
+        stream_url = playlist.xpath('//ref[contains(@href, ".flv")]')[0].get('href')
+        Log(stream_url)
         parts.append(PartObject(key=stream_url))
-    return IndirectResponse(VideoClipObject, key=parts)
+    return ObjectContainer(
+        objects = [
+            VideoClipObject(
+                items = [
+                    MediaObject(
+                        parts = parts
+                        )
+                    ]
+                )
+            ]
+        )
  
 ####################################################################################################
 def GetDetails(url):
