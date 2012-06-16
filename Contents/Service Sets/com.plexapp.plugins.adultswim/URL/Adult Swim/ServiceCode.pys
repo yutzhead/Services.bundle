@@ -17,7 +17,10 @@ def MetadataObjectForURL(url):
         epIndex = int(epIndex)
     except:
         epIndex = None
-    season = int(season)
+    try:    
+        season = int(season)
+    except:
+        season = None
     summary = episode.xpath('./description')[0].text
     thumb = episode.get('thumbnailUrl')
     content_rating = episode.get('rating')
