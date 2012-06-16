@@ -15,14 +15,11 @@ def MetadataObjectForURL(url):
     season = episode.get('epiSeasonNumber')
     try:
         epIndex = int(epIndex)
-        absIndex = None
     except:
-        epIndex = episode.get('episodeNumber')
-        epIndex = int(epIndex.partition(season)[2])
+        epIndex = None
     season = int(season)
-    summary = details.xpath('//description')[0].text
+    summary = episode.xpath('./description')[0].text
     thumb = episode.get('thumbnailUrl')
-    genres = [episode.get('collectionCategoryType')]
     content_rating = episode.get('rating')
     duration = episode.get('duration')
     try:
