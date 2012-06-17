@@ -2,6 +2,8 @@ DETAILS_URL = 'http://metaframe.digitalsmiths.tv/v2/CWtv/assets/%s/partner/53?fo
 BITRATES = ['300', '500', '700']
 BASE_URL = 'http://www.cwtv.com'
 
+CW_SWF = 'http://pdl.warnerbros.com/cwtv/digital-smiths/production_player/vsplayer.swf'
+
 def NormalizeURL(url):
     return url
 
@@ -82,7 +84,7 @@ def PlayVideo(url, bitrate):
     rtmp_parts = rtmp_url.partition('mp4:')
     player = rtmp_parts[0]
     playpath = rtmp_parts[1] + rtmp_parts[2]
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, swf_url=CW_SWF))
     
 def GetDetails(url):
     id = url.split('?play=')[1]
