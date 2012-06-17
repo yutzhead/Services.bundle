@@ -62,9 +62,9 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
   return [
     MediaObject(
-      container = 'flv',
-      video_codec = VideoCodec.VP6,
-      audio_codec = AudioCodec.MP3,
+      #container = Container.3GP,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
       optimized_for_streaming = True,
       video_resolution = '360',
       parts = [PartObject(key=Callback(PlayVideo, url=url))]
@@ -79,7 +79,7 @@ def PlayVideo(url):
     parts = []
     for id in stream_ids:
         playlist = XML.ElementFromURL(PLAYLIST_URL % id)
-        stream_url = playlist.xpath('//ref[contains(@href, ".flv")]')[0].get('href')
+        stream_url = playlist.xpath('//ref[contains(@href, "hi.3gp")]')[0].get('href')
         Log(stream_url)
         parts.append(PartObject(key=stream_url))
     return ObjectContainer(
