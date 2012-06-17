@@ -6,11 +6,6 @@
 	<dict>
 		<key>Vevo</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.vevo.com/watch/lmfao/sexy-and-i-know-it/USUV71101468</string>
-				<string>http://www.vevo.com/watch/professor-green/never-be-a-right-time/GB1201100064</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.vevo.com/watch/.+</string>
