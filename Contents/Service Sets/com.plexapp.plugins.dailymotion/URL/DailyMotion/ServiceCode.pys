@@ -85,8 +85,10 @@ def PlayVideo(url, fmt):
   if fmt == 'hd':
     if video['stream_h264_hd_url']:
       video_url = video['stream_h264_hd_url']
+    elif video['stream_h264_url']:
+      video_url = video['stream_h264_url']    
     else:
-      video_url = video['stream_h264_url']
+      video_url = video['stream_h264_sd_url']
   elif fmt == 'sd':
     if video['stream_h264_url']:
       video_url = video['stream_h264_url']
