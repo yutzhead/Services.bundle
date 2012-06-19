@@ -128,7 +128,7 @@ def PlayVideo(url, bitrate):
                 if video_url == '':
                     video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
 
-        return Redirect("http://vstream.vevo.com/%s" % video_url)
+        return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
         return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL % id))
 
