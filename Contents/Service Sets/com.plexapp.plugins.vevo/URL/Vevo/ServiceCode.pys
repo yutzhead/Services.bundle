@@ -131,7 +131,24 @@ def PlayVideo(url, bitrate):
 
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
-        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL % id))
+        try:
+            headers = HTTP.Request(HLS_URL % id).headers
+            Log(headers)
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL % id))
+        except:
+            smil = XML.ElementFromURL(RTMP_SMIL_URL % (id, id.lower()))
+            player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
+            while index > -1:
+                try:
+                    video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                    break
+                except:
+                    index = index -1
+                if index == 0:
+                    if video_url == '':
+                        video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+
+            return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=video_url))
 
 ####################################################################################################
 def TestURLs():
