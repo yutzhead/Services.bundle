@@ -12,6 +12,16 @@
 			</array>
 		</dict>
 	</dict>
+    <key>URL</key>
+    <dict>
+		<key>BET Music Videos</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.bet.com/video/music/.+</string>
+			</array>
+		</dict>
+	</dict>
 	<key>PlexFrameworkFlags</key>
 	<array>
 		<string>UseRealRTMP</string>
