@@ -1,0 +1,67 @@
+AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    
+    return
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return
+
+####################################################################################################
+def GetDetails(url):
+    data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"])[0]
+    playerID = data.xpath('./param[@name="playerID"])[0].get('value')
+    playerKey = data.xpath('./param[@name="playerKey"])[0].get('value')
+    #publisherID = data.xpath('./param[@name="publisherID"])[0].get('value')
+    videoPlayer = data.xpath('./param[@name="@videoPlayer"])[0].get('value')
+
+    return AmfRequest(playerID=playerID, playerKey=playerKey, videoPlayer=videoPlayer)
+
+####################################################################################################
+def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
+
+    endpoint = AMF_URL
+    if playerKey:
+        endpoint += '?playerKey=%s' % playerKey
+
+    client = AMF.RemotingService(url=endpoint, user_agent='', client_type=3)
+    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
+
+    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
+    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
+
+    video_obj = ContentOverride(videoPlayer)
+    experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
+    
+    result = service.getDataForExperience('', experience)
+
+    return result['programmedContent']['videoPlayer']['mediaDTO']
+
+####################################################################################################
+class ContentOverride(object):
+  def __init__ (self, videoPlayer=None):
+    self.contentType = int(0)
+    self.contentIds = None
+    self.target = 'videoPlayer'
+    self.contentId = int(videoPlayer)
+    self.featuredRefId = None
+    self.contentRefIds = None
+    self.featuredId = float('nan')
+    self.contentRefId = None
+
+class ViewerExperienceRequest(object):
+  def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
+    self.experienceId = int(playerID)
+    self.playerKey = playerKey
+    self.contentOverrides = []
+    self.contentOverrides.append(video_obj)
+    self.TTLToken = ''
+    self.URL = url
+    self.deliveryType = float('nan')
+    
+####################################################################################################
+def TestURLs():
+    test_urls = []
+    return test_urls
