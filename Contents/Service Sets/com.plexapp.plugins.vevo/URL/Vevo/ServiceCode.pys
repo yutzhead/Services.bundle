@@ -1,7 +1,10 @@
 DETAILS_URL                 = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
-SMIL_URL                    = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
+MP4_SMIL_URL                = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
 VIDEO_URL                   = 'http://www.vevo.com/watch/%s/%s/%s'
-HLS_URL                     = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
+HLS_URL_1                   = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
+HLS_URL_2                   = 'http://hls.lvl3.strm.vevo.com/Video/V2/IPAD/%s/index.m3u8'
+RTMP_SMIL_URL_1             = 'http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%sr.smil'
+RTMP_SMIL_URL_2             = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%sr.smil'
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 
@@ -117,7 +120,7 @@ def PlayVideo(url, bitrate):
     video_url = ''
     index = BITRATES.index(bitrate)
     try:
-        smil = XML.ElementFromURL(SMIL_URL % (id, id.lower()))
+        smil = XML.ElementFromURL(MP4_SMIL_URL % (id, id.lower()))
         while index > -1:
             try:
                 video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
@@ -130,7 +133,30 @@ def PlayVideo(url, bitrate):
 
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
-        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL % id))
+        try:
+            try:
+                headers = HTTP.Request(HLS_URL_1 % id).headers
+                return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL_1 % id))
+            except:
+                headers = HTTP.Request(HLS_URL_2 % id).headers
+                return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL_2 % id))
+        except:
+            try:
+                smil = XML.ElementFromURL(RTMP_SMIL_URL_1 % (id, id.lower()))
+            except:
+                smil = XML.ElementFromURL(RTMP_SMIL_URL_2 % (id, id.lower()))
+            player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
+            while index > -1:
+                try:
+                    video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                    break
+                except:
+                    index = index -1
+                if index == 0:
+                    if video_url == '':
+                        video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+
+            return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=video_url))
 
 ####################################################################################################
 def TestURLs():
