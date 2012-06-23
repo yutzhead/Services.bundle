@@ -1,5 +1,6 @@
-import re
 httpHeaders = {'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17'}
+
+RE_TITLE = Regex('Ep (?P<episode_number>\d+) (?P<title>(\w+( )?)*)')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -48,7 +49,7 @@ def MetadataObjectForEpisodeURL(item):
     title = ""
     episode = 0
     itemTitle = item.xpath("//div[@class='playerArea']//img/@title")[0].lstrip().rstrip()
-    itemTitleComponents = re.match('Ep (?P<episode_number>\d+) (?P<title>(\w+( )?)*)', itemTitle).groupdict()
+    itemTitleComponents = RE_TITLE.match(itemTitle).groupdict()
     if len(itemTitleComponents) == 2:
         title = itemTitleComponents['title']
         episode = int(itemTitleComponents['episode_number'])
@@ -140,7 +141,6 @@ def MetadataForPage(item):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
-        parts = [PartObject(key=WebVideoURL(url))],
-        protocol = 'webkit'
+        parts = [PartObject(key=WebVideoURL(url))]
       )
     ]
