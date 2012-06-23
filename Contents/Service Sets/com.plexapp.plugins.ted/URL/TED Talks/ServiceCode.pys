@@ -5,7 +5,7 @@ RE_FILM_YEAR = Regex(';year=(.+?);')
 RE_POST_DATE = Regex('pd:"(.+?)",')
 RE_EVENT = Regex('en:"(.+?)",')
 RE_EVENT_ALT = Regex(';event=(.+?);')
-RE_SLUG = Regex("\$\('#download_dialog'\)\.load\('([^']+)")
+RE_SLUG = Regex("download_dialog\.load\('([^']+)")
 RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
 RE_XML = Regex('file=([^&]*)')
 
