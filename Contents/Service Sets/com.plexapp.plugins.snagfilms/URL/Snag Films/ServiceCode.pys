@@ -1,5 +1,3 @@
-import re
-
 VIDEO_DETAILS_URL = "http://www.snagfilms.com/api/assets.jsp?id=%s"
 
 ####################################################################################################
@@ -34,13 +32,11 @@ def MediaObjectsForURL(url):
     return [
         MediaObject(
           bitrate = 1000,
-          protocol = 'webkit',
-          parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate = "1000"))]
+          parts = [PartObject(key=WebVideoURL(Callback(PlayVideo, url = url, bitrate = "1000")))]
         ),
         MediaObject(
           bitrate = 500,
-          protocol = 'webkit',
-          parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate = "500"))]
+          parts = [PartObject(key=WebVideoURL(Callback(PlayVideo, url = url, bitrate = "500")))]
         )
     ]
 
