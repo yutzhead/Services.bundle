@@ -51,17 +51,14 @@ def MediaObjectsForURL(url):
 
 		return [
 			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url = url))],
-				protocol = Protocol.WebKit,
-				video_codec = None,
-				audio_codec = None
+				parts = [PartObject(key = WebVideoURL(Callback(PlayVideo, url = url)))]
 			)
 		]
 
 	else:
 		return [
 			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url = url))],
+				parts = [PartObject(key = Callback(PlayVideo, url = url))],
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				container = Container.MP4,

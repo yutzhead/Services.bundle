@@ -76,12 +76,11 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [(MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.WebKit
-        )
-      )
-    ]
+  return [
+    MediaObject(
+      parts = [PartObject(key=WebVideoURL(Callback(PlayVideo, url=url)))]
+    )
+  ]
 
 ####################################################################################################
 def PlayVideo(url):

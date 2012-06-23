@@ -25,7 +25,6 @@ def MediaObjectsForURL(url):
 	if url.find('streaming-live') != -1 or url.find('en-direct') != -1:
 		return [
 			MediaObject(
-				protocol = 'webkit',
 				parts = [PartObject(key=WebVideoURL(url))]
 			)
 		]

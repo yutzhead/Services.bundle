@@ -75,8 +75,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key = WebVideoURL(url))],
-			protocol = 'webkit'
+			parts = [PartObject(key = WebVideoURL(url))]
 		)
 	]
 
