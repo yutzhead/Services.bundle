@@ -1,6 +1,5 @@
-import re
-
 SMIL_URL = 'http://release.theplatform.com/content.select?pid=%s&path=1aviva_gc_video_banners_opt_companion&format=SMIL&Embedded=true'
+RE_PID = Regex('pid=(.+)%26path=')
 
 def NormalizeURL(url):
     return url
@@ -32,7 +31,7 @@ def MediaObjectsForURL(url):
     
 def GetSMIL(url):
     data = HTTP.Request(url).content
-    pid = re.search('pid=(.+)%26path=', data).group(1)
+    pid = RE_PID.search(data).group(1)
     smil = HTML.ElementFromURL(SMIL_URL % pid)
     return smil
     
