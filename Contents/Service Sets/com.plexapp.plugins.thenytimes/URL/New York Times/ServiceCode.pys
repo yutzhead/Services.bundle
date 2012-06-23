@@ -1,5 +1,7 @@
-import re
 httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17' }
+
+RE_NAME = Regex('^\s*(\w+)\s*by\s*', Regex.IGNORECASE)
+RE_TITLE = Regex('^\s*([^,]*)\s*,\s*', Regex.IGNORECASE)
 
 ####################################################################################################
 
@@ -48,7 +50,7 @@ def ParseCredits(page):
         name_found = False
 
         while len(s.strip()) > 0:
-            match = re.match('^\s*(\w+)\s*by\s*', s, re.IGNORECASE)
+            match = RE_NAME.match(s)
 
             if match is not None:
                 # Title found
@@ -62,7 +64,7 @@ def ParseCredits(page):
             
                 continue
             
-            match = re.match('^\s*([^,]*)\s*,\s*', s, re.IGNORECASE)
+            match = RE_TITLE.match(s)
             
             if match is not None:
                 # Name found
@@ -86,7 +88,6 @@ def ParseCredits(page):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
-        parts = [PartObject(key = WebVideoURL(url))],
-        protocol = 'webkit'
+        parts = [PartObject(key = WebVideoURL(url))]
       )
     ]
