@@ -1,0 +1,111 @@
+DETAILS_URL = 'http://metaframe.digitalsmiths.tv/v2/WBtv/assets/%s/partner/146?format=json'
+BITRATES = ['500', '700']
+BASE_URL = 'http://www.thewb.com'
+
+SWF_URL = "http://www.thewb.com/player/wbphasethree/wbvideoplayer.swf"
+
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    details = GetDetails(url)
+    video = details['assetFields']
+    epTitle = video['title']
+    show = video['seriesName']
+    epIndex = video['episodeNumber']
+    try: epIndex = int(epIndex)
+    except: epIndex = None
+    season = video['seasonName']
+    try: season = int(season)
+    except: season = None
+    summary = video['description']
+    rating = float(video['rating'])
+    if rating == 0:
+        rating = None
+    try:
+        date = video['originalAirDate']
+        date = Datetime.ParseDate(date)
+    except:
+        date = None
+    duration = video['duration']
+    try: duration = int(duration)*1000
+    except: duration = None
+    thumb_list = GetThumbList(url)
+    if details['fullPlayback'] == 'true':
+        return EpisodeObject(
+            title = epTitle,
+            show = show,
+            index = epIndex,
+            season = season,
+            summary = summary,
+            rating = rating,
+            originally_available_at = date,
+            duration = duration,
+            thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list], fallback='icon-default.png')
+        )
+    else:
+        return VideoClipObject(
+            title = epTitle,
+            summary = summary,
+            rating = rating,
+            originally_available_at = date,
+            duration = duration,
+            thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list], fallback='icon-default.png')
+        )
+
+def MediaObjectsForURL(url):
+    items = []
+    R_bitrates = BITRATES
+    R_bitrates.reverse
+    for value in R_bitrates:
+        items.append(
+            MediaObject(
+                bitrate = value,
+                parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=value))]
+            )
+        )
+    return items
+
+@indirect
+def PlayVideo(url, bitrate):
+    videos = GetDetails(url)['videos']
+    index = BITRATES.index(bitrate)
+    rtmp_url = ''
+    while index > -1:
+        for stream in videos:
+            if videos[stream]['bitrate'] == BITRATES[index]:
+                rtmp_url = videos[stream]['uri']
+                break
+            else:
+                pass
+        if rtmp_url == '':
+            index = index - 1
+        else:
+            break
+    rtmp_parts = rtmp_url.partition('mp4:')
+    player = rtmp_parts[0]
+    playpath = rtmp_parts[1] + rtmp_parts[2]
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, swf_url=SWF_URL))
+    
+def GetDetails(url):
+    id = url.split('/')[-1]
+    details = JSON.ObjectFromURL(DETAILS_URL % id)
+    return details
+
+def GetThumbList(url):
+    images = GetDetails(url)['images']
+    thumb_list = []
+    for image in images:
+        thumb_list.append(images[image])
+    thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb["height"]), reverse=True)
+    return thumb_list
+
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL(BASE_URL)
+    for video in data.xpath('//div[@class="overlay_thumb_area"]'):
+        url = video.xpath('./a')[0].get('href')
+        test_urls.append(BASE_URL + url)
+        if test_urls > 2:
+            break
+    return test_urls
