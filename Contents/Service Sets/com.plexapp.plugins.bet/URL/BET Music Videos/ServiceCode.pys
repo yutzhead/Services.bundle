@@ -1,7 +1,6 @@
-RE_ARTIST_SONG_PATH = Regex('http://www.bet.com/video/music/./(.+/.+?)(?.html)?')
+RE_ARTIST_SONG_PATH = Regex('http://www.bet.com/video/music/./(.+/.+?)(.html)?')
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 VEVO_URL = 'http://www.vevo.com/watch/%s/%s'
-
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -207,8 +206,28 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, bitrate):
+    vevo_url = GetVevoURL(url)
+    media_objects = URLService.MetadataObjectForURL(vevo_url)
+    for video in media_objects:
+        if video.bitrate == bitrate:
+            media_key = video.parts[0].key
+            break
+        else:
+            pass
     
-    return
+    # Construct the ObjectContainer to return the details of the located media
+    return ObjectContainer(
+        VideoClipObject(
+            key = URLService.LookupURLForMediaURL(url),
+            items = [
+                MediaObject(
+                    parts = [
+                        PartObject(key = media_key)
+                    ]
+                )
+            ]
+        )
+    )
 
 ####################################################################################################
 def GetVevoURL(url):
