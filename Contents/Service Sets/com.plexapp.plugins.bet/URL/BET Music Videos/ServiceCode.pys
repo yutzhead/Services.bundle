@@ -1,23 +1,227 @@
+RE_ARTIST_SONG_PATH = Regex('http://www.bet.com/video/music/./(.+/.+?)(?.html)?')
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+VEVO_URL = 'http://www.vevo.com/watch/%s/%s'
+
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+    vevo_url = GetVevoURL(url)
+    return URLService.MetadataObjectForURL(vevo_url)
+    
+'''
+{
+    'startDate':{'hour': 3, 'seconds': 0, 'month': 5, 'milliseconds': 0, 'year': 2012, 'timezone': u'America/New_York', 'minutes': 0, 'meridian': u'AM', 'day': 20},
+    'adCategories': None,
+    'publisherName': u'VEVO - BET',
+    'videoStillURL': u'http://brightcove.vo.llnwd.net/d22/unsecured/media/62009797001/62009797001_1697598054001_vs-4fe1004f8782b0e4c15b353c-590065940001.jpg?pubId=605550900001',
+    'dateFiltered': False,
+    'color': None,
+    'encodingRate': 508680,
+    'sharedBy': 62009797001.0,
+    'allowViralSyndication': True,
+    'FLVFullSize': 16749462.0,
+    'isSubmitted': False,
+    'lineupId': None,
+    'SWFVerificationRequired': True,
+    'endDate': None,
+    'shortDescription': u'Buy Now!\niTunes: http://smarturl.it/WhereTheBoysAt\n\nMusic video by The OMG Girlz performing Where The Boys At?. (C) 2012 Interscope Records',
+    'id': 1697600078001.0,
+    'drmMetadataURL': None,
+    'thumbnailURL': u'http://brightcove.vo.llnwd.net/d22/unsecured/media/62009797001/62009797001_1697598055001_th-4fe1004f8782b0e4c15b353c-590065940001.jpg?pubId=62009797001',
+    'previewLength': 0.0,
+    'FLVPreBumperStreamed': False,
+    'customFieldValues': None,
+    'FLVPreviewStreamed': False,
+    'FLVFullLengthURL': u'rtmpe://bcsecure.fcod.llnwd.net/a3734/d2/&mp4:media/62009797001/62009797001_1697600452001_VEVO-19db3b98-5c9f-40af-8827-1c0d1a0e6349-USUV71200791-1-0-129846143786330234.mp4',
+    'publishedDate': datetime.datetime(2012, 6, 19, 23, 3, 56, 485000),
+    'allowedCountries': [u'gd', u'ge', u'gf', u'ga', u'gb', u'fk', u'fj', u'fm', u'fi', u'fr', u'fo', u'gy', u'gw', u'ws', u'gn', u'gm', u'gl', u'gi', u'gh', u'gu', u'gt', u'gs', u'gr', u'gq', u'gp', u'wf', u'vi', u'dz', u'vg', u'vu', u'ec', u'vn', u'de', u'uz', u'uy', u'dk', u'dj', u'dm', u've', u'vc', u'do', u'va', u'ug', u'us', u'um', u'eh', u'eg', u'ee', u'tz', u'tt', u'tw', u'tv', u'ua', u'et', u'es', u'er', u'to', u'tn', u'tm', u'ca', u'tl', u'bz', u'tr', u'bw', u'tg', u'bv', u'tf', u'by', u'td', u'bs', u'tk', u'br', u'tj', u'bt', u'th', u'bn', u'bo', u'bj', u'tc', u'bl', u'bm', u'bf', u'bg', u'sv', u'bh', u'st', u'bi', u'bb', u'sy', u'sz', u'bd', u'be', u'sl', u'sk', u'sn', u'sm', u'so', u'sr', u'cz', u'sd', u'cy', u'sc', u'cx', u'se', u'sh', u'cv', u'cu', u'sg', u'sj', u'si', u'cr', u'co', u'cm', u'cn', u'sa', u'ck', u'cl', u'sb', u'ci', u'rs', u'cg', u'ru', u'ch', u'rw', u'cf', u'cc', u'cd', u'ro', u're', u'az', u'ba', u'at', u'as', u'ar', u'aq', u'ax', u'qa', u'aw', u'au', u'al', u'ai', u'ao', u'py', u'am', u'an', u'pt', u'ad', u'pw', u'ag', u'pr', u'ae', u'ps', u'af', u'nu', u'nr', u'np', u'no', u'nz', u'om', u'pe', u'pf', u'pg', u'pa', u'pl', u'pm', u'pn', u'ph', u'pk', u'ls', u'lr', u'lv', u'lu', u'lt', u'ly', u'mc', u'md', u'ma', u'mg', u'mh', u'me', u'mf', u'mk', u'ml', u'mn', u'mm', u'mp', u'mo', u'mr', u'mq', u'mt', u'ms', u'mv', u'mu', u'mx', u'mw', u'mz', u'my', u'na', u'nc', u'ne', u'nf', u'ng', u'ni', u'nl', u'jp', u'jo', u'jm', u'ki', u'kh', u'kg', u'ke', u'kw', u'ky', u'kz', u'kp', u'kr', u'km', u'kn', u'li', u'lk', u'la', u'lc', u'lb', u'hr', u'ht', u'hu', u'hk', u'za', u'hn', u'hm', u'id', u'zw', u'ie', u'zm', u'iq', u'ir', u'is', u'ye', u'it', u'il', u'in', u'io', u'yt'],
+    'geoRestricted': True,
+    'version': None,
+    'WMVFullAssetId': None,
+    'filterEndDate': None,
+    'logoOverlay': None,
+    'customFields': {
+        'copyrightyear': u'2012',
+        'copyright': u'(C) 2012 Interscope Records',
+        'producer': u'Tramaine Winfrey,Ryan Norris,Craig Fanning,Nicole Ehrlich',
+        'repertoireowner': u'His & Hers', 'customid2': u'00602537103720',
+        'customid1': u'USUM71204865',
+        'label': u'His & Hers',
+        'director': u'Bryan Barber',
+        'composer': u'Ezekiel Lewis,Jerren "Jkits" Spruill,Clifford Harris,Edrick Miles,T. Haliburton',
+        'artists': u'The OMG Girlz',
+        'contentprovider': u'UMG',
+        'upc': u'00602537103720'
+    },
+    'FLVFullCodec': 3,
+    'FLVPreBumperControllerType': 0,
+    'rentalPeriod': None,
+    'yearProduced': None,
+    'IOSRenditions': [],
+    'monthlyAmount': None,
+    'tags': [
+        {'image': None, 'name': u'artist:The OMG Girlz'},
+        {'image': None, 'name': u'genre:R & B'},
+        {'image': None, 'name': u'omg'},
+        {'image': None, 'name': u'the'},
+        {'image': None, 'name': u'upc:00602537103720'},
+        {'image': None, 'name': u'where'},
+        {'image': None, 'name': u'hers'},
+        {'image': None, 'name': u'&'},
+        {'image': None, 'name': u'girlz'},
+        {'image': None, 'name': u'Boys'},
+        {'image': None, 'name': u'R'},
+        {'image': None, 'name': u'At?'},
+        {'image': None, 'name': u'b'},
+        {'image': None, 'name': u'his'}
+    ],
+    'FLVPreBumperURL': None,
+    'purchaseAmount': None,
+    'sharedToExternalAcct': False,
+    'controllerType': 0,
+    'longDescription': u'Buy Now!\niTunes: http://smarturl.it/WhereTheBoysAt\n\nMusic video by The OMG Girlz performing Where The Boys At?. (C) 2012 Interscope Records',
+    'referenceId': u'USUV71200791',
+    'sharedSourceId': None,
+    'publisherId': 605550900001.0,
+    'awards': None,
+    'linkText': None,
+    'FLVPreviewURL': None,
+    'creationDate': datetime.datetime(2012, 6, 19, 23, 3, 56, 485000),
+    'sharedByExternalAcct': False,
+    'forceAds': False,
+    'categories': [],
+    'FLVPreviewSize': 0.0,
+    'numberOfPlays': 0.0,
+    'cuePoints': None,
+    'FLVFullLengthStreamed': True,
+    'displayName': u'The OMG Girlz - Where The Boys At?',
+    'filterStartDate': None,
+    'language': None,
+    'FLVPreviewCodec': 0,
+    'ratingEnum': None,
+    'economics': 1,
+    'submitted': False,
+    'length': 265428.0,
+    'excludeListedCountries': False,
+    'WMVFullLengthURL': None,
+    'renditions': [
+        {
+            'videoCodec': u'H264',
+            'defaultURL': u'rtmpe://bcsecure.fcod.llnwd.net/a3734/d2/&mp4:media/62009797001/62009797001_1697598053001_VEVO-19db3b98-5c9f-40af-8827-1c0d1a0e6349-USUV71200791-1-0-129846143786330234.mp4',
+            'encodingRate': 856043,
+            'audioOnly': False,
+            'videoContainer': 1,
+            'mediaDeliveryType': 0,
+            'frameWidth': 480,
+            'frameHeight': 268,
+            'size': 27934817.0
+        },
+        {'videoCodec': u'H264',
+        'defaultURL': u'rtmpe://bcsecure.fcod.llnwd.net/a3734/d2/&mp4:media/62009797001/62009797001_1697600452001_VEVO-19db3b98-5c9f-40af-8827-1c0d1a0e6349-USUV71200791-1-0-129846143786330234.mp4', 'encodingRate': 508680, 'audioOnly': False, 'videoContainer': 1, 'mediaDeliveryType': 0, 'frameWidth': 320, 'frameHeight': 180, 'size': 16749462.0}, {'videoCodec': u'H264', 'defaultURL': u'rtmpe://bcsecure.fcod.llnwd.net/a3734/d2/&mp4:media/62009797001/62009797001_1697598020001_VEVO-19db3b98-5c9f-40af-8827-1c0d1a0e6349-USUV71200791-1-0-129846143786330234.mp4', 'encodingRate': 1092043, 'audioOnly': False, 'videoContainer': 1, 'mediaDeliveryType': 0, 'frameWidth': 480, 'frameHeight': 268, 'size': 35457378.0}, {'videoCodec': u'H264', 'defaultURL': u'rtmpe://bcsecure.fcod.llnwd.net/a3734/d2/&mp4:media/62009797001/62009797001_1697598829001_VEVO-19db3b98-5c9f-40af-8827-1c0d1a0e6349-USUV71200791-1-0-129846143786330234.mp4', 'encodingRate': 2092043, 'audioOnly': False, 'videoContainer': 1, 'mediaDeliveryType': 0, 'frameWidth': 640, 'frameHeight': 360, 'size': 67416930.0}], 'adKeys': None, 'linkURL': None, 'rentalAmount': None}
+'''
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "5392",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "4392",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "3328",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "2528",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1728",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1328",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "864",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "564",
+            audio_channels = 2
+        )
+    ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, bitrate):
     
     return
 
 ####################################################################################################
-def MediaObjectsForURL(url):
-    return
-
-####################################################################################################
-def GetDetails(url):
-    data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"])[0]
-    playerID = data.xpath('./param[@name="playerID"])[0].get('value')
-    playerKey = data.xpath('./param[@name="playerKey"])[0].get('value')
-    #publisherID = data.xpath('./param[@name="publisherID"])[0].get('value')
-    videoPlayer = data.xpath('./param[@name="@videoPlayer"])[0].get('value')
-
-    return AmfRequest(playerID=playerID, playerKey=playerKey, videoPlayer=videoPlayer)
+def GetVevoURL(url):
+    data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
+    playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
+    playerKey = data.xpath('./param[@name="playerKey"]')[0].get('value')
+    #publisherID = data.xpath('./param[@name="publisherID"]')[0].get('value')
+    videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
+    details = AmfRequest(playerID=playerID, playerKey=playerKey, videoPlayer=videoPlayer)
+    vevo_id = details['referenceId']
+    url_path = RE_ARTIST_SONG_PATH.search(url).group(1)
+    vevo_url = VEVO_URL % (url_path, vevo_id)
+    return vevo_url
 
 ####################################################################################################
 def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
