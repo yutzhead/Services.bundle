@@ -1,0 +1,184 @@
+RE_ARTIST_SONG_PATH = Regex('http://www.bet.com/video/music/./(.+/.+?)(.html)?')
+AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+VEVO_URL = 'http://www.vevo.com/watch/%s/%s'
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    vevo_url = GetVevoURL(url)
+    return URLService.MetadataObjectForURL(vevo_url)
+    
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "5392",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "1080",
+            bitrate = "4392",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "3328",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "720",
+            bitrate = "2528",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1728",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "432",
+            bitrate = "1328",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "864",
+            audio_channels = 2
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))],
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            video_resolution = "288",
+            bitrate = "564",
+            audio_channels = 2
+        )
+    ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, bitrate):
+    vevo_url = GetVevoURL(url)
+    media_objects = URLService.MetadataObjectForURL(vevo_url)
+    for video in media_objects:
+        if video.bitrate == bitrate:
+            media_key = video.parts[0].key
+            break
+        else:
+            pass
+    
+    # Construct the ObjectContainer to return the details of the located media
+    return ObjectContainer(
+        VideoClipObject(
+            key = URLService.LookupURLForMediaURL(url),
+            items = [
+                MediaObject(
+                    parts = [
+                        PartObject(key = media_key)
+                    ]
+                )
+            ]
+        )
+    )
+
+####################################################################################################
+def GetVevoURL(url):
+    data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
+    playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
+    playerKey = data.xpath('./param[@name="playerKey"]')[0].get('value')
+    videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
+    details = AmfRequest(playerID=playerID, playerKey=playerKey, videoPlayer=videoPlayer)
+    vevo_id = details['referenceId']
+    url_path = RE_ARTIST_SONG_PATH.search(url).group(1)
+    vevo_url = VEVO_URL % (url_path, vevo_id)
+    return vevo_url
+
+####################################################################################################
+def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
+
+    endpoint = AMF_URL
+    if playerKey:
+        endpoint += '?playerKey=%s' % playerKey
+
+    client = AMF.RemotingService(url=endpoint, user_agent='', client_type=3)
+    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
+
+    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
+    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
+
+    video_obj = ContentOverride(videoPlayer)
+    experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
+    
+    result = service.getDataForExperience('', experience)
+
+    return result['programmedContent']['videoPlayer']['mediaDTO']
+
+####################################################################################################
+class ContentOverride(object):
+  def __init__ (self, videoPlayer=None):
+    self.contentType = int(0)
+    self.contentIds = None
+    self.target = 'videoPlayer'
+    self.contentId = int(videoPlayer)
+    self.featuredRefId = None
+    self.contentRefIds = None
+    self.featuredId = float('nan')
+    self.contentRefId = None
+
+class ViewerExperienceRequest(object):
+  def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
+    self.experienceId = int(playerID)
+    self.playerKey = playerKey
+    self.contentOverrides = []
+    self.contentOverrides.append(video_obj)
+    self.TTLToken = ''
+    self.URL = url
+    self.deliveryType = float('nan')
+    
+####################################################################################################
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.bet.com/music/music-videos.html')
+    for video in data.xpath('//span[@class="bq_hd"]/a'):
+        test_urls.append(video.get('href'))
+        if len(test_urls) > 2:
+            break
+
+    return test_urls
