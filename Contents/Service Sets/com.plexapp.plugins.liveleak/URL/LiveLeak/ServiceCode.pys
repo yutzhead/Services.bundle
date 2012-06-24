@@ -1,48 +1,40 @@
-import re
+RE_FILE_URL = Regex('&file_url=(?P<url>[^&]*)&')
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
-        
-        # Request the url
-        page = HTML.ElementFromURL(url)
 
-        # Extract the details available directly form the page.
-        title = page.xpath("//head//title/text()")[0]
-        description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
-        thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+	page = HTML.ElementFromURL(url)
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb)
+	# Extract the details available directly form the page.
+	title = page.xpath("//head//title/text()")[0]
+	description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
+	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))],
-        protocol = Protocol.HTTPMP4Video
-      )
-    ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url = url))],
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = Container.MP4,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
-
 def PlayVideo(url):
 
-    # Request the url
-    page_content = HTTP.Request(url).content
+	page_content = HTTP.Request(url).content
 
-    # Find the video url from inside the player's config
-    video_url = re.match('.*&file_url=(?P<url>[^&]*)&.*', page_content, re.DOTALL).groupdict()['url']
-    return Redirect(String.Unquote(video_url))
+	# Find the video url from inside the player's config
+	video_url = RE_FILE_URL.search(page_content).group('url')
+	return Redirect(String.Unquote(video_url))

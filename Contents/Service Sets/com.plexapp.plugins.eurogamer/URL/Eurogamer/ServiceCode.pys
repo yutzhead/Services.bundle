@@ -1,78 +1,72 @@
 DATA_URL = "http://www.eurogamer.net/tv/playlist/%s"
 
+####################################################################################################
 def NormalizeURL(url):
-    return url
-    
-def MetadataObjectForURL(url):
-    data = HTML.ElementFromURL(url, errors='ignore')
-    
-    title = data.xpath('//div[@class="content"]//h1')[0].text
-    #Log(title)
-    
-    ''' need to figure out how to grab date and duration details from the html '''
-    date = data.xpath('//div[@class="details"]//p/text()')[1].strip()
-    #Log(date)
-    duration = data.xpath('//div[@class="details"]//p/text()')[2].strip()
-    durationParts = duration.split(':')
-    duration = (int(durationParts[0])*60 + int(durationParts[1]))*1000
-    #Log(duration)
-    
-    summary = data.xpath('//div[@class="details"]//p')[1].text.strip()
-    #Log(summary)
-    video_id = data.xpath('//div[@class="video-wrapper"]/div')[0].get('id').strip('video-')
-    thumb_url = GetThumb(DATA_URL % video_id)
-    #Log(thumb)
-    
-    co = VideoClipObject(
-        title = title,
-        summary = summary,
-        originally_available_at = Datetime.ParseDate(date).date(),
-        duration = duration,
-        thumb = thumb_url
-        )
-    
-    return co
 
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTML.ElementFromURL(url, errors='ignore')
+
+	title = data.xpath('//div[@class="content"]//h1')[0].text
+
+	''' need to figure out how to grab date and duration details from the html '''
+	date = data.xpath('//div[@class="details"]//p/text()')[1].strip()
+	duration = data.xpath('//div[@class="details"]//p/text()')[2].strip()
+	durationParts = duration.split(':')
+	duration = (int(durationParts[0])*60 + int(durationParts[1]))*1000
+
+	summary = data.xpath('//div[@class="details"]//p')[1].text.strip()
+	video_id = data.xpath('//div[@class="video-wrapper"]/div')[0].get('id').strip('video-')
+	thumb_url = GetThumb(DATA_URL % video_id)
+
+	vc = VideoClipObject(
+		title = title,
+		summary = summary,
+		originally_available_at = Datetime.ParseDate(date).date(),
+		duration = duration,
+		thumb = thumb_url
+	)
+
+	return vc
+
+####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
-      video_resolution = '720',
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    #MediaObject(
-    #  parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
-    #  protocol = [Protocol.HTTPMP4Streaming],
-    #  video_resolution = 'sd',
-    #  container = Container.MP4,
-    #  video_codec = VideoCodec.H264,
-    #  audio_codec = AudioCodec.AAC,
-    #  audio_channels = 2,
-    #  optimized_for_streaming = True
-    #)
-    ]
-    
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
+			video_resolution = '720',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
 def PlayVideo(url, fmt):
 
-    # Obtain the id of the video
-    page = HTML.ElementFromURL(url)
-    id = page.xpath("//div[@class='video-wrapper']/div")[0].get('id').strip('video-')
+	# Obtain the id of the video
+	page = HTML.ElementFromURL(url)
+	id = page.xpath("//div[@class='video-wrapper']/div")[0].get('id').strip('video-')
 
-    # Look up the associated JSON to extract the MP4 url
-    data = JSON.ObjectFromURL(DATA_URL % id, cacheTime = 0)
-    mp4_url = data[0]['file']
-    Log(mp4_url)
-    return Redirect(mp4_url)
-    
+	# Look up the associated JSON to extract the MP4 url
+	data = JSON.ObjectFromURL(DATA_URL % id, cacheTime = 0)
+	mp4_url = data[0]['file']
+
+	return Redirect(mp4_url)
+
+####################################################################################################
 def GetThumb(data_url):
-    content = HTTP.Request(data_url).content.strip('[').strip(']')
-    data = JSON.ObjectFromString(content)
 
-    if 'image' in data:
-      return data['image']
-    else:
-      return None
+	content = HTTP.Request(data_url).content.strip('[').strip(']')
+	data = JSON.ObjectFromString(content)
+
+	if 'image' in data:
+		return data['image']
+	else:
+		return None
