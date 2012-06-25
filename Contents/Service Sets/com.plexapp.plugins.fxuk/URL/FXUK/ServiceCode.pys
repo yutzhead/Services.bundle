@@ -75,5 +75,5 @@ def DoAmfRequest(playerId, videoId):
     experience = ViewerExperienceRequest(playerId, video)
     
     result = service.getDataForExperience('', experience)
-    Log(result)
+
     return result

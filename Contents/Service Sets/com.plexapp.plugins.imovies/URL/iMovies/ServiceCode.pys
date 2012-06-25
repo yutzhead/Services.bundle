@@ -48,7 +48,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
   content = HTTP.Request(url).content
   video_url = content.split("'file=")[1].split("&")[0]
-  Log(video_url)
+  #Log(video_url)
   return Redirect(video_url)
 
 ####################################################################################################
@@ -58,7 +58,7 @@ def GetThumb(title):
 
   searchResult = HTML.ElementFromURL(iMOVIES_SEARCH % title)
   firstResult = searchResult.xpath('//h2[@class="r"]/a')[0].get('href')
-  Log(firstResult)
+  #Log(firstResult)
   
   thumb_url = None
   

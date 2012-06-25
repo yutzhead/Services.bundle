@@ -8,7 +8,7 @@ def MetadataObjectForURL(url):
   if len(url.split('/full-episodes/')) > 1:
     full_episode = True
     show_title = (url.split('/full-episodes/')[1].split('/')[0].replace('-', ' ')).title()
-    Log(show_title)
+    #Log(show_title)
   else:
     full_episode = False
   

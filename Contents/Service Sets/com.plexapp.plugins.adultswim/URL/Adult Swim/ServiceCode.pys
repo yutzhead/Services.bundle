@@ -80,7 +80,6 @@ def PlayVideo(url):
     for id in stream_ids:
         playlist = XML.ElementFromURL(PLAYLIST_URL % id)
         stream_url = playlist.xpath('//ref[contains(@href, "hi.3gp")]')[0].get('href')
-        Log(stream_url)
         parts.append(PartObject(key=stream_url))
     return ObjectContainer(
         objects = [

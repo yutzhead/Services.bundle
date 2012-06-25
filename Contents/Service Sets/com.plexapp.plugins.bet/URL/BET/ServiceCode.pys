@@ -14,13 +14,9 @@ def MetadataObjectForURL(url):
     
 	feed = GetRSS(url)
 	title = feed.entries[0].title
-	Log(title)
 	summary = feed.entries[0].summary
-	Log(summary)
 	date = feed.entries[0].updated
-	Log(date)
 	thumb = feed.entries[0].media_thumbnail[0]['url']
-	Log(thumb)
 
 	if "fullepisodes" in url:
 		runtime = feed.entries[0].media_scenes[-1].sceneEndTime
@@ -39,7 +35,7 @@ def MetadataObjectForURL(url):
 			duration = duration,
 			originally_available_at = Datetime.ParseDate(date).date(),
 			thumb = thumb
-			)
+		)
 	else:
 		runtime = feed.entries[0].media_content[0]['duration']
 		duration = GetDur(runtime)
@@ -49,7 +45,7 @@ def MetadataObjectForURL(url):
 			duration = duration,
 			originally_available_at = Datetime.ParseDate(date).date(),
 			thumb = thumb
-			)
+		)
 
 	return mo
 
@@ -153,12 +149,14 @@ def GetRSS(url):
 ####################################################################################################
 def GetDur(runtime):
 	duration_parts = RE_RUNTIME.search(runtime).groupdict()
-	Log(duration_parts)
+
 	if duration_parts['minutes']:
 		duration = (int(duration_parts['minutes'])*60 + int(duration_parts['seconds']))*1000
 	else:
 		duration = int(duration_parts['minutes'])*1000
+
 	return duration
+
 ####################################################################################################
 def TestURLs():
 	test_urls = []

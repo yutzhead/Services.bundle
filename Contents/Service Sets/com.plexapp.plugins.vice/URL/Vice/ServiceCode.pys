@@ -21,7 +21,6 @@ def MetadataObjectForURL(url):
 #    except: pass
 
     thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
-    Log(thumb)
 
     try:
         show_name = title.split('|')[1].strip()

@@ -61,6 +61,6 @@ def PlayVideo(url, fmt):
     filmID = url.split('filmID=')[1]
     data = HTTP.Request(PLAYER_URL % (filmID, fmt)).content
     docid = re.search("docid=(.+)&type=flv", data).group(1)
-    Log(docid)
+    #Log(docid)
     
     return Redirect(FLV_URL % docid)

@@ -5,7 +5,7 @@ HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
 def MetadataObjectForURL(url):
   
   api_address = "http://www.hulu.com/api/oembed.json?url="+url
-  Log(api_address)
+
   try:
     jsonObj = JSON.ObjectFromURL(api_address, cacheTime=CACHE_INTERVAL)
   except: 
