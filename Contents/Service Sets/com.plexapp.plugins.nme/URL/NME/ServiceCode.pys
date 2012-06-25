@@ -3,28 +3,24 @@ import re
 VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
-        
-        # Request the url
-        page = HTML.ElementFromURL(url)
 
-        # Extract the details available directly form the page.
-        title = page.xpath("//meta[@property='og:title']")[0].get('content')
-        thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-        description = page.xpath("//meta[@property='og:description']")[0].get('content')
-        
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb)
+    page = HTML.ElementFromURL(url)
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Extract the details available directly form the page.
+    title = page.xpath("//meta[@property='og:title']")[0].get('content')
+    thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
+    description = page.xpath("//meta[@property='og:description']")[0].get('content')
+    
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         container = Container.MP4,
@@ -36,8 +32,8 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url):
+
     content = HTTP.Request(url).content
     playerId = re.search('param name="playerID" value="([0-9]+)"', content).group(1)
     videoId = re.search('param name="@videoPlayer" value="([0-9]+)"', content).group(1)

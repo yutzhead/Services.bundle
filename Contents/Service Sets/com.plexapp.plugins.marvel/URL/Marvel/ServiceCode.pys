@@ -5,23 +5,20 @@ VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&widt
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
 
-        # Attempt to extract the details of the title from the page.
-        page = HTML.ElementFromURL(url)
+    # Attempt to extract the details of the title from the page.
+    page = HTML.ElementFromURL(url)
 
-        # The page only currently contains the title and a brief description
-        title = page.xpath("//div[@id='video-head-text']/h2/text()")[0]
-        description = page.xpath("//meta[@name='description']")[0].get('content')
-        thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
+    # The page only currently contains the title and a brief description
+    title = page.xpath("//div[@id='video-head-text']/h2/text()")[0]
+    description = page.xpath("//meta[@name='description']")[0].get('content')
+    thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb
+    )
 
 ####################################################################################################
 

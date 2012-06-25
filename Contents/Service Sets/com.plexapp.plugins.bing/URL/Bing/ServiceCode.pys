@@ -5,40 +5,37 @@ JSON_URL = 'http://www.bing.com/videos/services/videodata/?callback=jsonp1315225
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
-        
-        # Request the url and determine the uuid associated with the title
-        page_content = HTTP.Request(url).content
-        uuid = re.search("uuid: '([^']+)'", page_content).group(1)
-        
-        # Obtain the JSON representation of the title's details
-        json_content = HTTP.Request(JSON_URL % uuid).content
-        start = json_content.find('{')
-        end = json_content.rfind('}') + 1
-        details = JSON.ObjectFromString(json_content[start:end])
 
-        # Extract the available information
-        video = details['videos'][0]
-        title = video['title']
-        description = video['description']
-        thumb = video['thumb']
-        duration = int(video['durationSecs']) * 1000
-        date = Datetime.ParseDate(video['startDate'])
+    # Request the url and determine the uuid associated with the title
+    page_content = HTTP.Request(url).content
+    uuid = re.search("uuid: '([^']+)'", page_content).group(1)
 
-        tags = []
-        for tag in video['tags']:
-            tags.append(tag['value'])
+    # Obtain the JSON representation of the title's details
+    json_content = HTTP.Request(JSON_URL % uuid).content
+    start = json_content.find('{')
+    end = json_content.rfind('}') + 1
+    details = JSON.ObjectFromString(json_content[start:end])
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            duration = duration,
-            originally_available_at = date,
-            tags = tags)
+    # Extract the available information
+    video = details['videos'][0]
+    title = video['title']
+    description = video['description']
+    thumb = video['thumb']
+    duration = int(video['durationSecs']) * 1000
+    date = Datetime.ParseDate(video['startDate'])
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    tags = []
+    for tag in video['tags']:
+        tags.append(tag['value'])
+
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        duration = duration,
+        originally_available_at = date,
+        tags = tags
+    )
 
 ####################################################################################################
 

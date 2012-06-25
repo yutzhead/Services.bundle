@@ -1,5 +1,3 @@
-import re
-
 IPAD_URL = 'http://video.nationalgeographic.com/video/player/media-mp4/%s/mp4/variant-playlist.m3u8'
 RE_VIDEO_ID = Regex(".*/([^/]+)")
 

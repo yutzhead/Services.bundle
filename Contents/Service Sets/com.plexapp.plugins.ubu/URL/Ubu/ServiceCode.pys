@@ -2,35 +2,31 @@ import re
 
 ####################################################################################################
 def NormalizeURL(url):
+
     return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page.
-        content = HTTP.Request(url).content
-        data = HTML.ElementFromString(content)
+    content = HTTP.Request(url).content
+    data = HTML.ElementFromString(content)
 
-        # Extract the available information from the page
-        title = data.xpath('//title')[0].text.strip('U B U W E B - Film &amp; Video: ')
-        description = content.split('<!--PLAYER END-->')[1]
-        description = description.split('<center>')[0]
-        description = String.StripTags(description)
-        #description = String.Decode(description)
-    
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = R('icon-default.png')
-            )
+    # Extract the available information from the page
+    title = data.xpath('//title')[0].text.strip('U B U W E B - Film &amp; Video: ')
+    description = content.split('<!--PLAYER END-->')[1]
+    description = description.split('<center>')[0]
+    description = String.StripTags(description)
+    #description = String.Decode(description)
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
-    
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = R('icon-default.png')
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         video_codec = VideoCodec.H263,
@@ -45,7 +41,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url):
+
     content = HTTP.Request(url).content
     flv_url = re.search("'file=(http://ubumexico\.centro\.org\.mx/video/flash/.+\.flv)'", content).group(1)
     return Redirect(flv_url)
-    

@@ -5,34 +5,31 @@ JSON_FEED = '%s/v/feed/video/%%s.js' % BASE_URL
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    try:
-        
-        # The url should contain details of the actual media asset number.
-        details = re.match(".*/v/(?P<asset_id>[0-9]+).*", url).groupdict()
-        asset_id = details['asset_id']
 
-        # Once we've determined the asset id, we can request the associated son.
-        json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
-        json_root = json_page['channel']['item']
+    # The url should contain details of the actual media asset number.
+    details = re.match(".*/v/(?P<asset_id>[0-9]+).*", url).groupdict()
+    asset_id = details['asset_id']
 
-        # Extract the available information from the page...
-        title = json_root['title']
-        description = json_root['media-content']['media-description']
-        duration = json_root['media-content']['mvn-duration']
-        duration = int(duration) * 60 * 1000
-        date = json_root['media-content']['mvn-airDate']
-        date = Datetime.ParseDate(date)
-        thumb_url = json_root['media-content']['mvn-fnc_grab_320x240']
+    # Once we've determined the asset id, we can request the associated son.
+    json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
+    json_root = json_page['channel']['item']
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb_url,
-            duration = duration,
-            originally_available_at = date)
+    # Extract the available information from the page...
+    title = json_root['title']
+    description = json_root['media-content']['media-description']
+    duration = json_root['media-content']['mvn-duration']
+    duration = int(duration) * 60 * 1000
+    date = json_root['media-content']['mvn-airDate']
+    date = Datetime.ParseDate(date)
+    thumb_url = json_root['media-content']['mvn-fnc_grab_320x240']
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb_url,
+        duration = duration,
+        originally_available_at = date
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):

@@ -4,32 +4,27 @@ PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page.
-        page = HTML.ElementFromURL(url)
-        
-        # Extract the available information from the details
-        title = page.xpath("//meta[@property='og:title']")[0].get('content')
-        description = page.xpath("//meta[@property='og:description']")[0].get('content')
-        thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-        tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-        tags = [ tag.strip() for tag in tags ]
+    page = HTML.ElementFromURL(url)
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            tags = tags)
+    # Extract the available information from the details
+    title = page.xpath("//meta[@property='og:title']")[0].get('content')
+    description = page.xpath("//meta[@property='og:description']")[0].get('content')
+    thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
+    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+    tags = [ tag.strip() for tag in tags ]
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        tags = tags
+    )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         video_codec = VideoCodec.H264,
@@ -42,10 +37,8 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url):
 
-    # Request the page
     page = HTML.ElementFromURL(url)
 
     player_script = page.xpath("//div[@id='videoPlayer']/script")[0].get('src')
@@ -54,7 +47,7 @@ def PlayVideo(url):
     # Once we've got this, we can then request the main JS page to do with the actual player. Since it
     # only actually contains JS source, we simply obtain the content.
     player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime = 0).content
-    
+
     # The player page will contain a reference to the mobile JS page (including all required parameters).
     # We therefore search for the known url.
     mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'

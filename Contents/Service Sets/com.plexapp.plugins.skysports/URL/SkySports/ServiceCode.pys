@@ -5,17 +5,13 @@ VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&widt
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
 
-        # Extract the available details from the url and return the appropriate clip.
-        details = JSONFromURL(url)
-        return VideoClipObject(
-            title = details['displayName'],
-            summary = details['shortDescription'],
-            thumb = details['videoStillURL'])
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Extract the available details from the url and return the appropriate clip.
+    details = JSONFromURL(url)
+    return VideoClipObject(
+        title = details['displayName'],
+        summary = details['shortDescription'],
+        thumb = details['videoStillURL'])
 
 ####################################################################################################
 

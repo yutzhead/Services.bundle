@@ -1,14 +1,8 @@
-import re
-
 ####################################################################################################
 def MetadataObjectForURL(url):
-    try:
 
-        external_source = GetExternalSource(url)
-        return URLService.MetadataObjectForURL(external_source)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    external_source = GetExternalSource(url)
+    return URLService.MetadataObjectForURL(external_source)
 
 ####################################################################################################
 def MediaObjectsForURL(url):

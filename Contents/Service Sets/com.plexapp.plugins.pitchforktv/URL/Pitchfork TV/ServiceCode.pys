@@ -4,49 +4,45 @@ PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
 
-        # Request the page.
-        page_content = HTTP.Request(url).content
+    page_content = HTTP.Request(url).content
 
-        config_start = page_content[page_content.find("tv.init("):]
-        json_start = config_start.find("[{")
-        json_end = config_start.find("}]")
-        details = JSON.ObjectFromString(config_start[json_start:json_end + 2])
+    config_start = page_content[page_content.find("tv.init("):]
+    json_start = config_start.find("[{")
+    json_end = config_start.find("}]")
+    details = JSON.ObjectFromString(config_start[json_start:json_end + 2])
 
-        page = HTML.ElementFromString(page_content)
-        playing = page.xpath("//div[@class='player-container']//script")[0].get('src')
+    page = HTML.ElementFromString(page_content)
+    playing = page.xpath("//div[@class='player-container']//script")[0].get('src')
 
-        # The JSON will contain a number of video titles. We therefore need to search for the one
-        # currently being played.
-        for title in details:
-            if playing.find(title['ooyala_id']) > -1:
-                currently_playing  = title
-                break
-        
-        # Extract the available information from the details
-        title = currently_playing['episode'] + ": " + currently_playing['title']
-        description = String.StripTags(currently_playing['description']).strip()
-        thumb = currently_playing['thumbnail_large_url']
-        
-        duration_dict = re.match("(?P<mins>[0-9]*):(?P<secs>[0-9]*)", currently_playing['length']).groupdict()
-        mins = int(duration_dict['mins'])
-        secs = int(duration_dict['secs'])
-        duration = ((mins * 60) + secs) * 1000
+    # The JSON will contain a number of video titles. We therefore need to search for the one
+    # currently being played.
+    for title in details:
+        if playing.find(title['ooyala_id']) > -1:
+            currently_playing  = title
+            break
+    
+    # Extract the available information from the details
+    title = currently_playing['episode'] + ": " + currently_playing['title']
+    description = String.StripTags(currently_playing['description']).strip()
+    thumb = currently_playing['thumbnail_large_url']
+    
+    duration_dict = re.match("(?P<mins>[0-9]*):(?P<secs>[0-9]*)", currently_playing['length']).groupdict()
+    mins = int(duration_dict['mins'])
+    secs = int(duration_dict['secs'])
+    duration = ((mins * 60) + secs) * 1000
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            duration = duration)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        duration = duration
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         video_codec = VideoCodec.H264,
@@ -62,7 +58,6 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-    # Request the page
     page_content = HTTP.Request(url).content
 
     # The first thing that we need to obtain is the actual "embed code". The most reliable way to do this

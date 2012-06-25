@@ -1,10 +1,7 @@
 def MetadataObjectForURL(url):
-  try:
-    external_source = GetExternalSource(url)
-    return URLService.MetadataObjectForURL(external_source)
 
-  except:
-    Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+  external_source = GetExternalSource(url)
+  return URLService.MetadataObjectForURL(external_source)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -70,10 +67,10 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetExternalSource(url):
 
-    # Request the url
-    page = HTML.ElementFromURL(url)
+  # Request the url
+  page = HTML.ElementFromURL(url)
 
-    # The page actually just contains a link to a you tube video. Instead of re-implementing the 
-    # associated logic, we should be able to simply re-direct the call to the You Tube service.
-    # We must first obtain the specific you tube url.
-    return page.xpath("//embed[contains(@src, 'youtube')]")[0].get('src')
+  # The page actually just contains a link to a you tube video. Instead of re-implementing the 
+  # associated logic, we should be able to simply re-direct the call to the You Tube service.
+  # We must first obtain the specific you tube url.
+  return page.xpath("//embed[contains(@src, 'youtube')]")[0].get('src')

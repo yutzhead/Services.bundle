@@ -1,40 +1,33 @@
-import re
-
-####################################################################################################
-
 def MetadataObjectForURL(url):
-    try:
 
-        # Retrieve the page and obtain the video and player ids. We then use this to make a AMF
-        # request which has all the information associated with the title.
-        page = HTML.ElementFromURL(url)
-        playerId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='playerID']")[0].get('value')
-        videoId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='@videoPlayer']")[0].get('value')
-        result = DoAmfRequest(playerId, videoId)
+    # Retrieve the page and obtain the video and player ids. We then use this to make a AMF
+    # request which has all the information associated with the title.
+    page = HTML.ElementFromURL(url)
+    playerId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='playerID']")[0].get('value')
+    videoId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='@videoPlayer']")[0].get('value')
+    result = DoAmfRequest(playerId, videoId)
 
-        # Extract the available information
-        title = result['programmedContent']['videoPlayer']['mediaDTO']['linkText']
-        description = result['programmedContent']['videoPlayer']['mediaDTO']['shortDescription']
-        thumb = result['programmedContent']['videoPlayer']['mediaDTO']['videoStillURL']
-        date = result['programmedContent']['videoPlayer']['mediaDTO']['publishedDate']
+    # Extract the available information
+    title = result['programmedContent']['videoPlayer']['mediaDTO']['linkText']
+    description = result['programmedContent']['videoPlayer']['mediaDTO']['shortDescription']
+    thumb = result['programmedContent']['videoPlayer']['mediaDTO']['videoStillURL']
+    date = result['programmedContent']['videoPlayer']['mediaDTO']['publishedDate']
 
-        # It appears that for some unknown reason, some of the videos do not have a known title by the 
-        # player. If we detect this, we should simply extract it from the actual page.
-        if title == None:
-            title = page.xpath("//article/h1[@class='hXL']/text()")[0].strip()
+    # It appears that for some unknown reason, some of the videos do not have a known title by the 
+    # player. If we detect this, we should simply extract it from the actual page.
+    if title == None:
+        title = page.xpath("//article/h1[@class='hXL']/text()")[0].strip()
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            originally_available_at = date)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        originally_available_at = date
+    )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
         MediaObject(
           video_codec = VideoCodec.H264,
@@ -46,8 +39,8 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url):
+
     page = HTML.ElementFromURL(url)
     playerId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='playerID']")[0].get('value')
     videoId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='@videoPlayer']")[0].get('value')
@@ -59,7 +52,6 @@ def PlayVideo(url):
     return Redirect(RTMPVideoItem(rtmp_details[0], clip = rtmp_details[1]))
 
 ####################################################################################################
-
 class ContentOverride(object):
     def __init__ (self, videoId=None):
         self.contentType = int(0)
@@ -79,6 +71,7 @@ class ViewerExperienceRequest(object):
         self.TTLToken = ''
         self.URL = ''
 
+####################################################################################################
 def DoAmfRequest(playerId, videoId):
     client = AMF.RemotingService('http://c.brightcove.com/services/messagebroker/amf', user_agent='', client_type=3)
     service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')

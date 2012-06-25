@@ -5,31 +5,28 @@ VIDEO_DETAILS = "http://api.mpora.com/tv/player/load/vid/%s"
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
 
-        # The given url should contain the video ID. We need this in order to use a different
-        # url to obtain the specific details in a sensible format.
-        matches = re.match(".*video.mpora.com/watch/(?P<id>\w+)/", url)
-        id = matches.group('id')
-        
-        # Request the page that contains the details of the title.
-        infoUrl = VIDEO_DETAILS % id
-        xmlInfo = XML.ElementFromURL(infoUrl)
+    # The given url should contain the video ID. We need this in order to use a different
+    # url to obtain the specific details in a sensible format.
+    matches = re.match(".*video.mpora.com/watch/(?P<id>\w+)/", url)
+    id = matches.group('id')
+    
+    # Request the page that contains the details of the title.
+    infoUrl = VIDEO_DETAILS % id
+    xmlInfo = XML.ElementFromURL(infoUrl)
 
-        # Extract the details available directly form the page.
-        title = xmlInfo.xpath("//title/text()")[0]
-        description = xmlInfo.xpath("//description/text()")[0]
-        artwork = xmlInfo.xpath("//video")[0].get('background_src')
-        if artwork.endswith("/") == True:
-            artwork = artwork + ".jpg"
-        
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = artwork)
-
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Extract the details available directly form the page.
+    title = xmlInfo.xpath("//title/text()")[0]
+    description = xmlInfo.xpath("//description/text()")[0]
+    artwork = xmlInfo.xpath("//video")[0].get('background_src')
+    if artwork.endswith("/") == True:
+        artwork = artwork + ".jpg"
+    
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = artwork
+    )
 
 ####################################################################################################
 

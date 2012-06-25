@@ -9,26 +9,23 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
-       
-        # Attempt to extract the video id from the url
-        video_id = RE_ID.match(url).groupdict()['id']
- 
-        # Request the url and the details page
-        page = HTML.ElementFromURL(url)
-        details_page = XML.ElementFromURL(DETAILS_URL % video_id)
 
-        title = page.xpath("//div[@id='video_container']/h1/text()")[0]
-        description = page.xpath("//meta[@name='description']")[0].get('content')
-        thumb = details_page.xpath("//item/type[text() = 'image']/../src/text()")[0]
-        
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb)
+    # Attempt to extract the video id from the url
+    video_id = RE_ID.match(url).groupdict()['id']
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Request the url and the details page
+    page = HTML.ElementFromURL(url)
+    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+
+    title = page.xpath("//div[@id='video_container']/h1/text()")[0]
+    description = page.xpath("//meta[@name='description']")[0].get('content')
+    thumb = details_page.xpath("//item/type[text() = 'image']/../src/text()")[0]
+
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb
+    )
 
 ####################################################################################################
 

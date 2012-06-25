@@ -3,23 +3,19 @@ import re
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
-        
-        # Request the url
-        page = HTML.ElementFromURL(url)
 
-        title = page.xpath("//head/title/text()")[0]
-        title = title[:title.find('|')].strip()
-        summary = page.xpath("//div[@id='showDescInner']//p/text()")[0].strip()
-        thumb = page.xpath("//meta[@property='og:image']")[1].get('content').strip()
+    page = HTML.ElementFromURL(url)
 
-        return VideoClipObject(
-            title = title,
-            summary = summary,
-            thumb = thumb)
+    title = page.xpath("//head/title/text()")[0]
+    title = title[:title.find('|')].strip()
+    summary = page.xpath("//div[@id='showDescInner']//p/text()")[0].strip()
+    thumb = page.xpath("//meta[@property='og:image']")[1].get('content').strip()
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb
+    )
 
 ####################################################################################################
 

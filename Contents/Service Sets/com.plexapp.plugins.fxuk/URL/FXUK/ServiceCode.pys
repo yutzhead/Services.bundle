@@ -3,19 +3,17 @@ import re
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
-        
-        # Extract the details from the page.
-        details = JSONFromURL(url)
-        return VideoClipObject(
-            title = details['displayName'],
-            summary = details['shortDescription'],
-            thumb = details['videoStillURL'],
-            originally_available_at = details['publishedDate'],
-            tags = [ tag['name'] for tag in details['tags'] ])
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    # Extract the details from the page.
+    details = JSONFromURL(url)
+
+    return VideoClipObject(
+        title = details['displayName'],
+        summary = details['shortDescription'],
+        thumb = details['videoStillURL'],
+        originally_available_at = details['publishedDate'],
+        tags = [ tag['name'] for tag in details['tags'] ]
+    )
 
 ####################################################################################################
 

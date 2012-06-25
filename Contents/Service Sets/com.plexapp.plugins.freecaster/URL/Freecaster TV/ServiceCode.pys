@@ -1,6 +1,4 @@
-import string
-
-FREECASTER_INFO_URL	   = "http://freecaster.tv/player/info/%s?source=freecaster"
+FREECASTER_INFO_URL = "http://freecaster.tv/player/info/%s?source=freecaster"
 
 ####################################################################################################
 
@@ -11,24 +9,22 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    try:
-        xmlInfo = GetInfo(url)
-        
-        # Extract the available meta data from the page
-        title = xmlInfo.xpath("//title/text()")[0]
-        description = xmlInfo.xpath("//description/text()")[0]
-        thumb = xmlInfo.xpath("//posterframe/path/text()")[0]
-        date = xmlInfo.xpath("//onlinedate/text()")[0]
-        date = Datetime.ParseDate(date)
 
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb,
-            originally_available_at = date)
+    xmlInfo = GetInfo(url)
+    
+    # Extract the available meta data from the page
+    title = xmlInfo.xpath("//title/text()")[0]
+    description = xmlInfo.xpath("//description/text()")[0]
+    thumb = xmlInfo.xpath("//posterframe/path/text()")[0]
+    date = xmlInfo.xpath("//onlinedate/text()")[0]
+    date = Datetime.ParseDate(date)
 
-    except:
-        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+    return VideoClipObject(
+        title = title,
+        summary = description,
+        thumb = thumb,
+        originally_available_at = date
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
