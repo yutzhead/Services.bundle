@@ -12,7 +12,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?cbs(news)?\.com/.+</string>
+				<string>http://(.+\.)?cbs(news|sports)?\.com/.+</string>
 			</array>
 		</dict>
 	</dict>
