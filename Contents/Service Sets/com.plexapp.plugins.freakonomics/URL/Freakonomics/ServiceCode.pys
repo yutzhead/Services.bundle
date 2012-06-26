@@ -1,0 +1,14 @@
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    return
+
+def MediaObjectsForURL(url):
+    
+    return
+
+def PlayAudio(url):
+    data = HTML.ElementForURL(url)
+    media_url = data.xpath('//a[@title="Play in new window"]')[0].get('href')
+    return Redirect(media_url)
