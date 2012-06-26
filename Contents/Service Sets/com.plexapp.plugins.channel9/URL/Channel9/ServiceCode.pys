@@ -1,7 +1,6 @@
-import re
+RE_DURATION = Regex("(?P<mins>[0-9]+) minutes, (?P<secs>[0-9]+) seconds")
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     page = HTML.ElementFromURL(url)
@@ -12,14 +11,14 @@ def MetadataObjectForURL(url):
     thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
     rating = float(page.xpath("//p[@class='avg-rating']/span/text()")[0]) * 2
 
-    duration = None
-    duration_text = page.xpath("//div[@class='entry-caption']/text()")[0]
     try:
-        duration_dict = re.match("(?P<mins>[0-9]+) minutes, (?P<secs>[0-9]+) seconds", duration_text).groupdict()
+        duration_text = page.xpath("//div[@class='entry-caption']/text()")[0]
+        duration_dict = RE_DURATION.match(duration_text).groupdict()
         mins = int(duration_dict['mins'])
         secs = int(duration_dict['secs'])
         duration = ((mins * 60) + secs) * 1000
-    except: pass
+    except:
+        duration = None
 
     return VideoClipObject(
         title = title,
@@ -30,8 +29,8 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         container = Container.MP4,
@@ -56,10 +55,8 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url, res):
 
-    # Request the page
     page = HTML.ElementFromURL(url)
 
     # Translate the requested resolution in a suitable text identifier

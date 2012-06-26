@@ -1,14 +1,12 @@
-import re
-
 JSON_URL = 'http://www.bing.com/videos/services/videodata/?callback=jsonp1315225675238&responseEncoding=json&ids=%s&detailed=true&v=2'
+RE_UUID = Regex("uuid: '([^']+)'")
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Request the url and determine the uuid associated with the title
     page_content = HTTP.Request(url).content
-    uuid = re.search("uuid: '([^']+)'", page_content).group(1)
+    uuid = RE_UUID.search(page_content).group(1)
 
     # Obtain the JSON representation of the title's details
     json_content = HTTP.Request(JSON_URL % uuid).content
@@ -38,8 +36,8 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         container = Container.MP4,
@@ -69,8 +67,8 @@ def PlayVideo(url, formatCode):
 
     # Request the url and determine the uuid associated with the title
     page_content = HTTP.Request(url).content
-    uuid = re.search("uuid: '([^']+)'", page_content).group(1)
-        
+    uuid = RE_UUID.search(page_content).group(1)
+
     # Obtain the JSON representation of the title's details
     json_content = HTTP.Request(JSON_URL % uuid).content
     start = json_content.find('{')

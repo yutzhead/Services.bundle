@@ -1,15 +1,12 @@
-import re
-
 VIDEO_URL_EXT_HD = '__VJ360PENG.mp4'
 VIDEO_URL_EXT_SD = '__PHOENG.mp4'
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
     return url.replace('http://m.','http://www.')
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Attempt to extract the details of the title from the page.
@@ -29,11 +26,12 @@ def MetadataObjectForURL(url):
         summary = description,
         thumb = thumb,
         duration = duration,
-        tags = tags)
+        tags = tags
+    )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         container = Container.MP4,
@@ -56,10 +54,8 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
 def PlayVideo(url, file_ext, fallback = None):
 
-    # Request the page
     page = HTML.ElementFromURL(url)
 
     # It appears that the best way to find the video is to use the thumbnail url as a starting point.
@@ -81,10 +77,9 @@ def PlayVideo(url, file_ext, fallback = None):
 
     return Redirect(video_url)
 
-
 ####################################################################################################
-
 def TimeToMs(timecode):
+
     seconds = 0
     duration = timecode.split(':')
     duration.reverse()

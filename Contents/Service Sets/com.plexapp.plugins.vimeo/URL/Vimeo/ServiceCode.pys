@@ -1,4 +1,10 @@
-import re, urlparse, urllib2, httplib
+import urlparse, urllib2, httplib
+
+RE_VIDEO_ID = Regex("^/?(.+)?(?P<id>\d)+$")
+RE_CLIP_ID = Regex("clip_id=(\d+)")
+RE_VIMEO_ID = Regex("vimeo\.com/(\d+)")
+RE_HD = Regex('"hd":([0-9])')
+RE_SIG = Regex('"signature":"([0-9a-f]+)","timestamp":([0-9]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,34 +15,37 @@ def NormalizeURL(url):
     url = urlparse.urlparse(url)
 
   # http://vimeo.com/staffpicks#24002628
-  if re.match("^\d+$", url.fragment):
+  if RE_VIDEO_ID.match(url.fragment):
     video_id = url.fragment
 
   # http://vimeo.com/23864381
-  if re.match("^/(\d+)$", url.path):
+  if RE_VIDEO_ID.match(url.path):
     video_id = url.path[1:]
 
-  # http://vimeo.com/groups/5dmkii/videos/26352235
+  # http://vimeo.com/groups/5dmkii/videos/44493124
   # http://player.vimeo.com/video/42601218
-  if re.search("/(\d+)$", url.path):
+  if RE_VIDEO_ID.search(url.path):
     video_id = url.path[url.path.rfind('/')+1:]
 
   # http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
   # http://vimeo.com/moogaloop.swf?clip_id=31856894
-  if re.search("clip_id=(\d+)", url.query):
-    video_id = re.search("clip_id=(\d+)", url.query).group(1)
+  clip_id = RE_CLIP_ID.search(url.query)
+  if clip_id:
+    video_id = clip_id.group(1)
 
-  if video_id is None:
+  if video_id:
+    return "http://vimeo.com/%s" % video_id
+  else:
     return None
-
-  return "http://vimeo.com/%s" % video_id
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  
+
   # Figure out the URL to call.
-  vimeo_video_id       = re.findall('vimeo.com\/(\d+)\/?', url)[0]                 # extract the video id
-  vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id  # API call
+  # Extract the video id
+  vimeo_video_id = RE_VIMEO_ID.search(url).group(1)
+  # API call
+  vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id
 
   # Fetch the page. Private videos return a HTTP 404 error.
   try:
@@ -67,7 +76,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  items = [
+  return [
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='hd', codecs='H264'))],
       container = Container.MP4,
@@ -88,8 +97,6 @@ def MediaObjectsForURL(url):
     )
   ]
 
-  return items
-
 ####################################################################################################
 class SmartRedirectHandler(urllib2.HTTPRedirectHandler):     
   def http_error_301(self, req, fp, code, msg, headers):
@@ -104,12 +111,13 @@ class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
 
 ####################################################################################################
 def GetVideoURL(url, format=None, codecs=None):
+
   key = url[url.rfind('/')+1:]
   headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
   video = HTTP.Request(url, cacheTime=1, headers=headers).content
 
-  m1 = re.search('"hd":([0-9])', video)
-  m2 = re.search('"signature":"([0-9a-f]+)","timestamp":([0-9]+)', video)
+  m1 = RE_HD.search(video)
+  m2 = RE_SIG.search(video)
 
   if m1 and m2:
     hd = int(m1.groups()[0])

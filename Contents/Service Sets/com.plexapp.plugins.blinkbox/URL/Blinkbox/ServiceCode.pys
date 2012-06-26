@@ -1,7 +1,5 @@
-import re
-
-MOVIE_CHECK = "http://www.blinkbox.com/Movies/[0-9]+/"
-TV_BASIC = "^(?P<series_name>[^-]*) - Series (?P<series_number>\d+) Ep. (?P<episode_number>\d+) - (?P<episode_name>.*)$"
+RE_MOVIE_CHECK = Regex("http://www.blinkbox.com/Movies/[0-9]+/", Regex.IGNORECASE)
+RE_TV_BASIC = Regex("^(?P<series_name>[^-]*) - Series (?P<series_number>\d+) Ep. (?P<episode_number>\d+) - (?P<episode_name>.*)$")
 
 ####################################################################################################
 
@@ -13,7 +11,7 @@ def MetadataObjectForURL(url):
 
     # If this match fails, then we know that the associated title is a Movie. We should therefore return the suitable
     # MovieObject.
-    if re.match(MOVIE_CHECK, url, flags = re.IGNORECASE) != None:
+    if RE_MOVIE_CHECK.match(url):
         return MovieObject(
             title = details['title'],
             summary = details['summary'],
@@ -27,7 +25,7 @@ def MetadataObjectForURL(url):
 
     # Blinkbox uses a standard format for all episodes. We can therefore use this to extract the required information, such
     # as the series number, episode number and episode name.
-    basic = re.match(TV_BASIC, title)
+    basic = RE_TV_BASIC.match(title)
     if basic != None:
         basic_dict = basic.groupdict()
         if len(basic_dict) > 0:

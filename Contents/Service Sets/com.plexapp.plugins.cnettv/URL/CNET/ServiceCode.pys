@@ -1,5 +1,3 @@
-import re
-
 CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
 API_URL = "http://api.cnet.com/restApi/v1.0/video?videoId=%s&orderBy=productionDate~desc,createDate~desc&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,&partTag=cntv&showBroadcast=true"
 

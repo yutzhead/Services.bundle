@@ -1,7 +1,6 @@
-import re
-
 BASE_URL = 'http://www.gamer.nl'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/', 'jwplayer': 'http://developer.longtailvideo.com/trac/wiki/FlashFormats'}
+RE_XML_URL = Regex('addVariable\("file","(.+?)"\)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,7 +14,7 @@ def MetadataObjectForURL(url):
 	# We'll attempt to find the reference to the xml file which contains all the details with the
 	# associated title.
 	content = HTTP.Request(url).content
-	xml_url = re.search('addVariable\("file","(.+?)"\)', content)
+	xml_url = RE_XML_URL.search(content)
 
 	if xml_url:
 		xml_url = BASE_URL + xml_url.group(1)
@@ -62,7 +61,7 @@ def PlayVideo(url, res):
 
 	# We'll attempt to find the reference to the xml file which contains all the details with the associated title.
 	content = HTTP.Request(url).content
-	xml_url = re.search('addVariable\("file","(.+?)"\)', content)
+	xml_url = RE_XML_URL.search(content)
 
 	if xml_url:
 		xml_url = BASE_URL + xml_url.group(1)

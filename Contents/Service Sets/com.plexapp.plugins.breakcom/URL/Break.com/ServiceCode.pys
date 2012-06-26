@@ -1,6 +1,5 @@
-import re
-
 DETAILS_URL = 'http://api.break.com/invoke/content/%s/'
+RE_ID = Regex(".*/.*-(?P<id>[0-9]+)/?$")
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -9,7 +8,7 @@ def MetadataObjectForURL(url):
     # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
     # done this, we can load the XML page which contains all the meta data associated with the title.
     id = None
-    id_in_url = re.match(".*/.*-(?P<id>[0-9]+)/?$", url)
+    id_in_url = RE_ID.match(url)
     if id_in_url != None:
         id = id_in_url.groupdict()['id']
     else:
@@ -75,7 +74,7 @@ def PlayVideo(url, res):
     # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
     # done this, we can load the XML page which contains all the meta data associated with the title.
     id = None
-    id_in_url = re.match(".*/.*-(?P<id>[0-9]+)/?$", url)
+    id_in_url = RE_ID.match(url)
     if id_in_url != None:
         id = id_in_url.groupdict()['id']
     else:

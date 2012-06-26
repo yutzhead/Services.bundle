@@ -1,6 +1,9 @@
-import re
 PLAYLIST = 'http://www.gamekings.tv/wp-content/themes/gk2010/playlist2.php?id=%s'
 XSPF_NS = {'xspf':'http://xspf.org/ns/0/'}
+
+RE_DATE = Regex('(.+?,\s[0-9]{4})')
+RE_ID = Regex("showVideo\('([^']+)','([^']+)'")
+RE_AMPERSAND = Regex('&(?!amp;)')
 
 ####################################################################################################
 def TestURLs():
@@ -22,7 +25,7 @@ def MetadataObjectForURL(url):
 
   try:
     date = page.xpath('//section[@id="MainContent"]//small')[0].text
-    date = re.search('(.+?,\s[0-9]{4})', date).group(1)
+    date = RE_DATE.search(date).group(1)
     originally_available_at = Datetime.ParseDate(date).date()
   except:
     originally_available_at = None
@@ -54,10 +57,10 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
   page = HTTP.Request(url).content
-  id = re.search("showVideo\('([^']+)','([^']+)'", page)
+  id = RE_ID.search(page)
 
   playlist = HTTP.Request(PLAYLIST % id.group(2)).content
-  playlist = re.sub('&(?!amp;)', '&amp;', playlist)
+  playlist = RE_AMPERSAND.sub('&amp;', playlist)
   playlist = XML.ElementFromString(playlist)
 
   url = playlist.xpath('//xspf:track/xspf:identifier[text()="' + id.group(1) + '"]/../xspf:location', namespaces=XSPF_NS)[0].text
