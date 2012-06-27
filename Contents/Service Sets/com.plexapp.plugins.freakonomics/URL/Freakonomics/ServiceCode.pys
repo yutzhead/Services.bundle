@@ -2,7 +2,18 @@ def NormalizeURL(url):
     return url
 
 def MetadataObjectForURL(url):
-    return
+    data = HTML.ElementForURL(url)
+    title = data.xpath('//h1[@class="h1title"]')[0].text
+    artist = data.xpath('//span[@class="author-name"]/a')[0].text
+    date = data.xpath('//p[@class="postmeta"][0]/text()')[0].split(' | ')[0].strip()
+    try: date = Datetime.ParseDate(date).date
+    except: date = None
+    return TrackObject(
+        title = title,
+        artist = artist,
+        originally_available_at = date,
+        thumb = 'icon-default.png'
+        )
 
 def MediaObjectsForURL(url):
     return [
