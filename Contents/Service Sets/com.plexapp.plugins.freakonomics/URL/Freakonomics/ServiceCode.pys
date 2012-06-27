@@ -5,8 +5,13 @@ def MetadataObjectForURL(url):
     return
 
 def MediaObjectsForURL(url):
-    
-    return
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3'))],
+            container = Container.MP3,
+            audio_codec = AudioCodec.MP3
+            )
+    ]
 
 def PlayAudio(url):
     data = HTML.ElementForURL(url)
