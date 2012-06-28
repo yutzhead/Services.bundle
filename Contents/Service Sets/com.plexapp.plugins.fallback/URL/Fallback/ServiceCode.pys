@@ -127,11 +127,11 @@ def MetadataObjectForURL(url):
 			)
 
 		# Meta tag refresh
-		video = RE_META_REFRESH.search(req.content)
+		refresh = RE_META_REFRESH.search(req.content)
 
-		if video:
-			if video.group('url') != url:
-				return URLService.MetadataObjectForURL(video.group('url'))
+		if refresh:
+			if refresh.group('url') != url:
+				return URLService.MetadataObjectForURL(refresh.group('url'))
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
@@ -207,11 +207,11 @@ def MediaObjectsForURL(url):
 			return result
 
 		# Meta tag refresh
-		video = RE_META_REFRESH.search(req.content)
+		refresh = RE_META_REFRESH.search(req.content)
 
-		if video:
-			if video.group('url') != url:
-				return URLService.MediaObjectsForURL(video.group('url'))
+		if refresh:
+			if refresh.group('url') != url:
+				return URLService.MediaObjectsForURL(refresh.group('url'))
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
