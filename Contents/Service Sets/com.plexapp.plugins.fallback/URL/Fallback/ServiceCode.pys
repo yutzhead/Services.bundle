@@ -22,6 +22,7 @@ RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[
 RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>http.+?youtu\.?be(.com)?.+?)("|\'|&quot;|%22)')
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
+RE_META_REFRESH = Regex('<meta.+?http-equiv=.refresh.+?content=.([0-9]+;url=)?(?P<url>https?://[^"\']+)', Regex.IGNORECASE)
 
 ####################################################################################################
 def FixUrl(parent_url, url):
@@ -98,7 +99,9 @@ def MetadataObjectForURL(url):
 		req.headers
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
-			return URLService.MetadataObjectForURL(e.headers['Location'])
+			if e.headers['Location'] != url:
+				return URLService.MetadataObjectForURL(e.headers['Location'])
+			return None
 
 	if ShouldParse(req):
 
@@ -122,6 +125,13 @@ def MetadataObjectForURL(url):
 				title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
 				thumb = thumb
 			)
+
+		# Meta tag refresh
+		video = RE_META_REFRESH.search(req.content)
+
+		if video:
+			if video.group('url') != url:
+				return URLService.MetadataObjectForURL(video.group('url'))
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
@@ -149,7 +159,9 @@ def MediaObjectsForURL(url):
 		req.headers
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
-			return URLService.MediaObjectsForURL(e.headers['Location'])
+			if e.headers['Location'] != url:
+				return URLService.MediaObjectsForURL(e.headers['Location'])
+			return None
 
 	if ShouldParse(req):
 
@@ -193,6 +205,13 @@ def MediaObjectsForURL(url):
 				result.append(MediaObject(**attrs))
 
 			return result
+
+		# Meta tag refresh
+		video = RE_META_REFRESH.search(req.content)
+
+		if video:
+			if video.group('url') != url:
+				return URLService.MediaObjectsForURL(video.group('url'))
 
 		# Regex Video
 		video = RE_PATTERN.search(req.content)
