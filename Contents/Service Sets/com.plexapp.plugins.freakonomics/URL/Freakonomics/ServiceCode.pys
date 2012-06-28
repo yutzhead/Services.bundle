@@ -25,7 +25,7 @@ def MediaObjectsForURL(url):
     ]
 
 def PlayAudio(url):
-    data = HTML.ElementForURL(url)
+    data = HTML.ElementFromURL(url)
     media_url = data.xpath('//a[@title="Play in new window"]')[0].get('href')
     return Redirect(media_url)
     
