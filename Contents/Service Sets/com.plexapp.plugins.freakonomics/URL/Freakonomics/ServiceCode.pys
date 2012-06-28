@@ -2,10 +2,10 @@ def NormalizeURL(url):
     return url
 
 def MetadataObjectForURL(url):
-    data = HTML.ElementForURL(url)
+    data = HTML.ElementFromURL(url)
     title = data.xpath('//h1[@class="h1title"]')[0].text
     artist = data.xpath('//span[@class="author-name"]/a')[0].text
-    date = data.xpath('//p[@class="postmeta"][0]/text()')[0].split(' | ')[0].strip()
+    date = data.xpath('//p[@class="postmeta"]//text()')[-1].split(' | ')[0].strip()
     try: date = Datetime.ParseDate(date).date
     except: date = None
     return TrackObject(
@@ -28,3 +28,12 @@ def PlayAudio(url):
     data = HTML.ElementForURL(url)
     media_url = data.xpath('//a[@title="Play in new window"]')[0].get('href')
     return Redirect(media_url)
+    
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.freakonomics.com/radio/freakonomics-radio-podcast-archive/')
+    for podcast in data.xpath('//table[@class="radioarchive"]//a'):
+        test_urls.append(podcast.get('href'))
+        if len(test_urls) > 2:
+            break
+    return test_urls
