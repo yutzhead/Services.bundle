@@ -1,0 +1,39 @@
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
+    title = data.xpath('//h1[@class="h1title"]')[0].text
+    artist = data.xpath('//span[@class="author-name"]/a')[0].text
+    date = data.xpath('//p[@class="postmeta"]//text()')[-1].split(' | ')[0].strip()
+    try: date = Datetime.ParseDate(date).date
+    except: date = None
+    return TrackObject(
+        title = title,
+        artist = artist,
+        originally_available_at = date,
+        thumb = 'icon-default.png'
+        )
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3'))],
+            container = Container.MP3,
+            audio_codec = AudioCodec.MP3
+            )
+    ]
+
+def PlayAudio(url):
+    data = HTML.ElementFromURL(url)
+    media_url = data.xpath('//a[@title="Play in new window"]')[0].get('href')
+    return Redirect(media_url)
+    
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.freakonomics.com/radio/freakonomics-radio-podcast-archive/')
+    for podcast in data.xpath('//table[@class="radioarchive"]//a'):
+        test_urls.append(podcast.get('href'))
+        if len(test_urls) > 2:
+            break
+    return test_urls
