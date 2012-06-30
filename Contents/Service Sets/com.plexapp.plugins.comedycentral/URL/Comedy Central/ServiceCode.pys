@@ -1,4 +1,5 @@
 DETAILS = 'http://www.comedycentral.com/comedycentral/video/data/mrss.jhtml?uri=mgid:cms:video:comedycentral.com:%s'
+PLAYER_URL = 'http://media.mtvnservices.com/%s'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -26,6 +27,12 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=WebVideoURL(url))]
+			parts = [PartObject(key=Callback(PlayVideo, url))]
 		)
 	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	return IndirectResponse(VideoClipObject, key=WebVideoURL(PLAYER_URL % id))

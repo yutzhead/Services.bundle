@@ -6,10 +6,6 @@
 	<dict>
 		<key>Comedy Central</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.comedycentral.com/videos/index.jhtml?videoId=359185</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.comedycentral.com/.+</string>
