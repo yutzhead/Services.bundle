@@ -2,14 +2,6 @@ YOUTUBE_BASE                = 'http://www.youtube.com/watch?v=%s'
 DETAILS_URL                 = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
 AUTH_URL                    = 'http://videoplayer.vevo.com/VideoService/AuthenticateVideo?isrc=%s'
 
-MP4_SMIL_URL                = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
-VIDEO_URL                   = 'http://www.vevo.com/watch/%s/%s/%s'
-HLS_URL_1                   = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
-HLS_URL_2                   = 'http://hls.lvl3.strm.vevo.com/Video/V2/IPAD/%s/index.m3u8'
-RTMP_SMIL_URLS = ['http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%sr.smil', 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%sr.smil', 'http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%s.smil']
-
-NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
-
 BITRATES = ["564000", "864000", "1328000", "1728000", "2528000", "3328000", "4392000", "5392000"]
 
 ####################################################################################################
