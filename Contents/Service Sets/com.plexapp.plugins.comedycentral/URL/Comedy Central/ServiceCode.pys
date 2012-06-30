@@ -1,23 +1,25 @@
-DETAILS = 'http://www.comedycentral.com/comedycentral/video/data/mrss.jhtml?uri=mgid:cms:video:comedycentral.com:%s'
+MRSS_PATH = "http://www.comedycentral.com/feeds/mrss?uri=%s"
+MRSS_NS = {"media": "http://search.yahoo.com/mrss/"}
 PLAYER_URL = 'http://media.mtvnservices.com/%s'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	id = url[url.find('videoId=')+8:]
-	if '&' in id:
-		id = id.split('&')[0]
+	id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	item = XML.ElementFromURL(MRSS_PATH % id).xpath('//item')[0]
 
-	details = XML.ElementFromString(HTTP.Request(DETAILS %id).content.replace('media:','media-'))
-
-	desc = details.xpath('//description')[0].text
-	thumb = details.xpath('//media-thumbnail')[0].get('url')
-	title = details.xpath('//title')[0].text
+	title = item.xpath('./title')[0].text
+	summary = item.xpath('./description')[0].text
+	date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
+	thumb = item.xpath('.//media:thumbnail', namespaces=MRSS_NS)[0].get('url')
+	duration = int(item.xpath('.//media:content', namespaces=MRSS_NS)[0].get('duration')) * 1000
 
 	vc = VideoClipObject(
 		title = title,
-		summary = desc,
-		thumb = thumb
+		summary = summary,
+		originally_available_at = date,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
 	)
 
 	return vc
@@ -27,12 +29,13 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			protocol = 'webkit'
 		)
 	]
 
 ####################################################################################################
-@indirect
 def PlayVideo(url):
+
 	id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
-	return IndirectResponse(VideoClipObject, key=WebVideoURL(PLAYER_URL % id))
+	return Redirect(WebVideoURL(PLAYER_URL % id))
