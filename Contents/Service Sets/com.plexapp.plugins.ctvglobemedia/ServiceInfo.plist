@@ -6,9 +6,6 @@
 	<dict>
 		<key>CTV</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
