@@ -12,7 +12,7 @@ def MetadataObjectForURL(url):
         title = title,
         artist = artist,
         #originally_available_at = date,
-        thumb = 'icon-default.png'
+        thumb = Resource.ContentsOfURLWithFallback(url="NONE", fallback='icon-default.png')
         )
 
 def MediaObjectsForURL(url):
