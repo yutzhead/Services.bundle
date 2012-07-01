@@ -1,6 +1,11 @@
 YOUTUBE_BASE                = 'http://www.youtube.com/watch?v=%s'
 DETAILS_URL                 = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
 AUTH_URL                    = 'http://videoplayer.vevo.com/VideoService/AuthenticateVideo?isrc=%s'
+MP4_SMIL_URL                = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
+VIDEO_URL                   = 'http://www.vevo.com/watch/%s/%s/%s'
+
+HLS_URLS = ['http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8', 'http://hls.lvl3.strm.vevo.com/Video/V2/IPAD/%s/index.m3u8']
+RTMP_URLS = ['http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%sr.smil', 'http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%s.smil', 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%sr.smil', 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil']
 
 BITRATES = ["564000", "864000", "1328000", "1728000", "2528000", "3328000", "4392000", "5392000"]
 
@@ -111,14 +116,58 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res, bitrate):
     id = url.split('/')[-1]
-    yt_id = JSON.ObjectFromURL(AUTH_URL % id)['video']['videoVersions'][0]['id']
-    media = URLService.MediaObjectsForURL(YOUTUBE_BASE % yt_id)
+    video_url = ''
     index = BITRATES.index(bitrate)
-    if index >= len(media):
-        return media[-1]
-    else:
-        return media[index]
+    try:
+        smil = XML.ElementFromURL(MP4_SMIL_URL % (id, id.lower()))
+        while index > -1:
+            try:
+                video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                break
+            except:
+                index = index -1
+            if index == 0:
+                if video_url == '':
+                    video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
 
+        return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
+    except:
+        try:
+            for m3u8_url in HLS_URLS:
+                try:
+                    headers = HTTP.Request(m3u8_url % id).headers
+                    hls_url = m3u8_url
+                    break
+                except:
+                    continue
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(hls_url % id))
+        except:
+            try:
+                for smil_url in RTMP_URLS:
+                    try:
+                        smil = XML.ElementFromURL(smil_url % (id, id.lower()))
+                    except:
+                        continue
+                player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
+                while index > -1:
+                    try:
+                        video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                        break
+                    except:
+                        index = index -1
+                    if index == 0:
+                        if video_url == '':
+                            video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+
+                return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=video_url))
+            except:
+                yt_id = JSON.ObjectFromURL(AUTH_URL % id)['video']['videoVersions'][0]['id']
+                media = URLService.MediaObjectsForURL(YOUTUBE_BASE % yt_id)
+                index = BITRATES.index(bitrate)
+                if index >= len(media):
+                    return media[-1]
+                else:
+                    return media[index]
 ####################################################################################################
 def TestURLs():
     test_urls = []
