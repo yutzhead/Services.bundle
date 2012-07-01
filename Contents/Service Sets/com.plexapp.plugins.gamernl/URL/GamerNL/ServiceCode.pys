@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
 		xml_url = BASE_URL + xml_url.group(1)
 
 		# Extract the available information.
-		xml = XML.ElementFromURL(xml_url)
+		xml = GetXML(xml_url)
 		title = xml.xpath("//title/text()", namespaces = NAMESPACES)[0]
 		thumb = xml.xpath("//jwplayer:image/text()", namespaces = NAMESPACES)[0]
 
@@ -66,9 +66,26 @@ def PlayVideo(url, res):
 	if xml_url:
 		xml_url = BASE_URL + xml_url.group(1)
 
-		xml = XML.ElementFromURL(xml_url, cacheTime=0)
+		xml = GetXML(xml_url)
 		video_url = xml.xpath("//media:content", namespaces = NAMESPACES)[0].get('url')
 		return Redirect(video_url)
+
+
+####################################################################################################
+def GetXML(xml_url, cacheTime = None):
+	xml_content = HTTP.Request(xml_url, cacheTime = cacheTime).content
+
+    # It appears that it's possible for the RSS feed to actually be invalid causing the XML code to
+    # raise an exception. The currently known issues that we have to deal with are as follows:
+    #    - The use of '&' instead of '&amp;'
+    #    - The inclusion of '<?xml version="1.0" encoding="UTF-8" ?>' at the beginning of the document.
+	if xml_content.startswith('<?xml') == True:
+		xml_content = xml_content[xml_content.find('?>') + 2:]
+
+	if xml_content.find(' & ') != -1:
+		xml_content = xml_content.replace(' & ', ' &amp; ')
+
+	return XML.ElementFromString(xml_content)
 
 ####################################################################################################
 def TestURLs():
