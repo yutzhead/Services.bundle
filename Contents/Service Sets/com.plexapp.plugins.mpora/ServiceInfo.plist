@@ -8,24 +8,24 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://video.mpora.com/watch/yjx2DHJNf/</string>
-				<string>http://video.mpora.com/watch/GXCVmDiBL/</string>
+				<string>http://mpora.com/videos/AA68kn5IEOu</string>
+				<string>http://mpora.com/videos/AA68i036GUe</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://video.mpora.com/\w+/</string>
+				<string>http://mpora.com/videos/\w+/?</string>
 			</array>
 		</dict>
 		<key>MPORA Photos</key>
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://photo.mpora.com/photo/KNWQjSSWAc/</string>
-				<string>http://photo.mpora.com/album/afn4WGmpbP/</string>
+				<string>http://mpora.com/photos/AA68jAeFOyJ</string>
+				<string>http://mpora.com/photos/awASZauAjL</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://photo.mpora.com/(photo|album)/\w+/?</string>
+				<string>http://mpora.com/photos/\w+/?</string>
 			</array>
 		</dict>
 	</dict>
