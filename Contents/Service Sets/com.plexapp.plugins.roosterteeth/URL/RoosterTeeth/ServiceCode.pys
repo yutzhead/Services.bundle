@@ -10,8 +10,12 @@ def MetadataObjectForURL(url):
     summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
     thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
     duration = int(data.xpath('//meta[@property="video:duration"]')[0].get('content')) * 60 * 1000
-    date = data.xpath('//meta[@property="video:release_date"]')[0].get('content')
-    date = Datetime.ParseDate(date)
+
+    date = None
+    try:
+        date = data.xpath('//meta[@property="video:release_date"]')[0].get('content')
+        date = Datetime.ParseDate(date)
+    except: pass
 
     return VideoClipObject(
         title = title,
