@@ -1,12 +1,11 @@
+YOUTUBE_BASE                = 'http://www.youtube.com/watch?v=%s'
 DETAILS_URL                 = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
+AUTH_URL                    = 'http://videoplayer.vevo.com/VideoService/AuthenticateVideo?isrc=%s'
 MP4_SMIL_URL                = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil'
 VIDEO_URL                   = 'http://www.vevo.com/watch/%s/%s/%s'
-HLS_URL_1                   = 'http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8'
-HLS_URL_2                   = 'http://hls.lvl3.strm.vevo.com/Video/V2/IPAD/%s/index.m3u8'
-RTMP_SMIL_URL_1             = 'http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%sr.smil'
-RTMP_SMIL_URL_2             = 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%sr.smil'
 
-NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
+HLS_URLS = ['http://hls.media.vevo.com/%s/ipad/index_500_wifi.m3u8', 'http://hls.lvl3.strm.vevo.com/Video/V2/IPAD/%s/index.m3u8']
+RTMP_URLS = ['http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%sr.smil', 'http://smil.lvl3.vevo.com/Video/V2/VFILE/%s/%s.smil', 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%sr.smil', 'http://smilstream.vevo.com/HDFlash/v1/smil/%s/%s.smil']
 
 BITRATES = ["564000", "864000", "1328000", "1728000", "2528000", "3328000", "4392000", "5392000"]
 
@@ -32,7 +31,7 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
       MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="5392000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="1080", bitrate="5392000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -42,7 +41,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="4392000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="1080", bitrate="4392000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -52,7 +51,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3328000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720", bitrate="3328000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -62,7 +61,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2528000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720", bitrate="2528000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -72,7 +71,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1728000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="432", bitrate="1728000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -82,7 +81,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1328000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="432", bitrate="1328000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -92,7 +91,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="864000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="288", bitrate="864000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -102,7 +101,7 @@ def MediaObjectsForURL(url):
             audio_channels = 2
         ),
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="564000"))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res="288", bitrate="564000"))],
             container = Container.MP4,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -115,7 +114,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate):
+def PlayVideo(url, res, bitrate):
     id = url.split('/')[-1]
     video_url = ''
     index = BITRATES.index(bitrate)
@@ -134,30 +133,41 @@ def PlayVideo(url, bitrate):
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
         try:
-            try:
-                headers = HTTP.Request(HLS_URL_1 % id).headers
-                return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL_1 % id))
-            except:
-                headers = HTTP.Request(HLS_URL_2 % id).headers
-                return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(HLS_URL_2 % id))
-        except:
-            try:
-                smil = XML.ElementFromURL(RTMP_SMIL_URL_1 % (id, id.lower()))
-            except:
-                smil = XML.ElementFromURL(RTMP_SMIL_URL_2 % (id, id.lower()))
-            player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
-            while index > -1:
+            for m3u8_url in HLS_URLS:
                 try:
-                    video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                    headers = HTTP.Request(m3u8_url % id).headers
+                    hls_url = m3u8_url
                     break
                 except:
-                    index = index -1
-                if index == 0:
-                    if video_url == '':
-                        video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+                    continue
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(hls_url % id))
+        except:
+            try:
+                for smil_url in RTMP_URLS:
+                    try:
+                        smil = XML.ElementFromURL(smil_url % (id, id.lower()))
+                    except:
+                        continue
+                player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
+                while index > -1:
+                    try:
+                        video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
+                        break
+                    except:
+                        index = index -1
+                    if index == 0:
+                        if video_url == '':
+                            video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
 
-            return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=video_url))
-
+                return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=video_url))
+            except:
+                yt_id = JSON.ObjectFromURL(AUTH_URL % id)['video']['videoVersions'][0]['id']
+                media = URLService.MediaObjectsForURL(YOUTUBE_BASE % yt_id)
+                index = BITRATES.index(bitrate)
+                if index >= len(media):
+                    return media[-1]
+                else:
+                    return media[index]
 ####################################################################################################
 def TestURLs():
     test_urls = []
