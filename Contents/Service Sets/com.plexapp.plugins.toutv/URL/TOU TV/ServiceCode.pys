@@ -1,4 +1,5 @@
 RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
+RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 
@@ -85,7 +86,10 @@ def PlayVideo(url, res):
 
 def GetSMIL(url):
     data = HTTP.Request(url).content
-    pID = RE_EPISODE_ID.search(data).group(1)
+    try:
+	pID = RE_EPISODE_ID.search(data).group(1)
+    except:
+	pID = RE_MEDIA_ID.search(data).group(1)
     content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
     smil = XML.ElementFromString(content)
     return smil
