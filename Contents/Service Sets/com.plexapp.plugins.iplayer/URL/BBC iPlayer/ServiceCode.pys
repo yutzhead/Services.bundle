@@ -1,5 +1,7 @@
 httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17' }
 RE_PID = Regex('iplayer/episode/([^/$]{8})')
+RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
+NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -96,9 +98,67 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
   return [
     MediaObject(
-      parts = [PartObject(key=WebVideoURL(url))]
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = '720',
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '720'))],
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = '486',
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '486'))],
+    ),
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      video_resolution = 'sd',
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '360'))],
     )
   ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, height):
+  page_contents = HTTP.Request(url).content
+  details_json = RE_DETAILS.findall(page_contents)[0]
+  details = JSON.ObjectFromString(details_json)
+
+  pid = RE_PID.findall(url)[0]
+  pid_details = details[pid]
+
+  stream_details = XML.ElementFromURL(pid_details['my_mediaselector_xml_url'])
+
+  last_stream = None
+  heights = ['720', '486', '360']
+  index = heights.index(height)
+  for height_index in range(index, len(heights)):
+    Log("IABI: " + '//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index])
+    streams = stream_details.xpath('//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index], namespaces = NAMESPACES)
+    if len(streams) > 0:
+      stream = streams[0]
+      break
+  
+  server = stream.get('server')
+  auth = stream.get('authString')
+
+  supplier = stream.get('supplier')
+  application = stream.get('application')
+  if application is None and supplier == 'akamai':
+    application = 'ondemand'
+
+  rtmp_url = 'rtmp://%s/%s?%s' % (server, application, auth)
+
+  clip = stream.get('identifier')
+  swf_url = 'http://www.bbc.co.uk/emp/10player.swf'
+  Log(rtmp_url)
+  Log(clip)
+  return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
