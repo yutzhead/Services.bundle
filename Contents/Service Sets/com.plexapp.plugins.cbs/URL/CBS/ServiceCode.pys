@@ -260,7 +260,11 @@ def TestURLs():
   test_urls = []
   data = HTML.ElementFromURL(CBS_URL + '/video/')
 
-  url = data.xpath('//div[@id="videoCopy"]//a')[0].get('href')
-  test_urls.append(url)
+  for item in data.xpath('//div[@id="show_block"]//a'):
+    video_url = item.get('href')
+    test_urls.append(video_url)
+
+    if len(test_urls) > 3:
+      break
 
   return test_urls
