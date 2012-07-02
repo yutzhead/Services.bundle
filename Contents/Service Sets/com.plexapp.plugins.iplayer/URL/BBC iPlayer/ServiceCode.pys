@@ -166,3 +166,20 @@ def PlayVideo(url, height):
     Log.Exception("?")
     # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
     return IndirectResponse(VideoClipObject, key = WebVideoURL(url)) 
+
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL('http://www.bbc.co.uk/iplayer')
+
+  for item in data.xpath('//div[contains(@class, "most-popular")]//li/a'):
+    video_url = item.get('href')
+    if video_url.startswith('/'):
+      video_url = 'http://www.bbc.co.uk' + video_url
+
+    test_urls.append(video_url)
+
+    if len(test_urls) > 3:
+      break
+
+  return test_urls
