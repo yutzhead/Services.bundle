@@ -111,9 +111,9 @@ def MediaObjectsForURL(url):
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
-      video_resolution = '486',
+      video_resolution = '468',
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '486'))],
+      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '468'))],
     ),
     MediaObject(
       container = Container.MP4,
@@ -138,7 +138,7 @@ def PlayVideo(url, height):
   stream_details = XML.ElementFromURL(pid_details['my_mediaselector_xml_url'])
 
   last_stream = None
-  heights = ['720', '486', '360']
+  heights = ['720', '468', '360']
   index = heights.index(height)
   for height_index in range(index, len(heights)):
     Log("IABI: " + '//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index])
