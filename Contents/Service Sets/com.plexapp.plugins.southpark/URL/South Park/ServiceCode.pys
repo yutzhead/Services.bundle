@@ -1,0 +1,40 @@
+RE_EP_DATA = Regex('.+Season (?P<season>[0-9]+), Episode (?P<episode>[0-9]+).+')
+RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
+####################################################################################################
+def NormalizeURL(url):
+    return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+    data = HTML.ElementFromURL(url)
+    title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
+    ep_title = title.split(' (')[0]
+    ep_data = RE_EP_DATA.search(title).groupdict()
+    season = ep_data['season']
+    index = ep_data['episode']
+    summary = data.xpath('//meta[@name="og:description"]')[0].get('content')
+    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+    
+    return EpisodeObject(
+        title = ep_title,
+        show = "South Park",
+        season = int(season),
+        index = int(index),
+        summary = summary,
+        thumb = thumb
+    )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+    return [
+	MediaObject(
+	    parts = [PartObject(key=Callback(PlayVideo, url=url))],
+	    protocol = 'webkit'
+	)
+    ]
+
+####################################################################################################
+def PlayVideo(url):
+    content = HTTP.Request(url).content
+    player_url = RE_PLAYER.search(content).group(1)
+    return Redirect(WebVideoURL(player_url))
