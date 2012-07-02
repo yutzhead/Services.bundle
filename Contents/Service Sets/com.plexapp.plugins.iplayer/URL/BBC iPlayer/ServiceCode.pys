@@ -163,8 +163,8 @@ def PlayVideo(url, height):
     return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
 
   except:
-    Log.Exception("?")
     # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
+    Log.Exception("Error obtaining RTMP details, falling back to WebKit")
     return IndirectResponse(VideoClipObject, key = WebVideoURL(url)) 
 
 ####################################################################################################
