@@ -141,10 +141,10 @@ def PlayVideo(url, height):
   heights = ['720', '468', '360']
   index = heights.index(height)
   for height_index in range(index, len(heights)):
-    Log("IABI: " + '//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index])
     streams = stream_details.xpath('//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index], namespaces = NAMESPACES)
     if len(streams) > 0:
       stream = streams[0]
+      Log("Stream: " + heights[height_index])
       break
   
   server = stream.get('server')
@@ -159,6 +159,4 @@ def PlayVideo(url, height):
 
   clip = stream.get('identifier')
   swf_url = 'http://www.bbc.co.uk/emp/10player.swf'
-  Log(rtmp_url)
-  Log(clip)
   return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
