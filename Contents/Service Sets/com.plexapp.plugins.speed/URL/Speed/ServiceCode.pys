@@ -1,4 +1,6 @@
+RE_APP = Regex('rtmp://brightcove\..+?/(.+)')
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+SWF_URL = "http://admin.brightcove.com/viewer/us20120627.1407/BrightcoveBootloader.swf"
 
 ####################################################################################################
 
@@ -40,11 +42,13 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
     data = DoAmfRequest(url)
     video_url = data['FLVFullLengthURL'].split('&', 1)
-    Log(video_url)
     player = video_url[0]
+    app = RE_APP.search(player).group(1)
     playpath = video_url[1]
+    connection1 = 'B:0'
+    connection2 = 'S:%s' % playpath
 
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, app=app, swf_url=SWF_URL, connections=[connection1, connection2]))
 
 ####################################################################################################
 
@@ -106,3 +110,8 @@ def TestURLs():
 	if len(test_urls) > 2:
 	    break
     return test_urls
+
+'''
+###SAMPLE###
+rtmpdump -r 'rtmp://brightcove.fcod.llnwd.net/a500/e1/uds/rtmp/ondemand/' --app 'a500/e1/uds/rtmp/ondemand/' --swfVfy 'http://admin.brightcove.com/viewer/us20120627.1407/BrightcoveBootloader.swf' --conn 'B:0' --conn 'S:mp4:340485641/340485641_781233986001_SPEED-BOS-S1-Ep1-Seg5-110210-169-BC.mp4&1341273600000&cd240d246f8ffd9b668729ae9c4d983e' --playpath 'mp4:340485641/340485641_781233986001_SPEED-BOS-S1-Ep1-Seg5-110210-169-BC.mp4&1341273600000&cd240d246f8ffd9b668729ae9c4d983e' -o test.flv
+'''
