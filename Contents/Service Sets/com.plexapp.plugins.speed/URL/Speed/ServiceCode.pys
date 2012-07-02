@@ -4,7 +4,6 @@ AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 
 def MetadataObjectForURL(url):
     data = DoAmfRequest(url)
-    Log(data)
   
     title = data['displayName']
     show_title = data['displayName']
@@ -40,7 +39,8 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
     data = DoAmfRequest(url)
-    video_url = data['FLVFullLengthURL'].split('&')
+    video_url = data['FLVFullLengthURL'].split('&', 1)
+    Log(video_url)
     player = video_url[0]
     playpath = video_url[1]
 
