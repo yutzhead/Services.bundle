@@ -4,21 +4,21 @@ NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
 def NormalizeURL(url):
 	return url
 
-
 #########################################################################################
 def MetadataObjectForURL(url):
-	smil = GetSMIL(url)
+	smil = GetSMIL(url)['entries'][0]
 
-	title = smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@abstract", namespaces=NAMESPACES)[0]
-	summary = smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@abstract", namespaces=NAMESPACES)[0]
-	duration = int(smil.xpath("/a:smil/a:body/a:seq/a:switch[1]/a:ref/@dur", namespaces=NAMESPACES)[0].split('ms')[0])
+	title = smil['title']
+	summary = smil['description']
+	thumb = smil['media$thumbnails'][0]['plfile$url']
+	duration = int(smil['media$content'][0]['plfile$duration'])
 	
 	return EpisodeObject(
 		title = title,
 		summary = summary,
+		thumb = thumb,
 		duration = duration
 	)
-
 
 #########################################################################################
 def MediaObjectsForURL(url):
@@ -29,7 +29,6 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
-
 
 #########################################################################################
 def TestURLs():
@@ -43,10 +42,16 @@ def TestURLs():
 	return testurls
 
 #########################################################################################
+
 def GetSMIL(url):
 	guid = url.split(':')[2]
-	infourl = "http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?&form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode,:disallowSharing%20&fileFields=url,duration,width,height,contentType,fileSize,format&byGuid="+guid	
-	data = JSON.ObjectFromURL(infourl)
+	infourl = "http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode,:disallowSharing%20&fileFields=url,duration,width,height,contentType,fileSize,format&byGuid="+guid	
+	return JSON.ObjectFromURL(infourl)
+
+#########################################################################################
+
+def GetVideoSMIL(url):
+	data = GetSMIL(url)
 	
 	# only adding in the 720p video, provider is very wishy-washy on actually having
 	# other resolutions in place and working, even though they advertise a lot of them ...
@@ -61,7 +66,7 @@ def GetSMIL(url):
 
 #########################################################################################
 def PlayVideo(url):
-	smil = GetSMIL(url)
+	smil = GetVideoSMIL(url)
 	video_url = smil.xpath("//a:video[1]/@src", namespaces=NAMESPACES)[0]
 	return Redirect(video_url)
 

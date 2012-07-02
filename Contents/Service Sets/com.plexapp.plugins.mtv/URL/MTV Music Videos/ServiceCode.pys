@@ -1,3 +1,4 @@
+MTV_BASE = "http://www.mtv.com"
 MTV_VIDEOS = "http://www.mtv.com/music/videos/"
 
 ####################################################################################################
@@ -13,12 +14,12 @@ def MetadataObjectForURL(url):
   artist = data.xpath('//meta[@name="mtvn_artist"]')[0].get('content')
   title = '%s - %s' % (artist, video_title)
   date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
-  thumb = data.xpath('//meta[@name="thumbnail"]')
+  thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
 
   vc = VideoClipObject(
     title = title,
     originally_available_at = date,
-    thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+    thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback = 'icon-default.png')
   )
 
   return vc
@@ -35,14 +36,14 @@ def MediaObjectsForURL(url):
 def TestURLs():
   test_urls = []
   data = HTML.ElementFromURL(MTV_VIDEOS)
-  for video in data.xpath('//item'):
-    try:
-      link = video.xpath('.//img')[0].get('src')
-      test_urls.append(link)
-    except:
-      continue
+  for video in data.xpath('//li[contains(@itemtype, "VideoObject")]//a'):
+
+    video_url = video.get('href')
+    if video_url.startswith('/'):
+      video_url = MTV_BASE + video_url
+    test_urls.append(video_url)
+
     if len(test_urls) > 3:
       break
-    else:
-      pass
+
   return test_urls

@@ -6,10 +6,6 @@
 	<dict>
 		<key>MTV Music Videos</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.mtv.com/videos/nicki-minaj/769681/right-by-my-side-featuring-chris-brown-explicit.jhtml#id=1518072</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.mtv.com/videos/.*</string>

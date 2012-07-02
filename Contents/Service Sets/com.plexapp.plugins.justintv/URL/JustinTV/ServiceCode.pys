@@ -57,7 +57,7 @@ def TestURLs():
 
         user_test_urls = []
         page = HTML.ElementFromURL('http://www.justin.tv/%s/videos' % user)
-        for item in page.xpath('//ul[@id = "broadcasts_list"]/li//p[@class = "title"]/a'):
+        for item in page.xpath('//div[@id="videos"]//a[@class="thumb"]'):
             video_url = 'http://www.justin.tv' + item.get('href')
 
             if video_url.find('/b/') > -1:

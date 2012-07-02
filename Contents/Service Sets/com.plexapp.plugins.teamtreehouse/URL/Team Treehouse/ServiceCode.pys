@@ -7,12 +7,11 @@ def MetadataObjectForURL(url):
     # Attempt to extract the details from the page.
     page = HTML.ElementFromURL(url)
 
-    title = page.xpath("//div[@class='heading']//h2/text()")[0]
-    thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
+    try: title = page.xpath("//div[@class='page-footing']//h2/text()")[0]
+    except: title = page.xpath("//title/text()")[0]
 
-    summary = None
-    try: summary = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[1]
-    except: pass
+    thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
+    summary = page.xpath("//meta[@name = 'description']")[0].get('content')
 
     duration = None
     try:

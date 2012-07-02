@@ -1,28 +1,92 @@
+
+AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+
+PLAYER_ID = Regex('"playerID":"(\w+)"', Regex.DOTALL)
+PLAYER_KEY = Regex('"playerKey":"([^"]+)"', Regex.DOTALL)
+VIDEO_ID = Regex('"videoID":"(\w+)"', Regex.DOTALL)
+
+####################################################################################################
+
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
-	
-	# Extract the details available directly form the page.
-	title = page.xpath("//meta[@name='og:title']")[0].get('content')
-	thumb = page.xpath("//meta[@name='og:image']")[0].get('href')
-	description = page.xpath("//meta[@name='description']")[0].get('content')
-	tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-	date = page.xpath("//meta[@name='date']")[0].get('content')
-	date = Datetime.ParseDate(date)
-	
-	return VideoClipObject(
-		title = title,
-		summary = description,
-		thumb = thumb,
-		tags = tags,
-		originally_available_at = date
-	)
-	
+    amf_response = DoAmfRequest(url)
+    return VideoClipObject(
+        title = amf_response['displayName'],
+        summary = amf_response['shortDescription'],
+        thumb = amf_response['thumbnailURL'],
+        tags = [ tag['name'] for tag in amf_response['tags'] ],
+        originally_available_at = amf_response['publishedDate']
+    )
+    
 ####################################################################################################
-def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [PartObject(key=WebVideoURL(url))]
-		)
-	]
+def MediaObjectsForURL(url):
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      )
+    ]
+
+####################################################################################################
+
+def PlayVideo(url):
+    amf_response = DoAmfRequest(url)
+    return Redirect(amf_response['FLVFullLengthURL'])
+
+####################################################################################################
+
+def DoAmfRequest(url):
+    page_contents = HTTP.Request(url).content
+    player_id = PLAYER_ID.search(page_contents).groups()[0]
+
+    player_key = PLAYER_KEY.search(page_contents).groups()[0]
+    video_id = VIDEO_ID.search(page_contents).groups()[0]
+
+    return AmfRequest(url = url, playerID = player_id, playerKey = player_key, videoPlayer = video_id)
+
+####################################################################################################
+
+def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
+
+    endpoint = AMF_URL
+    if playerKey:
+        endpoint += '?playerKey=%s' % playerKey
+
+    client = AMF.RemotingService(url=endpoint, user_agent='', client_type=3)
+    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
+
+    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
+    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
+
+    video_obj = ContentOverride(videoPlayer)
+    experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
+    
+    result = service.getDataForExperience('', experience)
+
+    return result['programmedContent']['videoPlayer']['mediaDTO']
+
+####################################################################################################
+class ContentOverride(object):
+  def __init__ (self, videoPlayer=None):
+    self.contentType = int(0)
+    self.contentIds = None
+    self.target = 'videoPlayer'
+    self.contentId = int(videoPlayer)
+    self.featuredRefId = None
+    self.contentRefIds = None
+    self.featuredId = float('nan')
+    self.contentRefId = None
+
+class ViewerExperienceRequest(object):
+  def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
+    self.experienceId = int(playerID)
+    self.playerKey = playerKey
+    self.contentOverrides = []
+    self.contentOverrides.append(video_obj)
+    self.TTLToken = ''
+    self.URL = url
+    self.deliveryType = float('nan')

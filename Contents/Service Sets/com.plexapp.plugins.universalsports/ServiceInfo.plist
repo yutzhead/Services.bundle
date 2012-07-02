@@ -8,12 +8,12 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.universalsports.com/video/assetid=ead4b8a0-e2ea-4705-9a30-47b1e8e8903d.html#excitement+personified+missy+franklin+worlds</string>
-				<string>http://www.universalsports.com/video/assetid=e95bbeaa-1be9-425f-b341-77552c767b80.html#2011+diamond+league+stockholm+usain+bolt+wins+200m</string>
+				<string>http://universalsports.com/video/two-massive-hits-get-sunlula-and-emerick-ejected/</string>
+				<string>http://universalsports.com/video/2012-womens-volleyball-world-grand-prix-usa-vs-cuba/</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.universalsports.com/video/assetid=.+</string>
+				<string>http://(www\.)?universalsports.com/video/.+</string>
 			</array>
 		</dict>
 	</dict>
