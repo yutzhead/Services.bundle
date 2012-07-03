@@ -46,7 +46,7 @@ def PlayVideo(url):
     app = RE_APP.search(player).group(1)
     playpath = video_url[1]
 
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, app=app, swf_url=SWF_URL, args=[0, playpath]))
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, app=app, swf_url=SWF_URL, args=[False, playpath]))
 
 ####################################################################################################
 
