@@ -1,0 +1,8 @@
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    return
+
+def MediaObjectsForURL(url):
+    return
