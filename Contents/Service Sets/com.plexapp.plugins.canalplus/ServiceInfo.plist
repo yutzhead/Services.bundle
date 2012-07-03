@@ -4,11 +4,11 @@
 <dict>
     <key>URL</key>
 	<dict>
-		<key>Canal Plus</key>
+		<key>Canal Plus France</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?canalplus\.(fr|no|dk|se)/</string>
+				<string>http://(www\.)?canalplus\.fr/</string>
 			</array>
 		</dict>
 	</dict>

@@ -1,0 +1,46 @@
+RE_VIDEO_ID = Regex('http://.+(\?vid=[0-9]+)')
+
+XML_URL = "http://service.canal-plus.com/video/rest/getVideosLiees/cplus/%s"
+
+QUALITIES = ['BAS_DEBIT', 'HAU_DEBIT', 'HD']
+
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    data = GetXML(url)
+    title = data.xpath('//TITRE')[0].text
+    summary = data.xpath('//DESCRIPTION')[0].text
+    date = Datetime.ParseDate(data.xpath('//DATE')[0].text)
+    thumbs = [data.xpath('//IMAGES/GRAND')[0].text, data.xpath('//IMAGES/PETIT')[0].text]
+    return
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            parts= [PartObject(key=Callback(PlayVideo, url=url, quality='HD'))]
+        ),
+        MediaObject(
+            parts= [PartObject(key=Callback(PlayVideo, url=url, quality='HAUT_DEBIT'))]
+        ),
+        MediaObject(
+            parts= [PartObject(key=Callback(PlayVideo, url=url, quality='BAS_DEBIT'))]
+        )
+    ]
+
+def PlayVideo(url, quality):
+    index = QUALITIES.index(quality)
+    videos = GetXML.xpath('//VIDEOS')[0]:
+    rtmp_url = ''
+    while index > -1:
+        try:
+            rtmp_url = videos.xpath('//'+QUALITIES[index]+'')[0].text
+            break
+        except:
+            index = index -1
+    
+    
+def GetXML(url):
+    id = RE_VIDEO_ID.search(url)
+    data = XML.ElementFromURL(XML_URL % id)
+    return data
