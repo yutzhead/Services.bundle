@@ -33,12 +33,12 @@ def MediaObjectsForURL(url):
           video_codec = VideoCodec.H264,
           audio_codec = AudioCodec.AAC,
           container = Container.MP4,
-          protocol = Protocol.RTMP,
           parts = [PartObject(key=Callback(PlayVideo, url = url))]
         )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
     page = HTML.ElementFromURL(url)
@@ -49,7 +49,7 @@ def PlayVideo(url):
     result = DoAmfRequest(playerId, videoId)
     url = result['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
     rtmp_details = url.split('&')
-    return Redirect(RTMPVideoItem(rtmp_details[0], clip = rtmp_details[1]))
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_details[0], clip = rtmp_details[1]))
 
 ####################################################################################################
 class ContentOverride(object):
