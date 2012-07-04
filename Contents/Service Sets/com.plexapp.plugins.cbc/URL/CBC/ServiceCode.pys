@@ -1,0 +1,15 @@
+JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases=byId=%s&byApproved=true&fields=id,title,description,pubDate,defaultThumbnailUrl,keywords,approved,:adSite,:backgroundImage,:show,:relatedURL1,:relatedURL2,:relatedURL3,:sport,:seasonNumber,:type,:segment,:event,:adCategory,:liveOnDemand,:audioVideo,:episodeNumber,:relatedClips,:genre,:commentsEnabled,:metaDataURL,:isPLS,:radioLargeImage,:contentArea,:subEvent,:featureImage,media:content,media:keywords"
+
+def NormalizeURL(url):
+    return url.strip('/')
+
+def MetadataObjectForURL(url):
+    return
+
+def MediaObjectsForURL(url):
+    return
+
+def GetDetails(url):
+    id = url.split('/')[-1]
+    details = JSON.ObjectFromURL(JSON_URL % id)
+    return details
