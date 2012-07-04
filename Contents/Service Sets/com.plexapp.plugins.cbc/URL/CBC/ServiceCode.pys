@@ -1,15 +1,54 @@
-JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases=byId=%s&byApproved=true&fields=id,title,description,pubDate,defaultThumbnailUrl,keywords,approved,:adSite,:backgroundImage,:show,:relatedURL1,:relatedURL2,:relatedURL3,:sport,:seasonNumber,:type,:segment,:event,:adCategory,:liveOnDemand,:audioVideo,:episodeNumber,:relatedClips,:genre,:commentsEnabled,:metaDataURL,:isPLS,:radioLargeImage,:contentArea,:subEvent,:featureImage,media:content,media:keywords"
+NAMESPACES = {"a" : "http://www.w3.org/2005/SMIL21/Language"}
+JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases=byId=%s&byApproved=true&fields=id,title,description,pubDate,defaultThumbnailUrl,keywords,approved,:adSite,:backgroundImage,:show,:relatedURL1,:relatedURL2,:relatedURL3,:sport,:seasonNumber,:episode,:type,:segment,:event,:adCategory,:liveOnDemand,:audioVideo,:episodeNumber,:relatedClips,:genre,:commentsEnabled,:metaDataURL,:isPLS,:radioLargeImage,:contentArea,:subEvent,:featureImage,media:content,media:keywords"
 
 def NormalizeURL(url):
     return url.strip('/')
 
 def MetadataObjectForURL(url):
-    return
+    video = GetDetails(url)
+    title = video['title']
+    summary = video['description']
+    date = Datetime.FromTimeStamp(float(video['pubDate'])).date()
+    duration = int(float(video['media$content']['plfile$duration'])*1000)
+    thumbs = [video['pl1$featureImage'], video['plmedia$defaultThumbnailUrl']]
+    try:
+        episode = int(video['pl1$episodeNumber'])
+        season = int(video['pl1$seasonNumber'])
+        show = video['pl1$show']
+        mo = EpisodeObject(
+            title=title,
+            summary=summary,
+            show=show,
+            season=season,
+            index=episode,
+            originally_available_at=date,
+            duration=duration,
+            thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-defaul.png'))
+    except:
+        mo = VideoClipObject(
+            title=title,
+            summary=summary,
+            originally_available_at=date,
+            duration=duration,
+            thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-defaul.png'))
+    
+    return mo
 
 def MediaObjectsForURL(url):
-    return
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url))]
+        )
+    ]
+
+def PlayVideo(url):
+    smil_url = GetDetails(url)['media$content']['plfile$releases']['plrelease$url']
+    smil = XML.ElementFromURL(url)
+    player = smil.xpath('//a:meta')[0].get('base')
+    playpath = smil.xpath('//a:video')[0].get('src')
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
     id = url.split('/')[-1]
     details = JSON.ObjectFromURL(JSON_URL % id)
-    return details
+    return details['entries'][0]
