@@ -32,13 +32,15 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
         MediaObject(
-          protocol = Protocol.RTMP,
+          video_codec = VideoCodec.H264,
+          audio_codec = AudioCodec.AAC,
           video_resolution = "432",
           audio_channels = 2,
           parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
         ),
         MediaObject(
-          protocol = Protocol.RTMP,
+          video_codec = VideoCodec.H264,
+          audio_codec = AudioCodec.AAC,
           video_resolution = "288",
           audio_channels = 2,
           parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
@@ -46,7 +48,7 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
+@indirect
 def PlayVideo(url, res):
 
     # Request the details pages.
@@ -59,7 +61,7 @@ def PlayVideo(url, res):
         video_url = video_url.replace('sd.mp4','hd.mp4')
 
     (streamer, file) = video_url.split('/OD/')
-    return Redirect(RTMPVideoURL(url=streamer + '/OD/', clip=file))
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = streamer + '/OD/', clip = file))
 
 ####################################################################################################
 def TestURLs():
