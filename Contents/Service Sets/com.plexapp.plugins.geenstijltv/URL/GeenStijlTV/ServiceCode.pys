@@ -2,9 +2,10 @@ VIDLINK = Regex('videourl: \'(.*?)\',')
 VIDLINK2 = Regex('xgstvplayer\(\'(.*?)\',')
 VIDLINK3 = Regex('gstvplayer\(\'[0-9]+\', \'(.*?)\',')
 THUMBLINK = Regex('GSvideo.preview = \'(.*?)\';')
+
+HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:8.0) Gecko/20100101 Firefox/8.0'
 ####################################################################################################
 def MediaObjectsForURL(url):
-
 	return [
 		MediaObject(
 			audio_codec = AudioCodec.AAC,
@@ -13,13 +14,12 @@ def MediaObjectsForURL(url):
 			video_resolution = 'sd',
 			optimized_for_streaming = True,
 			audio_channels = 2,
-			parts = [PartObject(key=url)]
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
 		)
 	]
 
 ####################################################################################################
 def NormalizeURL(url):
-
 	return url
 	
 ####################################################################################################
@@ -63,3 +63,31 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		thumb = thumb
 		)
+		
+####################################################################################################
+def PlayVideo(url):
+	
+	data = HTTP.Request(url).content
+	content = HTML.ElementFromString(data)
+	
+	cliplink = VIDLINK.findall(data)
+			
+	if cliplink == []:
+		cliplink = VIDLINK2.findall(data)
+			
+		if cliplink == []:
+			cliplink = VIDLINK3.findall(data)
+				
+	if cliplink == []:
+		Log(ClipErr)
+	else:
+		video_url = cliplink[0]
+
+		
+	Log.Debug(video_url)
+	return Redirect(video_url)
+	
+	#return Redirect(video_url)
+	#return Redirect(video_url)
+	#return Redirect(WebVideoItem(video_url))
+	#return WebVideoURL(video_url)

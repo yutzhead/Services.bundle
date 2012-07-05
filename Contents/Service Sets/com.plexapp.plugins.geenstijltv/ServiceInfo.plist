@@ -8,7 +8,8 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://flv.dumpert.nl/.*</string>
+				<string>http://www.geenstijl.tv/.*</string>
+				<string>http://www.geenstijl.nl/.*</string>
 			</array>
 		</dict>
 	</dict>
