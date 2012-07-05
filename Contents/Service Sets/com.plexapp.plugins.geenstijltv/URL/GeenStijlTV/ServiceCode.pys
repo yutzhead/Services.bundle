@@ -4,20 +4,6 @@ VIDLINK3 = Regex('gstvplayer\(\'[0-9]+\', \'(.*?)\',')
 THUMBLINK = Regex('GSvideo.preview = \'(.*?)\';')
 
 ####################################################################################################
-def MediaObjectsForURL(url):
-	return [
-		MediaObject(
-			audio_codec = AudioCodec.AAC,
-			video_codec = VideoCodec.H264,
-			container = 'mp4',
-			video_resolution = 'sd',
-			optimized_for_streaming = True,
-			audio_channels = 2,
-			parts = [PartObject(key=Callback(PlayVideo, url = url))]
-		)
-	]
-
-####################################################################################################
 def NormalizeURL(url):
 	return url
 	
@@ -62,6 +48,20 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		thumb = thumb
 		)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			audio_codec = AudioCodec.AAC,
+			video_codec = VideoCodec.H264,
+			container = 'mp4',
+			video_resolution = 'sd',
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
 		
 ####################################################################################################
 @indirect
