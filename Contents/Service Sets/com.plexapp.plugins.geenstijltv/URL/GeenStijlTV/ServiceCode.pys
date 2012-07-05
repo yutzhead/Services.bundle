@@ -80,9 +80,8 @@ def PlayVideo(url):
 				
 	if cliplink == []:
 		Log('ClipError')
+		video_url = ""
 	else:
 		video_url = cliplink[0]
 
-		
-	Log.Debug(video_url)
 	return IndirectResponse(VideoClipObject, key = video_url)
