@@ -1,56 +1,39 @@
-VIDLINK = Regex('videourl: \'(.*?)\',')
-VIDLINK2 = Regex('xgstvplayer\(\'(.*?)\',')
-VIDLINK3 = Regex('gstvplayer\(\'[0-9]+\', \'(.*?)\',')
-THUMBLINK = Regex('GSvideo.preview = \'(.*?)\';')
+VIDLINK = Regex("videourl: '(.*?)',")
+VIDLINK2 = Regex("xgstvplayer\('(.*?)',")
+VIDLINK3 = Regex("gstvplayer\('[0-9]+', '(.*?)',")
+THUMBLINK = Regex("GSvideo.preview = '(.*?)';")
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
-	
+
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	data = HTTP.Request(url).content
 	content = HTML.ElementFromString(data)
-	
+
 	title = content.xpath('//article/h1')[0].text
 	summary = content.xpath('//article/p')[0].text
-	
-	cliplink = VIDLINK.findall(data)
-	thumb = THUMBLINK.findall(data)
+
 	try:
-		thumb = thumb[0]
+		thumb = THUMBLINK.findall(data)[0]
 	except:
-		thumb = ""
-			
-	if cliplink == []:
-		cliplink = VIDLINK2.findall(data)
 		try:
-			thumb = content.xpath('.//article/img')[0].get('src')				
+			thumb = content.xpath('//article/img')[0].get('src')
 		except:
-			Log('ImageError')
-			
-		if cliplink == []:
-			cliplink = VIDLINK3.findall(data)
-			try:
-				thumb = content.xpath('.//article/img')[0].get('src')
-			except:
-				Log('ImageError')
-				
-	if cliplink == []:
-		Log('Unsupported clip')
-	else:
-		cliplink = cliplink[0]
-			
-		return VideoClipObject(
-		url = cliplink,
+			thumb = ''
+
+	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb
-		)
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
 			audio_codec = AudioCodec.AAC,
@@ -62,26 +45,22 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url = url))]
 		)
 	]
-		
+
 ####################################################################################################
 @indirect
 def PlayVideo(url):
-	
-	data = HTTP.Request(url).content
-	content = HTML.ElementFromString(data)
-	
-	cliplink = VIDLINK.findall(data)
-			
-	if cliplink == []:
-		cliplink = VIDLINK2.findall(data)
-			
-		if cliplink == []:
-			cliplink = VIDLINK3.findall(data)
-				
-	if cliplink == []:
-		Log('ClipError')
-		video_url = ""
-	else:
-		video_url = cliplink[0]
 
-	return IndirectResponse(VideoClipObject, key = video_url)
+	data = HTTP.Request(url).content
+	video_url = VIDLINK.findall(data)
+
+	if len(video_url) == 0:
+		video_url = VIDLINK2.findall(data)
+
+		if len(video_url) == 0:
+			video_url = VIDLINK3.findall(data)
+
+	if len(video_url) > 0:
+		return IndirectResponse(VideoClipObject, key = video_url[0])
+	else:
+		Log("Can't find video for url: %s" % url)
+		return
