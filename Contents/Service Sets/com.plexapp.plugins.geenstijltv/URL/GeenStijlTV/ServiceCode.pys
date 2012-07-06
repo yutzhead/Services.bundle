@@ -1,0 +1,87 @@
+VIDLINK = Regex('videourl: \'(.*?)\',')
+VIDLINK2 = Regex('xgstvplayer\(\'(.*?)\',')
+VIDLINK3 = Regex('gstvplayer\(\'[0-9]+\', \'(.*?)\',')
+THUMBLINK = Regex('GSvideo.preview = \'(.*?)\';')
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+	
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTTP.Request(url).content
+	content = HTML.ElementFromString(data)
+	
+	title = content.xpath('//article/h1')[0].text
+	summary = content.xpath('//article/p')[0].text
+	
+	cliplink = VIDLINK.findall(data)
+	thumb = THUMBLINK.findall(data)
+	try:
+		thumb = thumb[0]
+	except:
+		thumb = ""
+			
+	if cliplink == []:
+		cliplink = VIDLINK2.findall(data)
+		try:
+			thumb = content.xpath('.//article/img')[0].get('src')				
+		except:
+			Log('ImageError')
+			
+		if cliplink == []:
+			cliplink = VIDLINK3.findall(data)
+			try:
+				thumb = content.xpath('.//article/img')[0].get('src')
+			except:
+				Log('ImageError')
+				
+	if cliplink == []:
+		Log('Unsupported clip')
+	else:
+		cliplink = cliplink[0]
+			
+		return VideoClipObject(
+		url = cliplink,
+		title = title,
+		summary = summary,
+		thumb = thumb
+		)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			audio_codec = AudioCodec.AAC,
+			video_codec = VideoCodec.H264,
+			container = 'mp4',
+			video_resolution = 'sd',
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
+		
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	
+	data = HTTP.Request(url).content
+	content = HTML.ElementFromString(data)
+	
+	cliplink = VIDLINK.findall(data)
+			
+	if cliplink == []:
+		cliplink = VIDLINK2.findall(data)
+			
+		if cliplink == []:
+			cliplink = VIDLINK3.findall(data)
+				
+	if cliplink == []:
+		Log('ClipError')
+		video_url = ""
+	else:
+		video_url = cliplink[0]
+
+	return IndirectResponse(VideoClipObject, key = video_url)
