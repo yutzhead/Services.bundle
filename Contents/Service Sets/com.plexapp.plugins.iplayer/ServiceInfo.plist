@@ -2,15 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 	<key>URL</key>
 	<dict>
 		<key>BBC iPlayer</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.bbc.co.uk/iplayer/episode/b012m668/Top_Gear_Series_17_Episode_3/</string>
-				<string>http://www.bbc.co.uk/iplayer/episode/b012g0gm/The_Apprentice_Series_7_The_Final_Five/</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www\.bbc\.co\.uk/iplayer/episode/[^/$]{8}</string>
