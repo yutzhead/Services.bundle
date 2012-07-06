@@ -8,8 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.geenstijl.tv/.*</string>
-				<string>http://www.geenstijl.nl/.*</string>
+				<string>http://www\.geenstijl\.(nl|tv)/.+</string>
 			</array>
 		</dict>
 	</dict>
