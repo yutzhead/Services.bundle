@@ -13,9 +13,7 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
     data = GetXML(url)
     title = data.xpath('//TITRE')[0].text
-    Log(title)
     summary = data.xpath('//DESCRIPTION')[0].text
-    Log(summary)
     try:
         date = data.xpath('//DATE')[0].text
         date = Datetime.ParseDate(date)
@@ -54,7 +52,6 @@ def PlayVideo(url, quality):
     while index > -1:
         try:
             rtmp_url = videos.xpath('//'+QUALITIES[index]+'')[0].text
-            Log(rtmp_url)
             if rtmp_url != '':
                 break
             else:
