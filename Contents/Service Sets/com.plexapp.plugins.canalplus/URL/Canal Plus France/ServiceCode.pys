@@ -1,8 +1,10 @@
-RE_VIDEO_ID = Regex('http://.+(\?vid=[0-9]+)')
+RE_VIDEO_ID = Regex('http://.+\?vid=([0-9]+)')
+
+RE_RTMP_PARAMS = Regex('(?P<player>rtmp(e)?.+?/ondemand/)(?P<playpath>.+)')
 
 XML_URL = "http://service.canal-plus.com/video/rest/getVideosLiees/cplus/%s"
 
-QUALITIES = ['BAS_DEBIT', 'HAU_DEBIT', 'HD']
+QUALITIES = ['BAS_DEBIT', 'HAUT_DEBIT', 'HD']
 
 def NormalizeURL(url):
     return url
@@ -18,29 +20,43 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
         MediaObject(
+            video_resolution = '720',
             parts= [PartObject(key=Callback(PlayVideo, url=url, quality='HD'))]
         ),
         MediaObject(
+            video_resolution = '480',
             parts= [PartObject(key=Callback(PlayVideo, url=url, quality='HAUT_DEBIT'))]
         ),
         MediaObject(
+            video_resolution = '360',
             parts= [PartObject(key=Callback(PlayVideo, url=url, quality='BAS_DEBIT'))]
         )
     ]
 
+@indirect
 def PlayVideo(url, quality):
     index = QUALITIES.index(quality)
-    videos = GetXML.xpath('//VIDEOS')[0]:
+    videos = GetXML(url).xpath('//VIDEOS')[0]
     rtmp_url = ''
     while index > -1:
         try:
             rtmp_url = videos.xpath('//'+QUALITIES[index]+'')[0].text
-            break
+            Log(rtmp_url)
+            if rtmp_url != '':
+                break
+            else:
+                index = index -1
         except:
             index = index -1
     
+    rtmp_params = RE_RTMP_PARAMS.search(rtmp_url).groupdict()
+    player = rtmp_params['player']
+    playpath = rtmp_params['playpath']
+    if playpath[-4:] == '.mp4':
+        playpath = 'MP4:' + playpath
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
     
 def GetXML(url):
-    id = RE_VIDEO_ID.search(url)
+    id = RE_VIDEO_ID.search(url).group(1)
     data = XML.ElementFromURL(XML_URL % id)
     return data
