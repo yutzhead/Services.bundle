@@ -5,6 +5,7 @@ JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2Cdefa
 
 
 def NormalizeURL(url):
+    url = url.split('?')[0]
     return url.strip('/')
 
 def MetadataObjectForURL(url):
