@@ -51,14 +51,15 @@ def PlayVideo(url):
     smil_url = details['media$content'][0]['plfile$releases'][0]['plrelease$url']
     smil = XML.ElementFromURL(smil_url)
     player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
-    Log(player)
     playpath = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
     if playpath[-4:] == '.mp4':
         playpath = 'MP4:' + playpath
     elif playpath[-4:] == '.flv':
         playpath = playpath.strip('.flv')
-    Log(playpath)
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
+    if '/Live+Streaming/' in url:
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
+    else:
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
     id = url.split('/')[-1]
