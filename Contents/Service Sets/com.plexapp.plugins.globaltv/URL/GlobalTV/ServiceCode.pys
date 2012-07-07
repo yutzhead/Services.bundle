@@ -14,7 +14,10 @@ def MetadataObjectForURL(url):
 	
 	title = details.get('title')
 	summary = details.get('abstract')
-	duration = int(details.get('dur').strip('ms'))
+	try:
+		duration = int(details.get('dur').strip('ms'))
+	except:
+		duration = 0
 # 	thumb = details.get('imagePlayerLargeA')
 
 	try:
