@@ -2,19 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>URL</key>
-    <dict>
-	<key>CBC</key>
+	<key>URL</key>
 	<dict>
-	    <key>URLPatterns</key>
-	    <array>
-		<string>http://www.cbc.ca/player/.+</string>
-	    </array>
+		<key>CBC</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.cbc.ca/player/.+</string>
+			</array>
+		</dict>
 	</dict>
-    </dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
-        <string>UseRealRTMP</string>
-    </array>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>
