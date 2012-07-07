@@ -12,8 +12,8 @@ def MetadataObjectForURL(url):
     video = GetDetails(url)
     title = video['title']
     summary = video['description']
-    date = Datetime.FromTimeStamp(float(video['pubDate'])).date()
-    duration = int(float(video['media$content']['plfile$duration'])*1000)
+    date = Datetime.FromTimestamp(float(video['pubDate'])/1000).date()
+    duration = int(float(video['media$content'][0]['plfile$duration'])*1000)
     thumbs = [video['pl1$featureImage'], video['plmedia$defaultThumbnailUrl']]
     try:
         episode = int(video['pl1$episodeNumber'])
