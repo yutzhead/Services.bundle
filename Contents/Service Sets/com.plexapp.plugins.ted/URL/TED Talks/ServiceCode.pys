@@ -1,10 +1,6 @@
 TED_BASE = 'http://www.ted.com'
 
-RE_FILM_DATE = Regex('fd:"(.+?)",')
-RE_FILM_YEAR = Regex(';year=(.+?);')
-RE_POST_DATE = Regex('pd:"(.+?)",')
-RE_EVENT = Regex('en:"(.+?)",')
-RE_EVENT_ALT = Regex(';event=(.+?);')
+RE_EVENT = Regex(';event=(.+?);')
 RE_SLUG = Regex("download_dialog\.load\('([^']+)")
 RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
 RE_XML = Regex('file=([^&]*)')
@@ -34,28 +30,34 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  content = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
-  data = HTML.ElementFromString(content)
+  data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
+  html = HTML.ElementFromString(data)
 
-  title = data.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
-  summary = data.xpath('//meta[@name="description"]')[0].get('content')
+  title = html.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
+  summary = html.xpath('//meta[@name="description"]')[0].get('content')
 
-  try: filmDate = RE_FILM_DATE.search(content).group(1)
-  except: filmDate = RE_FILM_YEAR.search(content).group(1)
+  try:
+    date = html.xpath('//div[@class="talk-meta"]/span[1]/text()')[-1]
+    date = '1 %s' % date
+    date = Datetime.ParseDate(date).date()
+  except:
+    date = None
 
-  try: postedDate = RE_POST_DATE.search(content).group(1)
-  except: postedDate = RE_FILM_YEAR.search(content).group(1)
+  try:
+    event = html.xpath('//div[@class="talk-meta"]/span[@class="event-name"]')[0].text
+  except:
+    try:
+      event = String.Unquote(RE_EVENT.search(data).group(1), usePlus=True)
+    except:
+      event = None
 
-  try: event = RE_EVENT.search(content).group(1)
-  except: event = String.Unquote(RE_EVENT_ALT.search(content).group(1), usePlus=True)
-
-  thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
+  thumbUrl = html.xpath('//link[@rel="image_src"]')[0].get('href')
 
   # Construct a metadata item
   vc = VideoClipObject(
     title = title,
-    tagline = '%s : %s' % (event, filmDate),
-    originally_available_at = Datetime.ParseDate(postedDate).date(),
+    tagline = event,
+    originally_available_at = date,
     summary = summary,
     thumb = thumbUrl
   )
