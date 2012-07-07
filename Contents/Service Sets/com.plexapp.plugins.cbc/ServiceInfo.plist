@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
     <key>URL</key>
+    <dict>
+	<key>CBC</key>
 	<dict>
-		<key>CBC</key>
-		<dict>
-			<key>URLPatterns</key>
-			<array>
-				<string>http://www.cbc.ca/player/.+</string>
-			</array>
-		</dict>
+	    <key>URLPatterns</key>
+	    <array>
+		<string>http://www.cbc.ca/player/.+</string>
+	    </array>
 	</dict>
+    </dict>
     <key>PlexFrameworkFlags</key>
     <array>
         <string>UseRealRTMP</string>
