@@ -39,3 +39,21 @@ def PlayVideo(url):
 
 	id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 	return Redirect(WebVideoURL(PLAYER_URL % id))
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+
+	for episode in HTML.ElementFromURL('http://www.comedycentral.com/shows').xpath('//a[contains(@href, "/episodes/")]'):
+		url = episode.get('href')
+
+		if not url.startswith('http'):
+			url = 'http://www.comedycentral.com%s' % url
+
+		test_urls.append(url)
+
+		if len(test_urls) > 2:
+			break
+
+	return test_urls
