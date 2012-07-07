@@ -1,7 +1,7 @@
 NAMESPACES = {"a" : "http://www.w3.org/2005/SMIL21/Language"}
 JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases%3DbyId%253D"
 JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2CdefaultThumbnailUrl%2Ckeywords%2Capproved%2C%3AadSite%2C%3AbackgroundImage%2C%3Ashow%2C%3ArelatedURL1%2C%3ArelatedURL2%2C%3ArelatedURL3%2C%3Asport%2C%3AseasonNumber%2C%3Atype%2C%3Asegment%2C%3Aevent%2C%3AadCategory%2C%3AliveOnDemand%2C%3AaudioVideo%2C%3AepisodeNumber%2C%3ArelatedClips%2C%3Agenre%2C%3AcommentsEnabled%2C%3AmetaDataURL%2C%3AisPLS%2C%3AradioLargeImage%2C%3AcontentArea%2C%3AsubEvent%2C%3AfeatureImage%2Cmedia%3Acontent%2Cmedia%3Akeywords"
-
+BASE_URL = 'http://www.cbc.ca'
 
 
 def NormalizeURL(url):
@@ -66,19 +66,12 @@ def GetDetails(url):
     details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)
     return details['entries'][0]
 
-
-{
-    'itemsPerPage': 100,
-    'startIndex': 1,
-    'entryCount': 1,
-    '$xmlns': {'pl1': 'http://mps.theplatform.com/data/Account/1186324321', 'media': 'http://search.yahoo.com/mrss/', 'plrelease': 'http://xml.theplatform.com/media/data/Release', 'plmedia': 'http://xml.theplatform.com/media/data/Media', 'plfile': 'http://xml.theplatform.com/media/data/MediaFile', 'pla': 'http://xml.theplatform.com/data/object/admin', 'dcterms': 'http://purl.org/dc/terms/', 'pl': 'http://xml.theplatform.com/data/object'},
-    'entries':[
-        {
-            'pl1$isPLS': False,
-            'plmedia$defaultThumbnailUrl': 'http://thumbnails.cbc.ca/maven_legacy/thumbnails/4/839/Rick_Mercer_Report_S09E05_10_10_00_2011-10-11_620x350_2253300436.jpg',
-            'pl1$sport': '(not specified)',
-            'pl1$adSite': 'cbc.rickmercer.ca',
-            'id': 'http://mps.theplatform.com/data/Media/2151487919',
-            'pl1$featureImage': 'http://thumbnails.cbc.ca/maven_legacy/thumbnails/4/839/Rick_Mercer_Report_S09E05_10_10_00_2011-10-11_620x350_2253300436.jpg',
-            'media$content': [
-                {'plfile$duration': 1348.057, 'plfile$releases': [{'plrelease$parameters': '', 'updated': 1341409346000L, 'plrelease$fileId': 'http://mps.theplatform.com/data/MediaFile/2151487925', 'plrelease$restrictionId': '', 'pl1$yospaceID': '26802373', '$xmlns': {'pl1': 'http://mps.theplatform.com/data/Account/1186324321'}, 'plrelease$pid': 'AYSAc0tio3G9h6JE6wkODP1cOAigz2rO', 'plrelease$delivery': 'streaming', '$types': {'pl1$yospaceID': 'string'}, 'plrelease$url': 'http://link.theplatform.com/s/h9dtGB/AYSAc0tio3G9h6JE6wkODP1cOAigz2rO', 'plrelease$mediaId': 'http://mps.theplatform.com/data/Media/2151487919', 'ownerId': 'http://mps.theplatform.com/data/Account/1186324321', 'plrelease$approved': True, 'guid': 'RC57mw8bxUObkiQjoZRCsgfv_bA4jm0L', 'id': 'http://mps.theplatform.com/data/Release/2152152649'}]}], 'plmedia$approved': True, 'pl1$relatedURL1': 'Rick Mercer Report website|http://www.cbc.ca/mercerreport/|_blank', 'pubDate': 1341360000000L, 'title': 'Season 9 - Episode 5', 'pl1$type': 'Full Program', 'pl1$seasonNumber': '9', 'pl1$genre': 'Entertainment', 'media$keywords': '', 'pl1$show': 'Rick Mercer Report', 'description': "Tonight Rick is at the speedway in Brighton, Ontario where he participates in the Eve of Destruction by driving a trailer in a high speed race until it's demolished. He is also in Calgary at the High Country Carriage Club for the horse and carriage races, a sport Prince Philip developed.", 'pl1$audioVideo': 'Video', 'pl1$adCategory': 'restricted', 'pl1$contentArea': 'Entertainment', 'pl1$episodeNumber': '5', 'pl1$commentsEnabled': 'Yes'}]}
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL(BASE_URL + '/player/')
+    for clip in data.xpath('//div[@class="clips"]//div[contains(@class, "clip col")]'):
+	clip_url = BASE_URL + clip.xpath('.//a')[0].get('href')
+        test_urls.append(clip_url)
+        if len(test_urls) > 2:
+            break
+    return test_urls
