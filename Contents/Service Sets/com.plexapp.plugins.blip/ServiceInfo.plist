@@ -8,9 +8,9 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://blip.tv/file/5205726</string>
-				<string>http://blip.tv/play/hp9ggrvEfAI</string>
-				<string>http://blip.tv/moviesense/michael-madsen-interview-part-1-5255959</string>
+				<string>http://blip.tv/file/4662202</string>
+				<string>http://blip.tv/play/h7Q5gsLSXwI</string>
+				<string>http://blip.tv/david-mitchells-soapbox/wine-tasting-6238879</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
