@@ -1,0 +1,77 @@
+NAMESPACES = {"a" : "http://www.w3.org/2005/SMIL21/Language"}
+JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases%3DbyId%253D"
+JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2CdefaultThumbnailUrl%2Ckeywords%2Capproved%2C%3AadSite%2C%3AbackgroundImage%2C%3Ashow%2C%3ArelatedURL1%2C%3ArelatedURL2%2C%3ArelatedURL3%2C%3Asport%2C%3AseasonNumber%2C%3Atype%2C%3Asegment%2C%3Aevent%2C%3AadCategory%2C%3AliveOnDemand%2C%3AaudioVideo%2C%3AepisodeNumber%2C%3ArelatedClips%2C%3Agenre%2C%3AcommentsEnabled%2C%3AmetaDataURL%2C%3AisPLS%2C%3AradioLargeImage%2C%3AcontentArea%2C%3AsubEvent%2C%3AfeatureImage%2Cmedia%3Acontent%2Cmedia%3Akeywords"
+BASE_URL = 'http://www.cbc.ca'
+
+
+def NormalizeURL(url):
+    url = url.split('?')[0]
+    return url.strip('/')
+
+def MetadataObjectForURL(url):
+    video = GetDetails(url)
+    title = video['title']
+    summary = video['description']
+    date = Datetime.FromTimestamp(float(video['pubDate'])/1000).date()
+    duration = int(float(video['media$content'][0]['plfile$duration'])*1000)
+    thumbs = [video['pl1$featureImage'], video['plmedia$defaultThumbnailUrl']]
+    try:
+        episode = int(video['pl1$episodeNumber'])
+        season = int(video['pl1$seasonNumber'])
+        show = video['pl1$show']
+        mo = EpisodeObject(
+            title=title,
+            summary=summary,
+            show=show,
+            season=season,
+            index=episode,
+            originally_available_at=date,
+            duration=duration,
+            thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png'))
+    except:
+        mo = VideoClipObject(
+            title=title,
+            summary=summary,
+            originally_available_at=date,
+            duration=duration,
+            thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png'))
+    
+    return mo
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url))]
+        )
+    ]
+
+@indirect
+def PlayVideo(url):
+    details = GetDetails(url)
+    smil_url = details['media$content'][0]['plfile$releases'][0]['plrelease$url']
+    smil = XML.ElementFromURL(smil_url)
+    player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
+    playpath = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+    if playpath[-4:] == '.mp4':
+        playpath = 'MP4:' + playpath
+    elif playpath[-4:] == '.flv':
+        playpath = playpath.strip('.flv')
+    if '/Live+Streaming/' in url:
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
+    else:
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
+
+def GetDetails(url):
+    id = url.split('/')[-1]
+    details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)
+    return details['entries'][0]
+
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL(BASE_URL + '/player/')
+    for clip in data.xpath('//div[@class="clips"]//div[contains(@class, "clip col")]'):
+	clip_url = BASE_URL + clip.xpath('.//a')[0].get('href')
+        test_urls.append(clip_url)
+        if len(test_urls) > 2:
+            break
+    return test_urls
