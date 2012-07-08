@@ -11,33 +11,41 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
     smil = GetSMIL(url)
     details = GetSRC(smil)
-    
+
     title = details.get('title')
     summary = details.get('abstract')
-    runtime = details.get('dur')
-    duration = int(runtime.strip('ms'))
-    
+
+    try:
+        runtime = details.get('dur')
+        duration = int(runtime.strip('ms'))
+    except:
+        duration = 0
+
     thumb = details.get('imagePlayerLargeA')
-    
+    if thumb is None:
+        thumb = ""
+
     try:
         show_title = details.get('Show')
         season = int(details.get('SeasonNumber'))
         episode = int(details.get('EpisodeNumber'))
         date = Datetime.ParseDate(details.get('OriginalAirDate')).date()
+
         try:
             directors = details.get('PeopleDirector')
-	    if directors:
-		directors = directors.split(', ')
-	    else:
-		directors = []
+            if directors:
+                directors = directors.split(', ')
+            else:
+                directors = []
         except:
             directors = []
-    	try:
+
+        try:
             writers = details.get('PeopleWriter')
-	    if writers:
-		writers = writers.split(', ')
-	    else:
-		writers = []
+            if writers:
+                writers = writers.split(', ')
+            else:
+                writers = []
         except:
             writers = []
 
@@ -51,7 +59,7 @@ def MetadataObjectForURL(url):
             originally_available_at = date,
             directors = directors,
             writers = writers,
-	    thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+            thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
 	    )
     except:
         pass
@@ -60,7 +68,7 @@ def MetadataObjectForURL(url):
         title = title,
         summary = summary,
         duration = duration,
-	thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+        thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
 
 def MediaObjectsForURL(url):
@@ -75,13 +83,13 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
     smil = GetSMIL(url)
-    
+
     video_url = None
     source = GetSRC(smil).get('src')
-    
+
     player = source.split('<break>')[0]
     clip = source.split('<break>')[1]
-    
+
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
 def GetSMIL(url):
