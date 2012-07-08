@@ -8,13 +8,22 @@ def MetadataObjectForURL(url):
 
     # Extract the details from the page.
     details = GetSMIL(url)
-    video = details.xpath('//a:video', namespaces = SMIL_NAMESPACE)[0]
+
+    try:
+        video = details.xpath('//a:video', namespaces = SMIL_NAMESPACE)[0]
+    except:
+        video = details.xpath('//a:seq', namespaces = SMIL_NAMESPACE)[0]
+
+    try:
+        tags = [ tag.strip() for tag in video.get('keywords').split(',') ]
+    except:
+        tags = []
 
     return VideoClipObject(
         title = video.get('title'),
         summary = video.get('abstract'),
         thumb = R('icon-default.png'),
-        tags = [ tag.strip() for tag in video.get('keywords').split(',') ]
+        tags = tags
     )
 
 ####################################################################################################
