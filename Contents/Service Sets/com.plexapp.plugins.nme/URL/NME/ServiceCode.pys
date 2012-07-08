@@ -1,11 +1,16 @@
-import re
+HTTP.CacheTime = CACHE_1DAY
+httpHeaders = {'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:13.0) Gecko/20100101 Firefox/13.0.1'}
 
 VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
+
+RE_PLAYER_ID = Regex('param name="playerID" value="([0-9]+)"')
+RE_VIDEOPLAYER = Regex('param name="@videoPlayer" value="([0-9]+)"')
+RE_JSON = Regex('var experienceJSON = (.+)};')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    page = HTML.ElementFromURL(url)
+    page = HTML.ElementFromURL(url, headers=httpHeaders)
 
     # Extract the details available directly form the page.
     title = page.xpath("//meta[@property='og:title']")[0].get('content')
@@ -34,12 +39,12 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-    content = HTTP.Request(url).content
-    playerId = re.search('param name="playerID" value="([0-9]+)"', content).group(1)
-    videoId = re.search('param name="@videoPlayer" value="([0-9]+)"', content).group(1)
+    content = HTTP.Request(url, headers=httpHeaders).content
+    playerId = RE_PLAYER_ID.search(content).group(1)
+    videoId = RE_VIDEOPLAYER.search(content).group(1)
 
-    video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (playerId, videoId)).content
-    experience = re.search('var experienceJSON = (.+)};', video_details_page).group(1) + '}'
+    video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (playerId, videoId), headers=httpHeaders).content
+    experience = RE_JSON.search(video_details_page).group(1) + '}'
     details = JSON.ObjectFromString(experience)
 
     video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
