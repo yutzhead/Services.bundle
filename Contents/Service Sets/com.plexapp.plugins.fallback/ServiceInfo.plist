@@ -9,7 +9,7 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://videojs.com/</string>
-				<string>http://sublimevideo.net/demo</string>
+				<string>http://sublimevideo.net/</string>
 				<string>http://www.macslocum.com/html5-video.html</string>
 				<string>http://www.miracletutorials.com/howto-embed-vimeo/</string>
 				<string>http://apiblog.youtube.com/2010/07/new-way-to-embed-youtube-videos.html</string>
