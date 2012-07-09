@@ -148,6 +148,8 @@ def PlayMedia(url, fmt):
 		except:
 			# if this didn't work fall back to next resolution
 			continue
+	
+	# TODO:  Raise a new exception if we don't get a viable url (not sure how to do that just yet)
 
 	if 'twit.mediafly.com' in url:
 		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
