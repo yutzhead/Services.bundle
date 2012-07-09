@@ -165,7 +165,7 @@ def TestURLs():
 	test_urls = []
 
 	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item/link/text()'):
-		if len(test_urls) < 10:
+		if len(test_urls) < 3:
 			if url not in test_urls and RE_EPISODE.search(url):
 				test_urls.append(url)
 		else:
