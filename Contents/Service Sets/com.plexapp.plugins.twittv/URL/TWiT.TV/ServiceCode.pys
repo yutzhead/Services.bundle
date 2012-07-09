@@ -68,23 +68,21 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	mediaobjects = []
-
-	# This Week in Tech has 720p videos available
-	if '/show/this-week-in-tech/' in url or 'twit.tv/twit' in url:
-		mediaobjects.append(
-			MediaObject(
-				parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
-				video_resolution = '720',
-				aspect_ratio = '1.78',
-				container = Container.MP4,
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
+	# Lots of shows now have 720p, let's add it and handle the fallback if not available 
+	# in PlayMedia instead of limiting here
+	mediaobjects.append(
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
+			video_resolution = '720',
+			aspect_ratio = '1.78',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
 		)
+	)
 
-	# 480p
 	mediaobjects.append(
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='480p'))],
@@ -98,7 +96,6 @@ def MediaObjectsForURL(url):
 		)
 	)
 
-	# sd
 	mediaobjects.append(
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='sd'))],
@@ -111,7 +108,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		)
 	)
-
+	
 	return mediaobjects
 
 ####################################################################################################
@@ -135,12 +132,24 @@ def PlayMedia(url, fmt):
 
 	page = HTML.ElementFromURL(url)
 
-	if fmt == '720p':
-		url = page.xpath('//a[@class="hd download"]')[0].get('href')
-	elif fmt == '480p':
-		url = page.xpath('//a[@class="sd download"]')[0].get('href')
-	elif fmt == 'sd':
-		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
+	resolutions = ['720p','480p','sd']
+	video_path = {}
+	video_path['720p'] = '//a[@class="hd download"]'
+	video_path['480p'] = '//a[@class="sd download"]'
+	video_path['sd'] = '//a[@class="sd-low download"]'
+
+	index = resolutions.index(fmt)
+
+	for resolution_index in range(index, len(resolutions)):
+		current_resolution = resolutions[resolution_index]
+		try:
+			url = page.xpath(video_path[current_resolution])[0].get('href')
+			break
+		except:
+			# if this didn't work fall back to next resolution
+			continue
+	
+	# TODO:  Raise a new exception if we don't get a viable url (not sure how to do that just yet)
 
 	if 'twit.mediafly.com' in url:
 		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
