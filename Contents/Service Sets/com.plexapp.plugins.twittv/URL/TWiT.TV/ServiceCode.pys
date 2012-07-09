@@ -148,17 +148,6 @@ def PlayMedia(url, fmt):
 		except:
 			# if this didn't work fall back to next resolution
 			continue
-	
-# 	if fmt == '720p':
-# 		try:
-# 			url = page.xpath('//a[@class="hd download"]')[0].get('href')
-# 		except:
-# 			# fallback to 480p if hd is not available otherwise clients requesting 720p and not getting it go boom
-# 			url = page.xpath('//a[@class="sd download"]')[0].get('href')
-# 	elif fmt == '480p':
-# 		url = page.xpath('//a[@class="sd download"]')[0].get('href')
-# 	elif fmt == 'sd':
-# 		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
 
 	if 'twit.mediafly.com' in url:
 		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
