@@ -68,23 +68,21 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	mediaobjects = []
-
-	# This Week in Tech has 720p videos available
-	if '/show/this-week-in-tech/' in url or 'twit.tv/twit' in url:
-		mediaobjects.append(
-			MediaObject(
-				parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
-				video_resolution = '720',
-				aspect_ratio = '1.78',
-				container = Container.MP4,
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
+	# Lots of shows now have 720p, let's add it and handle the fallback if not available 
+	# in PlayMedia instead of limiting here
+	mediaobjects.append(
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
+			video_resolution = '720',
+			aspect_ratio = '1.78',
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
 		)
+	)
 
-	# 480p
 	mediaobjects.append(
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='480p'))],
@@ -98,7 +96,6 @@ def MediaObjectsForURL(url):
 		)
 	)
 
-	# sd
 	mediaobjects.append(
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='sd'))],
@@ -111,7 +108,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		)
 	)
-
+	
 	return mediaobjects
 
 ####################################################################################################
@@ -136,7 +133,11 @@ def PlayMedia(url, fmt):
 	page = HTML.ElementFromURL(url)
 
 	if fmt == '720p':
-		url = page.xpath('//a[@class="hd download"]')[0].get('href')
+		try:
+			url = page.xpath('//a[@class="hd download"]')[0].get('href')
+		except:
+			# fallback to 480p if hd is not available otherwise clients requesting 720p and not getting it go boom
+			url = page.xpath('//a[@class="sd download"]')[0].get('href')
 	elif fmt == '480p':
 		url = page.xpath('//a[@class="sd download"]')[0].get('href')
 	elif fmt == 'sd':
