@@ -93,152 +93,156 @@ def CodecsForVideoTypeValue(value):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
-
 	try:
-		req.headers
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers:
-			if e.headers['Location'] != url:
-				return URLService.MetadataObjectForURL(e.headers['Location'])
-			return None
+		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
 
-	if ShouldParse(req):
+		try:
+			req.headers
+		except Ex.RedirectError, e:
+			if 'Location' in e.headers:
+				if e.headers['Location'] != url:
+					return URLService.MetadataObjectForURL(e.headers['Location'])
+				return None
 
-		# Embedded Video
-		source_url = FindExternalSource(req)
-		if source_url is not None:
-			return URLService.MetadataObjectForURL(source_url)
+		if ShouldParse(req):
 
-		doc = HTML.ElementFromString(req.content)
+			# Embedded Video
+			source_url = FindExternalSource(req)
+			if source_url is not None:
+				return URLService.MetadataObjectForURL(source_url)
 
-		# HTML5 Video
-		videos = doc.xpath('//video')
+			doc = HTML.ElementFromString(req.content)
 
-		if len(videos) > 0:
-			tag = videos[0]
+			# HTML5 Video
+			videos = doc.xpath('//video')
 
-			try: thumb = FixUrl(url, tag.get('poster'))
-			except: thumb = None
+			if len(videos) > 0:
+				tag = videos[0]
 
-			return VideoClipObject(
-				title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
-				thumb = thumb
-			)
+				try: thumb = FixUrl(url, tag.get('poster'))
+				except: thumb = None
 
-		# Meta tag refresh
-		refresh = RE_META_REFRESH.search(req.content)
+				return VideoClipObject(
+					title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
+					thumb = thumb
+				)
 
-		if refresh:
-			if refresh.group('url') != url:
-				return URLService.MetadataObjectForURL(refresh.group('url'))
+			# Meta tag refresh
+			refresh = RE_META_REFRESH.search(req.content)
 
-		# Regex Video
-		video = RE_PATTERN.search(req.content)
+			if refresh:
+				if refresh.group('url') != url:
+					return URLService.MetadataObjectForURL(refresh.group('url'))
 
-		if video:
-			return VideoClipObject(
-				title = doc.xpath('//title')[0].text.strip()
-			)
+			# Regex Video
+			video = RE_PATTERN.search(req.content)
 
-		# Regex Video YouTube
-		youtube = RE_YOUTUBE.search(req.content)
+			if video:
+				return VideoClipObject(
+					title = doc.xpath('//title')[0].text.strip()
+				)
 
-		if youtube:
-			youtube_url = youtube.group('vid').replace('\\', '')
-			return URLService.MetadataObjectForURL(youtube_url)
+			# Regex Video YouTube
+			youtube = RE_YOUTUBE.search(req.content)
 
-	return None
+			if youtube:
+				youtube_url = youtube.group('vid').replace('\\', '')
+				return URLService.MetadataObjectForURL(youtube_url)
+
+	except:
+		return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
-
 	try:
-		req.headers
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers:
-			if e.headers['Location'] != url:
-				return URLService.MediaObjectsForURL(e.headers['Location'])
-			return None
+		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
 
-	if ShouldParse(req):
+		try:
+			req.headers
+		except Ex.RedirectError, e:
+			if 'Location' in e.headers:
+				if e.headers['Location'] != url:
+					return URLService.MediaObjectsForURL(e.headers['Location'])
+				return None
 
-		# Embedded Video
-		source_url = FindExternalSource(req)
-		if source_url is not None:
-			return URLService.MediaObjectsForURL(source_url)
+		if ShouldParse(req):
 
-		doc = HTML.ElementFromString(req.content)
+			# Embedded Video
+			source_url = FindExternalSource(req)
+			if source_url is not None:
+				return URLService.MediaObjectsForURL(source_url)
 
-		# HTML5 Video
-		videos = doc.xpath('//video')
+			doc = HTML.ElementFromString(req.content)
 
-		if len(videos) > 0:
-			tag = videos[0]
+			# HTML5 Video
+			videos = doc.xpath('//video')
 
-			result = []
-			sources = tag.xpath('./source')
-			sources.insert(0, tag)
+			if len(videos) > 0:
+				tag = videos[0]
 
-			for source in sources:
-				src = source.get('src')
+				result = []
+				sources = tag.xpath('./source')
+				sources.insert(0, tag)
 
-				if src == None:
-					continue
+				for source in sources:
+					src = source.get('src')
 
+					if src == None:
+						continue
+
+					src = FixUrl(url, src)
+					videoType = source.get('type')
+					codecs = CodecsForVideoTypeValue(videoType)
+
+					attrs = {
+						'parts': [PartObject(key=src)]
+					}
+
+					if codecs and len(codecs) > 0:
+						attrs['video_codec'] = codecs[0]
+
+					if codecs and len(codecs) > 1:
+						attrs['audio_codec'] = codecs[1]
+
+					result.append(MediaObject(**attrs))
+
+				return result
+
+			# Meta tag refresh
+			refresh = RE_META_REFRESH.search(req.content)
+
+			if refresh:
+				if refresh.group('url') != url:
+					return URLService.MediaObjectsForURL(refresh.group('url'))
+
+			# Regex Video
+			video = RE_PATTERN.search(req.content)
+
+			if video:
+				src = video.group('vid')
+				src = String.Unquote(src)
 				src = FixUrl(url, src)
-				videoType = source.get('type')
-				codecs = CodecsForVideoTypeValue(videoType)
 
-				attrs = {
-					'parts': [PartObject(key=src)]
-				}
+				if src.find('.m3u8') != -1:
+					return [
+						MediaObject(
+							parts = [PartObject(key=HTTPLiveStreamURL(src))]
+						)
+					]
+				else:
+					return [
+						MediaObject(
+							parts = [PartObject(key=src)]
+						)
+					]
 
-				if codecs and len(codecs) > 0:
-					attrs['video_codec'] = codecs[0]
+			# Regex Video YouTube
+			youtube = RE_YOUTUBE.search(req.content)
 
-				if codecs and len(codecs) > 1:
-					attrs['audio_codec'] = codecs[1]
+			if youtube:
+				youtube_url = youtube.group('vid').replace('\\', '')
+				return URLService.MediaObjectsForURL(youtube_url)
 
-				result.append(MediaObject(**attrs))
-
-			return result
-
-		# Meta tag refresh
-		refresh = RE_META_REFRESH.search(req.content)
-
-		if refresh:
-			if refresh.group('url') != url:
-				return URLService.MediaObjectsForURL(refresh.group('url'))
-
-		# Regex Video
-		video = RE_PATTERN.search(req.content)
-
-		if video:
-			src = video.group('vid')
-			src = String.Unquote(src)
-			src = FixUrl(url, src)
-
-			if src.find('.m3u8') != -1:
-				return [
-					MediaObject(
-						parts = [PartObject(key=HTTPLiveStreamURL(src))]
-					)
-				]
-			else:
-				return [
-					MediaObject(
-						parts = [PartObject(key=src)]
-					)
-				]
-
-		# Regex Video YouTube
-		youtube = RE_YOUTUBE.search(req.content)
-
-		if youtube:
-			youtube_url = youtube.group('vid').replace('\\', '')
-			return URLService.MediaObjectsForURL(youtube_url)
-
-	return None
+	except:
+		return None
