@@ -132,16 +132,33 @@ def PlayMedia(url, fmt):
 
 	page = HTML.ElementFromURL(url)
 
-	if fmt == '720p':
+	resolutions = ['720p','480p','sd']
+	video_path = {}
+	video_path['720p'] = '//a[@class="hd download"]'
+	video_path['480p'] = '//a[@class="sd download"]'
+	video_path['sd'] = '//a[@class="sd-low download"]'
+
+	index = resolutions.index(fmt)
+
+	for resolution_index in range(index, len(resolutions)):
+		current_resolution = resolutions[resolution_index]
 		try:
-			url = page.xpath('//a[@class="hd download"]')[0].get('href')
+			url = page.xpath(video_path[current_resolution])[0].get('href')
+			break
 		except:
-			# fallback to 480p if hd is not available otherwise clients requesting 720p and not getting it go boom
-			url = page.xpath('//a[@class="sd download"]')[0].get('href')
-	elif fmt == '480p':
-		url = page.xpath('//a[@class="sd download"]')[0].get('href')
-	elif fmt == 'sd':
-		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
+			# if this didn't work fall back to next resolution
+			continue
+	
+# 	if fmt == '720p':
+# 		try:
+# 			url = page.xpath('//a[@class="hd download"]')[0].get('href')
+# 		except:
+# 			# fallback to 480p if hd is not available otherwise clients requesting 720p and not getting it go boom
+# 			url = page.xpath('//a[@class="sd download"]')[0].get('href')
+# 	elif fmt == '480p':
+# 		url = page.xpath('//a[@class="sd download"]')[0].get('href')
+# 	elif fmt == 'sd':
+# 		url = page.xpath('//a[@class="sd-low download"]')[0].get('href')
 
 	if 'twit.mediafly.com' in url:
 		url = url.replace('twit.mediafly.com', 'twit.cachefly.net')
@@ -159,7 +176,7 @@ def TestURLs():
 	test_urls = []
 
 	for url in XML.ElementFromURL('http://twit.tv/node/feed').xpath('//item/link/text()'):
-		if len(test_urls) < 3:
+		if len(test_urls) < 10:
 			if url not in test_urls and RE_EPISODE.search(url):
 				test_urls.append(url)
 		else:
