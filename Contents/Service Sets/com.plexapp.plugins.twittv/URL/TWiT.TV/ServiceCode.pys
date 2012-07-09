@@ -67,10 +67,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	mediaobjects = []
-	# Lots of shows now have 720p, let's add it and handle the fallback if not available 
-	# in PlayMedia instead of limiting here
-	mediaobjects.append(
+	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='720p'))],
 			video_resolution = '720',
@@ -80,10 +77,7 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
-		)
-	)
-
-	mediaobjects.append(
+		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='480p'))],
 			video_resolution = '480',
@@ -93,10 +87,7 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
-		)
-	)
-
-	mediaobjects.append(
+		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayMedia, url=url, fmt='sd'))],
 			video_resolution = 'sd',
@@ -107,9 +98,7 @@ def MediaObjectsForURL(url):
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
-	)
-	
-	return mediaobjects
+	]
 
 ####################################################################################################
 def TimeToMs(timecode):
@@ -133,10 +122,11 @@ def PlayMedia(url, fmt):
 	page = HTML.ElementFromURL(url)
 
 	resolutions = ['720p','480p','sd']
-	video_path = {}
-	video_path['720p'] = '//a[@class="hd download"]'
-	video_path['480p'] = '//a[@class="sd download"]'
-	video_path['sd'] = '//a[@class="sd-low download"]'
+	video_path = {
+		'720p' : '//a[@class="hd download"]',
+		'480p' : '//a[@class="sd download"]',
+		'sd'   : '//a[@class="sd-low download"]'
+	}
 
 	index = resolutions.index(fmt)
 
@@ -148,7 +138,7 @@ def PlayMedia(url, fmt):
 		except:
 			# if this didn't work fall back to next resolution
 			continue
-	
+
 	# TODO:  Raise a new exception if we don't get a viable url (not sure how to do that just yet)
 
 	if 'twit.mediafly.com' in url:
