@@ -72,8 +72,8 @@ def PlayVideo(url, res):
 
 
 ####################################################################################################
-def GetXML(xml_url, cacheTime = None):
-	xml_content = HTTP.Request(xml_url, cacheTime = cacheTime).content
+def GetXML(xml_url):
+	xml_content = HTTP.Request(xml_url, cacheTime = 1).content
 
     # It appears that it's possible for the RSS feed to actually be invalid causing the XML code to
     # raise an exception. The currently known issues that we have to deal with are as follows:
