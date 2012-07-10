@@ -1,17 +1,25 @@
 ARCHIVES = 'http://api.justin.tv/api/channel/archives/%s.json'
+CLIP_DATA = 'http://api.justin.tv/api/clip/show/%s.json'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
     video = VideoFromURL(url)
-    if video is not None:
-        return VideoClipObject(
-            title = video['title'],
-            thumb = video['image_url_medium'],
-            originally_available_at = Datetime.ParseDate(video['updated_on']),
-            duration = int(video['length']) * 1000)
 
-    return None
+    try:
+        originally_available_at = Datetime.ParseDate(video['updated_on'])
+    except:
+        try:
+            originally_available_at = Datetime.ParseDate(video['created_on'])
+        except:
+            originally_available_at = None
+
+    return VideoClipObject(
+        title = video['title'],
+        thumb = video['image_url_medium'],
+        originally_available_at = originally_available_at,
+        duration = int(video['length']) * 1000
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -35,16 +43,10 @@ def PlayVideo(url):
 ####################################################################################################
 def VideoFromURL(url):
 
-    # Request the details page associated with the channel
-    channel_name = url.split('/')[-3]
+    # Request the details page associated with the video clip
     video_id = url.split('/')[-1]
-    videos = JSON.ObjectFromURL(ARCHIVES % channel_name)
-
-    for video in videos:
-        if video['id'] == video_id:
-            return video
-
-    return None
+    video = JSON.ObjectFromURL(CLIP_DATA % video_id)
+    return video[0]
 
 ####################################################################################################
 def TestURLs():
