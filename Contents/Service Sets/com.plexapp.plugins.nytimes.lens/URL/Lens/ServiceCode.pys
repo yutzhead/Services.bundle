@@ -36,11 +36,14 @@ def GetPhotos(url):
   url = RE_DATA_URL.findall(data)[0]
   image = 1
   for photo in XML.ElementFromURL(url).xpath('//photo'):
+    summary = photo.find('caption').text
+    if summary != None and len(summary) > 0:
+      summary = String.StripTags(summary)
     c.add(PhotoObject(
         key = photo.find('url').text,
         title = 'Photo %d' % image,
         #directors = photo.find('credit').text, '''assigning directors to PhotoObjects doesn't seem to be supported currently'''
-        summary = String.StripTags(photo.find('caption').text),
+        summary = summary,
         thumb = photo.find('url').text
         )
       )
