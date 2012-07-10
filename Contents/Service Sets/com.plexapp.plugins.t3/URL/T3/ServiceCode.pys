@@ -73,7 +73,7 @@ class ViewerExperienceRequest(object):
 
 ####################################################################################################
 def DoAmfRequest(playerId, videoId):
-    client = AMF.RemotingService('http://c.brightcove.com/services/messagebroker/amf', user_agent='', client_type=3)
+    client = AMF.RemotingService('http://c.brightcove.com/services/messagebroker/amf', user_agent='', amf_version=3)
     service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
     
     AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')

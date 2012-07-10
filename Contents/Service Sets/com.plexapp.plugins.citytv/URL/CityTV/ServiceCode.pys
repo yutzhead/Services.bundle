@@ -85,7 +85,7 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
     if playerKey:
         endpoint += '?playerKey=%s' % playerKey
 
-    client = AMF.RemotingService(url=endpoint, user_agent='', client_type=3)
+    client = AMF.RemotingService(url=endpoint, user_agent='', amf_version=3)
     service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
 
     AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')

@@ -58,14 +58,14 @@ def PlayVideo(url, quality):
                 index = index -1
         except:
             index = index -1
-    
+
     rtmp_params = RE_RTMP_PARAMS.search(rtmp_url).groupdict()
     player = rtmp_params['player']
     playpath = rtmp_params['playpath']
     if playpath[-4:] == '.mp4':
         playpath = 'MP4:' + playpath
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
-    
+
 def GetXML(url):
     id = RE_VIDEO_ID.search(url).group(1)
     data = XML.ElementFromURL(XML_URL % id)
