@@ -16,6 +16,7 @@ def MetadataObjectForURL(url):
 	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')[0]
 	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
 
+	originally_available_at = None
 	try:
 		date = data.xpath('//ul[@class="video-details"]/li')
 		if len(date) > 0:
@@ -23,7 +24,7 @@ def MetadataObjectForURL(url):
 			if date:
 				originally_available_at = Datetime.ParseDate(date.group(1)).date()
 	except:
-		originally_available_at = None
+		pass
 
 	vc = VideoClipObject(
 		title = title,
