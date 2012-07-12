@@ -6,6 +6,12 @@
 	<dict>
 		<key>GeenStijlTV</key>
 		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.geenstijl.tv/2012/04/rotterdammers_feliciteren_joha.html</string>
+				<string>http://www.geenstijl.tv/2011/06/jelte_de_sletten_tietonfilmpje.html</string>
+				<string>http://www.geenstijl.tv/2012/07/exclusief_pvver_klapt_uit_de_s.html</string>
+			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www\.geenstijl\.(nl|tv)/.+</string>
