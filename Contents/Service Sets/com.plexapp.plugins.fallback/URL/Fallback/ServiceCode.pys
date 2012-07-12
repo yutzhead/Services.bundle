@@ -73,7 +73,7 @@ def FindExternalSource(req):
 				node_url = video.get(node)
 				for sources_check in URLService.AllPatterns:
 					try: 
-						if len(Regex(sources_check).findall(node_url)) > 0:
+						if len(node_url) > 0 and len(Regex(sources_check).findall(node_url)) > 0:
 							return node_url
 					except: pass
 			except: pass
