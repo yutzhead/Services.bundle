@@ -167,7 +167,16 @@ def PickMatch(fmts, index, match_format):
 @indirect
 def PlayVideo(url, default_fmt = None):
 
-  yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
+  # Some videos require the user to authenticate in order for age verification to be successful. Since
+  # this is currently not supported, we should detect the case and raise the suitable Framework 
+  # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
+  try:
+    yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1, follow_redirects = False).content
+  except Ex.RedirectError, e:
+    if e.location.startswith('http://www.youtube.com/verify_age?') == False:
+      yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
+    else:
+      raise Ex.MediaNotAuthorized
 
   # Build up the format map.
   fmt_url_map = RE_URL_MAP.findall(yt_page)[0]

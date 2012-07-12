@@ -218,6 +218,7 @@ def GetAvailableMediaObjectsForURL(url):
 
     external_sources = [
       ('//embed[contains(@src, "youtube.com")]', 'src', None, False),
+      ('//iframe[contains(@src, "youtube.com")]', 'src', None, False),
       ('//embed[contains(@src, "vimeo.com")]', 'src', None, False),
       ('//object[contains(@data, "blip.tv")]', 'data', FindBlip, True)
     ]
