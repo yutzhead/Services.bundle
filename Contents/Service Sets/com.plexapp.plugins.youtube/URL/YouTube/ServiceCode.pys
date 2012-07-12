@@ -84,12 +84,15 @@ def NormalizeURL(url):
       if id:
         video_id = id.group(1)
       else:
-        return None
+        return ''
 
   return 'http://www.youtube.com/watch?v=%s' % video_id
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+  if url == '':
+    return None
 
   video_id = url[url.find('v=')+2:].split('&')[0]
   details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
@@ -125,6 +128,9 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+  if url == '':
+    return None
 
   ret = []
 
