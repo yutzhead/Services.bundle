@@ -19,7 +19,7 @@ HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; 
 HTTP.CacheTime = CACHE_1HOUR
 
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
-RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?(:|%3A)(//|%2F%2F)(www\.)?youtu\.?be(\.com)?.+?)("|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\)?/){2}(www\.)?youtu\.?be(\.com)?.+?)("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
 RE_META_REFRESH = Regex('<meta.+?http-equiv=.refresh.+?content=.([0-9]+;url=)?(?P<url>https?://[^"\']+)', Regex.IGNORECASE)
