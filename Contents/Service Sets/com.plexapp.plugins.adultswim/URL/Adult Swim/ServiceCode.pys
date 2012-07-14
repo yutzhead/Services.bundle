@@ -52,7 +52,6 @@ def MetadataObjectForURL(url):
             title = title,
             summary = summary,
             thumb = thumb,
-            genres = genres,
             content_rating = content_rating,
             originally_available_at = date,
             duration = duration
