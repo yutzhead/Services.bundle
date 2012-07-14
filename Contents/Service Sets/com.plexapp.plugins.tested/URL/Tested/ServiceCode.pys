@@ -1,0 +1,62 @@
+BASEURL = 'http://www.tested.com'
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+
+	page = HTML.ElementFromURL("http://www.tested.com/videos/")
+	videos = page.xpath('//section[@class="content"]/ul/li')
+
+	for video in videos:
+		thisLink = BASEURL + video.xpath('./a[@class="title"]/@href')[0]
+		test_urls.append(thisLink)
+
+		if len(test_urls) > 5:
+			break
+
+	return test_urls
+	
+			
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+	title = page.xpath('//aside/section[@class="info"]/a[@class="title"]/text()')
+	summary = page.xpath('//aside/section[@class="info"]/p/text()')
+	
+	# Construct a metadata item
+	vc = VideoClipObject(
+		title = title,
+		summary = summary
+	)
+
+	return vc
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	video_url = HTML.ElementFromURL(url).xpath('//iframe/@src')[0]
+	media = URLService.MediaObjectsForURL(video_url)
+	return Redirect(media[0].parts[0].key)
+
+
+
