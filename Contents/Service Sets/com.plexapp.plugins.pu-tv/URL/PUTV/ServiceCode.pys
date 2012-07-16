@@ -32,22 +32,8 @@ def PlayVideo(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	content = HTML.ElementFromURL(url)
+	clip 	= HTML.ElementFromURL(url).xpath("//div[@class='field-items']/div/iframe")[0].get('src')
+	clip 	= clip.split('?', 1)[0]
+	media 	= URLService.MediaObjectsForURL(clip)
 	
-	title = content.xpath('//h1[@id="page-title"]')[0].text
-	
-	try:
-		thumb = content.xpath('//meta[@property="og:image"]')[0].get('content')
-	except:
-		thumb = R('icon-default.png')
-	
-	try:
-		summary = content.xpath('//meta[@property="og:description"]')[0].get('content')
-	except:
-		summary = ""
-		
-	return VideoClipObject(
-		title = title,
-		summary = summary,
-		thumb = thumb
-	)
+	return URLService.MetadataObjectForURL(media)
