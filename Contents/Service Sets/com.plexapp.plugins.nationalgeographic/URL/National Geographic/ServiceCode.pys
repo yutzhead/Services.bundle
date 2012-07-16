@@ -55,4 +55,22 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(id):
 
-  return Redirect(IPAD_URL % id)
+  playlist_url = IPAD_URL % id
+  if Client.Platform == ClientPlatform.Roku:
+    original_playlist = HTTP.Request(playlist_url).content
+
+    # The National Geographic playlists (m3u8) are known to contain multiple return characters in their
+    # body. Although this shouldn't be a problem, the Roku client is currently unable to handle this. 
+    # Therefore, we 'clean' the playlist ourself and provide it's contents to the client. Since the
+    # playlist contains URLs to the actual National Geographic servers, it shouldn't cause any further
+    # requests back to the user's server.
+    new_playlist = ""
+    for line in original_playlist.splitlines():
+      if len(line) > 0:
+        new_playlist = new_playlist + line
+        new_playlist = new_playlist + '\n'
+
+    return new_playlist
+  else:
+    
+    return Redirect(playlist_url)
