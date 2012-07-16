@@ -79,9 +79,6 @@ def GetExternalSource(url):
 
     # Obtain the page source
     page_content = HTTP.Request(url).content
-    Log("Begin")
-    Log(page_content)
-    Log("End")
     ajax_content = RE_AJAX_CONTENT.search(page_content).groupdict()['c'] + '}'
     ajax = JSON.ObjectFromString(ajax_content)
     return ajax['player']
