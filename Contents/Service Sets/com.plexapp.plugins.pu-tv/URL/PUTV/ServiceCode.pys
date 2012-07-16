@@ -1,0 +1,53 @@
+YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	clip = HTML.ElementFromURL(url).xpath("//div[@class='field-items']/div/iframe")[0].get('src')
+	clip = clip.split('?', 1)[0]
+	media = URLService.MediaObjectsForURL(clip)
+
+	return Redirect(media[0].parts[0].key)
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	content = HTML.ElementFromURL(url)
+	
+	title = content.xpath('//h1[@id="page-title"]')[0].text
+	
+	try:
+		thumb = content.xpath('//meta[@property="og:image"]')[0].get('content')
+	except:
+		thumb = R('icon-default.png')
+	
+	try:
+		summary = content.xpath('//meta[@property="og:description"]')[0].get('content')
+	except:
+		summary = ""
+		
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb
+	)
