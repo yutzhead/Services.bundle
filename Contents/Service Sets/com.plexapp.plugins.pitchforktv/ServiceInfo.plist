@@ -25,7 +25,18 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?pitchfork\.com/tv/(?!musicvideos).+</string>
+				<string>http://(www\.)?pitchfork\.com/tv/(?!musicvideos|youtube).+</string>
+			</array>
+		</dict>
+		<key>Pitchfork TV YouTube</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://pitchfork.com/tv/youtube/11-pitchfork-weekly/275-andrew-wk-flying-lotus-pay-attention/</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(www\.)?pitchfork\.com/tv/youtube/.+</string>
 			</array>
 		</dict>
 	</dict>
