@@ -35,7 +35,6 @@ def MetadataObjectForURL(url):
 	tagline = None
 	try: tagline = 'Views: '+str(page.xpath("/video/@views")[0])+' | Ratings: '+str(page.xpath("/video/@ratings")[0])
 	except: pass
-	PCLogging('MetadataObjectForURL - '+title,url,id)
 	return VideoClipObject(
 		title = title,
 		thumb = thumb,
@@ -45,6 +44,7 @@ def MetadataObjectForURL(url):
 		originally_available_at = originally_available_at,
 		year = year,
 		tagline = tagline,
+		summary = tagline,
 		genres = ['XXX','Adult','18+'],
 		content_rating = 'XXX',
 		content_rating_age = 18,
@@ -64,7 +64,6 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url):
-	PCLogging('Play',url)
 	HTTP.Headers['Referer'] = 'http://plexchannels.com'
 	page = HTTP.Request(url).content
 	video_url = RE_VIDEO_URL.search(page).group('video_url')
@@ -81,26 +80,10 @@ def TestURLs():
 				test_urls.append(link)
 		else:
 			break
-	log_urls = ' '.join(test_urls)
-	PCLogging('TestURLs',log_urls)
+	#log_urls = ' '.join(test_urls)
 	return test_urls
 
 ####################################################################################################
-def PCLogging(action='',label='',value=''):
-	HTTP.Headers['Referer'] = ''
-	if value != '':
-		url = ('http://logging.plexchannels.com/%s/?action=%s&label=%s&value=%s' % (TITLE, String.Encode(action), String.Encode(label), str(value)))
-	else:
-		if label != '':
-			url = ('http://logging.plexchannels.com/%s/?action=%s&label=%s' % (TITLE, String.Encode(action), String.Encode(label)))
-		else:
-			url = ('http://logging.plexchannels.com/%s/?action=%s' % (TITLE, String.Encode(action)))
-	try:
-		HTTP.Request(url, cacheTime=0).headers
-		#Log(HTTP.Request(url, cacheTime=0).content)
-	except:
-		Log(HTTP.Request(url, cacheTime=0).content)
-
 def GetDurationFromString(duration):
 	try:
 		durationArray = duration.split(":")
