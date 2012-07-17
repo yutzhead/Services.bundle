@@ -100,7 +100,7 @@ def MetadataObjectForURL(url):
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
-				if e.headers['Location'] != url:
+				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					return URLService.MetadataObjectForURL(e.headers['Location'])
 				return None
 
@@ -162,7 +162,7 @@ def MediaObjectsForURL(url):
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
-				if e.headers['Location'] != url:
+				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					return URLService.MediaObjectsForURL(e.headers['Location'])
 				return None
 
