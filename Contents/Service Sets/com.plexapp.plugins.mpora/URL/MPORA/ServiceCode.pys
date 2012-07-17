@@ -1,9 +1,6 @@
 SD_REGEX	= Regex('"sd":{"src":"(.*?)",')
 HD_REGEX	= Regex('"hd":{"src":"(.*?)",')
 
-#"sd":{"src":"http://ugc.mporatrons.com/videos/AA69CghwlqI_640.mp4",
-#"hd":{"src":"http://ugc.mporatrons.com/videos/AA69CghwlqI_1280.mp4",
-
 ####################################################################################################
 
 def NormalizeURL(url):
