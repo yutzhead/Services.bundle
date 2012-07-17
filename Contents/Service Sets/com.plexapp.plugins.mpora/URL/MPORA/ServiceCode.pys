@@ -1,3 +1,8 @@
+SD_REGEX	= Regex('"sd":{"src":"(.*?)",')
+HD_REGEX	= Regex('"hd":{"src":"(.*?)",')
+
+#"sd":{"src":"http://ugc.mporatrons.com/videos/AA69CghwlqI_640.mp4",
+#"hd":{"src":"http://ugc.mporatrons.com/videos/AA69CghwlqI_1280.mp4",
 
 ####################################################################################################
 
@@ -55,12 +60,33 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
-
+@indirect
 def PlayVideo(url, res):
 
-    if res == "hd":
-        url = url + '?hd=1'
+	page = HTTP.Request(url).content
+	
+	video_urlsd = SD_REGEX.findall(page)
+	video_urlhd = HD_REGEX.findall(page)
+	try:
+		video_urlsd = video_urlsd[0]
+	except:
+		video_urlsd = ""
+	
+	try:
+		video_urlhd = video_urlhd[0]
+	except:
+		video_urlhd = ""
 
-    page = HTML.ElementFromURL(url)
-    video_url = page.xpath('//div[contains(@class, "player")]//video')[0].get('src')
-    return Redirect(video_url)
+	Log.Debug(video_urlsd)
+	Log.Debug(video_urlhd)
+		
+	if res == "hd":
+		if video_urlhd != "":
+			Log.Debug('playing hd')
+			return IndirectResponse(VideoClipObject, key = video_urlhd)
+		else:
+			Log.Debug('playing sd')
+			return IndirectResponse(VideoClipObject, key = video_urlsd)
+	else:
+		Log.Debug('playing sd')
+		return IndirectResponse(VideoClipObject, key = video_urlsd)
