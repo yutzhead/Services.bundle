@@ -82,8 +82,7 @@ def MetadataObjectForURL(url):
 
           break
 
-        # If this is a documentary...
-        elif category['title'] == 'Documentaries':
+        else:
           title = programme['display_title']['title']
           # Create a VideoClipObject...
           video = VideoClipObject(
