@@ -73,9 +73,6 @@ def PlayVideo(url, res):
 		video_urlhd = video_urlhd[0]
 	except:
 		video_urlhd = ""
-
-	Log.Debug(video_urlsd)
-	Log.Debug(video_urlhd)
 		
 	if res == "hd":
 		if video_urlhd != "":
