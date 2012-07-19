@@ -1,0 +1,39 @@
+YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	clip = HTML.ElementFromURL(url).xpath("//div[@class='field-items']/div/iframe")[0].get('src')
+	clip = clip.split('?', 1)[0]
+	media = URLService.MediaObjectsForURL(clip)
+
+	return Redirect(media[0].parts[0].key)
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	clip 	= HTML.ElementFromURL(url).xpath("//div[@class='field-items']/div/iframe")[0].get('src')
+	clip 	= clip.split('?', 1)[0]
+	media 	= URLService.MediaObjectsForURL(clip)
+	
+	return URLService.MetadataObjectForURL(media)
