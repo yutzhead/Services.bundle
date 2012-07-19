@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>PUTV</key>
+		<key>PU-TV</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)/?pu.nl/pu-tv/.*</string>
+				<string>http://(www\.)/?pu.nl/pu-tv/.+</string>
 			</array>
 		</dict>
 	</dict>

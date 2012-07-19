@@ -109,6 +109,10 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 	experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
 	result = service.getDataForExperience('', experience)
 
+	Log("=====================================================================================")
+	Log(result)
+	Log("=====================================================================================")
+
 	clip = result['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
 	domain, file  = clip.split('/&')
 	play				= []
@@ -117,6 +121,8 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 	play_rtmpdomain     =   domain
 	crap, play_rtmpurl	= play_rtmpurl.split('mp4:')
 	video_url = play_rtmpdomain + "/" + play_rtmpurl
+
+	Log(" ---> " + video_url)
 
 	return video_url
 
