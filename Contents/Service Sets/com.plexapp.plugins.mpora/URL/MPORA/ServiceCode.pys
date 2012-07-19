@@ -1,86 +1,73 @@
-SD_REGEX	= Regex('"sd":{"src":"(.*?)",')
-HD_REGEX	= Regex('"hd":{"src":"(.*?)",')
+SD_REGEX = Regex('"sd":{"src":"([^"]+)",')
+HD_REGEX = Regex('"hd":{"src":"([^"]+)",')
 
 ####################################################################################################
-
 def NormalizeURL(url):
-    url = url.replace('?hd=1', '')
-    return url
+
+	url = url.replace('?hd=1', '')
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
 
-    title = page.xpath('//meta[@property = "og:title"]')[0].get('content')
-    description = page.xpath('//meta[@property = "og:description"]')[0].get('content')
-    tags = page.xpath('//meta[@name = "keywords"]')[0].get('content')
-    tags = [ tag.strip() for tag in tags.split(',') ]
-    date = page.xpath('//time')[0].get('datetime')
-    date = Datetime.ParseDate(date)
+	title = page.xpath('//meta[@property = "og:title"]')[0].get('content')
+	description = page.xpath('//meta[@property = "og:description"]')[0].get('content')
+	tags = page.xpath('//meta[@name = "keywords"]')[0].get('content')
+	tags = [ tag.strip() for tag in tags.split(',') ]
+	date = page.xpath('//time')[0].get('datetime')
+	date = Datetime.ParseDate(date)
 
-    thumb = page.xpath('//meta[@property = "og:image"]')[0].get('content')
-    if thumb.endswith("/") == True:
-        thumb = thumb + ".jpg"
-    
-    return VideoClipObject(
-        title = title,
-        summary = description,
-        thumb = thumb,
-        tags = tags,
-        originally_available_at = date
-    )
+	thumb = page.xpath('//meta[@property = "og:image"]')[0].get('content')
+
+	if thumb.endswith("/") == True:
+		thumb = thumb + ".jpg"
+
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+		tags = tags,
+		originally_available_at = date
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_resolution = '720',
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        bitrate = 2400,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_resolution = 'sd',
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        bitrate = 1500,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_resolution = '720',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			bitrate = 2400,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_resolution = 'sd',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			bitrate = 1500,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
+		)
+	]
 
 ####################################################################################################
-@indirect
 def PlayVideo(url, res):
 
 	page = HTTP.Request(url).content
-	
-	video_urlsd = SD_REGEX.findall(page)
-	video_urlhd = HD_REGEX.findall(page)
-	try:
-		video_urlsd = video_urlsd[0]
-	except:
-		video_urlsd = ""
-	
-	try:
-		video_urlhd = video_urlhd[0]
-	except:
-		video_urlhd = ""
-		
-	if res == "hd":
-		if video_urlhd != "":
-			Log.Debug('playing hd')
-			return IndirectResponse(VideoClipObject, key = video_urlhd)
-		else:
-			Log.Debug('playing sd')
-			return IndirectResponse(VideoClipObject, key = video_urlsd)
+
+	try: video_urlhd = HD_REGEX.findall(page)[0]
+	except: video_urlhd = None
+
+	try: video_urlsd = SD_REGEX.findall(page)[0]
+	except: video_urlsd = None
+
+	if res == "hd" and video_urlhd:
+		return Redirect(video_urlhd)
 	else:
-		Log.Debug('playing sd')
-		return IndirectResponse(VideoClipObject, key = video_urlsd)
+		return Redirect(video_urlsd)
