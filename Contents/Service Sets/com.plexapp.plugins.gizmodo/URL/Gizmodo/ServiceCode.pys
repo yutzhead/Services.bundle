@@ -1,4 +1,4 @@
-RE_AJAX_CONTENT = Regex("(VideoHandler.dumpObject|newVideoPlayer)\((?P<c>[^}]+)")
+RE_AJAX_CONTENT = Regex("(VideoHandler.dumpObject|newVideoPlayer)\(\s(?P<json>{.+})")
 
 ####################################################################################################
 
@@ -79,6 +79,6 @@ def GetExternalSource(url):
 
     # Obtain the page source
     page_content = HTTP.Request(url).content
-    ajax_content = RE_AJAX_CONTENT.search(page_content).groupdict()['c'] + '}'
+    ajax_content = RE_AJAX_CONTENT.search(page_content).group('json')
     ajax = JSON.ObjectFromString(ajax_content)
     return ajax['player']
