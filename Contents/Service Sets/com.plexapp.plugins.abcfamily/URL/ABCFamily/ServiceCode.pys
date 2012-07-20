@@ -118,6 +118,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate):
 
 	video_id = url.split('/')[-2]
@@ -137,7 +138,7 @@ def PlayVideo(url, bitrate):
 		index = index - 1
 
 	player = "rtmp://cp88586.edgefcs.net/ondemand/"
-	return Redirect(RTMPVideoURL(player, clip))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(player, clip))
 
 ####################################################################################################
 def DurationMs(run_time):
