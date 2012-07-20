@@ -1,5 +1,7 @@
 RE_VIDEO_URL = Regex('videoIDTouch:"(http://ctvmmsolx.rd.llnwd.net/.+?)"')
 
+BASE_URL = 'http://www.ctvolympics.ca'
+
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url)
     title = data.xpath('//meta[@property="og:title"]')[0].get('content')
@@ -28,4 +30,10 @@ def PlayVideo(url):
     return Redirect(video_url)
 
 def TestURLs():
-    return
+    test_urls = []
+    data = HTML.ElementFromURL(BASE_URL + '/videos/index.html')
+    for video in data.xpath('//div[@id="ctv-videospecial-items"]//a'):
+        test_urls.append(BASE_URL + video.get('href'))
+        if len(test_urls) > 2:
+            break
+    return test_urls
