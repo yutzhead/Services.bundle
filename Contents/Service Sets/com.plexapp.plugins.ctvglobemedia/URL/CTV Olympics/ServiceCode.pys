@@ -1,3 +1,5 @@
+RE_VIDEO_URL = Regex('videoIDTouch:"(http://ctvmmsolx.rd.llnwd.net/.+?)"')
+
 def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url)
     title = data.xpath('//meta[@property="og:title"]')[0].get('content')
@@ -10,7 +12,20 @@ def MetadataObjectForURL(url):
         )
 
 def MediaObjectsForURL(url):
-    return
+    return [
+    	MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = 'mp4',
+			optimized_for_streaming = True,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			)
+        ]
+
+def PlayVideo(url):
+    content = HTTP.Request(url).content
+    video_url = RE_VIDEO_URL.search(content).group(1)
+    return Redirect(video_url)
 
 def TestURLs():
     return
