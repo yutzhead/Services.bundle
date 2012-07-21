@@ -17,8 +17,9 @@ def MetadataObjectForURL(url):
 	data = GetJson(url)
 
 	tags = []
-	for tag in data['tags']:
-		tags.append(tag['name'])
+	if 'tags' in data:
+		for tag in data['tags']:
+			tags.append(tag['name'])
 
 	summary = data['description']
 	if summary != None:
