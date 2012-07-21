@@ -4,6 +4,7 @@ RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 RE_FILE_ID = Regex('blip\.tv/file/([0-9]{6,7})')
 RE_PLAY_ID = Regex('blip\.tv/play/([^$.]+)')
 RE_POST_ID = Regex('blip\.tv/.+/.+-([0-9]{6,7})')
+RE_FLASH_XML = Regex('http://blip\.tv/rss/flash/[0-9]+')
 RE_JSON = Regex('blip_ws_results\(\[(.*)\]\);', Regex.DOTALL)
 
 ####################################################################################################
@@ -102,8 +103,16 @@ def GetJsonURL(url):
 		file_id = RE_FILE_ID.search(url).group(1)
 		url = 'http://blip.tv/file/%s' % file_id
 	elif url.find('/play/') != -1:
-		play_id = RE_PLAY_ID.search(url).group(1)
-		url = 'http://blip.tv/players/episode/%s' % play_id
+		try:
+			page = HTTP.Request(url, follow_redirects=False).headers
+		except Ex.RedirectError, e:
+			try:
+				flash_xml = RE_FLASH_XML.findall(String.Unquote(e.location))[0]
+				embed_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:embedLookup', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0].text
+				url = 'http://blip.tv/players/episode/%s' % embed_id
+			except:
+				play_id = RE_PLAY_ID.search(url).group(1)
+				url = 'http://blip.tv/players/episode/%s' % play_id
 	else:
 		post_id = RE_POST_ID.search(url)
 		if post_id:
