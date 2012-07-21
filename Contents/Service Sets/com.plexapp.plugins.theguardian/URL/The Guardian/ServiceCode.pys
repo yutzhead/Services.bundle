@@ -1,5 +1,5 @@
-RE_VIDEO = Regex("'src': '(?P<url>[^']+)'")
-RE_THUMB = Regex("video.attr\('poster', '(?P<thumb>[^']+)'")
+RE_VIDEO = Regex('file:\s"(?P<url>[^"]+)')
+RE_THUMB = Regex('image:\s"(?P<thumb>[^"]+)')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
