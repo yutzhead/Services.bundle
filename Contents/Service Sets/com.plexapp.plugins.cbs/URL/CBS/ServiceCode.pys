@@ -208,6 +208,10 @@ def VideoFromSMIL(url, res):
   if pid:
     pid = pid.group(1)
     smil = XML.ElementFromURL(CBS_SMIL % pid)
+
+    if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
+      raise Ex.MediaGeoblocked
+
     video_url = None
     for profile in PROFILES:
       try:
