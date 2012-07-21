@@ -71,10 +71,8 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	items = []
-	R_bitrates = BITRATES
-	R_bitrates.reverse
 
-	for value in R_bitrates:
+	for value in reversed(BITRATES):
 		items.append(
 			MediaObject(
 				bitrate = value,
