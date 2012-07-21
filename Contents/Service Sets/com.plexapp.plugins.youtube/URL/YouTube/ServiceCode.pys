@@ -96,7 +96,10 @@ def MetadataObjectForURL(url):
   else:
     video_id = url[url.find('?v=')+3:].split('&')[0]
 
-  details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  try:
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  except:
+    raise Ex.MediaNotAuthorized
 
   thumbs = details['thumbnail']
   if 'hqDefault' in thumbs:
@@ -184,6 +187,21 @@ def PlayVideo(url, default_fmt = None):
       yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
     else:
       raise Ex.MediaNotAuthorized
+
+  # Check for geoblocks and unavailable videos
+  video_id = url[url.find('?v=')+3:].split('&')[0]
+
+  try:
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  except:
+    raise Ex.MediaNotAuthorized
+
+  if 'status' in details:
+    if details['status']['value'] == 'restricted':
+      if details['status']['reason'] == 'requesterRegion':
+        raise Ex.MediaGeoblocked
+      else:
+        raise Ex.MediaNotAvailable
 
   # Build up the format map.
   fmt_url_map = RE_URL_MAP.findall(yt_page)[0]
