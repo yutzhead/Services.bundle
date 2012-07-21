@@ -117,8 +117,9 @@ def MetadataObjectForURL(url):
 				Log.Debug(' --> [Metadata] Found an embedded video: %s' % source_url)
 				return URLService.MetadataObjectForURL(source_url)
 
-			# HTML5 Video
 			doc = HTML.ElementFromString(req.content)
+
+			# HTML5 Video
 			videos = doc.xpath('//video')
 
 			if len(videos) > 0:
@@ -187,8 +188,9 @@ def MediaObjectsForURL(url):
 				Log.Debug(' --> [Media] Found an embedded video: %s' % source_url)
 				return URLService.MediaObjectsForURL(source_url)
 
-			# HTML5 Video
 			doc = HTML.ElementFromString(req.content)
+
+			# HTML5 Video
 			videos = doc.xpath('//video')
 
 			if len(videos) > 0:
