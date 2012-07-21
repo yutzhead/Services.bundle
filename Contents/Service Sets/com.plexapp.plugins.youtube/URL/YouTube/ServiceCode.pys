@@ -187,6 +187,9 @@ def PlayVideo(url, default_fmt = None):
       yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
     else:
       raise Ex.MediaNotAuthorized
+  # If 404...
+  except:
+    raise Ex.MediaNotAvailable
 
   # Check for geoblocks and unavailable videos
   video_id = url[url.find('?v=')+3:].split('&')[0]
