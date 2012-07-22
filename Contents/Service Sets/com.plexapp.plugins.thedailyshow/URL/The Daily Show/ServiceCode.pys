@@ -13,35 +13,26 @@ def MetadataObjectForURL(url):
   
   try: videoType = data.xpath('//title')[0].text.split(' - ')[4].split('|')[0].strip(' ')
   except: videoType = data.xpath('//title')[0].text.split(' - ')[3].split('|')[0].strip(' ')
-  #Log(videoType)
   
   thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=OG_NAMESPACE)[0].get('content')
-  #Log(thumbUrl)
-  
-  #try: duration = details.xpath('//div[@id="info-container-left"]/p[3]/text()')[0]
-  #except: duration = details.xpath('//div[@id="info-container-left"]/p[2]/text()')[0]
-  #Log(duration)
-  #durationParts = duration.split(':')
-  #duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
-  #Log(duration)
   
   if videoType == "Full Episode Video":
 
     show_title = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
-    #Log(show_title)
     episode_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-    #Log(episode_title)
-    air_date = data.xpath('//title')[0].text.split(' - ')[0].strip(' ')
-    #Log(air_date)
     summary = data.xpath('//meta[@property="og:description"]', namespaces=OG_NAMESPACE)[0].get('content')
-    #Log(summary)
+
+    try:
+      air_date = data.xpath('//title')[0].text.split(' - ')[0].strip(' ')
+      originally_available_at = Datetime.ParseDate(air_date).date()
+    except:
+      originally_available_at = None
 
     # Construct a metadata item
     eo = EpisodeObject(
       title = episode_title,
       show = show_title,
-      originally_available_at = Datetime.ParseDate(air_date).date(),
-      #duration = duration,
+      originally_available_at = originally_available_at,
       summary = summary,
       thumb = thumbUrl
     )
@@ -50,17 +41,18 @@ def MetadataObjectForURL(url):
   elif videoType == "Video Clip":
   
     clip_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-    #Log(clip_title)
     summary = data.xpath('//meta[@name="description"]')[0].get('content')
-    #Log(summary)
-    air_date = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
-    #Log(air_date)
+
+    try:
+      air_date = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
+      originally_available_at = Datetime.ParseDate(air_date).date()
+    except:
+      originally_available_at = None
 
     # Construct a metadata item
     co = EpisodeObject(
       title = clip_title,
-      #duration = duration,
-      originally_available_at = Datetime.ParseDate(air_date).date(),
+      originally_available_at = originally_available_at,
       summary = summary,
       thumb = thumbUrl
     )
