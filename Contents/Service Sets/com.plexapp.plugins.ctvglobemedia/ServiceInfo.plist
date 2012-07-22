@@ -16,7 +16,7 @@
             <key>URLPatterns</key>
             <array>
                 <string>http://www\.ctvolympics\.ca/videos/.+</string>
-            </aaray>
+            </array>
         </dict>
 	</dict>
 </dict>
