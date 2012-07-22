@@ -82,7 +82,13 @@ def MetadataObjectFromPAGE(url):
     video_type = "Clip"
 
   title = data.xpath('//meta[@property="og:title"]')[0].get('content')
-  (show_title, episode_title, junk) = title.split(' - ', 2)
+
+  if ' - ' in title:
+    (show_title, episode_title, junk) = title.split(' - ', 2)
+  else:
+    show_title = None
+    episode_title = title
+
   summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
 
   try:
@@ -116,9 +122,13 @@ def MetadataObjectFromPAGE(url):
     return eo
 
   elif video_type == "Clip":
-    
+    if show_title:
+      ' - '.join([show_title, episode_title])
+    else:
+      title = episode_title
+
     co = VideoClipObject(
-      title = ' - '.join([show_title, episode_title]),
+      title = title,
       summary = summary,
       thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
