@@ -220,14 +220,21 @@ def PlayVideo(url, default_fmt = None):
   for f in fmt_url_map:
     map = {}
     params = f.split('\u0026')
+
     for p in params:
       (name, value) = p.split('=')
       map[name] = value
+
     quality = int(map['itag'])
-    fmts_info[quality] = String.Unquote(map['url'])
-    fmts.append(quality)
+
+    if 'url' in map: # Just http (url) for now, not rtmp (stream)
+      fmts_info[quality] = String.Unquote(map['url'])
+      fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
+
+  if len(fmts) == 0:
+    raise Ex.MediaNotAvailable
 
   # Figure out the index we're looking for.
   index = YOUTUBE_VIDEO_FORMATS.index(default_fmt)
