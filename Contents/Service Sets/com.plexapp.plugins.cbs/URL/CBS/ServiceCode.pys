@@ -36,12 +36,15 @@ def MetadataObjectFromAPI(url):
   originally_available_at = Datetime.ParseDate(details.xpath('//l:ProductionDate', namespaces=CNET_NAMESPACE)[0].text).date()
   summary = details.xpath('//l:Description', namespaces=CNET_NAMESPACE)[0].text
   duration = int(details.xpath('//l:LengthSecs', namespaces=CNET_NAMESPACE)[0].text)*1000
+
+  try: content_rating = details.xpath('//l:ContentRatingOverall', namespaces=CNET_NAMESPACE)[0].text
+  except: content_rating = None
+
   images = details.xpath('//l:Images/l:Image', namespaces=CNET_NAMESPACE)
   thumbs = SortImages(images)
   
   if details.xpath('//l:Feature', namespaces=CNET_NAMESPACE)[0].text == "full_episodes":
     show = details.xpath('//l:FranchiseName', namespaces=CNET_NAMESPACE)[0].text
-    content_rating = details.xpath('//l:ContentRatingOverall', namespaces=CNET_NAMESPACE)[0].text
     season = int(details.xpath('//l:SeasonNumber', namespaces=CNET_NAMESPACE)[0].text)
     index = int(details.xpath('//l:EpisodeNumber', namespaces=CNET_NAMESPACE)[0].text)
   
