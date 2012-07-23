@@ -48,7 +48,6 @@ CAPABILTIES_BROWSER = {
 def MetadataObjectForURL(url):
 
   details = GetDetails(url)
-  Log(details)
   thumb = details['thumbnailLarge']
   if thumb.startswith('http://') == False:
       thumb = BASE_URL + thumb
