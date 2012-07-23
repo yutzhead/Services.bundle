@@ -6,7 +6,6 @@ RE_EXPERIENCE       = Regex('var experienceJSON = (.+)};')
 def MetadataObjectForURL(url):
 
     details = GetDetails(url)
-    Log(details)
     return VideoClipObject(
         title = details['displayName'],
         summary = details['shortDescription'],
