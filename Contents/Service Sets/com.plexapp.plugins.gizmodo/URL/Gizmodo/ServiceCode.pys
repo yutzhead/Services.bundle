@@ -1,20 +1,23 @@
 RE_AJAX_CONTENT = Regex("(VideoHandler.dumpObject|newVideoPlayer)\(\s(?P<json>{.+})")
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
     return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     external_source = GetExternalSource(url)
-    return URLService.MetadataObjectForURL(external_source)
+
+    if external_source:
+        return URLService.MetadataObjectForURL(external_source)
+    else:
+        return None
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
   return [
     MediaObject(
       container = Container.MP4,
@@ -77,8 +80,11 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetExternalSource(url):
 
-    # Obtain the page source
     page_content = HTTP.Request(url).content
-    ajax_content = RE_AJAX_CONTENT.search(page_content).group('json')
-    ajax = JSON.ObjectFromString(ajax_content)
-    return ajax['player']
+    ajax_content = RE_AJAX_CONTENT.search(page_content)
+
+    if ajax_content:
+        ajax = JSON.ObjectFromString(ajax_content.group('json'))
+        return ajax['player']
+    else:
+        return None
