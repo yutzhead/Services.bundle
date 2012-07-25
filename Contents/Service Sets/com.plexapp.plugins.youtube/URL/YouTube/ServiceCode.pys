@@ -200,8 +200,8 @@ def PlayVideo(url, default_fmt = None):
     raise Ex.MediaNotAuthorized
 
   if 'status' in details:
-    if details['status']['value'] == 'restricted':
-      if details['status']['reason'] == 'requesterRegion':
+    if 'value' in details['status'] and details['status']['value'] == 'restricted':
+      if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
         raise Ex.MediaGeoblocked
       else:
         raise Ex.MediaNotAvailable
