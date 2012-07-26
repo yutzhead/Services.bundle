@@ -95,7 +95,7 @@ def GetSRC(smil):
 #########################################################################################
 def TestURLs():
 	test_urls = []
-	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=5&query=hasReleases&query=CustomText|PlayerTag|z/HGTV%20Player%20-%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&field=ID&field=parent")
+	entries = JSON.ObjectFromURL("http://feeds.theplatform.com/ps/JSON/PortalService/2.2/getCategoryList?PID=HmHUZlCuIXO_ymAAPiwCpTCNZ3iIF1EG&startIndex=1&endIndex=5&query=hasReleases&query=CustomText|PlayerTag|z/HGTVNEWVC%20-%20New%20Video%20Center&field=airdate&field=fullTitle&field=author&field=description&field=PID&field=thumbnailURL&field=title&contentCustomField=title&field=ID&field=parent")
 
 	for entry in entries['items']:
 		id = entry['ID']
