@@ -130,7 +130,8 @@ def PlayVideo(url, resolution):
 	try:
 		other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
 		smil = XML.ElementFromURL(other_source)
-		base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+		#base = smil.xpath("//smil:meta[@name='httpBase']", namespaces = NAMESPACES)[0].get('content')
+		base = 'http://ht.cdn.turner.com/'
 		clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
 		video = base + clip
 	except: pass
