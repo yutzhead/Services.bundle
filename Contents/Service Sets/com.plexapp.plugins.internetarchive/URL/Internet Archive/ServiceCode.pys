@@ -40,8 +40,11 @@ def MetadataObjectForURL(url):
         except:
             year = None
 
-        runtime = meta_xml.xpath('//runtime')[0].text
-        duration = (int(re.search('([0-9]+) minutes ', runtime).group(1))*60 + int(re.search('([0-9]+) seconds', runtime).group(1)))*1000
+        try:
+            runtime = meta_xml.xpath('//runtime')[0].text
+            duration = (int(re.search('([0-9]+) minutes ', runtime).group(1))*60 + int(re.search('([0-9]+) seconds', runtime).group(1)))*1000
+        except:
+            duration = None
 
         return VideoClipObject(
             url = url + '#video',
