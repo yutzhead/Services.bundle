@@ -12,15 +12,13 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-<!--
-				<string>http://www.showcase.ca/video/video.html?v=2041462686&pid=clOkQy_UgZssUmnW64Qb_da7qXPumZJw#video</string>
-				<string>http://www.showcase.ca/video/video.html?v=2052006136&pid=xIMuoLlgr_reC3arVyiWs_p3bpnq4265#video</string>
-				<string>http://www.showcase.ca/video/video.html?v=2080341670&pid=pw18tef0D8AbR63d9otxBYMnWp2RwNte#video</string>
--->
+				<string>http:\/\/www\.showcase\.ca\/video\/video\.html\?v\=2041462686#video</string>
+				<string>http:\/\/www\.showcase\.ca\/video\/video\.html\?v\=2052006136#video</string>
+				<string>http:\/\/www\.showcase\.ca\/video\/video\.html\?v\=2080341670#video</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.showcase\.ca\/(.*)video\.html\?v=.+</string>
+				<string>http:\/\/www\.showcase\.ca\/(.*)video\.html\?v=.+</string>
 			</array>
 		</dict>
 	</dict>
