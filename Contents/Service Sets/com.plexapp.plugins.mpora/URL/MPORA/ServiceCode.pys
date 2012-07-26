@@ -1,66 +1,73 @@
+SD_REGEX = Regex('"sd":{"src":"([^"]+)",')
+HD_REGEX = Regex('"hd":{"src":"([^"]+)",')
 
 ####################################################################################################
-
 def NormalizeURL(url):
-    url = url.replace('?hd=1', '')
-    return url
+
+	url = url.replace('?hd=1', '')
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
 
-    title = page.xpath('//meta[@property = "og:title"]')[0].get('content')
-    description = page.xpath('//meta[@property = "og:description"]')[0].get('content')
-    tags = page.xpath('//meta[@name = "keywords"]')[0].get('content')
-    tags = [ tag.strip() for tag in tags.split(',') ]
-    date = page.xpath('//time')[0].get('datetime')
-    date = Datetime.ParseDate(date)
+	title = page.xpath('//meta[@property = "og:title"]')[0].get('content')
+	description = page.xpath('//meta[@property = "og:description"]')[0].get('content')
+	tags = page.xpath('//meta[@name = "keywords"]')[0].get('content')
+	tags = [ tag.strip() for tag in tags.split(',') ]
+	date = page.xpath('//time')[0].get('datetime')
+	date = Datetime.ParseDate(date)
 
-    thumb = page.xpath('//meta[@property = "og:image"]')[0].get('content')
-    if thumb.endswith("/") == True:
-        thumb = thumb + ".jpg"
-    
-    return VideoClipObject(
-        title = title,
-        summary = description,
-        thumb = thumb,
-        tags = tags,
-        originally_available_at = date
-    )
+	thumb = page.xpath('//meta[@property = "og:image"]')[0].get('content')
+
+	if thumb.endswith("/") == True:
+		thumb = thumb + ".jpg"
+
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+		tags = tags,
+		originally_available_at = date
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_resolution = '720',
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        bitrate = 2400,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_resolution = 'sd',
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        bitrate = 1500,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_resolution = '720',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			bitrate = 2400,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = "hd"))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_resolution = 'sd',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			bitrate = 1500,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd"))]
+		)
+	]
 
 ####################################################################################################
-
 def PlayVideo(url, res):
 
-    if res == "hd":
-        url = url + '?hd=1'
+	page = HTTP.Request(url).content
 
-    page = HTML.ElementFromURL(url)
-    video_url = page.xpath('//div[contains(@class, "player")]//video')[0].get('src')
-    return Redirect(video_url)
+	try: video_urlhd = HD_REGEX.findall(page)[0]
+	except: video_urlhd = None
+
+	try: video_urlsd = SD_REGEX.findall(page)[0]
+	except: video_urlsd = None
+
+	if res == "hd" and video_urlhd:
+		return Redirect(video_urlhd)
+	else:
+		return Redirect(video_urlsd)

@@ -13,8 +13,17 @@ def MetadataObjectForURL(url):
     show_title = data['customFields']['displayshowname']
     summary = data['shortDescription']
     thumbUrl = data['videoStillURL']
-    season = data['customFields']['season']
-    episode = data['customFields']['episode']
+
+    try:
+        season = int(data['customFields']['season'])
+    except:
+        season = None
+
+    try:
+        episode = int(data['customFields']['episode'])
+    except:
+        episode = None
+
     date = data['publishedDate']
     duration = data['length']
 
@@ -22,8 +31,8 @@ def MetadataObjectForURL(url):
     mo = EpisodeObject(
       title = title,
       show = show_title,
-      season = int(season),
-      index = int(episode),
+      season = season,
+      index = episode,
       originally_available_at = date,
       summary = summary,
       duration = int(duration),

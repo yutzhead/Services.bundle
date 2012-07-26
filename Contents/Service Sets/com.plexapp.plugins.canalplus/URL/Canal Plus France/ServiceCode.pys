@@ -7,11 +7,17 @@ XML_URL = "http://service.canal-plus.com/video/rest/getVideosLiees/cplus/%s"
 
 QUALITIES = ['BAS_DEBIT', 'HAUT_DEBIT', 'HD']
 
+####################################################################################################
 def NormalizeURL(url):
     return url
 
+####################################################################################################
 def MetadataObjectForURL(url):
     data = GetXML(url)
+
+    if not data:
+        return None
+
     title = data.xpath('//TITRE')[0].text
     summary = data.xpath('//DESCRIPTION')[0].text
     try:
@@ -28,6 +34,7 @@ def MetadataObjectForURL(url):
         thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
     )
 
+####################################################################################################
 def MediaObjectsForURL(url):
     return [
         MediaObject(
@@ -44,6 +51,7 @@ def MediaObjectsForURL(url):
         )
     ]
 
+####################################################################################################
 @indirect
 def PlayVideo(url, quality):
     index = QUALITIES.index(quality)
@@ -66,11 +74,16 @@ def PlayVideo(url, quality):
         playpath = 'MP4:' + playpath
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
+####################################################################################################
 def GetXML(url):
-    id = RE_VIDEO_ID.search(url).group(1)
-    data = XML.ElementFromURL(XML_URL % id)
-    return data
+    id = RE_VIDEO_ID.search(url)
 
+    if id:
+        return XML.ElementFromURL(XML_URL % id.group(1))
+    else:
+        return None
+
+####################################################################################################
 def TestURLs():
     test_urls = []
     data = HTML.ElementFromURL(BASE_URL)

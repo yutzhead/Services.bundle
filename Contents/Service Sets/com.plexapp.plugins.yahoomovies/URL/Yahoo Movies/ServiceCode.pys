@@ -7,6 +7,7 @@ VIDEO_URL = 'http://playlist.yahoo.com/makeplaylist.dll?sdm=web&pt=rd&sid=%s'
 
 RE_ID_URL = Regex('\-([0-9]+)\.html')
 RE_ID_EMBED = Regex('vid=([0-9]+)')
+RE_SID = Regex('<cms.+sid=.([0-9]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -101,7 +102,7 @@ def PlayVideo(url, bitrate):
 			Log("Couldn't find video id.")
 			return None
 
-	xml = XML.ElementFromURL(POPS_URL % (bitrate, id))
-	sid = xml.xpath('//*[@sid]')[0].get('sid')
+	xml = HTTP.Request(POPS_URL % (bitrate, id)).content
+	sid = RE_SID.search(xml).group(1)
 
 	return Redirect(VIDEO_URL % sid)

@@ -11,6 +11,13 @@
 				<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
 			</array>
 		</dict>
+		<key>CTV Olympics</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www\.ctvolympics\.ca/videos/.+</string>
+			</array>
+		</dict>
 	</dict>
 </dict>
 </plist>

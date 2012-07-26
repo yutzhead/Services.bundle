@@ -4,17 +4,13 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>ABCFamily</key>
+		<key>PU-TV</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://abcfamily.go.com/(watch|movies|shows)/.+</string>
+				<string>http://(www\.)/?pu.nl/pu-tv/.+</string>
 			</array>
 		</dict>
 	</dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
-        <string>UseRealRTMP</string>
-    </array>
 </dict>
 </plist>

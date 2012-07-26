@@ -1,4 +1,4 @@
-import re, string
+import re
 
 METADATA_BASE_URL = "http://archive.org"
 BASE_URL = "http://www.archive.org"
@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
       summary = meta_xml.xpath('//description')[0].text
     except:
       summary = meta_xml.xpath('//notes')[0].text
-      
+
     '''gather the media-type specific metadata and return the appropriate object'''
     if meta_xml.xpath('//mediatype')[0].text in ['audio', 'etree']:
         return AlbumObject(
@@ -39,10 +39,10 @@ def MetadataObjectForURL(url):
             year = int(meta_xml.xpath('.//year')[0].text)
         except:
             year = None
-        
+
         runtime = meta_xml.xpath('//runtime')[0].text
         duration = (int(re.search('([0-9]+) minutes ', runtime).group(1))*60 + int(re.search('([0-9]+) seconds', runtime).group(1)))*1000
-        
+
         return VideoClipObject(
             url = url + '#video',
             title = title,
@@ -60,7 +60,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 
 def Thumb(url):
-  
+
   if url[-4:] == ".jpg":
     thumb_url = url
   else:
@@ -82,10 +82,9 @@ def Thumb(url):
           thumb_url = DownloadURL(url) + files.xpath('//file[contains(@name, ".jpg")]')[0].get('name')
         except:
           thumb_url = INTERNET_ARCHIVE_LOGO
-  
+
   data = HTTP.Request(thumb_url, cacheTime=0).content
   return DataObject(data, 'image/jpeg')
-  
 
 ####################################################################################################
 
@@ -108,7 +107,7 @@ def MediaObjectsForURL(url):
             '''return MediaObjects for the given Album, where each part is a track'''
             Log('ERROR - This URL is an audio page which should have been caught and broken into tracks. ')
     return
-    
+
 ####################################################################################################
 
 def GetMetadata(url):
@@ -123,18 +122,19 @@ def GetMetadata(url):
         else:
             pass
     return xml_url
-        
+
 ####################################################################################################
 
 def ConvertToBytes(size_string):
     ''' crude converter for file sizes '''
+    size_string = size_string.replace(',', '').strip()
     if " KB" in size_string:
         return float(size_string.split(' ')[0])*1000
     elif " B" in size_string:
         return float(size_string.split(' ')[0])
     else: #just in case
         return float(size_string.split(' ')[0])
-        
+
 ####################################################################################################
 
 def GetTracks(url):
@@ -440,9 +440,9 @@ def GetRating(url):
 ####################################################################################################
 
 def DownloadURL(url):
-    
-    download_url = string.replace(url, '/details/', '/download/') + '/'
-    
+
+    download_url = url.replace('/details/', '/download/') + '/'
+
     return download_url
 
 ####################################################################################################
@@ -480,17 +480,17 @@ def VideoObjectsForURL(url):
             video_resolution = 300
             )
         ]
-        
+
 ####################################################################################################
 
 def PlayVideo(url, fmt=None):
     FMTS = ['512kb MP4', 'h.264', 'MP4']
     files = XML.ElementFromURL(FileListURL(url))
-    
+
     '''default to the "original" file in case the chosen format isn't found'''
     file_name = files.xpath('//file[@source="original"]')[0].get('name')
     found = False
-    
+
     try:
         fmt = FMTS.index(fmt)
     except:
@@ -507,7 +507,7 @@ def PlayVideo(url, fmt=None):
             fmt = 0
         else:
             pass
-    
+
     '''iterate through the track files until the desired format (or a suitable alternative) is found'''
     while not found and fmt >= 0:
         for file in files.xpath('//file'):
@@ -521,7 +521,7 @@ def PlayVideo(url, fmt=None):
         if not found:
             '''choose the next lower format'''
             fmt = fmt - 1
-    
+
     media_url = DownloadURL(url) + file_name
-    
+
     return Redirect(media_url)

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>Gizmodo</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://gizmodo.com/5923677/this-ship-flips-to-rise-five-stories-above-the-sea-surface</string>
+				<string>http://gizmodo.com/5923585/a-really-simple-explanation-of-what-this-higgs-boson-thing-is</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://(www\.)?gizmodo\.com/.*</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>

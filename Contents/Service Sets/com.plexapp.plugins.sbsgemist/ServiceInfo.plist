@@ -4,17 +4,13 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>ABCFamily</key>
+		<key>SBS Gemist</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://abcfamily.go.com/(watch|movies|shows)/.+</string>
+				<string>http://(www\.)/?(net5|sbs6|veronicatv).nl/(video|programmas)/.+</string>
 			</array>
 		</dict>
 	</dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
-        <string>UseRealRTMP</string>
-    </array>
 </dict>
 </plist>

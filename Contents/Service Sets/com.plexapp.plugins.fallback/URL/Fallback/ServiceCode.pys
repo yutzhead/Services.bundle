@@ -18,8 +18,9 @@ HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; 
 
 HTTP.CacheTime = CACHE_1HOUR
 
+RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
-RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu\.?be(\.com)?((\\\+)?/)(v(\\\+)?/|watch\?v=)?.{11}(&|\?)?.+?)("|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
 RE_META_REFRESH = Regex('<meta.+?http-equiv=.refresh.+?content=.([0-9]+;url=)?(?P<url>https?://[^"\']+)', Regex.IGNORECASE)
@@ -39,6 +40,22 @@ def FixUrl(parent_url, url):
 		final_url = url
 
 	return final_url
+
+####################################################################################################
+def ValidURL(url):
+
+	if not isinstance(url, basestring):
+		return False
+
+	url = urlparse.urlparse(url)
+
+	if url.scheme not in ['http', 'https']:
+		return False
+
+	if RE_IPV4_PRIVATE.search(url.hostname):
+		return False
+
+	return True
 
 ####################################################################################################
 def ShouldParse(req):
@@ -94,13 +111,17 @@ def CodecsForVideoTypeValue(value):
 def MetadataObjectForURL(url):
 
 	try:
+		if not ValidURL(url):
+			return None
+
 		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
 
 		try:
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
-				if e.headers['Location'] != url:
+				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
+					Log.Debug(' --> [Metadata] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
 					return URLService.MetadataObjectForURL(e.headers['Location'])
 				return None
 
@@ -109,6 +130,7 @@ def MetadataObjectForURL(url):
 			# Embedded Video
 			source_url = FindExternalSource(req)
 			if source_url is not None:
+				Log.Debug(' --> [Metadata] Found an embedded video: %s' % source_url)
 				return URLService.MetadataObjectForURL(source_url)
 
 			doc = HTML.ElementFromString(req.content)
@@ -117,6 +139,7 @@ def MetadataObjectForURL(url):
 			videos = doc.xpath('//video')
 
 			if len(videos) > 0:
+				Log.Debug(' --> [Metadata] Found an HTML5 video')
 				tag = videos[0]
 
 				try: thumb = FixUrl(url, tag.get('poster'))
@@ -131,13 +154,15 @@ def MetadataObjectForURL(url):
 			refresh = RE_META_REFRESH.search(req.content)
 
 			if refresh:
-				if refresh.group('url') != url:
+				if refresh.group('url').split('://',1)[1] != url.split('://',1)[1]:
+					Log.Debug(' --> [Metadata] Found a meta refresh tag with a new URL: %s' % refresh.group('url'))
 					return URLService.MetadataObjectForURL(refresh.group('url'))
 
 			# Regex Video
 			video = RE_PATTERN.search(req.content)
 
 			if video:
+				Log.Debug(' --> [Metadata] Found a video using the regex')
 				return VideoClipObject(
 					title = doc.xpath('//title')[0].text.strip()
 				)
@@ -147,6 +172,7 @@ def MetadataObjectForURL(url):
 
 			if youtube:
 				youtube_url = youtube.group('vid').replace('\\', '')
+				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
 
 	except:
@@ -156,13 +182,17 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	try:
+		if not ValidURL(url):
+			return None
+
 		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
 
 		try:
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
-				if e.headers['Location'] != url:
+				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
+					Log.Debug(' --> [Media] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
 					return URLService.MediaObjectsForURL(e.headers['Location'])
 				return None
 
@@ -171,6 +201,7 @@ def MediaObjectsForURL(url):
 			# Embedded Video
 			source_url = FindExternalSource(req)
 			if source_url is not None:
+				Log.Debug(' --> [Media] Found an embedded video: %s' % source_url)
 				return URLService.MediaObjectsForURL(source_url)
 
 			doc = HTML.ElementFromString(req.content)
@@ -179,6 +210,7 @@ def MediaObjectsForURL(url):
 			videos = doc.xpath('//video')
 
 			if len(videos) > 0:
+				Log.Debug(' --> [Media] Found an HTML5 video')
 				tag = videos[0]
 
 				result = []
@@ -192,6 +224,7 @@ def MediaObjectsForURL(url):
 						continue
 
 					src = FixUrl(url, src)
+					Log.Debug(' --> %s' % src)
 					videoType = source.get('type')
 					codecs = CodecsForVideoTypeValue(videoType)
 
@@ -213,7 +246,8 @@ def MediaObjectsForURL(url):
 			refresh = RE_META_REFRESH.search(req.content)
 
 			if refresh:
-				if refresh.group('url') != url:
+				if refresh.group('url').split('://',1)[1] != url.split('://',1)[1]:
+					Log.Debug(' --> [Media] Found a meta refresh tag with a new URL: %s' % refresh.group('url'))
 					return URLService.MediaObjectsForURL(refresh.group('url'))
 
 			# Regex Video
@@ -223,6 +257,7 @@ def MediaObjectsForURL(url):
 				src = video.group('vid')
 				src = String.Unquote(src)
 				src = FixUrl(url, src)
+				Log.Debug(' --> [Media] Found a video using the regex: %s' % src)
 
 				if src.find('.m3u8') != -1:
 					return [
@@ -242,6 +277,7 @@ def MediaObjectsForURL(url):
 
 			if youtube:
 				youtube_url = youtube.group('vid').replace('\\', '')
+				Log.Debug(' --> [Media] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MediaObjectsForURL(youtube_url)
 
 	except:

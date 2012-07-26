@@ -70,11 +70,11 @@ def PlayVideo(url):
     mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime = 0).content
 
     # We now have the mobile JS player page. 
-    stream_json = re.match('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^;]+)\);.*', mobile_player_page, re.DOTALL).groupdict()['json']
-    stream_json = stream_json.decode('unicode_escape')[2:-2]
+    stream_json = re.search('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', mobile_player_page, re.DOTALL).group('json')
+    stream_json = stream_json.decode('unicode_escape')[1:-1]
     stream_details = JSON.ObjectFromString(stream_json)
 
-    return Redirect(stream_details[0]['ipad_url'])
+    return Redirect(stream_details['ipad_url'])
 
 ####################################################################################################
 def TestURLs():

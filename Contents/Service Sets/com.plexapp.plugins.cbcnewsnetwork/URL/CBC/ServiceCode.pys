@@ -52,6 +52,10 @@ def PlayVideo(url):
     details = GetDetails(url)
     smil_url = details['media$content'][0]['plfile$releases'][0]['plrelease$url']
     smil = XML.ElementFromURL(smil_url)
+
+    if (len(smil.xpath('//a:ref[contains(@title, "Geo") or contains(@title, "geo")]', namespaces=NAMESPACES)) > 0):
+        raise Ex.MediaGeoblocked
+
     player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
     playpath = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
     if playpath[-4:] == '.mp4':

@@ -61,8 +61,8 @@ def PlayVideo(url):
 		clip = source.split("<break>")[1]
 		player = source.split("<break>")[0]
 	except:
-		clip = player.split("/video/")
-		player = player.split("/video/")[0]
+		clip = source.split("/video/")
+		player = source.split("/video/")[0]
 		clip = "/video/" + clip[-1]
 	
 	if clip.endswith(".mp4"):

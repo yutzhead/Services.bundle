@@ -43,7 +43,13 @@ def MetadataObjectForURL(url):
 
   # Figure out the URL to call.
   # Extract the video id
-  vimeo_video_id = RE_VIMEO_ID.search(url).group(1)
+  vimeo_video_id = RE_VIMEO_ID.search(url)
+
+  if vimeo_video_id:
+    vimeo_video_id = vimeo_video_id.group(1)
+  else:
+    return None
+
   # API call
   vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id
 
@@ -75,6 +81,9 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+  if not RE_VIMEO_ID.search(url):
+    return None
 
   return [
     MediaObject(

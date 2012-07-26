@@ -96,7 +96,10 @@ def MetadataObjectForURL(url):
   else:
     video_id = url[url.find('?v=')+3:].split('&')[0]
 
-  details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  try:
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  except:
+    raise Ex.MediaNotAuthorized
 
   thumbs = details['thumbnail']
   if 'hqDefault' in thumbs:
@@ -184,10 +187,32 @@ def PlayVideo(url, default_fmt = None):
       yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
     else:
       raise Ex.MediaNotAuthorized
+  # If 404...
+  except:
+    raise Ex.MediaNotAvailable
+
+  # Check for geoblocks and unavailable videos
+  video_id = url[url.find('?v=')+3:].split('&')[0]
+
+  try:
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+  except:
+    raise Ex.MediaNotAuthorized
+
+  if 'status' in details:
+    if 'value' in details['status'] and details['status']['value'] == 'restricted':
+      if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
+        raise Ex.MediaGeoblocked
+      else:
+        raise Ex.MediaNotAvailable
 
   # Build up the format map.
-  fmt_url_map = RE_URL_MAP.findall(yt_page)[0]
-  fmt_url_map = fmt_url_map.replace('\/', '/').split(',')
+  fmt_url_map = RE_URL_MAP.findall(yt_page)
+
+  if not fmt_url_map:
+    raise Ex.MediaNotAvailable
+
+  fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
 
   fmts = []
   fmts_info = {}
@@ -195,14 +220,21 @@ def PlayVideo(url, default_fmt = None):
   for f in fmt_url_map:
     map = {}
     params = f.split('\u0026')
+
     for p in params:
       (name, value) = p.split('=')
       map[name] = value
+
     quality = int(map['itag'])
-    fmts_info[quality] = String.Unquote(map['url'])
-    fmts.append(quality)
+
+    if 'url' in map: # Just http (url) for now, not rtmp (stream)
+      fmts_info[quality] = String.Unquote(map['url'])
+      fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
+
+  if len(fmts) == 0:
+    raise Ex.MediaNotAvailable
 
   # Figure out the index we're looking for.
   index = YOUTUBE_VIDEO_FORMATS.index(default_fmt)
