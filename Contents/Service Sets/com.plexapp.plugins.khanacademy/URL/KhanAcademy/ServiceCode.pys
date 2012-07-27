@@ -71,5 +71,9 @@ def GetExternalSource(url):
   # Request the url
   page = HTML.ElementFromURL(url, timeout = 30)
 
-  yt_url = page.xpath("//embed[@id='idPlayer']")[0].get('src')
+  try:
+    yt_url = page.xpath('//meta property="og:video"')[0].get('content')
+  except:
+    yt_url = page.xpath('//iframe[contains(@src, "youtube.com")]')[0].get('src')
+
   return yt_url
