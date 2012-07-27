@@ -1,0 +1,106 @@
+BASE_URL        = 'http://www.sesamestreet.org'
+JSON_SERVICE    = 'http://www.sesamestreet.org/c/portal/json_service'
+
+RE_MEDIA_ID     = Regex('#media/video_(.*)')
+
+CAPABILTIES_IOS = {
+  "isIE":False,
+  "isFirefox":False,
+  "isChrome":False,
+  "isWebKit":True,
+  "isMobile":True,
+  "isTablet":True,
+  "isHandset":False,
+  "isIOS":True,
+  "isIOSHandset":True,
+  "isIOSTablet":False,
+  "isAndroid":False,
+  "isAndroidTablet":False,
+  "isAndroidHandset":False,
+  "isKindle":False,
+  "hasCanvasSupport":True,
+  "hasTouchSupport":True,
+  "hasFlashSupport":False,
+  "hasVideoSupport":True}
+
+CAPABILTIES_BROWSER = {
+  "isIE":False,
+  "isFirefox":True,
+  "isChrome":False,
+  "isWebKit":False,
+  "isMobile":False,
+  "isTablet":False,
+  "isHandset":False,
+  "isIOS":False,
+  "isIOSHandset":False,
+  "isIOSTablet":False,
+  "isAndroid":False,
+  "isAndroidTablet":False,
+  "isAndroidHandset":False,
+  "isKindle":False,
+  "hasCanvasSupport":True,
+  "hasTouchSupport":False,
+  "hasFlashSupport":True,
+  "hasVideoSupport":False}
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+
+  details = GetDetails(url)
+  thumb = details['thumbnailLarge']
+  if thumb.startswith('http://') == False:
+      thumb = BASE_URL + thumb
+
+  return VideoClipObject(
+    title = details['title'],
+    summary = details['description'],
+    thumb = thumb)
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      container = Container.MP4,
+      video_codec = VideoCodec.H264,
+      audio_codec = AudioCodec.AAC,
+      optimized_for_streaming = True,
+      audio_channels = 2,
+      parts = [PartObject(key=Callback(PlayVideo, url = url))]
+    )
+  ]
+
+####################################################################################################
+
+def PlayVideo(url):
+  details = GetDetails(url)
+  return Redirect(details['source'][-1]['fileName'])
+
+####################################################################################################
+
+def GetDetails(url):
+
+  # Find the final URL, which we know has the media identifier located within it
+  if url.find('#media') == -1:
+    try: HTTP.Request(url, follow_redirects = False).content
+    except Ex.RedirectError, e:
+      url = e.location
+
+  id = RE_MEDIA_ID.findall(url)[0]
+
+  post_data = {
+    'uid': id,
+    'type': 'video',
+    'capabilities': CAPABILTIES_IOS,
+    'context': {
+      "userId": "10097",
+      "groupId": "10171",
+      "privateLayout": False,
+      "layoutId": "1368"},
+    "serviceClassName": "org.sesameworkshop.service.UmpServiceUtil",
+    "serviceMethodName": "getMediaItem",
+    "serviceParameters": [ "uid", "type", "capabilities", "context" ],
+    "doAsUserId": ""}
+
+  return JSON.ObjectFromURL(JSON_SERVICE, headers = {'X-Requested-With': 'XMLHttpRequest'}, values = post_data, cacheTime = 0)['content']

@@ -203,8 +203,6 @@ def PlayVideo(url, default_fmt = None):
     if 'value' in details['status'] and details['status']['value'] == 'restricted':
       if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
         raise Ex.MediaGeoblocked
-      else:
-        raise Ex.MediaNotAvailable
 
   # Build up the format map.
   fmt_url_map = RE_URL_MAP.findall(yt_page)
