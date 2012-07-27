@@ -193,7 +193,7 @@ def GetAvailableMediaObjectsForURL(url):
     if download_url:
       download_url = download_url[0].replace('{lang}', '')
 
-      # Return the MediObjects which are known to be available from TED. We could populate
+      # Return the MediaObjects which are known to be available from TED. We could populate
       # it with more metadata, but this isn't required. The video_resolution and bitrate 
       # should be sufficient for the called to select the appropriate one.
       return [
@@ -217,13 +217,14 @@ def GetAvailableMediaObjectsForURL(url):
   else:
 
     external_sources = [
-      ('//embed[contains(@src, "youtube.com")]', 'src', None, False),
-      ('//iframe[contains(@src, "youtube.com")]', 'src', None, False),
-      ('//embed[contains(@src, "vimeo.com")]', 'src', None, False),
-      ('//object[contains(@data, "blip.tv")]', 'data', FindBlip, True)
+      ('//embed[contains(@src, "youtube.com")]',	'src',	None),
+      ('//iframe[contains(@src, "youtube.com")]',	'src',	None),
+      ('//embed[contains(@src, "vimeo.com")]',		'src',	None),
+      ('//iframe[contains(@src, "vimeo.com")]',		'src',	None),
+      ('//object[contains(@data, "blip.tv")]',		'data',	FindBlip)
     ]
 
-    for (select, node, find_url, make_indirect) in external_sources:
+    for (select, node, find_url) in external_sources:
       try:
         external_url = page.xpath(select)[0].get(node)
 
