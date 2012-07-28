@@ -1,39 +1,33 @@
-####################################################################################################
-
 def NormalizeURL(url):
   return url.replace('layout=embed', '')
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
+
   data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
   
   if len(data.xpath('//video')) == 0: # we're using a link to a non-video page... find the link to the proper page
     url = data.xpath('//a[@class="play-bttn"]')[0].get('href')
-    #Log(url)
     data = data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
   else:
     pass
-  
+
   title = data.xpath('//title')[0].text.strip(' - Do Lectures')
-  #Log(title)
-  
   summary = data.xpath('//section[@id="video-details"]//p')[0].text
-  #Log(summary)
-  
   thumbUrl = data.xpath('//video')[0].get('poster')
-  #Log(thumbUrl)
-  
+
   # Construct a metadata item
   vc = VideoClipObject(
     title = title,
     summary = summary,
     thumb = thumbUrl
   )
+
   return vc
-  
+
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   return [
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720'))],
@@ -59,21 +53,18 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, fmt=''):
-  
+
   data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  
+
   if len(data.xpath('//video')) == 0: # we're using a link to a non-video page... find the link to the proper page
     url = data.xpath('//a[@class="play-bttn"]')[0].get('href')
     data = data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
   else:
     pass
-  
+
   if fmt == '720':
     video_url = data.xpath('//source[contains(@type, "video/mp4")]')[0].get('src')
   elif fmt == 'sd':
     video_url = data.xpath('//video')[0].get('data-iphone-video-url')
-    
-  return Redirect(video_url)
-  
 
-  
+  return Redirect(video_url)
