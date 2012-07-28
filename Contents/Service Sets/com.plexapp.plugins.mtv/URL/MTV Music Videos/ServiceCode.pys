@@ -2,48 +2,58 @@ MTV_BASE = "http://www.mtv.com"
 MTV_VIDEOS = "http://www.mtv.com/music/videos/"
 
 ####################################################################################################
-
 def NormalizeURL(url):
-  return url
+
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url)
-  video_title = data.xpath('//meta[@name="mtvn_title"]')[0].get('content')
-  artist = data.xpath('//meta[@name="mtvn_artist"]')[0].get('content')
-  title = '%s - %s' % (artist, video_title)
-  date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
-  thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
 
-  vc = VideoClipObject(
-    title = title,
-    originally_available_at = date,
-    thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback = 'icon-default.png')
-  )
+	data = HTML.ElementFromURL(url)
+	artist = data.xpath('//meta[@name="mtvn_artist"]')
 
-  return vc
+	# This service only handles music videos
+	if len(artist) == 0:
+		return None
+
+	artist = artist[0].get('content')
+	video_title = data.xpath('//meta[@name="mtvn_title"]')[0].get('content')
+	title = '%s - %s' % (artist, video_title)
+	date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
+	thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
+
+	vc = VideoClipObject(
+		title = title,
+		originally_available_at = date,
+		thumb = Resource.ContentsOfURLWithFallback(url = thumb, fallback = 'icon-default.png')
+	)
+
+	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key=WebVideoURL(url))]
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=WebVideoURL(url))]
+		)
+	]
 
 ####################################################################################################
 def TestURLs():
-  test_urls = []
-  data = HTML.ElementFromURL(MTV_VIDEOS)
-  for video in data.xpath('//li[contains(@itemtype, "VideoObject")]//a'):
 
-    video_url = video.get('href')
-    if video_url.startswith('/'):
-      video_url = MTV_BASE + video_url
-    test_urls.append(video_url)
+	test_urls = []
+	data = HTML.ElementFromURL(MTV_VIDEOS)
 
-    if len(test_urls) > 3:
-      break
+	for video in data.xpath('//li[contains(@itemtype, "VideoObject")]//a'):
+		video_url = video.get('href')
 
-  return test_urls
+		if video_url.startswith('/'):
+			video_url = MTV_BASE + video_url
+
+		test_urls.append(video_url)
+
+		if len(test_urls) > 3:
+			break
+
+	return test_urls
