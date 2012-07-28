@@ -1,0 +1,60 @@
+NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "x":"http://www.w3.org/1999/xhtml"}
+SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+	smil = GetSMIL(url)
+	details = GetSRC(smil)
+	
+	title = details.get('title')
+	summary = details.get('abstract')
+	duration = int(details.get('dur').strip('ms'))
+	try:
+		source = details.get('provider')
+	except:
+		try:
+			source = details.get('author')
+		except:
+			source = ''	
+	
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration,
+		source_title = source)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			audio_channels = 2,
+			parts = [PartObject(key = WebVideoURL(url))]
+		)
+	]
+
+
+####################################################################################################
+def GetSMIL(url):
+	page = HTML.ElementFromURL(url)
+	pID = page.xpath('//link[@rel="video_src"]/@href', namespaces=NAMESPACES)[0].split("pid=")[1].split('&')[0]
+	smil = XML.ElementFromURL(SMIL_URL % pID)
+	return smil
+
+####################################################################################################
+def GetSRC(smil):
+	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+	if len(src_list) == 1:
+		return src_list[0]
+	else:
+		for ref in src_list:
+			if "pfadx///video" in ref.get('src'):
+				pass
+			elif ref.get('src').startswith('rtmp'):
+				return ref
+			else:
+				return ref
+	return None
