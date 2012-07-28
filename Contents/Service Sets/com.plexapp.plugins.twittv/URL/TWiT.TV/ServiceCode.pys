@@ -126,7 +126,7 @@ def TimeToMs(timecode):
 ####################################################################################################
 def PlayMedia(url, fmt):
 
-	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url, cacheTime=CACHE_1DAY)
 
 	resolutions = ['720p','480p','sd']
 	video_path = {
