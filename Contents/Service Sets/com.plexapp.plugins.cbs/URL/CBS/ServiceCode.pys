@@ -87,7 +87,14 @@ def MetadataObjectFromPAGE(url):
   title = data.xpath('//meta[@property="og:title"]')[0].get('content')
 
   if ' - ' in title:
-    (show_title, episode_title, junk) = title.split(' - ', 2)
+    try:
+      (show_title, episode_title, junk) = title.split(' - ', 2)
+
+      if show_title.endswith(' Video'):
+        show_title = show_title.rsplit(' ',1)[0]
+    except: # This is not a webpage with an episode
+      return None
+
   else:
     show_title = None
     episode_title = title
