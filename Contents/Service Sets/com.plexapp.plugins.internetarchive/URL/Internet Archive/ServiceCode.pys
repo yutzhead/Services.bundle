@@ -12,7 +12,13 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-    meta_xml = XML.ElementFromURL(GetMetadata(url))
+    xml_url = GetMetadata(url)
+
+    if xml_url == '':
+        return None
+
+    meta_xml = XML.ElementFromURL(xml_url)
+
     '''gather the metadata that doesn't vary between media types'''
     rating = GetRating(url)
     title = meta_xml.xpath('//title')[0].text
@@ -117,7 +123,7 @@ def GetMetadata(url):
     page = HTML.ElementFromURL(url)
     xml_url = ''
     size = 0
-    for meta in page.xpath('.//table[@class="fileFormats"]//a[contains(@href, "_meta.xml")]'):
+    for meta in page.xpath('//table[@class="fileFormats"]//a[contains(@href, "_meta.xml")]'):
         file_size = ConvertToBytes(meta.xpath('./text()')[0])
         if file_size > size:
             xml_url = METADATA_BASE_URL + meta.get('href')
