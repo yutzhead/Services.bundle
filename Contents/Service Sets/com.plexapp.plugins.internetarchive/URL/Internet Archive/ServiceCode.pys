@@ -22,10 +22,13 @@ def MetadataObjectForURL(url):
     '''gather the metadata that doesn't vary between media types'''
     rating = GetRating(url)
     title = meta_xml.xpath('//title')[0].text
-    try:
-      summary = meta_xml.xpath('//description')[0].text
-    except:
-      summary = meta_xml.xpath('//notes')[0].text
+
+    summary = None
+    for summary_node in ['//description', '//notes']:
+      try: 
+        summary = meta_xml.xpath(summary_node)[0].text
+        break
+      except: pass
 
     '''gather the media-type specific metadata and return the appropriate object'''
     if meta_xml.xpath('//mediatype')[0].text in ['audio', 'etree']:
