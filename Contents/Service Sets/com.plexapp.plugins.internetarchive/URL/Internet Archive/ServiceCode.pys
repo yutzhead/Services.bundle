@@ -25,7 +25,9 @@ def MetadataObjectForURL(url):
 
     summary = None
     for summary_node in ['//description', '//notes']:
-      try: summary = meta_xml.xpath(summary_node)[0].text
+      try: 
+        summary = meta_xml.xpath(summary_node)[0].text
+        break
       except: pass
 
     '''gather the media-type specific metadata and return the appropriate object'''
