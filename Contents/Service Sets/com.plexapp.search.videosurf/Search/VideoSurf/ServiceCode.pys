@@ -14,13 +14,13 @@ def Search(query):
   if query and len(query.strip()) >= 3:
     # Compute the URL and download the JSON
     url = 'http://apis.videosurf.com/video_search/v1.2/?client_id=%s&client_key=%s&refinement_providers=%s&query=%s&num_per_page=20' % (VS_ID, VS_KEY, VS_PROVIDERS, String.Quote(query.strip()))
-    json = JSON.ObjectFromURL(url, timeout=30)
 
-    for video in json['videos']:
-      try:
-        available_at = None
+    try:
+      json = JSON.ObjectFromURL(url, timeout=30)
+
+      for video in json['videos']:
         try: available_at = Datetime.FromTimestamp(video['date_added']).date()
-        except: pass
+        except: available_at = None
 
         source_url = get_source_url(video['source_url'])
 
@@ -34,7 +34,7 @@ def Search(query):
           url = source_url
         ))
 
-      except:
-        Log.Exception("Exception adding video result")
+    except:
+      Log.Exception("Exception adding video result")
 
   return c
