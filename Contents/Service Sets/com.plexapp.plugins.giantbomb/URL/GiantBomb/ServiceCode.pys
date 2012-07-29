@@ -1,86 +1,73 @@
-import re, string
-
 API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
 
 ####################################################################################################
-
 def NormalizeURL(url):
-  return url.split('?')[0]
+
+	return url.split('?')[0]
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-  clip = GetClip(url)
-  
-  title = clip["name"]
-  #Log(title)
-  
-  summary = clip["deck"]
-  #Log(summary)
-  
-  thumbUrl = clip["image"]["super_url"]
-  #Log(thumbUrl)
-  
-  date = Datetime.ParseDate(clip["publish_date"]).date()
-  
-  # Construct a metadata item
-  vc = VideoClipObject(
-    title = title,
-    summary = summary,
-    thumb = thumbUrl,
-    originally_available_at = date
-  )
-  return vc
-  
+	clip = GetClip(url)
+
+	title = clip['name']
+	summary = clip['deck']
+	thumbUrl = clip['image']['super_url']
+	date = Datetime.ParseDate(clip['publish_date']).date()
+
+	vc = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumbUrl,
+		originally_available_at = date
+	)
+
+	return vc
+
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hi'))],
-      container = Container.MP4,
-      bitrate = '1500',
-      optimized_for_streaming = True,
-      video_resolution = 'sd',
-      aspect_ratio = '1.77',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='lo'))],
-      container = Container.MP4,
-      bitrate = '700',
-      optimized_for_streaming = True,
-      video_resolution = 'sd',
-      aspect_ratio = '1.77',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hi'))],
+			container = 'mp4',
+			bitrate = 1500,
+			optimized_for_streaming = True,
+			video_resolution = 'sd',
+			aspect_ratio = '1.77',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='lo'))],
+			container = 'mp4',
+			bitrate = 700,
+			optimized_for_streaming = True,
+			video_resolution = 'sd',
+			aspect_ratio = '1.77',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2
+		)
+	]
 
 ####################################################################################################
 def PlayVideo(url, fmt=''):
-  
-  clip = GetClip(url)
-  
-  if fmt == 'hi':
-    video_url = clip["high_url"]
-  elif fmt == 'lo':
-    video_url = clip["low_url"]
-  
-  #Log(video_url)  
-    
-  return Redirect(video_url)
+
+	clip = GetClip(url)
+
+	if fmt == 'hi':
+		video_url = clip['high_url']
+	elif fmt == 'lo':
+		video_url = clip['low_url']
+
+	return Redirect(video_url)
 
 ####################################################################################################
 def GetClip(url):
-  
-  video_id = url.split('-')[-1].strip('/')
 
-  clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
-  
-  data = JSON.ObjectFromURL(clip_detail_url)
-  
-  return(data['results'])
+	video_id = url.split('-')[-1].strip('/')
+	clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
+	data = JSON.ObjectFromURL(clip_detail_url)
+	return(data['results'])
