@@ -220,14 +220,16 @@ def PlayVideo(url, default_fmt = None):
     params = f.split('\u0026')
 
     for p in params:
-      (name, value) = p.split('=')
-      map[name] = value
+      if '=' in p:
+        (name, value) = p.split('=')
+        map[name] = value
 
-    quality = int(map['itag'])
+    if 'itag' in map:
+      quality = int(map['itag'])
 
-    if 'url' in map: # Just http (url) for now, not rtmp (stream)
-      fmts_info[quality] = String.Unquote(map['url'])
-      fmts.append(quality)
+      if 'url' in map: # Just http (url) for now, not rtmp (stream)
+        fmts_info[quality] = String.Unquote(map['url'])
+        fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
 
