@@ -7,6 +7,9 @@ def MetadataObjectForURL(url):
 
 	data = DoAmfRequest(url)
 
+	if not data:
+		return None
+
 	title = data['displayName']
 	show_title = data['displayName']
 	summary = data['shortDescription']
@@ -54,7 +57,13 @@ def PlayVideo(url):
 ####################################################################################################
 def DoAmfRequest(url):
 
-	data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
+	data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')
+
+	if len(data) == 0:
+		return None
+	else:
+		data = data[0]
+
 	playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
 	videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
 
@@ -77,9 +86,12 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 	video_obj = ContentOverride(videoPlayer)
 	experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
 
-	result = service.getDataForExperience('', experience)
+	try:
+		result = service.getDataForExperience('', experience)
 
-	return result['programmedContent']['videoPlayer']['mediaDTO']
+		return result['programmedContent']['videoPlayer']['mediaDTO']
+	except:
+		raise Ex.MediaGeoblocked
 
 ####################################################################################################
 class ContentOverride(object):
