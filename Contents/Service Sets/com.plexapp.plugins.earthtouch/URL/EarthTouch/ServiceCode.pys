@@ -54,7 +54,8 @@ def PlayVideo(url, format = None):
 			vimeolink	= vimeolink.split('.hd.mp4')[0]
 
 			media = URLService.MediaObjectsForURL(vimeolink)
-	
+			break
+			
 	if format == "hd":		
 		return Redirect(media[0].parts[0].key)
 	else:
@@ -73,5 +74,6 @@ def MetadataObjectForURL(url):
 			vimeolink 	= video.xpath('enclosure', namespaces=NAMESPACES_A)[0].get('url')
 			vimeolink	= VIMEO + vimeolink.split('external')[1]
 			vimeolink	= vimeolink.split('.hd.mp4')[0]
-
+			break
+			
 	return URLService.MetadataObjectForURL(vimeolink)
