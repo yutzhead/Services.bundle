@@ -156,6 +156,7 @@ def GetTracks(url):
     count = 0
     Flac_Available = False
     for file in track_list.xpath('//file'):
+        Log(XML.StringFromElement(file))
         file_format = file.xpath('./format')[0].text
         if file_format == 'Flac':
           Flac_Available = True
@@ -260,6 +261,12 @@ def GetTracks(url):
     '''sort the track objects into album order by track number'''
     oc.objects.sort(key = lambda obj: obj.index)
     
+    '''It's possible that the track list simply contains types which we don't support (e.g. Shorten)'''
+    if len(oc) == 0:
+      return ObjectContainer(
+        header = "No Tracks Found", 
+        message = "No tracks with supported filetypes were found")
+
     return oc
 
 ####################################################################################################
