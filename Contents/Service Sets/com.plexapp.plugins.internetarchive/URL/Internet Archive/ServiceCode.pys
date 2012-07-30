@@ -156,7 +156,6 @@ def GetTracks(url):
     count = 0
     Flac_Available = False
     for file in track_list.xpath('//file'):
-        Log(XML.StringFromElement(file))
         file_format = file.xpath('./format')[0].text
         if file_format == 'Flac':
           Flac_Available = True
