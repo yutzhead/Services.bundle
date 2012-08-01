@@ -13,6 +13,11 @@ def MetadataObjectForURL(url):
     if not external_source:
         return None
 
+    # Check for Viddler. We can't do URLService.MetadataObjectForURL for Viddler videos because
+    # those videos do not have a 'page' on the Viddler website.
+    # Example:
+    # Embed: http://www.viddler.com/player/43c9ce49 (works)
+    # Page: http://www.viddler.com/v/43c9ce49 (says 'Video forbidden')
     if 'viddler.com' in external_source:
         html = HTML.ElementFromURL(url)
 
