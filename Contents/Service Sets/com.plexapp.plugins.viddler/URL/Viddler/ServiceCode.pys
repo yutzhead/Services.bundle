@@ -9,7 +9,7 @@ def NormalizeURL(url):
 	elif '/embed/' in url:
 		url = url.replace('/embed/', '/v/')
 
-	return url.split('?', 1)[0]
+	return url.split('?', 1)[0].rstrip('/')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
