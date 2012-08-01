@@ -260,8 +260,7 @@ def PlayVideo(url, default_fmt = None):
       MediaObject(
         parts = [
           PartObject(key = final_url)
-        ],
-        protocol = 'http-mp4-streaming' if fmt in (18, 22, 37, 38) else 'http-video'
+        ]
       )
     ]
   ))
