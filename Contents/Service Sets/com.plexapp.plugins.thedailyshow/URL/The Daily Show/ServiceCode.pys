@@ -1,4 +1,5 @@
 OG_NAMESPACE  = {'og':'http://www.w3.org/1999/xhtml'}
+RE_PLAYER = Regex('http://media.mtvnservices.com/(?P<id>.+(episode|video)[^"]+)')
 
 ####################################################################################################
 
@@ -63,6 +64,15 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
   return [
     MediaObject(
-      parts = [PartObject(key = WebVideoURL(url))]
+      parts = [PartObject(key = Callback(PlayVideo, url=url))],
+      protocol = 'webkit'
     )
   ]
+
+####################################################################################################
+
+def PlayVideo(url):
+  content = HTTP.Request(url).content
+  flashlink = RE_PLAYER.search(content).group('id')
+  flashlink = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.1.12.1.swf?uri=' + flashlink + '&autoPlay=true'
+  return Redirect(WebVideoURL(flashlink))
