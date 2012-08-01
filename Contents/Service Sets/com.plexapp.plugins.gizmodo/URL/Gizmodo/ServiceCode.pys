@@ -10,10 +10,25 @@ def MetadataObjectForURL(url):
 
     external_source = GetExternalSource(url)
 
-    if external_source:
-        return URLService.MetadataObjectForURL(external_source)
-    else:
+    if not external_source:
         return None
+
+    if 'viddler.com' in external_source:
+        html = HTML.ElementFromURL(url)
+
+        title = html.xpath('//meta[@property="og:title"]')[0].get('content')
+        summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+
+        viddler_video_id = external_source.split('?')[0].rstrip('/').rsplit('/',1)[1]
+        thumb = 'http://www.viddler.com/thumbnail/%s/' % viddler_video_id
+
+        return VideoClipObject(
+            title = title,
+            summary = summary,
+            thumb = thumb
+        )
+    else:
+        return URLService.MetadataObjectForURL(external_source)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -85,6 +100,11 @@ def GetExternalSource(url):
 
     if ajax_content:
         ajax = JSON.ObjectFromString(ajax_content.group('json'))
-        return ajax['player']
+        player = ajax['player']
+
+        if player[0:2] == '//':
+            player = 'http:%s' % player
+
+        return player
     else:
         return None
