@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.viddler.com/v/[a-f0-9]{8}</string>
+				<string>http://www.viddler.com/v/[a-f0-9]+</string>
 			</array>
 		</dict>
 	</dict>
