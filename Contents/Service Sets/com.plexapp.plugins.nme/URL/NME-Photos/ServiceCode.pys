@@ -1,0 +1,63 @@
+BASE_URL            = 'http://static.nme.com/images/gallery/'
+
+REGEX_FILENAMES     = Regex('var fileNameArr = new Array\([^"]+([^)]+)\)', Regex.DOTALL)
+REGEX_CAPTIONS      = Regex('var captionArr = new Array\([^"]+(.+)\);', Regex.DOTALL)
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+
+  page = HTML.ElementFromURL(url)
+
+  # Extract the details
+  try:
+    title = page.xpath("//meta[@property = 'og:title']")[0].get('content')
+    summary = page.xpath("//meta[@name = 'Description']")[0].get('content')
+    thumb = page.xpath("//meta[@property = 'og:image']")[0].get('content')
+  except:
+    # We haven't found the main title information and therefore we will fallback to what the details
+    # of the current photo
+    title = page.xpath("//h1[@class = 'headline']/span/text()")[0]
+    summary = page.xpath("//div[contains(@class, 'media_details')]//p[contains(@class, 'caption')]/text()")[0]
+    thumb = page.xpath("//div[@class = 'media_container']//img")[0].get('src')
+
+  # Return the photo
+  return PhotoAlbumObject(
+    key = Callback(GetPhotos, url = url),
+    title = title,
+    summary = summary,
+    thumb = thumb
+  )
+
+####################################################################################################
+
+def GetPhotos(url):
+  oc = ObjectContainer()
+
+  page_contents = HTTP.Request(url).content
+  files = ListFromArray(REGEX_FILENAMES.findall(page_contents)[0])
+
+  for i in range(len(files)):
+    url = BASE_URL + files[i]
+    oc.add(PhotoObject(
+      url = url,
+      title = 'Photo: %d' % i,
+      thumb = url))
+
+  return oc
+
+####################################################################################################
+
+def ListFromArray(array):
+  list = array.split('",')
+  list = [item.strip().replace('"', '') for item in list]
+  return list
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+  return [
+    MediaObject(
+      parts = [PartObject(key = url)]
+    )
+  ]
