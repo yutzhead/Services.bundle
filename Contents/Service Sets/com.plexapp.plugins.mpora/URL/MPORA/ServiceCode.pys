@@ -58,10 +58,10 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, res):
-	
+
 	if res == "hd":
 		url = url + "?hd=1"
-	
+
 	page = HTTP.Request(url).content
 
 	try: video_urlhd = HD_REGEX.findall(page)[0]
@@ -72,12 +72,16 @@ def PlayVideo(url, res):
 
 	if video_urlsd == None and video_urlhd == None:
 		html_page = HTML.ElementFromString(page)
+
 		for item in html_page.xpath('//div[contains(@class, "player")]'):
 			videolink = item.xpath('.//video')[0].get('src')
-		
+
+			if videolink:
+				break
+
 	if res == "hd" and video_urlhd:
 		return Redirect(video_urlhd)
-	elif res == "sd" and video_urlsd:
+	elif video_urlsd:
 		return Redirect(video_urlsd)
 	else:
 		return Redirect(videolink)
