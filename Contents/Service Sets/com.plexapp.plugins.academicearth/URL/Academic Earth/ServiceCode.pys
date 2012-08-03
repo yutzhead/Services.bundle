@@ -88,15 +88,8 @@ def PlayVideo(url):
 	# It appears that Academic Earth either uses YouTube or Blip to host their content. Therefore we
 	# should be able to find what is appropriate to redirect to the necessary URL service.
 	video_url = None
-	yt_match = RE_YOUTUBE.search(page_content)
-
-	if yt_match != None:
-		video_url = YOUTUBE_URL % yt_match.group('id')
-		media = URLService.MediaObjectsForURL(video_url)
-		return Redirect(media[0].parts[0].key)
-
-	else:
-		page = HTML.ElementFromString(page_content)
-		video_url = page.xpath("//textarea[@id='lecture-embed']//embed")[0].get('src')
-		media = URLService.MediaObjectsForURL(video_url)
-		return Redirect(media[0].parts[0].key)
+	
+	page = HTML.ElementFromString(page_content)
+	video_url = page.xpath("//embed[@id='idPlayer']")[0].get('src')
+	media = URLService.MediaObjectsForURL(video_url)
+	return Redirect(media[0].parts[0].key)
