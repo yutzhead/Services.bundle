@@ -155,6 +155,7 @@ def GetTracks(url):
     tracks = []
     count = 0
     Flac_Available = False
+    unsupported_audio_found = False
     for file in track_list.xpath('//file'):
         file_format = file.xpath('./format')[0].text
         if file_format == 'Flac':
@@ -164,6 +165,8 @@ def GetTracks(url):
         try:
             if file_format not in ['64Kbps MP3', 'Ogg Vorbis', 'VBR MP3', 'Flac']:
                 '''we don't care about non-audio files, so ignore them'''
+                if file_format in ['Shorten']:
+                  unsupported_audio_found = True
                 continue
             else:
                 try:
@@ -260,6 +263,12 @@ def GetTracks(url):
     '''sort the track objects into album order by track number'''
     oc.objects.sort(key = lambda obj: obj.index)
     
+    '''It's possible that the track list simply contains types which we don't support (e.g. Shorten)'''
+    if len(oc) == 0 and unsupported_audio_found:
+      return ObjectContainer(
+        header = "No Tracks Found", 
+        message = "No tracks with supported filetypes were found")
+
     return oc
 
 ####################################################################################################
