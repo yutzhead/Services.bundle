@@ -6,14 +6,14 @@
 	<dict>
 		<key>South Park</key>
 		<dict>
-                    <key>TestURLs</key>
-		    <array>
-	    		<string>http://www.southparkstudios.com/full-episodes/s01e01-cartman-gets-an-anal-probe</string>
-		    </array>    
-		    <key>URLPatterns</key>
-		    <array>
-	    		<string>http://www.southpark(studios)?\.(dk|fi|de|nl|no|se|com)/.+</string>
-                    </array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.southparkstudios.com/full-episodes/s01e01-cartman-gets-an-anal-probe</string>
+			</array>    
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.southpark(studios)?\.(dk|fi|de|nl|no|se|com)/((full-)?episodes|alleEpisoden)/.+</string>
+			</array>
 		</dict>
 	</dict>
 </dict>
