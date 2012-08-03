@@ -1,9 +1,6 @@
-import re
-
-EXTREME_INFO_URL    = "http://player.extreme.com/info/%s?source_url=%s"
+EXTREME_INFO_URL = "http://player.extreme.com/info/%s"
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     info = GetVideoDetails(url)
@@ -21,10 +18,12 @@ def MetadataObjectForURL(url):
         summary = description,
         thumb = thumb,
         originally_available_at = date,
-        tags = tags)
+        tags = tags
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         video_codec = VideoCodec.H264,
@@ -74,6 +73,7 @@ def PlayVideo(url, res):
 
     resolutions = ['FULL-HD', 'HD', 'SD', 'LD']
     index = resolutions.index(res)
+
     for resolution_index in range(index, len(resolutions)):
         current_resolution = resolutions[resolution_index]
         try:
@@ -92,9 +92,6 @@ def PlayVideo(url, res):
 def GetVideoDetails(url):
 
     page = HTML.ElementFromURL(url)
-    video_url = page.xpath('//meta[@property = "og:video"]')[0].get('content')
-    video_id = re.search('id=([^;]+)(&|;)', video_url).group(1)
+    video_id = page.xpath('//meta[@property="og:image"]')[0].get('content').split('.jpg')[0].rsplit('/',1)[1]
 
-    url = String.Quote(url)
-    url = url.replace('/', '%2F')
-    return XML.ElementFromURL(EXTREME_INFO_URL % (video_id, url))
+    return XML.ElementFromURL(EXTREME_INFO_URL % (video_id))
