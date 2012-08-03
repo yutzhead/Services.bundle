@@ -10,12 +10,12 @@ def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url)
 	title = data.xpath('//meta[@name="title"]')[0].get('content')
-	summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	#summary = data.xpath('//meta[@name="description"]')[0].get('content')
 	thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
 
 	mo = VideoClipObject(
 		title = title,
-		summary = summary,
+		#summary = summary,
 		thumb = thumb
 	)
 
