@@ -1,6 +1,15 @@
-IPAD_HTTP_HEADERS = { 'X-Requested-With': 'XMLHttpRequest', 'User-Agent' : 'Mozilla/5.0 (iPad; CPU OS 5_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B176 Safari/7534.48.3' }
+IPAD_HTTP_HEADERS 	= { 'X-Requested-With': 'XMLHttpRequest', 'User-Agent' : 'Mozilla/5.0 (iPad; CPU OS 5_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B176 Safari/7534.48.3' }
+IPHONE_HTTP_HEADERS = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3'} 
+
 RE_DURATION = Regex("T(?P<mins>[0-9]+)M(?P<secs>[0-9]+)S")
-MOOGALOOP_XML = 'http://www.collegehumor.com/moogaloop/video/%s'
+
+MOOGALOOP_XML 	= 'http://www.collegehumor.com/moogaloop/video/%s'
+MOOGALOOP_MOBILE_REGEX = Regex("flvSourceUrl: '([^']+)'")
+
+RNMD_CONTENT_REGEX 	= Regex("content: '([^']+)'")
+RNMD_VIDEO_ID_REGEX = Regex("videoId: '([^']+)'")
+RNMD_JSON_RESPONSE  = Regex('r.completeRequest\((.+)\)')
+RNMD_JSON			= 'http://ads.rnmd.net/getAds?delivery=jsonp&adType=videosrc&adDiv=%s&url=%s&appId=college_humor_web&v=1'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -48,11 +57,41 @@ def PlayVideo(url):
 	html = HTML.ElementFromURL(url, headers = IPAD_HTTP_HEADERS, cacheTime = CACHE_1DAY)
 
 	# We can then find the available MP4 stream and redirect too it.
-	video_url = html.xpath("//video")[0].get('src')
+	video_url = None
+	try: video_url = html.xpath("//video")[0].get('src')
+	except: pass
 
+	# If we haven't found a video for the iPad, lets move on and see if MOOGALOOP will give us anything
+	# more. The one thing with this source is that a lot of these fail because they return a manifest file
+	# which requires further work to determine where the video is.
 	if not video_url:
-		video_id = url.split('/')[4]
-		xml = XML.ElementFromURL(MOOGALOOP_XML % video_id)
-		video_url = xml.xpath('//video/file')[0].text
+		try:
+			video_id = url.split('/')[4]
+			xml = XML.ElementFromURL(MOOGALOOP_XML % video_id)
+			megaloop_video_url = xml.xpath('//video/file')[0].text
+			HTTP.Request(megaloop_video_url).headers
+			video_url = megaloop_video_url
+		except: pass
+
+	# Okay, things are looking a bit dodgy if we haven't found anything yet. Let's make one last attempt and see
+	# if our mobiles will have any luck. It's kinda wierd that we hit an 'ad' URL to get the video, but actually
+	# the video contains the Ads embedded, which is perfect!
+	if not video_url:
+		try:
+			mobile_url = url.replace('www.', 'm.')
+			mobile_content = HTTP.Request(mobile_url, headers = IPHONE_HTTP_HEADERS, cacheTime = 0).content
+
+			try:
+				video_url = MOOGALOOP_MOBILE_REGEX.findall(mobile_content)[0]
+
+			except:
+				content = RNMD_CONTENT_REGEX.findall(mobile_content)[0]
+				video_id = RNMD_VIDEO_ID_REGEX.findall(mobile_content)[0]
+
+				video_details = HTTP.Request(RNMD_JSON % (video_id, content)).content
+				video_details_json = JSON.ObjectFromString(RNMD_JSON_RESPONSE.findall(video_details)[0])
+				video_url = video_details_json['adUrl']
+
+		except: pass
 
 	return Redirect(video_url)
