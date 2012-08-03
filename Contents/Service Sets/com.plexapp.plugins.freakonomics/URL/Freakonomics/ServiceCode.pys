@@ -38,7 +38,6 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-@indirect
 def PlayAudio(url):
 
 	data = HTML.ElementFromURL(url)

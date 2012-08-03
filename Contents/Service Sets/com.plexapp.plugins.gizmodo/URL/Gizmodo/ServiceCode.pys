@@ -78,7 +78,6 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
-@indirect
 def PlayVideo(url, res):
 
   # Find the external source and the available media objects.
