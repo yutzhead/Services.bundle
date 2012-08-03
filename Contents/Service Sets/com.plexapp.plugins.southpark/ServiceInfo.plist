@@ -12,7 +12,7 @@
 			</array>    
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.southpark(studios)?\.(dk|fi|de|nl|no|se|com)/((full-)?episodes|alleEpisoden)/.+</string>
+				<string>http://www\.southpark(studios)?\.(com|de|dk|fi|nl|no|se)/((full-)?episodes|alleEpisoden)/.+</string>
 			</array>
 		</dict>
 	</dict>
