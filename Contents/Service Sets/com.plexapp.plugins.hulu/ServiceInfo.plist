@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)hulu.com/.+</string>
+				<string>http://(.+\.)hulu.com/watch/.+</string>
 			</array>
 		</dict>
 	</dict>
