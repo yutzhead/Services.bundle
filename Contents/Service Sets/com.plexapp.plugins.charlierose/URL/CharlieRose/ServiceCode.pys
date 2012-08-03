@@ -1,30 +1,43 @@
-FLV_URL_PATTERN = Regex('"url":"(http://charlierose\..+\.flv)"')
+FLV_URL_PATTERN = Regex('"url":"(http://charlierose\..+\.flv)')
 
+####################################################################################################
 def NormalizeURL(url):
-    return url
-    
+
+	return url
+
+####################################################################################################
 def MetadataObjectForURL(url):
-    data = HTML.ElementFromURL(url)
-    title = data.xpath('//meta[@name="title"]')[0].get('content')
-    thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
-    mo = VideoClipObject(
-        title = title,
-        thumb = thumb)
-    return mo
-    
+
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//meta[@name="title"]')[0].get('content')
+	summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
+
+	mo = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb
+	)
+
+	return mo
+
+####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url))],
-            container = 'flv',
-            video_resolution = '402',
-            video_codec = 'flv1',
-            audio_codec = 'mp3',
-            audio_channels = 2
-            )
-        ]
-        
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = 'flv',
+			video_resolution = '402',
+			video_codec = 'flv1',
+			audio_codec = 'mp3',
+			audio_channels = 2
+		)
+	]
+
+####################################################################################################
 def PlayVideo(url):
-    content = HTTP.Request(url).content
-    flv_url = FLV_URL_PATTERN.search(content).group(1)
-    return Redirect(flv_url)
+
+	content = HTTP.Request(url).content
+	flv_url = FLV_URL_PATTERN.search(content).group(1)
+	return Redirect(flv_url)
