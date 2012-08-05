@@ -128,6 +128,9 @@ def PlayVideo(url, res, bitrate = None):
   # Obtain the collection of MediaObjects which are actually availalbe.
   media = GetAvailableMediaObjectsForURL(url)
 
+  if not media:
+    return None
+
   # Iterate through the collection of known offered video resolutions. We will start at the desired
   # and progress to lower qualities.
   most_appropriate = None
