@@ -6,6 +6,12 @@
 	<dict>
 		<key>SBS Gemist</key>
 		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.sbs6.nl/programmas/huizenjacht/videos/seizoen-0/huizenjacht-4/huizenjacht</string>
+				<string>http://www.net5.nl/programmas/het-huis-van-je-dromen/videos/seizoen-0/aflevering-53/het-huis-van-je-dromen-aflevering-53</string>
+				<string>http://www.veronicatv.nl/programmas/top-gear/videos/seizoen-8/aflevering-4/top-gear</string>
+			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://(www\.)/?(net5|sbs6|veronicatv).nl/(video|programmas)/.+</string>
