@@ -115,7 +115,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate):
+def PlayVideo(url, bitrate, res=None):
     id = url.split('/')[-1]
     video_url = ''
     index = BITRATES.index(bitrate)
