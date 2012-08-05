@@ -66,12 +66,18 @@ def GetVideoItem(url):
     mrssdata = String.Unquote(String.Base64Decode(mrssdata.group(1))).replace('media:','media-')
     data = XML.ElementFromString(mrssdata)
 
-    item = data.xpath("//item")[0]
     if url.find('#') != -1:
       video_name = url[url.find('#') + 1:]
-      item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)[0]
+      item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)
 
-    return item
+      if len(item) < 1:
+        raise Ex.MediaNotAvailable
+      else:
+        return item[0]
+
+    else:
+      item = data.xpath("//item")[0]
+      return item
 
   else:
     return None
@@ -81,7 +87,7 @@ def TestURLs():
 
     test_urls = []
 
-    page = HTML.ElementFromURL('http://www.history.com/shows#')
+    page = HTML.ElementFromURL('http://www.history.com/shows')
 
     for link in page.xpath("//a[@class='watch more']"):
         if len(test_urls) < 3:
