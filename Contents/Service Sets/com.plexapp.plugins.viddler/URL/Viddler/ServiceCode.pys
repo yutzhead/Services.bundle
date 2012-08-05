@@ -45,14 +45,15 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	video_id = url.rsplit('/',1)[1]
-	video_url = MP4_URL % video_id
 
 	try:
+		video_url = MP4_URL % video_id
 		HTTP.Request(video_url).headers
-		return Redirect(video_url)
+		return IndirectResponse(VideoClipObject, key=video_url)
 	except:
 		video_url = FLV_URL % video_id
-		return Redirect(video_url)
+		return IndirectResponse(VideoClipObject, key=video_url)
