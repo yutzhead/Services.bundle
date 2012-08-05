@@ -29,7 +29,8 @@ def PlayVideo(url):
 	id = ID_REGEX.findall(url)[0]
 	details = GetDetails(id)
 
-	stream_url = details['streaming_urls'][0]['url']
+	streaming_urls = sorted(details['streaming_urls'], key=lambda k: k['frame_width'], reverse = True)
+	stream_url = streaming_urls[0]['url']
 	stream_details = stream_url.split('mp4:')
 
 	return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = stream_details[0], clip = 'mp4:' + stream_details[1]))
