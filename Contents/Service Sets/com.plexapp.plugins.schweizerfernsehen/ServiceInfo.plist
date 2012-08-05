@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
+	<key>URL</key>
+	<dict>
+		<key>Schweizer Fernsehen</key>
+		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.videoportal.sf.tv/video?id=b7d725d1-2fbf-4998-b7e9-fb847f84b5de;DCSext.zugang=videoportal_sendungsuebersicht</string>
+				<string>http://www.videoportal.sf.tv/video?id=e147b567-d23e-4b30-bc52-5eb51705df13;DCSext.zugang=videoportal_sendungsuebersicht</string>
+			</array>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www.videoportal.sf.tv/video\?id=.+</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
