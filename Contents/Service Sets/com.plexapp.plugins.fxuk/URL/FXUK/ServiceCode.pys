@@ -53,7 +53,7 @@ def GetSmil(url):
     smil_url = SMIL_REGEX.search(page_contents).group(1)
     smil = XML.ElementFromURL(smil_url)
 
-    if len(smil.xpath('//a:ref[contains(@title, "Geo") or contains(@title, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
+    if len(smil.xpath('//a:ref[contains(@src, "Unavailable") and contains(@title, "Geographic Restriction")]', namespaces = SMIL_NAMESPACE)) > 0:
         raise Ex.MediaGeoblocked
     else:
         return smil
