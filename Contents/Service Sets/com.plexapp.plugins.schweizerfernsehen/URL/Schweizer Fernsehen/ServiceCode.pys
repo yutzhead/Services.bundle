@@ -30,7 +30,6 @@ def PlayVideo(url):
 	details = GetDetails(id)
 
 	streaming_urls = sorted(details['streaming_urls'], key=lambda k: k['frame_width'], reverse = True)
-	Log(streaming_urls)
 	stream_url = streaming_urls[0]['url']
 	stream_details = stream_url.split('mp4:')
 
