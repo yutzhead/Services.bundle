@@ -31,7 +31,10 @@ def PlayVideo(url):
 
 	streaming_urls = sorted(details['streaming_urls'], key=lambda k: k['frame_width'], reverse = True)
 	if len(streaming_urls) == 0:
-		raise Ex.MediaNotAvailable
+		if 'geoblock' in details['flags']:
+			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
 
 	stream_url = streaming_urls[0]['url']
 	stream_details = stream_url.split('mp4:')
