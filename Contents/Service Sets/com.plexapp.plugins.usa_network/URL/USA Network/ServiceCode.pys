@@ -72,8 +72,8 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, res):
 
-	res_index = RES_MAP.index(res)
 	episode = GetVideoDetails(url)
+	res_index = RES_MAP.index(res)
 
 	if not episode or 'media$content' not in episode:
 		return None
@@ -123,7 +123,7 @@ def GetVideoDetails(url):
 		elif episode['guid'] == video_id:
 			return episode
 
-	return None
+	raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
