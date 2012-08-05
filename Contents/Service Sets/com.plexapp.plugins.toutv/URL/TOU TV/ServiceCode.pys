@@ -2,12 +2,13 @@ RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
 RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
-
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
+####################################################################################################
 def NormalizeURL(url):
     return url
 
+####################################################################################################
 def MetadataObjectForURL(url):
     smil = GetSMIL(url)
     details = GetSRC(smil)
@@ -71,6 +72,7 @@ def MetadataObjectForURL(url):
         thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
 
+####################################################################################################
 def MediaObjectsForURL(url):
     return [
         MediaObject(
@@ -80,11 +82,10 @@ def MediaObjectsForURL(url):
         )
     ]
 
+####################################################################################################
 @indirect
 def PlayVideo(url, res):
     smil = GetSMIL(url)
-
-    video_url = None
     source = GetSRC(smil).get('src')
 
     player = source.split('<break>')[0]
@@ -92,26 +93,41 @@ def PlayVideo(url, res):
 
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
+####################################################################################################
 def GetSMIL(url):
     data = HTTP.Request(url).content
+
     try:
-	pID = RE_EPISODE_ID.search(data).group(1)
+        pID = RE_EPISODE_ID.search(data).group(1)
     except:
-	pID = RE_MEDIA_ID.search(data).group(1)
+        pID = RE_MEDIA_ID.search(data).group(1)
+
     content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
     smil = XML.ElementFromString(content)
+
     return smil
 
+####################################################################################################
 def GetSRC(smil):
     src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+
     if len(src_list) == 1:
-        return src_list[0]
+        if 'Unavailable.flv' in src_list[0].get('src'):
+            if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
+                # content is geo blocked
+                raise Ex.MediaGeoblocked
+            else:
+                # just a general failure of the media not being available
+                raise Ex.MediaNotAvailable
+
+        else:
+            return src_list[0]
+
     else:
         for ref in src_list:
             if "raca.tou.tv" in ref.get('src'):
-                pass
+                continue
             elif ref.get('src').startswith('rtmp'):
                 return ref
-            else:
-                return ref
+
     return None
