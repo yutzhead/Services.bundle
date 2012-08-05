@@ -175,7 +175,7 @@ def PickMatch(fmts, index, match_format):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, default_fmt = None):
+def PlayVideo(url, default_fmt = None, **kwargs):
 
   # Some videos require the user to authenticate in order for age verification to be successful. Since
   # this is currently not supported, we should detect the case and raise the suitable Framework 
