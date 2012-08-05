@@ -255,9 +255,20 @@ def VideoFromSMIL(url, res):
 def ClipData(url):
   if 'pid=' in url:
     return False
+
   page = HTTP.Request(url).content
+
   try:
-    video_id = RE_VIDEO_ID.search(page).group(1)
+    id = RE_VIDEO_ID.search(page)
+
+    if id:
+      video_id = id.group(1)
+    else:
+      id = HTML.ElementFromString(page).xpath('//*[@videoid]')
+
+      if len(id) > 0:
+        video_id = id[0].get('videoid')
+
     video_data = XML.ElementFromURL(API_URL % video_id)
   except:
     video_data = None
