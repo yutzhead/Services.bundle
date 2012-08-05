@@ -1,4 +1,4 @@
-VIDEO_INFO = 'http://teamcoco.com/video-xml/%d/video.xml'
+VIDEO_INFO = 'http://teamcoco.com/video-xml/%s/video.xml'
 FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
 
 ####################################################################################################
@@ -74,9 +74,9 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-	try:
-		video_id = GetVideoId(url)
-	except:
+	video_id = GetVideoId(url)
+
+	if not video_id
 		Log.Exception("Could not retrieve video_id in PlayVideo function")
 		return None
 
@@ -87,7 +87,7 @@ def PlayVideo(url):
 		try:
 			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
 		except:
-			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@type="Standard"]')[0].text
+			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@type="standard"]')[0].text
 
 		return Redirect(video_url)
 
@@ -97,11 +97,11 @@ def GetVideoId(url):
 	part = url.split('/')
 
 	if len(part) > 4 and part[4].isdigit():
-		return int(part[4])
+		return part[4]
 	else:
 		try:
-			video_id = HTML.ElementFromURL(url).xpath('//article')[0].get('data-id')
-			return int(video_id)
+			video_id = HTML.ElementFromURL(url).xpath('//article[@data-id]')[0].get('data-id')
+			return video_id
 		except:
 			return None
 
