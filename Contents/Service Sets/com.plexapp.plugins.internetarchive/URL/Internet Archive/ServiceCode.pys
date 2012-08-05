@@ -40,7 +40,7 @@ def MetadataObjectForURL(url):
             originally_available_at = Datetime.ParseDate(meta_xml.xpath('//publicdate')[0].text).date(),
             rating = rating,
             thumb = Callback(Thumb, url=url)
-            )
+        )
     elif meta_xml.xpath('//mediatype')[0].text == 'movies':
         '''year is about the only useful date info (usually available) that applies to the actual release of the video
         as opposed to the upload date'''
@@ -63,7 +63,7 @@ def MetadataObjectForURL(url):
             rating = rating,
             duration = duration,
             thumb = Callback(Thumb, url=url)
-            )
+        )
     else:
         '''if it's not audio or video, I have no idea what it is or how to handle it (yet)'''
         pass
@@ -71,7 +71,10 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 
-def Thumb(url):
+def Thumb(url=None):
+
+  if not url:
+    return Redirect(R('icon-default.png'))
 
   if url[-4:] == ".jpg":
     thumb_url = url
@@ -95,7 +98,7 @@ def Thumb(url):
         except:
           thumb_url = INTERNET_ARCHIVE_LOGO
 
-  data = HTTP.Request(thumb_url, cacheTime=0).content
+  data = HTTP.Request(thumb_url, cacheTime=CACHE_1DAY).content
   return DataObject(data, 'image/jpeg')
 
 ####################################################################################################
@@ -255,7 +258,8 @@ def GetTracks(url):
                     artist=artist,
                     index=index,
                     duration=duration,
-                    thumb=Callback(Thumb, url=url)))
+                    thumb=Callback(Thumb, url=url))
+                )
         
         except:
           pass
@@ -282,29 +286,29 @@ def MediaObjectsForTrack(url):
             bitrate = 256,
             audio_codec = AudioCodec.FLAC,
             audio_channels = 2
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='VBR MP3'))],
             container = Container.MP3,
             bitrate = 192,
             audio_codec = AudioCodec.MP3,
             audio_channels = 2
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='ogg', fmt='Ogg Vorbis'))],
             container = Container.OGG,
             bitrate = 128,
             audio_codec = AudioCodec.VORBIS,
             audio_channels = 2
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='64Kbps MP3'))],
             container = Container.MP3,
             bitrate = 64,
             audio_codec = AudioCodec.MP3,
             audio_channels = 2
-            )
-        ]
+        )
+    ]
   else:
     return [
         MediaObject(
@@ -313,22 +317,22 @@ def MediaObjectsForTrack(url):
             bitrate = 192,
             audio_codec = AudioCodec.MP3,
             audio_channels = 2
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='ogg', fmt='Ogg Vorbis'))],
             container = Container.OGG,
             bitrate = 128,
             audio_codec = AudioCodec.VORBIS,
             audio_channels = 2
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayAudio, url=url, ext='mp3', fmt='64Kbps MP3'))],
             container = Container.MP3,
             bitrate = 64,
             audio_codec = AudioCodec.MP3,
             audio_channels = 2
-            )
-        ]
+        )
+    ]
         
 ####################################################################################################
 
@@ -479,7 +483,7 @@ def VideoObjectsForURL(url):
             audio_channels = 2,
             optimized_for_streaming = True,
             video_resolution = 480
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='512Kb MP4'))],
             container = Container.MP4,
@@ -489,7 +493,7 @@ def VideoObjectsForURL(url):
             audio_channels = 2,
             optimized_for_streaming = True,
             video_resolution = 480
-            ),
+        ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Ogg Video'))],
             container = Container.OGG,
@@ -499,8 +503,8 @@ def VideoObjectsForURL(url):
             audio_channels = 2,
             optimized_for_streaming = True,
             video_resolution = 300
-            )
-        ]
+        )
+    ]
 
 ####################################################################################################
 
