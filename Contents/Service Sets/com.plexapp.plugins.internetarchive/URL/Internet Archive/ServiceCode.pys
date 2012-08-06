@@ -446,8 +446,19 @@ def PlayAudio(url, fmt=None):
 
 def FileListURL(url):
     page = HTML.ElementFromURL(url)
-    track_list_url = BASE_URL + page.xpath('.//table[@class="fileFormats"]//a[contains(@href, "_files.xml")]')[0].get('href')
-    return track_list_url
+
+    '''It's possible that there are more than one file list available. However, we want to ensure 
+       that in this case, we return at least one which is valid. We've found that some albums have
+       broken URL links associated with them. Therefore we should at least try and validate first.'''
+    track_list_urls = page.xpath('.//table[@class="fileFormats"]//a[contains(@href, "_files.xml")]')
+    for file_url in track_list_urls:
+      try: 
+        track_list_url = BASE_URL + file_url.get('href')
+        HTTP.Request(track_list_url).headers
+        return track_list_url
+      except: pass
+
+    return None
 
 ####################################################################################################
 
