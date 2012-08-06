@@ -76,7 +76,7 @@ def PlayVideo(url):
 
 	video_id = GetVideoId(url)
 
-	if not video_id
+	if not video_id:
 		Log.Exception("Could not retrieve video_id in PlayVideo function")
 		return None
 
