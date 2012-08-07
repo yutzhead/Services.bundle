@@ -3,24 +3,28 @@ HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  
+
   api_address = "http://www.hulu.com/api/oembed.json?url="+url
 
   try:
     jsonObj = JSON.ObjectFromURL(api_address, cacheTime=CACHE_INTERVAL)
   except: 
     jsonObj = JSON.ObjectFromURL(api_address.rsplit('/',1)[0], cacheTime=CACHE_INTERVAL)
-		  
+
   eid = jsonObj['embed_url'].split('embed/')[1].split('/')[0]
-		
+
   details = XML.ElementFromURL(HULU_ASSETS %eid, cacheTime=CACHE_INTERVAL)
-	  
+
   desc = details.xpath('//video/description')[0].text
-  airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
+
+  try:
+    airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
+  except:
+    airdate = None
 
   duration =  int(float(details.xpath('//video/duration')[0].text)*1000)
   thumb = details.xpath('//video/thumbnail-url')[0].text
-  
+
   rating =  float(details.xpath('//video/user-star-rating')[0].text)
   plusonly =  details.xpath('//video/is-plus-web-only')[0].text
   if (plusonly == 'true'):
@@ -28,12 +32,12 @@ def MetadataObjectForURL(url):
   else:
     plustext = ""
   title =  plustext + details.xpath('//video/title')[0].text
-  
+
   try:
     show_title = details.xpath('//video/show/name')[0].text
     season = details.xpath('//video/season-number')[0].text
     episode = details.xpath('//video/episode-number')[0].text
-  
+
     # Construct a metadata item
     obj = EpisodeObject(
       title = title,
