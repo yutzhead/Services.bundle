@@ -5,7 +5,11 @@ PLAYER_URL = 'http://media.mtvnservices.com/%s'
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	try:
+		id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	except:
+		return None
+
 	item = XML.ElementFromURL(MRSS_PATH % id).xpath('//item')[0]
 
 	title = item.xpath('./title')[0].text
