@@ -1,50 +1,51 @@
-import re
+RE_DURATION = Regex('Time: (?P<mins>[0-9]+) minutes (?P<secs>[0-9]+) seconds')
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    # Attempt to extract the details from the page.
-    page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		return None
 
-    try: title = page.xpath("//div[@class='page-footing']//h2/text()")[0]
-    except: title = page.xpath("//title/text()")[0]
+	try: title = page.xpath("//div[@class='page-footing']//h2/text()")[0]
+	except: title = page.xpath("//title/text()")[0]
 
-    thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
-    summary = page.xpath("//meta[@name = 'description']")[0].get('content')
+	thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
+	summary = page.xpath("//meta[@name='description']")[0].get('content')
 
-    duration = None
-    try:
-        duration_text = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[0]
-        duration_dict = re.match(".* Time: (?P<mins>[0-9]+) minutes (?P<secs>[0-9]+) seconds.*", duration_text).groupdict()
-        mins = int(duration_dict['mins'])
-        secs = int(duration_dict['secs'])
-        duration = ((mins * 60) + secs) * 1000
-    except:  Log.Exception("Error attempting to determine duration")
+	try:
+		duration_text = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[0]
+		duration_dict = RE_DURATION.search(duration_text).groupdict()
+		mins = int(duration_dict['mins'])
+		secs = int(duration_dict['secs'])
+		duration = ((mins * 60) + secs) * 1000
+	except:
+		duration = None
 
-    return VideoClipObject(
-        title = title,
-        summary = summary,
-        thumb = thumb,
-        duration = duration
-    )
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		duration = duration
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))],
-        audio_channels = 2
-      )
-    ]
+
+	return [
+		MediaObject(
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))],
+			audio_channels = 2
+		)
+	]
 
 ####################################################################################################
-
 def PlayVideo(url):
-    page = HTML.ElementFromURL(url)
-    video_url = page.xpath("//div[@class='video-player-container']//video")[0].get('src')
-    return Redirect(video_url)
+
+	page = HTML.ElementFromURL(url)
+	video_url = page.xpath("//div[@class='video-player-container']//video")[0].get('src')
+	return Redirect(video_url)
