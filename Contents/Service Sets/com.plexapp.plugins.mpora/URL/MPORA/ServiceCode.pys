@@ -70,18 +70,15 @@ def PlayVideo(url, res):
 	try: video_urlsd = SD_REGEX.findall(page)[0]
 	except: video_urlsd = None
 
-	if video_urlsd == None and video_urlhd == None:
-		html_page = HTML.ElementFromString(page)
+	if not video_urlhd and not video_urlsd:
+		html = HTML.ElementFromString(page)
+		video = html.xpath('//div[contains(@class, "player")]//video[@src]')
 
-		for item in html_page.xpath('//div[contains(@class, "player")]'):
-			videolink = item.xpath('.//video')[0].get('src')
-
-			if videolink:
-				break
+		if len(video) > 0:
+			video_url = video[0].get('src')
+			return Redirect(video_url)
 
 	if res == "hd" and video_urlhd:
 		return Redirect(video_urlhd)
 	elif video_urlsd:
 		return Redirect(video_urlsd)
-	else:
-		return Redirect(videolink)
