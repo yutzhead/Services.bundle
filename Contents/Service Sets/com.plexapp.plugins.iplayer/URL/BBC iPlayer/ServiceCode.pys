@@ -24,7 +24,11 @@ def MetadataObjectForURL(url):
   else:
     summary = ''
 
-  originally_available_at = Datetime.ParseDate(programme['first_broadcast_date']).date()
+  if programme['first_broadcast_date']:
+    originally_available_at = Datetime.ParseDate(programme['first_broadcast_date']).date()
+  else:
+    originally_available_at = None
+
   duration = programme['versions'][0]['duration']
 
   if 'parent' in programme:
