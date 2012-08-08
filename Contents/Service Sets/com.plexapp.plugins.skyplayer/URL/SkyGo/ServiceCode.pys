@@ -1,6 +1,6 @@
-httpHeaders = {'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17'}
+httpHeaders = {'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:14.0) Gecko/20100101 Firefox/14.0.1'}
 
-RE_TITLE = Regex('Ep (?P<episode_number>\d+) (?P<title>(\w+( )?)*)')
+RE_TITLE = Regex('Ep(isode)? (?P<episode_number>\d+)( (?P<title>(\w+( )?)+))?')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -46,19 +46,23 @@ def MetadataObjectForEpisodeURL(item):
     # Attempt to determine the title.
     # The format of titles for shows are as follows:
     #    SHOW NAME Season X | EP Y TITLE
-    title = ""
+    # or
+    #    SHOW NAME Season X | EPISODE Y
     episode = 0
     itemTitle = item.xpath("//div[@class='playerArea']//img/@title")[0].strip()
+
     itemTitleComponents = RE_TITLE.match(itemTitle).groupdict()
-    if len(itemTitleComponents) == 2:
+    if itemTitleComponents['title'] is not None:
         title = itemTitleComponents['title']
         episode = int(itemTitleComponents['episode_number'])
- 
+    else:
+        title = itemTitle
+
     # Attempt to determine the name of the actual show along with the selected season
     show = ""
     season = 0
     itemSubtitle = item.xpath("//div[@class='pageTitle']/h1/a/text()")[0]
-    itemSubtitleComponents = itemSubtitle.split('Season')
+    itemSubtitleComponents = itemSubtitle.rsplit('Season',1)
     if len(itemSubtitleComponents) == 2:
         show = itemSubtitleComponents[0].strip()
         season = int(itemSubtitleComponents[1])
