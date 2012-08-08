@@ -126,7 +126,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 
 def GetMetadata(url):
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url)
+    except:
+        return ''
+
     xml_url = ''
     size = 0
     for meta in page.xpath('//table[@class="fileFormats"]//a[contains(@href, "_meta.xml")]'):
