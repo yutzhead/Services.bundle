@@ -15,7 +15,7 @@ def MetadataObjectForURL(url):
     else:
 
         # Attempt to determine the title.
-        title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].lstrip().rstrip()
+        title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].strip()
 
         # If the title is not accessible via this mechanism, then we can assume that the url is 
         # pointing to a different video item, probably just a video clip
@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 def MetadataObjectForVideoURL(item):
 
     # Attempt to determine the title.
-    title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].lstrip().rstrip()
+    title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].strip()
 
     # Get the remaining metadata
     metadata = MetadataForPage(item)
@@ -48,7 +48,7 @@ def MetadataObjectForEpisodeURL(item):
     #    SHOW NAME Season X | EP Y TITLE
     title = ""
     episode = 0
-    itemTitle = item.xpath("//div[@class='playerArea']//img/@title")[0].lstrip().rstrip()
+    itemTitle = item.xpath("//div[@class='playerArea']//img/@title")[0].strip()
     itemTitleComponents = RE_TITLE.match(itemTitle).groupdict()
     if len(itemTitleComponents) == 2:
         title = itemTitleComponents['title']
@@ -80,7 +80,7 @@ def MetadataObjectForEpisodeURL(item):
 def MetadataObjectForMovieURL(item):
     
     # Attempt to determine the title.
-    title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].lstrip().rstrip()
+    title = item.xpath("//div[@class='pageTitle']/h1/text()")[0].strip()
 
     # [Optional] The director(s)
     directors = []
