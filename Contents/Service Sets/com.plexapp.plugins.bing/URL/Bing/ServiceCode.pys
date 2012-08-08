@@ -6,7 +6,12 @@ def MetadataObjectForURL(url):
 
     # Request the url and determine the uuid associated with the title
     page_content = HTTP.Request(url).content
-    uuid = RE_UUID.search(page_content).group(1)
+    re_uuid = RE_UUID.search(page_content)
+
+    if re_uuid:
+        uuid = re_uuid.group(1)
+    else:
+        return None
 
     # Obtain the JSON representation of the title's details
     json_content = HTTP.Request(JSON_URL % uuid).content
@@ -67,7 +72,12 @@ def PlayVideo(url, formatCode):
 
     # Request the url and determine the uuid associated with the title
     page_content = HTTP.Request(url).content
-    uuid = RE_UUID.search(page_content).group(1)
+    re_uuid = RE_UUID.search(page_content)
+
+    if re_uuid:
+        uuid = re_uuid.group(1)
+    else:
+        return None
 
     # Obtain the JSON representation of the title's details
     json_content = HTTP.Request(JSON_URL % uuid).content
