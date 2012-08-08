@@ -87,6 +87,10 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	details = GetDetails(url)
+
+	if not details:
+		raise Ex.MediaNotAvailable
+
 	stream_ids = details.xpath('//item[@name="segIds"]/value')[0].text.split('#')
 	parts = []
 
