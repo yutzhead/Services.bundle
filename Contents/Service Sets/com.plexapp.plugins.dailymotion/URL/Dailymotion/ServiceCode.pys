@@ -1,5 +1,5 @@
 JSON_URL = 'http://www.dailymotion.com/json/video/%s?fields=video_id,title,thumbnail_large_url,url,stream_h264_sd_url,stream_h264_url,stream_h264_hd_url,rating,duration,description'
-RE_ID = Regex('dailymotion\.com/((embed/)?video/|swf/|.+#video(Id)?=)(?P<id>[0-9a-z]+)', Regex.IGNORECASE)
+RE_ID = Regex('dailymotion\.com/((embed/)?video/|swf/(video/)?|.+#video(Id)?=)(?P<id>[0-9a-z]+)', Regex.IGNORECASE)
 
 ####################################################################################################
 def NormalizeURL(url):
