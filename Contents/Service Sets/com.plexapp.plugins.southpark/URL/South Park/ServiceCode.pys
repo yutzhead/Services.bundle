@@ -9,7 +9,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	# Pages of older episodes sometimes redirect to the same URL, creating an endless loop. If we
+	# are redirected, first check if the destination URL isn't the same as the input URL.
+	try:
+		data = HTML.ElementFromURL(url, follow_redirects=False)
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			if e.headers['Location'] != url:
+				data = HTML.ElementFromURL(e.headers['Location'])
+			else:
+				return None
+
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
 	ep_title = title.split(' (')[0]
 	ep_data = RE_EP_DATA.search(title).groupdict()
