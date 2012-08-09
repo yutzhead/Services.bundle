@@ -129,7 +129,7 @@ def PlayVideo(url, res, bitrate = None):
   media = GetAvailableMediaObjectsForURL(url)
 
   if not media:
-    return None
+    raise Ex.MediaNotAvailable
 
   # Iterate through the collection of known offered video resolutions. We will start at the desired
   # and progress to lower qualities.
@@ -190,8 +190,11 @@ def GetAvailableMediaObjectsForURL(url):
   slug = RE_SLUG.findall(page_content)
 
   if slug:
-    download_info = HTTP.Request(TED_BASE + slug[0], cacheTime = CACHE_1WEEK).content
-    download_url = RE_DOWNLOAD.findall(download_info)
+    try:
+      download_info = HTTP.Request(TED_BASE + slug[0], cacheTime = CACHE_1WEEK).content
+      download_url = RE_DOWNLOAD.findall(download_info)
+    except:
+      download_url = None
 
     if download_url:
       download_url = download_url[0].replace('{lang}', '')
@@ -217,25 +220,27 @@ def GetAvailableMediaObjectsForURL(url):
         )
       ]
 
-  else:
+  external_sources = [
+    ('//embed[contains(@src, "youtube.com")]',	'src',	None),
+    ('//iframe[contains(@src, "youtube.com")]',	'src',	None),
+    ('//embed[contains(@src, "vimeo.com")]',		'src',	None),
+    ('//iframe[contains(@src, "vimeo.com")]',		'src',	None),
+    ('//object[contains(@data, "blip.tv")]',		'data',	FindBlip),
+    ('//a[@class="external" and @target="_blank" and contains(text(), "Watch on")]', 'href', None)
+  ]
 
-    external_sources = [
-      ('//embed[contains(@src, "youtube.com")]',	'src',	None),
-      ('//iframe[contains(@src, "youtube.com")]',	'src',	None),
-      ('//embed[contains(@src, "vimeo.com")]',		'src',	None),
-      ('//iframe[contains(@src, "vimeo.com")]',		'src',	None),
-      ('//object[contains(@data, "blip.tv")]',		'data',	FindBlip)
-    ]
+  for (select, node, find_url) in external_sources:
+    try:
+      external = page.xpath(select)
 
-    for (select, node, find_url) in external_sources:
-      try:
-        external_url = page.xpath(select)[0].get(node)
+      if len(external) > 0:
+        external_url = external[0].get(node)
 
         if find_url != None:
           external_url = find_url(external_url)
 
         return URLService.MediaObjectsForURL(external_url)
-      except: pass
+    except: pass
 
   # If we've got to here without finding any movie, we will make one last attempt from the original
   # page.
