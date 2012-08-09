@@ -166,6 +166,12 @@ def PlayVideo(url, res, bitrate = None):
   # and assume its already @indirect.
   if most_appropriate.endswith(".mp4") == False:
     return Redirect(most_appropriate)
+  elif 'download.ted.com' in most_appropriate:
+    try:
+      headers = HTTP.Request(most_appropriate, follow_redirects=False).headers
+    except Ex.RedirectError, e:
+      if 'Location' in e.headers:
+        most_appropriate = e.headers['Location']
 
   # Construct the ObjectContainer to return the details of the located media
   c = ObjectContainer()
