@@ -7,7 +7,7 @@ def MetadataObjectForURL(url):
   item = GetVideoItem(url)
 
   if not item:
-    return None
+    raise Ex.MediaNotAvailable
 
   page = HTML.ElementFromURL(url)
 
@@ -46,7 +46,7 @@ def PlayVideo(url):
   item = GetVideoItem(url)
 
   if not item:
-    return None
+    raise Ex.MediaNotAvailable
 
   video_link = item.xpath(".//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
   video_id = video_link[video_link.find('/s/') + 3:]
@@ -59,7 +59,11 @@ def PlayVideo(url):
 ####################################################################################################
 def GetVideoItem(url):
 
-  page_content = HTTP.Request(url).content
+  try:
+    page_content = HTTP.Request(url).content
+  except:
+    return None
+
   mrssdata = RE_MRSS.search(page_content)
 
   if mrssdata:
