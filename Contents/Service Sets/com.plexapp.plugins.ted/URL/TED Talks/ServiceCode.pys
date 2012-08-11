@@ -159,14 +159,7 @@ def PlayVideo(url, res, bitrate = None):
   if most_appropriate is None:
     most_appropriate = media[-1].parts[0].key
 
-  # HACK
-  # This is particularly nasty. Ideally I wouldn't need to do this but it appears that Laika doesn't
-  # like when an @indirect points to another @indirect. Since we only support MP4s, and we know that
-  # all direct URLs will end with this, we can check if the located media doesn't have the extension
-  # and assume its already @indirect.
-  if most_appropriate.endswith(".mp4") == False:
-    return Redirect(most_appropriate)
-  elif 'download.ted.com' in most_appropriate:
+  if 'download.ted.com' in most_appropriate:
     try:
       headers = HTTP.Request(most_appropriate, follow_redirects=False).headers
     except Ex.RedirectError, e:
