@@ -171,7 +171,7 @@ def PlayVideo(url, res, bitrate = None):
       headers = HTTP.Request(most_appropriate, follow_redirects=False).headers
     except Ex.RedirectError, e:
       if 'Location' in e.headers:
-        most_appropriate = e.headers['Location']
+        most_appropriate = e.headers['Location'].replace('/Impossible/', '/None/')
 
   # Construct the ObjectContainer to return the details of the located media
   c = ObjectContainer()
@@ -232,7 +232,7 @@ def GetAvailableMediaObjectsForURL(url):
     ('//embed[contains(@src, "vimeo.com")]',		'src',	None),
     ('//iframe[contains(@src, "vimeo.com")]',		'src',	None),
     ('//object[contains(@data, "blip.tv")]',		'data',	FindBlip),
-    ('//a[@class="external" and @target="_blank" and contains(text(), "Watch on")]', 'href', None)
+    ('//a[@class="external" and @target="_blank" and contains(text(), "Watch")]', 'href', None)
   ]
 
   for (select, node, find_url) in external_sources:
