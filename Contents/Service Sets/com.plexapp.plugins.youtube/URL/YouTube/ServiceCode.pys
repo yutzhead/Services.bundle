@@ -2,6 +2,7 @@ import urlparse
 
 DEVELOPER_KEY = 'AI39si7PodNU93CVDU6kxh3-m2R9hkwqoVrfijDMr0L85J94ZrJFlimNxzFA9cSky9jCSHz9epJdps8yqHu1wb743d_SfSCRWA'
 YOUTUBE_VIDEO_DETAILS = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
+YOUTUBE_VIDEO_LINKS = 'http://www.youtube.com/get_video_info?video_id=%s'
 YOUTUBE_VIDEO_FORMATS = ['Standard', 'Medium', 'High', '720p', '1080p']
 YOUTUBE_FMT =           [ 34,         18,       35,     22,     37]
 YOUTUBE_CONTAINERS =    ['flv',      'mp4',    'flv',  'mp4',  'mp4']
@@ -11,7 +12,7 @@ YOUTUBE_AUDIOCODEC =    ['aac',      'aac',    'aac',  'aac',  'aac']
 
 httpHeaders = { 'X-GData-Key' : "key="+DEVELOPER_KEY }
 
-RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
+RE_URL_MAP = Regex('url_encoded_fmt_stream_map=([^&]+)&')
 RE_PATH_1 = Regex('^/(watch|details)(_popup)?')
 RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
@@ -141,6 +142,7 @@ def MediaObjectsForURL(url):
 
   if url.find('?v=') == -1:
     return None
+  video_id = url[url.find('?v=')+3:].split('&')[0]
 
   ret = []
 
@@ -150,7 +152,7 @@ def MediaObjectsForURL(url):
   for fmt in fmts:
     index = YOUTUBE_VIDEO_FORMATS.index(fmt)
     ret.append(MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, default_fmt=fmt))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=YOUTUBE_VIDEO_LINKS % video_id, default_fmt=fmt))],
       container = YOUTUBE_CONTAINERS[index],
       video_codec = YOUTUBE_VIDEOCODEC[index],
       audio_codec = YOUTUBE_AUDIOCODEC[index],
@@ -183,25 +185,11 @@ def PickMatch(fmts, index, match_format):
 @indirect
 def PlayVideo(url, default_fmt = None, **kwargs):
 
-  # Some videos require the user to authenticate in order for age verification to be successful. Since
-  # this is currently not supported, we should detect the case and raise the suitable Framework 
-  # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
-  try:
-    yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1, follow_redirects = False).content
-  except Ex.RedirectError, e:
-    if e.location.startswith('http://www.youtube.com/verify_age?') == False:
-      yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
-    else:
-      raise Ex.MediaNotAuthorized
-  # If 404...
-  except:
-    raise Ex.MediaNotAvailable
-
   # Check for geoblocks and unavailable videos
   video_id = url[url.find('?v=')+3:].split('&')[0]
 
   try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id)['data']
   except:
     raise Ex.MediaNotAuthorized
 
@@ -211,19 +199,20 @@ def PlayVideo(url, default_fmt = None, **kwargs):
         raise Ex.MediaGeoblocked
 
   # Build up the format map.
-  fmt_url_map = RE_URL_MAP.findall(yt_page)
+  yt_page = HTTP.Request(YOUTUBE_VIDEO_LINKS % video_id).content
 
-  if not fmt_url_map:
-    raise Ex.MediaNotAvailable
+  try: fmt_url_map = RE_URL_MAP.findall(yt_page)[0]
+  except: raise Ex.MediaNotAvailable
 
-  fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
+  fmt_url_map = String.Unquote(fmt_url_map)
+  fmt_url_map = fmt_url_map.replace('\/', '/').split(',')
 
   fmts = []
   fmts_info = {}
 
   for f in fmt_url_map:
     map = {}
-    params = f.split('\u0026')
+    params = f.split('&')
 
     for p in params:
       if '=' in p:
