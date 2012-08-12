@@ -1,37 +1,49 @@
 RE_EP_INDEX = Regex('Avsnitt ([0-9]+)')
 RE_SE_INDEX = Regex('song ([0-9]+)')
 
+####################################################################################################
 def NormalizeURL(url):
-    return url
-    
+
+	return url
+
+####################################################################################################
 def MetadataObjectForURL(url):
-    data = HTML.ElementFromURL(url)
-    
-    episode_title = data.xpath('//h2[@class="title"]')[0].text
-    show_title = data.xpath('//h1[@class="header"]/a')[0].text
-    episode_summary = data.xpath('//p[@class="description"]')[0].text.strip()
-    episode_duration = int(data.xpath('//div[@class="summary"]//div[@class="text"]')[1].text.split(' ')[0])*60*1000
-    air_date = data.xpath('//div[@class="summary"]//div[@class="text"]')[0].text
-    episode_thumb = data.xpath('//img[@class="poster"]')[0].get('src')
-    season_episode = data.xpath('//div[@class="sub-header"]')[0].text_content().strip()
-    season_index = RE_SE_INDEX.search(season_episode).group(1)
-    episode_index = RE_EP_INDEX.search(season_episode).group(1)
-    
-    mo = EpisodeObject(
-        title = episode_title,
-        index = int(episode_index),
-        season = int(season_index),
-        show = show_title,
-        originally_available_at = Datetime.ParseDate(air_date).date(),
-        summary = episode_summary,
-        duration = episode_duration,
-        thumb = episode_thumb
-        )
-    return mo
-    
+
+	data = HTML.ElementFromURL(url)
+
+	episode_title = data.xpath('//h2[@class="title"]')[0].text
+	show_title = data.xpath('//h1[@class="header"]/a')[0].text
+	episode_summary = data.xpath('//p[@class="description"]')[0].text.strip()
+	episode_duration = int(data.xpath('//div[@class="summary"]//div[@class="text"]')[1].text.split(' ')[0])*60*1000
+	episode_thumb = data.xpath('//img[@class="poster"]')[0].get('src').rsplit('=s',1)[0]
+	season_episode = data.xpath('//div[@class="sub-header"]')[0].text_content().strip()
+	season_index = RE_SE_INDEX.search(season_episode).group(1)
+	episode_index = RE_EP_INDEX.search(season_episode).group(1)
+
+	try:
+		air_date = data.xpath('//div[@class="summary"]//div[@class="text"]')[0].text
+		originally_available_at = Datetime.ParseDate(air_date).date(),
+	except:
+		originally_available_at = None
+
+	mo = EpisodeObject(
+		title = episode_title,
+		index = int(episode_index),
+		season = int(season_index),
+		show = show_title,
+		originally_available_at = originally_available_at,
+		summary = episode_summary,
+		duration = episode_duration,
+		thumb = episode_thumb
+	)
+
+	return mo
+
+####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-        MediaObject(
-            parts = [PartObject(key = WebVideoURL(url))]
-        )
-    ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key = WebVideoURL(url))]
+		)
+	]
