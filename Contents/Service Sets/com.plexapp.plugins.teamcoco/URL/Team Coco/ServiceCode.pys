@@ -1,5 +1,6 @@
 VIDEO_INFO = 'http://teamcoco.com/video-xml/%s/video.xml'
 FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
+RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 
 ####################################################################################################
 def TestURLs():
@@ -99,11 +100,17 @@ def GetVideoId(url):
 	if len(part) > 4 and part[4].isdigit():
 		return part[4]
 	else:
+		page = HTTP.Request(url).content
+
 		try:
-			video_id = HTML.ElementFromURL(url).xpath('//article[@data-id]')[0].get('data-id')
+			video_id = HTML.ElementFromString(page).xpath('//article[@data-id]')[0].get('data-id')
 			return video_id
 		except:
-			return None
+			try:
+				video_id = RE_VIDEO_ID.search(page).group('id')
+				return video_id
+			except:
+				return None
 
 ####################################################################################################
 def Duration(timecode):
