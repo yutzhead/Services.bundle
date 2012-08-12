@@ -1,4 +1,4 @@
-import re
+RE_FLASHVARS = Regex('flashvars=&quot;config=(?P<url>[^&]*)&quot;')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -20,7 +20,8 @@ def MetadataObjectForURL(url):
 		title = title,
 		summary = description,
 		thumb = thumb,
-		originally_available_at = date)
+		originally_available_at = date
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -28,7 +29,7 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url = url))],
-			container = Container.MP4,
+			container = 'mp4',
 			video_resolution = 'sd',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -43,11 +44,14 @@ def PlayVideo(url):
 	page_content = HTTP.Request(url, values={"birth_day":"10","birth_month":"02","birth_year":"1980"}).content
 
 	# Find the 'flashvars' associated with the player. This contains the required config path.
-	configUrl = re.match('.*flashvars=&quot;config=(?P<url>[^&]*)&quot;.*', page_content, re.DOTALL).groupdict()['url']
-	configUrl = String.Unquote(configUrl, usePlus = True)
+	config_url = RE_FLASHVARS.search(page_content).group('url')
+	config_url = String.Unquote(config_url, usePlus=True)
 
 	# We can use the config path to actually get a JSON page which contains the actual MP4 path to the
 	# associated video.
-	json_page = JSON.ObjectFromURL("http://surf-proxy.de/index.php?q=" + String.Quote(configUrl, usePlus=True))
-	video_url = json_page['playlist'][1]['url']
+	json_page = HTTP.Request("http://surf-proxy.de/index.php?q=" + String.Quote(config_url, usePlus=True)).content
+	json_page = json_page.replace("'", '"')
+	json = JSON.ObjectFromString(json_page)
+
+	video_url = json['playlist'][1]['url']
 	return Redirect(video_url)
