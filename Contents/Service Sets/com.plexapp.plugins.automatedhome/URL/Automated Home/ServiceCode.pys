@@ -73,4 +73,4 @@ def GetExternalSource(url):
   # The page actually just contains a link to a you tube video. Instead of re-implementing the 
   # associated logic, we should be able to simply re-direct the call to the You Tube service.
   # We must first obtain the specific you tube url.
-  return page.xpath("//embed[contains(@src, 'youtube')]")[0].get('src')
+  return page.xpath("//iframe[contains(@src, 'youtube')]")[0].get('src')
