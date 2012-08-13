@@ -85,9 +85,7 @@ def TestURLs():
 	test_urls = []
 	page = HTML.ElementFromURL(BASE_URL)
 	featured = page.xpath('//div[@id="ae_recently_added"]//div[@class="items"]')[0]
-	Log("APPLE")
 	for lecture in featured.xpath('.//a[normalize-space(@href != "")]'):
-		Log("BING")
 		Log(HTML.StringFromElement(lecture))
 		test_urls.append(BASE_URL + lecture.get('href'))
 
