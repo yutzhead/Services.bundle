@@ -133,16 +133,15 @@ def PlayVideo(url, fmt):
 	available = {}
 
 	if url.endswith('/web'):
-		clip = String.Unquote(url.split('#')[-1].split('/web')[0])
 		inc_url = '%s%s' % (url.split('#')[0].rstrip('/'), '/includes/playlists/web.inc')
-		playlist = HTTP.Request(inc_url).content
+		playlist = HTTP.Request(inc_url, cacheTime=CACHE_1HOUR).content
 		html = HTML.ElementFromString('<div>%s</div>' % playlist)
 
 		# If we have a big "Watch Now" link, there is just 1 trailer and the HTML looks different from where we have multiple videos.
 		if len(html.xpath('//h2//a[contains(text(), "Watch Now")]')) == 1:
-
 			videos = html.xpath('//li[@class="hd"]//a[@class="target-quicktimeplayer"]')
 		else:
+			clip = String.Unquote(url.split('#')[-1].split('/web')[0])
 			videos = html.xpath('//h3[text()="%s"]/../..//li[@class="hd"]//a[@class="target-quicktimeplayer"]' % clip)
 
 		for video in videos:
