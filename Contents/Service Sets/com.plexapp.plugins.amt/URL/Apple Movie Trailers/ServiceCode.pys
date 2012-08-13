@@ -1,17 +1,19 @@
-HTTP_HEADERS = {'User-Agent':'iTunes/10.6'}
+HTTP_HEADERS = {'User-Agent':'iTunes/10.6.3'}
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
-QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large', 'Medium', 'Small']
+AMT_WEB_PLAYLIST = 'http://trailers.apple.com/%s/includes/playlists/web.inc'
+QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p']
 
-RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?/?$')
+RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?(/web)?$')
 
 ####################################################################################################
 def NormalizeURL(url):
 
 	url = url.replace('/iphone/', '/')
-	studio, title, video = RE_URL_INFO.findall(url)[0]
+	studio, title, video, web = RE_URL_INFO.findall(url)[0]
 	if not video: video = 'trailer'
+	if not web: web = ''
 
-	return 'http://trailers.apple.com/trailers/%s/%s#%s' % (studio, title, video)
+	return 'http://trailers.apple.com/trailers/%s/%s#%s%s' % (studio, title, video, web)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -19,20 +21,24 @@ def MetadataObjectForURL(url):
 	xml = GetXML(url)
 
 	if xml:
-		movie = xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS)[0]
-
-		movie_title = movie.xpath('./a:key[text()="playlistName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
-		subtitle = movie.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[0]
-		title = movie_title + ' (' + subtitle + ')'
-
+		movie_title = xml.xpath('//a:Path/a:PathElement[last()]', namespaces=AMT_VIDEOS_NS)[0].get('displayName')
 		summary = xml.xpath('//a:ScrollView//comment()[contains(.,"DESCRIPTION")]/following-sibling::a:TextView[1]/a:SetFontStyle', namespaces=AMT_VIDEOS_NS)[0].text.strip()
+		duration = None
+		tracklist = xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS)
 
-		# Duration
-		try:
+		if len(tracklist) > 0:
+			movie = tracklist[0]
+
+			subtitle = movie.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[0]
+			title = movie_title + ' (' + subtitle + ')'
+
 			duration = movie.xpath('./a:key[text()="duration"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
 			duration = int(duration)
-		except:
-			duration = None
+		elif url.endswith('/web'):
+			subtitle = String.Unquote(url.split('#')[-1].split('/web')[0])
+			title = movie_title + ' (' + subtitle + ')'
+		else:
+			title = movie_title
 
 		# Poster
 		try:
@@ -54,6 +60,9 @@ def MetadataObjectForURL(url):
 			thumb = Resource.ContentsOfURLWithFallback(thumb, fallback='icon-default.png')
 		)
 
+	else:
+		return None
+
 ####################################################################################################
 def MediaObjectsForURL(url):
 
@@ -61,7 +70,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 1080p'))],
 			video_resolution = '1080',
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
@@ -70,7 +79,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 720p'))],
 			video_resolution = '720',
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
@@ -79,34 +88,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 480p'))],
 			video_resolution = '480',
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Large'))],
-			video_resolution = 'sd',
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Medium'))],
-			video_resolution = 'sd',
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='Small'))],
-			video_resolution = 'sd',
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
@@ -117,7 +99,12 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetXML(url):
 
-	studio, title, video = RE_URL_INFO.findall(url)[0]
+	studio, title, video, web = RE_URL_INFO.findall(url)[0]
+
+	# Even if this is a video we found in the web/playlist (instead of in an xml file), we grab the metadata from an xml file.
+	if web:
+		video = 'trailer'
+
 	xml_url = 'http://trailers.apple.com/moviesxml/s/%s/%s/%s.xml' % (studio, title, video)
 
 	try:
@@ -143,38 +130,65 @@ def GetXML(url):
 def PlayVideo(url, fmt):
 
 	video_url = None
-	xml = GetXML(url)
+	available = {}
 
-	if xml:
-		available = {}
+	if url.endswith('/web'):
+		clip = String.Unquote(url.split('#')[-1].split('/web')[0])
+		inc_url = '%s%s' % (url.split('#')[0].rstrip('/'), '/includes/playlists/web.inc')
+		playlist = HTTP.Request(inc_url).content
+		html = HTML.ElementFromString('<div>%s</div>' % playlist)
 
-		for video in xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS):
-			key = video.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[1][:-1]
+		# If we have a big "Watch Now" link, there is just 1 trailer and the HTML looks different from where we have multiple videos.
+		if len(html.xpath('//h2//a[contains(text(), "Watch Now")]')) == 1:
 
-			if key in QUALITY:
-				video_url = video.xpath('./a:key[text()="previewURL"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
-				available[key] = video_url
+			videos = html.xpath('//li[@class="hd"]//a[@class="target-quicktimeplayer"]')
+		else:
+			videos = html.xpath('//h3[text()="%s"]/../..//li[@class="hd"]//a[@class="target-quicktimeplayer"]' % clip)
 
-		# Find the requested video quality or figure out what the next best available quality is
-		start_index = QUALITY.index(fmt)
-		end_index = len(QUALITY)
+		for video in videos:
+			video_url = video.get('href')
 
-		for i in range(start_index, end_index):
+			if video_url.endswith('h480p.mov'):
+				available['HD 480p'] = video_url
+			elif video_url.endswith('h720p.mov'):
+				available['HD 720p'] = video_url
+			elif video_url.endswith('h1080p.mov'):
+				available['HD 1080p'] = video_url
+
+	else:
+		xml = GetXML(url)
+
+		if xml:
+			for video in xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_VIDEOS_NS):
+				key = video.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text.rsplit(' (', 1)[1][:-1]
+
+				if key in QUALITY:
+					video_url = video.xpath('./a:key[text()="previewURL"]/following-sibling::*[1]', namespaces=AMT_VIDEOS_NS)[0].text
+					available[key] = video_url
+
+	# Find the requested video quality or figure out what the next best available quality is
+	start_index = QUALITY.index(fmt)
+	end_index = len(QUALITY)
+
+	for i in range(start_index, end_index):
+		key = QUALITY[i]
+		if key in available:
+			video_url = available[key]
+			break
+
+	if not video_url:
+		for i in reversed(range(0, start_index)):
 			key = QUALITY[i]
 			if key in available:
 				video_url = available[key]
 				break
 
-		if not video_url:
-			for i in reversed(range(0, start_index)):
-				key = QUALITY[i]
-				if key in available:
-					video_url = available[key]
-					break
+	if not video_url:
+		raise Ex.MediaNotAvailable
 
-	c = ObjectContainer()
+	oc = ObjectContainer()
 
-	c.add(VideoClipObject(
+	oc.add(VideoClipObject(
 		items = [
 			MediaObject(
 				parts = [PartObject(key=video_url)]
@@ -182,5 +196,5 @@ def PlayVideo(url, fmt):
 		]
 	))
 
-	c.http_headers = HTTP_HEADERS
-	return c
+	oc.http_headers = HTTP_HEADERS
+	return oc
