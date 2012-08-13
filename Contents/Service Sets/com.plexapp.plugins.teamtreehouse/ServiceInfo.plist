@@ -9,7 +9,7 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://teamtreehouse.com/topics/introduction/ios</string>
-				<string>http://teamtreehouse.com/library/ios-4-foundations/your-first-app/getting-started/play</string>
+				<string>http://teamtreehouse.com/library/ios-development/ios-5-foundations/automatic-reference-counting/getting-started</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
