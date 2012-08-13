@@ -61,14 +61,16 @@ def PlayVideo(url, bitrate):
         rtmp_url = smil.xpath('.//rendition[@bitrate="'+bitrate+'"]/src')[0].text
         rtmp_args = RE_RTMP_ARGS.search(rtmp_url).groupdict()
         rtmp_parts.append(PartObject(key=RTMPVideoURL(url=rtmp_args['player'], clip=rtmp_args['playpath'])))
-    video_object = VideoClipObject(
+    oc = ObjectContainer()
+    oc.add(VideoClipObject(
         items = [
             MediaObject(
                 parts = rtmp_parts
             )
         ]
-    )
-    return video_object
+    ))
+
+    return oc
 
 def GetMRSS(url):
     video_id = RE_VIDEO_ID.search(url).group(1)
