@@ -1,8 +1,5 @@
 BASE_URL = 'http://www.academicearth.org'
-YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
-
 RE_INDEX = Regex('(?P<index>[0-9]+) of (?P<total>[0-9]+)')
-RE_YOUTUBE = Regex('flashVars.ytID = "(?P<id>[^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -73,7 +70,7 @@ def PlayVideo(url):
 	# It appears that Academic Earth either uses YouTube or Blip to host their content. Therefore we
 	# should be able to find what is appropriate to redirect to the necessary URL service.
 	video_url = None
-	
+
 	page = HTML.ElementFromString(page_content)
 	video_url = page.xpath("//embed[@id='idPlayer']")[0].get('src')
 	media = URLService.MediaObjectsForURL(video_url)
