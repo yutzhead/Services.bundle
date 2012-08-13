@@ -5,21 +5,6 @@ RE_INDEX = Regex('(?P<index>[0-9]+) of (?P<total>[0-9]+)')
 RE_YOUTUBE = Regex('flashVars.ytID = "(?P<id>[^"]+)"')
 
 ####################################################################################################
-def TestURLs():
-
-	test_urls = []
-	page = HTML.ElementFromURL(BASE_URL)
-	featured = page.xpath('//div[@class="featured lectures"]')[0]
-
-	for lecture in featured.xpath('.//a[@class="thumb"]'):
-		test_urls.append(BASE_URL + lecture.get('href'))
-
-		if len(test_urls) >=3:
-			break
-
-	return test_urls
-
-####################################################################################################
 def NormalizeURL(url):
 
 	return url
@@ -93,3 +78,20 @@ def PlayVideo(url):
 	video_url = page.xpath("//embed[@id='idPlayer']")[0].get('src')
 	media = URLService.MediaObjectsForURL(video_url)
 	return Redirect(media[0].parts[0].key)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	page = HTML.ElementFromURL(BASE_URL)
+	featured = page.xpath('//div[@id="ae_recently_added"]//div[@class="items"]')[0]
+	Log("APPLE")
+	for lecture in featured.xpath('.//a[normalize-space(@href != "")]'):
+		Log("BING")
+		Log(HTML.StringFromElement(lecture))
+		test_urls.append(BASE_URL + lecture.get('href'))
+
+		if len(test_urls) >=3:
+			break
+
+	return test_urls
