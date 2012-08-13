@@ -1,5 +1,4 @@
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
-
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
 #########################################################################################
@@ -70,7 +69,7 @@ def PlayVideo(url):
 		clip = "MP4:" + clip
 	else:
 		clip = clip.replace(".flv", "")
-	
+
 	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
 
 #########################################################################################
@@ -82,8 +81,8 @@ def GetSMIL(url):
 #########################################################################################
 def GetSRC(smil):
 	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-	if src_list[0].get('src') =="Unavailable.flv":
-		if src_list[0].get('abstract')=="You are not in a geographic region that has access to this content.":
+	if src_list[0].get('src') == "Unavailable.flv":
+		if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
 			# content is geo blocked
 			raise Ex.MediaGeoblocked
 		else:

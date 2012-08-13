@@ -9,7 +9,7 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 	smil = GetSMIL(url)
 	details = GetSRC(smil)
-	
+
 	title = details.get('title')
 	summary = details.get('abstract')
 	duration = int(details.get('dur').strip('ms'))
@@ -20,12 +20,13 @@ def MetadataObjectForURL(url):
 			source = details.get('author')
 		except:
 			source = ''	
-	
+
 	return VideoClipObject(
 		title = title,
 		summary = summary,
 		duration = duration,
-		source_title = source)
+		source_title = source
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -35,7 +36,6 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key = WebVideoURL(url))]
 		)
 	]
-
 
 ####################################################################################################
 def GetSMIL(url):
@@ -48,14 +48,13 @@ def GetSMIL(url):
 def GetSRC(smil):
 	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
 
-	if src_list[0].get('src') =="Unavailable.flv":
-		if src_list[0].get('abstract')=="You are not in a geographic region that has access to this content.":
+	if src_list[0].get('src') == "Unavailable.flv":
+		if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
 			# content is geo blocked
 			raise Ex.MediaGeoblocked
 		else:
 			# just a general failure of the media not being available
 			raise Ex.MediaNotAvailable
-
 
 	if len(src_list) == 1:
 		return src_list[0]
