@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 
 	try:
 		air_date = data.xpath('//div[@class="summary"]//div[@class="text"]')[0].text
-		originally_available_at = Datetime.ParseDate(air_date).date(),
+		originally_available_at = Datetime.ParseDate(air_date).date()
 	except:
 		originally_available_at = None
 
