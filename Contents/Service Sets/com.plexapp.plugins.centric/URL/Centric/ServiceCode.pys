@@ -2,6 +2,8 @@ RE_VIDEO_ID = Regex('http://www.centrictv.com/videos/.+?/([0-9]+).*')
 RE_RTMP_ARGS = Regex('(?P<player>rtmp.+?/ondemand)(?P<playpath>.+)')
 MRSS_URL = "http://services.centrictv.com/content/video/mrss.aspx?uri=mgid:media:video:centrictv.com:%s"
 
+BITRATES = ['350', 650', '900', '1400']
+
 def NormalizeURL(url):
     return url
     
@@ -55,10 +57,19 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
     feed = GetMRSS(url)
     rtmp_parts = []
+    index = BITRATES.index(bitrate)
     for entry in feed.entries:
         smil_url = entry.media_content[0]['url']
         smil = XML.ElementFromURL(smil_url)
-        rtmp_url = smil.xpath('.//rendition[@bitrate="'+bitrate+'"]/src')[0].text
+        rtmp_url = None
+        while index > -1:
+            try:
+                rtmp_url = smil.xpath('.//rendition[@bitrate="'+BITRATES[index]+'"]/src')[0].text
+                break
+            except:
+                index = index -1
+        if not rtmp_url:
+            rtmp_url = smil.xpath('.//rendition/src')[0].text
         rtmp_args = RE_RTMP_ARGS.search(rtmp_url).groupdict()
         rtmp_parts.append(PartObject(key=RTMPVideoURL(url=rtmp_args['player'], clip=rtmp_args['playpath'])))
     oc = ObjectContainer()

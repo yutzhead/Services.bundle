@@ -13,7 +13,7 @@ def NormalizeURL(url):
 	if not video: video = 'trailer'
 	if not web: web = ''
 
-	return 'http://trailers.apple.com/trailers/%s/%s#%s%s' % (studio, title, video, web)
+	return 'http://trailers.apple.com/trailers/%s/%s/#%s%s' % (studio, title, video, web)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
