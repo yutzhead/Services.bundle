@@ -6,9 +6,6 @@
 	<dict>
 		<key>Hollywood Reporter</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.hollywoodreporter.com/video/.+</string>
