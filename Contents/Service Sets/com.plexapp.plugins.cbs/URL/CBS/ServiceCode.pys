@@ -6,7 +6,7 @@ RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
 API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast,lowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
 
 CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
-SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language'}
+SMIL_NAMESPACE = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
 
 CBS_URL = 'http://www.cbs.com'
 CBS_SMIL = 'http://link.theplatform.com/s/dJ5BDC/%s?format=SMIL&Tracking=true&mbr=true'
@@ -229,7 +229,7 @@ def VideoFromSMIL(url, res):
 
   if pid:
     pid = pid.group(1)
-    smil = XML.ElementFromURL(CBS_SMIL % pid)
+    smil = XML.ElementFromURL(CBS_SMIL % pid, cacheTime=0)
 
     if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
       raise Ex.MediaGeoblocked
