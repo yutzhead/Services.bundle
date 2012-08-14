@@ -218,10 +218,8 @@ def VideoFromSMIL(url, res):
     if video_url:
       return IndirectResponse(VideoClipObject, key = video_url)
     else:
-      rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[-1].get('src')
-      rtmp_params = rtmp_url.split('<break>')
-      rtmp_url = rtmp_params[0]
-      clip = rtmp_params[1]
+      rtmp_url = smil.xpath('//a:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
+      clip = smil.xpath('//a:ref[starts-with(@src, "video/")]', namespaces=SMIL_NAMESPACE)[0].get('src')
       if clip[-4:] == '.mp4':
         clip = 'MP4:' + clip[:-4]
     
