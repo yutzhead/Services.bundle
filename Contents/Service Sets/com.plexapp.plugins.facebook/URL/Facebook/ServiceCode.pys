@@ -14,6 +14,10 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
     page_content = HTTP.Request(url).content
+
+    if len(HTML.ElementFromString(page_content).xpath('//h2[text()="This content is currently unavailable"]')) > 0:
+        raise Ex.MediaNotAvailable
+
     title = RE_TITLE.search(page_content).group(1)
     thumb = RE_THUMB.search(page_content).group(1)
     duration_text = RE_DURATION.search(page_content).group(1)
