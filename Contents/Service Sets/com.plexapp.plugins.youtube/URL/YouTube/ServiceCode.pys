@@ -207,7 +207,7 @@ def PlayVideo(url, default_fmt = None, attribution = None, **kwargs):
   # If we detect that the video has failed, it's possible that it is because it's restricted to only be played
   # by the 'attribution'. If this is the case, we can find the appropriate element and return another @indirect
   # response which has the correct POST URL.
-  if 'status=fail' in yt_page:
+  if 'status=fail' in yt_page and not attribution:
     yt_page_html = HTML.ElementFromURL(url)
     attribution = yt_page_html.xpath('//meta[@name = "attribution"]')[0].get('content')
     c = ObjectContainer()
@@ -245,8 +245,9 @@ def PlayVideo(url, default_fmt = None, attribution = None, **kwargs):
       quality = int(map['itag'])
 
       if 'url' in map: # Just http (url) for now, not rtmp (stream)
-        fmts_info[quality] = String.Unquote(map['url'])
-        fmts.append(quality)
+        if 'signature' in map['url']:
+          fmts_info[quality] = String.Unquote(map['url'])
+          fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
 
