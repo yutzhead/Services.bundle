@@ -183,7 +183,7 @@ def PickMatch(fmts, index, match_format):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, default_fmt = None, **kwargs):
+def PlayVideo(url, default_fmt = None, attribution = None, **kwargs):
 
   # Check for geoblocks and unavailable videos
   video_id = url[url.find('?v=')+3:].split('&')[0]
@@ -199,7 +199,29 @@ def PlayVideo(url, default_fmt = None, **kwargs):
         raise Ex.MediaGeoblocked
 
   # Build up the format map.
-  yt_page = HTTP.Request(YOUTUBE_VIDEO_LINKS % video_id).content
+  yt_page_details = YOUTUBE_VIDEO_LINKS % video_id
+  if attribution != None:
+    yt_page_details = yt_page_details + '&el=' + attribution
+  yt_page = HTTP.Request(yt_page_details).content
+
+  # If we detect that the video has failed, it's possible that it is because it's restricted to only be played
+  # by the 'attribution'. If this is the case, we can find the appropriate element and return another @indirect
+  # response which has the correct POST URL.
+  if 'status=fail' in yt_page:
+    yt_page_html = HTML.ElementFromURL(url)
+    attribution = yt_page_html.xpath('//meta[@name = "attribution"]')[0].get('content')
+    c = ObjectContainer()
+    c.add(VideoClipObject(
+      key = URLService.LookupURLForMediaURL(url.decode('unicode_escape')),
+      items = [
+        MediaObject(
+          parts = [
+            PartObject(key = Callback(PlayVideo, url=url, post_url=YOUTUBE_VIDEO_LINKS % video_id + '&el=' + attribution, attribution = attribution, default_fmt=default_fmt))
+          ]
+        )
+      ]
+    ))
+    return c
 
   try: fmt_url_map = RE_URL_MAP.findall(yt_page)[0]
   except: raise Ex.MediaNotAvailable
