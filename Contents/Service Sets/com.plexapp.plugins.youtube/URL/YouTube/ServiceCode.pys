@@ -18,6 +18,7 @@ RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
 RE_VID_PID = Regex('pid=(.{11})')
 RE_VIDEO_ID = Regex('"video_id":\s"([^"]+)')
+RE_ATTRIBUTION = Regex('meta name="?attribution"? content="?([^"/]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -208,20 +209,24 @@ def PlayVideo(url, default_fmt = None, attribution = None, **kwargs):
   # by the 'attribution'. If this is the case, we can find the appropriate element and return another @indirect
   # response which has the correct POST URL.
   if 'status=fail' in yt_page and not attribution:
-    yt_page_html = HTML.ElementFromURL(url)
-    attribution = yt_page_html.xpath('//meta[@name = "attribution"]')[0].get('content')
-    c = ObjectContainer()
-    c.add(VideoClipObject(
-      key = URLService.LookupURLForMediaURL(url.decode('unicode_escape')),
-      items = [
-        MediaObject(
-          parts = [
-            PartObject(key = Callback(PlayVideo, url=url, post_url=YOUTUBE_VIDEO_LINKS % video_id + '&el=' + attribution, attribution = attribution, default_fmt=default_fmt))
-          ]
-        )
-      ]
-    ))
-    return c
+    yt_page_html = HTTP.Request(url).content
+    attr = RE_ATTRIBUTION.search(yt_page_html)
+
+    if attr:
+      attribution = attr.group(1)
+
+      c = ObjectContainer()
+      c.add(VideoClipObject(
+        key = URLService.LookupURLForMediaURL(url.decode('unicode_escape')),
+        items = [
+          MediaObject(
+            parts = [
+              PartObject(key = Callback(PlayVideo, url=url, post_url=YOUTUBE_VIDEO_LINKS % video_id + '&el=' + attribution, attribution = attribution, default_fmt=default_fmt))
+            ]
+          )
+        ]
+      ))
+      return c
 
   try: fmt_url_map = RE_URL_MAP.findall(yt_page)[0]
   except: raise Ex.MediaNotAvailable
