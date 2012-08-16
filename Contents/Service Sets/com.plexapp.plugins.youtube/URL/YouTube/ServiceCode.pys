@@ -18,7 +18,7 @@ RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
 RE_VID_PID = Regex('pid=(.{11})')
 RE_VIDEO_ID = Regex('"video_id":\s"([^"]+)')
-RE_ATTRIBUTION = Regex('meta name="?attribution"? content="?([^"/]+)')
+RE_ATTRIBUTION = Regex('meta name="?attribution"? content="?([^"/>]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -213,7 +213,7 @@ def PlayVideo(url, default_fmt = None, attribution = None, **kwargs):
     attr = RE_ATTRIBUTION.search(yt_page_html)
 
     if attr:
-      attribution = attr.group(1)
+      attribution = attr.group(1).strip()
 
       c = ObjectContainer()
       c.add(VideoClipObject(
