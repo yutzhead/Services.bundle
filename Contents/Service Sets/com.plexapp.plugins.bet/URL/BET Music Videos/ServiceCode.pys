@@ -97,7 +97,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
     vevo_url = GetVevoURL(url)
-    media_objects = URLService.MetadataObjectForURL(vevo_url)
+    media_objects = URLService.MediaObjectsForURL(vevo_url)
     for video in media_objects:
         if video.bitrate == bitrate:
             media_key = video.parts[0].key
