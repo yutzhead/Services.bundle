@@ -59,11 +59,19 @@ def PlayVideo(url, res):
 
     page = HTML.ElementFromURL(url)
 
-    # Translate the requested resolution in a suitable text identifier
-    res_description = 'MP4'
-    if res == 'hd':
-        res_description = 'High Quality MP4'
+    try:
+        sd_video_url = page.xpath('//a[text()="MP4"]')[0].get('href')
+    except:
+        sd_video_url = None
 
-    # Redirect to the actual video url
-    video_url = page.xpath("//a[text() = '%s']" % res_description)[0].get('href')
-    return Redirect(video_url)
+    try:
+        hd_video_url = page.xpath('//a[text()="High Quality MP4"]')[0].get('href')
+    except:
+        hd_video_url = None
+
+    if res == 'hd' and hd_video_url:
+        return Redirect(hd_video_url)
+    elif sd_video_url:
+        return Redirect(sd_video_url)
+    else:
+        raise Ex.MediaNotAvailable
