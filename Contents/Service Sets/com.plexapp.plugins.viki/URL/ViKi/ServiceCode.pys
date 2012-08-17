@@ -16,15 +16,12 @@ def MetadataObjectForURL(url):
   video_id = url.split('/')[-1]
   if len(video_id) < 5:
     video_id = url.split('/')[-2]
-  #Log(video_id)
   
   data = HTML.ElementFromURL(url)
   video_type = data.xpath('//meta[@property="og:type"]')[0].get('content').split('.')[1]
-  #Log(video_type)
   
   if video_type == "episode":
     episode = HTML.ElementFromString(data).xpath('//h3')[0].text.strip()
-    #Log(episode)
     return EpisodeMetadata(url, episode)
   elif video_type == "movie":
     return MovieMetadata(url)
@@ -38,11 +35,8 @@ def MetadataObjectForURL(url):
   data = JSON.ObjectFromURL(JSON_URL % video_id)
     
   title = data['title']
-  #Log(title)
   summary = data['description']
-  #Log(summary)
   thumb = data['thumbnail']
-  #Log(thumb)
 
   vc = VideoClipObject(
     title = title,
@@ -58,20 +52,14 @@ def MetadataObjectForURL(url):
 def EpisodeMetadata(url, episode):
   
   video_id = url.split('/')[-1]
-  #Log(video_id)
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
     
   title = episode
-  #Log(title)
   show = data['title']
-  #Log(show)
   summary = data['description']
-  #Log(summary)
   absolute_index = int(episode.split(' ')[1])
-  #Log(absolute_index)
   thumb = data['thumbnail']
-  #Log(thumb)
 
   ec = EpisodeObject(
     title = title,
@@ -89,16 +77,12 @@ def EpisodeMetadata(url, episode):
 def MovieMetadata(url):
   
   video_id = url.split('/')[-1]
-  #Log(video_id)
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
     
   title = data['title']
-  #Log(title)
   summary = data['description']
-  #Log(summary)
   thumb = data['thumbnail']
-  #Log(thumb)
 
   mc = MovieObject(
     title = title,
