@@ -259,6 +259,7 @@ def ClipData(url):
     return False
 
   page = HTTP.Request(url).content
+  video_id = None
 
   id = RE_VIDEO_ID.search(page)
 
