@@ -2,7 +2,7 @@ RE_VIDEO_ID = Regex('http://www.centrictv.com/videos/.+?/([0-9]+).*')
 RE_RTMP_ARGS = Regex('(?P<player>rtmp.+?/ondemand)(?P<playpath>.+)')
 MRSS_URL = "http://services.centrictv.com/content/video/mrss.aspx?uri=mgid:media:video:centrictv.com:%s"
 
-BITRATES = ['350', 650', '900', '1400']
+BITRATES = ['350', '650', '900', '1400']
 
 def NormalizeURL(url):
     return url
