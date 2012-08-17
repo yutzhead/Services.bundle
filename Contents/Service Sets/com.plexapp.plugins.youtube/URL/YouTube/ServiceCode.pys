@@ -234,8 +234,9 @@ def PlayVideo(url, default_fmt = None, **kwargs):
       quality = int(map['itag'])
 
       if 'url' in map: # Just http (url) for now, not rtmp (stream)
-        fmts_info[quality] = String.Unquote(map['url'])
-        fmts.append(quality)
+        if 'signature' in map['url']:
+          fmts_info[quality] = String.Unquote(map['url'])
+          fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
 
