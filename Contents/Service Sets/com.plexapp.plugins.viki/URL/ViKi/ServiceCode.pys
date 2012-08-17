@@ -1,4 +1,4 @@
-import re
+RE_VID = Regex(".*/videos/(?P<id>[0-9]+).*")
 
 JSON_URL = "http://www.viki.com/player/medias/%s/info.json?rtmp=true&source=direct"
 
@@ -111,7 +111,7 @@ def MediaObjectsForURL(url):
 
 def PlayVideo(url):
 
-  video_id = re.match(".*/videos/(?P<id>[0-9]+).*", url).groupdict()['id']
+  video_id = RE_VID.match(url).groupdict()['id']
   
   data = JSON.ObjectFromURL(JSON_URL % video_id)
   
