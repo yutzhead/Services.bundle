@@ -67,12 +67,12 @@ def PlayVideo(url, res):
 
 	if res == 'hd' and 'highDefinitionMP4' in media:
 		video_url = media['highDefinitionMP4']['mediaURL']
-		key = media['highDefinitionMP4']['key']
+		key = media['highDefinitionMP4']['access'][0]['value']
 	elif 'MP4' in media:
 		video_url = media['MP4']['mediaURL']
-		key = media['MP4']['key']
+		key = media['MP4']['access'][0]['value']
 	else:
 		video_url = media['flv']['mediaURL']
-		key = media['flv']['key']
+		key = media['flv']['access'][0]['value']
 
 	return Redirect(VIDEO_URL % (video_url.replace(' ', '%20'), key))
