@@ -87,15 +87,18 @@ def PlayVideo(url, res):
 
 	smil = XML.ElementFromURL(smil_url)
 	video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
+	video_url = None
 
 	while res_index > -1:
 		for video in video_list:
 			if video.get('height') == RES_MAP[res_index]:
 				video_url = video.get('src')
-				res_index = -1
 				break
-			else:
-				res_index = res_index - 1
+
+		if video_url:
+			break
+		else:
+			res_index = res_index - 1
 
 	return Redirect(video_url)
 
