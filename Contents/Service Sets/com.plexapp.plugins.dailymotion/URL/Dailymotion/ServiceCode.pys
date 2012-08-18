@@ -4,96 +4,96 @@ RE_ID = Regex('dailymotion\.com/((embed/)?video/|swf/(video/)?|.+#video(Id)?=)(?
 ####################################################################################################
 def NormalizeURL(url):
 
-  video_id = RE_ID.search(url)
+	video_id = RE_ID.search(url)
 
-  if video_id:
-    return 'http://www.dailymotion.com/video/%s' % video_id.group('id')
+	if video_id:
+		return 'http://www.dailymotion.com/video/%s' % video_id.group('id')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  video_id = url.rsplit('/',1)[1]
-  video = JSON.ObjectFromURL(JSON_URL % video_id)
+	video_id = url.rsplit('/',1)[1]
+	video = JSON.ObjectFromURL(JSON_URL % video_id)
 
-  title = video['title']
-  summary = video['description']
-  thumbUrl = video['thumbnail_large_url']
-  duration = int(video['duration'])*1000
-  dateString = thumbUrl.split('?')[-1]
-  date = '%s/%s/%s' % (dateString[4:6], dateString[6:8], dateString[0:4])
-  rating = float(video['rating'])
+	title = video['title']
+	summary = video['description']
+	thumbUrl = video['thumbnail_large_url']
+	duration = int(video['duration'])*1000
+	dateString = thumbUrl.split('?')[-1]
+	date = '%s/%s/%s' % (dateString[4:6], dateString[6:8], dateString[0:4])
+	rating = float(video['rating'])
 
-  # Construct a metadata item
-  vc = VideoClipObject(
-    title = title,
-    summary = summary,
-    thumb = thumbUrl,
-    duration = duration,
-    originally_available_at = Datetime.ParseDate(date).date(),
-    rating = rating
-  )
+	# Construct a metadata item
+	vc = VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumbUrl,
+		duration = duration,
+		originally_available_at = Datetime.ParseDate(date).date(),
+		rating = rating
+	)
 
-  return vc
+	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  video_id = url.rsplit('/',1)[1]
-  json_url = JSON_URL % video_id
-
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='hd'))],
-      container = Container.MP4,
-      bitrate = '1500',
-      video_resolution = '720',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='sd'))],
-      container = Container.MP4,
-      bitrate = '400',
-      video_resolution = 'sd',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='low-res'))],
-      container = Container.MP4,
-      bitrate = '180',
-      video_resolution = 'sd',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    )
-  ]
+	video_id = url.rsplit('/',1)[1]
+	json_url = JSON_URL % video_id
+	
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='hd'))],
+			container = Container.MP4,
+			bitrate = '1500',
+			video_resolution = '720',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='sd'))],
+			container = Container.MP4,
+			bitrate = '400',
+			video_resolution = 'sd',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=json_url, post_url=json_url, fmt='low-res'))],
+			container = Container.MP4,
+			bitrate = '180',
+			video_resolution = 'sd',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, fmt):
 
-  json = HTTP.Request(url).content
-  video = JSON.ObjectFromString(json)
+	json = HTTP.Request(url).content
+	video = JSON.ObjectFromString(json)
 
-  if fmt == 'hd':
-    if video['stream_h264_hd_url']:
-      video_url = video['stream_h264_hd_url']
-    elif video['stream_h264_url']:
-      video_url = video['stream_h264_url']    
-    else:
-      video_url = video['stream_h264_sd_url']
-  elif fmt == 'sd':
-    if video['stream_h264_url']:
-      video_url = video['stream_h264_url']
-    else:
-      video_url = video['stream_h264_sd_url']
-  else:
-    video_url = video['stream_h264_sd_url']
+	if fmt == 'hd':
+		if video['stream_h264_hd_url']:
+			video_url = video['stream_h264_hd_url']
+		elif video['stream_h264_url']:
+			video_url = video['stream_h264_url']    
+		else:
+			video_url = video['stream_h264_sd_url']
+	elif fmt == 'sd':
+		if video['stream_h264_url']:
+			video_url = video['stream_h264_url']
+		else:
+			video_url = video['stream_h264_sd_url']
+	else:
+		video_url = video['stream_h264_sd_url']
 
-  return IndirectResponse(VideoClipObject, key=video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
