@@ -12,7 +12,12 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	video = GetDetails(url)['assetFields']
+	data = GetDetails(url)
+
+	if not data:
+		return None
+
+	video = data['assetFields']
 
 	epTitle = video['title']
 	show = video['seriesName']
@@ -111,9 +116,24 @@ def PlayVideo(url, bitrate):
 ####################################################################################################
 def GetDetails(url):
 
-	id = url.split('?play=')[1]
-	details = JSON.ObjectFromURL(DETAILS_URL % id)
-	return details
+	id = None
+
+	if '?play=' in url:
+		id = url.split('?play=')[1]
+	else:
+		html = HTML.ElementFromURL(url)
+		current_url = html.xpath('//meta[@property="og:url"]', namespaces={'og': 'http://opengraphprotocol.org/schema/'})
+
+		if current_url:
+			url = current_url[0].get('content')
+			if '?play=' in url:
+				id = url.split('?play=')[1]
+
+	if id:
+		details = JSON.ObjectFromURL(DETAILS_URL % id)
+		return details
+	else:
+		return None
 
 ####################################################################################################
 def GetThumbList(url):
