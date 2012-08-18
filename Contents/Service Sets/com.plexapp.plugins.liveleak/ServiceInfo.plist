@@ -13,7 +13,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.liveleak.com/view?.+</string>
+				<string>http://www.liveleak.com/view\?i=.+</string>
+				<string>http://www.liveleak.com/ll_embed\?f=.+</string>
 			</array>
 		</dict>
 	</dict>
