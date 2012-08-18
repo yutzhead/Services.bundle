@@ -14,7 +14,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://channel9.msdn.com/.+</string>
+				<string>http://channel9.msdn.com/Shows/[^/]+/.+</string>
+				<string>http://channel9.msdn.com/posts/.+</string>
 			</array>
 		</dict>
 	</dict>
