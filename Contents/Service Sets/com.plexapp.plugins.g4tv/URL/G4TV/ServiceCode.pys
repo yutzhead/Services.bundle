@@ -13,6 +13,9 @@ def MetadataObjectForURL(url):
 
   data = GetXML(url)
 
+  if not data:
+    return None
+
   clip_title = data.xpath('//a:Title', namespaces=XML_NS)[0].text
   clip_summary = data.xpath('//a:Description', namespaces=XML_NS)[0].text
   date = data.xpath('//a:Date', namespaces=XML_NS)[0].text
@@ -60,8 +63,11 @@ def PlayVideo(url, HD=False):
 
   data = GetXML(url)
 
+  if not data:
+    return None
+
   video_url = data.xpath('//a:FilePath', namespaces=XML_NS)[0].text
-  video_url= String.Unquote(video_url.split('r=')[1])
+  video_url = String.Unquote(video_url.split('r=')[1])
 
   if HD:
     try:
@@ -76,18 +82,24 @@ def PlayVideo(url, HD=False):
 ####################################################################################################
 def GetXML(url):
 
-  try:
-    video_id = RE_VID_ID.search(url).group(1)
-    data = XML.ElementFromURL(XML_URL % video_id, cacheTime=7200)
-    if data.xpath('//a:BroadbandPlayer', namespaces=XML_NS)[0].get("Status") == "Success":
-      return data
-    else:
-      video_page = HTML.ElementFromURL(url, cacheTime=7200)
-      video_id = video_page.xpath('//div[@class="video-player-wrap"]')[0].get('id').split('_')[1]
-      data = XML.ElementFromURL(XML_URL % video_id, cacheTime=7200)
-      return data
-  except:
+  re_video_id = RE_VID_ID.search(url)
+
+  if re_video_id:
+    video_id = re_video_id.group(1)
+  else:
     video_page = HTML.ElementFromURL(url, cacheTime=7200)
-    video_id = video_page.xpath('//div[@class="video-player-wrap"]')[0].get('id').split('_')[1]
-    data = XML.ElementFromURL(XML_URL % video_id, cacheTime=7200)
-    return data
+    xp_video_id = video_page.xpath('//div[@class="video-player-wrap"]')
+
+    if xp_video_id:
+      video_id = xp_video_id[0].get('id').split('_')[1]
+
+  if video_id:
+    try:
+      data = XML.ElementFromURL(XML_URL % video_id, cacheTime=7200)
+
+      if data.xpath('//a:BroadbandPlayer', namespaces=XML_NS)[0].get("Status") == "Success":
+        return data
+    except:
+      pass
+
+  return None
