@@ -1,4 +1,17 @@
 RE_FILE_URL = Regex('&file_url=(?P<url>[^&]*)&')
+RE_ITEM_TOKEN = Regex('item_token=([^&]+)')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	if 'll_embed' in url:
+		embed_html = HTTP.Request(url).content
+		item_token = RE_ITEM_TOKEN.search(embed_html)
+
+		if item_token:
+			url = 'http://www.liveleak.com/view?i=%s' % item_token.group(1)
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
