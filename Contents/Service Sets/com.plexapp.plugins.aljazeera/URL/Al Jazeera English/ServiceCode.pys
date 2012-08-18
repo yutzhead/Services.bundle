@@ -21,7 +21,8 @@ def MetadataObjectForURL(url):
   for item in summary:
     summary_text += item
   summary = summary_text.split('Click here for more')[0].strip()
-  source = data.xpath('//meta[@property="og:sitename"]')[0].get('content')
+  try: source = data.xpath('//meta[@property="og:sitename"]')[0].get('content')
+  except: source = None
   
   eo = EpisodeObject(
     show = show,
