@@ -35,11 +35,14 @@ def MetadataObjectForURL(url):
 
 	except: #if it's not an episode return a clip object
 		clip_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[0]
-		thumb_url = data.xpath('//div[@id="show_callout"]/img')[0].get('src')
+		try:
+			thumb_url = data.xpath('//div[@id="show_callout"]/img')[0].get('src')
+		except:
+			thumb_url = ''
 
 		mo = VideoClipObject(
 			title = clip_title,
-			thumb = thumb_url
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-default.png')
 		)
 
 	return mo
