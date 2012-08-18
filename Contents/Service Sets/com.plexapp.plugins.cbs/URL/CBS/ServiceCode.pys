@@ -88,7 +88,12 @@ def MetadataObjectFromPAGE(url):
   else:
     video_type = "Clip"
 
-  title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+  title = data.xpath('//meta[@property="og:title"]')
+
+  if len(title) < 1:
+    return None
+  else:
+    title = title[0].get('content')
 
   if ' - ' in title:
     try:
