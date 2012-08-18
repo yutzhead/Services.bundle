@@ -79,6 +79,14 @@ def GetSMIL(url):
 #########################################################################################
 def GetSRC(smil):
 	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+	if src_list[0].get('src') == "Unavailable.flv":
+		if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
+			# content is geo blocked
+			raise Ex.MediaGeoblocked
+		else:
+			# just a general failure of the media not being available
+			raise Ex.MediaNotAvailable
+
 	if len(src_list) == 1:
 		return src_list[0]
 	else:
