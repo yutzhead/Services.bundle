@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.thedailyshow.com/.+</string>
+				<string>http://www.thedailyshow.com/(full-episodes|watch)/.+</string>
 			</array>
 		</dict>
 	</dict>
