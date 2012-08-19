@@ -1,24 +1,27 @@
 DETAILS_URL = 'http://www.absoluteradio.co.uk/_ajax2/media_player.php?mode=flash&id=%s'
-RE_ID = Regex(".*/player.*/(?P<id>[0-9]+)/")
+RE_ID = Regex("/player.*/(?P<id>[0-9]+)/")
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
     return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Attempt to extract the video id from the url
-    video_id = RE_ID.match(url).groupdict()['id']
+    video_id = RE_ID.search(url).group('id')
 
     # Request the url and the details page
     page = HTML.ElementFromURL(url)
-    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+
+    if len(page.xpath('//div[@id="video_container"]//*[contains(text(), "Sorry, this media is only available to UK users")]')) > 0:
+        raise Ex.MediaGeoblocked
 
     title = page.xpath("//div[@id='video_container']/h1/text()")[0]
     description = page.xpath("//meta[@name='description']")[0].get('content')
+
+    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
     thumb = details_page.xpath("//item/type[text() = 'image']/../src/text()")[0]
 
     return VideoClipObject(
@@ -28,8 +31,8 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
         MediaObject(
           video_codec = VideoCodec.H264,
@@ -65,6 +68,7 @@ def PlayVideo(url, res):
 
 ####################################################################################################
 def TestURLs():
+
     test_urls = []
 
     # Request a page which should contain a collection of videos
@@ -83,7 +87,7 @@ def TestURLs():
 
         test_urls.append(url.replace(' ', '+'))
 
-        if len(test_urls) >= 2:
+        if len(test_urls) > 2:
             break
 
     return test_urls
