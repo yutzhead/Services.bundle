@@ -6,6 +6,9 @@ def MetadataObjectForURL(url):
 
 	page = HTML.ElementFromURL(url)
 
+	if len(page.xpath('//script[@type="text/javascript"]/text()[contains(., "flv/")]')) < 1:
+		return None
+
 	# Extract the details available directly form the page.
 	title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
 	description = page.xpath("//head//meta[@name='description']")[0].get('content')
