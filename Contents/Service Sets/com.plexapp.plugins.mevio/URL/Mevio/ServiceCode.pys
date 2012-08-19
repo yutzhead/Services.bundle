@@ -1,17 +1,16 @@
-RE_JSON_DATA = Regex('var q = ({.*});')
-RE_DEFAULT_MEDIA_JSON = Regex('args.default_media = ({.*});')
+RE_JSON_DATA = Regex('var q = (\{.*\});')
+RE_DEFAULT_MEDIA_JSON = Regex('args\.default_media = (\{.*\});')
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
   return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
   clip_details = GetClipJSON(url)
-  
+
   try:
     title = "%s: %s" % (clip_details["parent_name"], clip_details["name"])
     summary = clip_details["summary"]
@@ -27,7 +26,7 @@ def MetadataObjectForURL(url):
     duration = int(clip_xml.enclosures[0].length)
     date = Datetime.ParseDate(clip_xml.updated).date()
     rating = None
-  
+
   # Construct a metadata item
   vc = VideoClipObject(
     title = title,
@@ -37,10 +36,12 @@ def MetadataObjectForURL(url):
     originally_available_at = date,
     rating = rating
   )
+
   return vc
-  
+
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   return [
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720'))],
@@ -73,8 +74,9 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, fmt=''):
-  
+
   clip_details = GetClipJSON(url)
+
   try:
     try:
       video_url = clip_details["media_urls"]["h264"]
@@ -93,34 +95,37 @@ def PlayVideo(url, fmt=''):
   except:
     clip_xml = GetXML(url)
     video_url = clip_xml.guid
+
   return Redirect(video_url)
 
 ####################################################################################################
-
 def GetJSON(url):
-  content = HTTP.Request(url, cacheTime=7200, errors='ignore').content
+
+  content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
+
   try:
     data = RE_DEFAULT_MEDIA_JSON.search(content).group(1)
   except:
     data = RE_JSON_DATA.search(content).group(1)
-  details = JSON.ObjectFromString(data)
-  return details
-  
-####################################################################################################
 
+  details = JSON.ObjectFromString(data)
+
+  return details
+
+####################################################################################################
 def GetClipJSON(url):
-  
+
   details = GetJSON(url)
-  
+
   try:
     clip_id = url.split('mId=')[1]
     key_id = None
   except:
     clip_id = None
     key_id = url.split('episode/')[1].split('/')[0]
-  
+
   clip_details = {}
-  
+
   try:
     if details['key_id'] == key_id:
       return details
@@ -140,19 +145,20 @@ def GetClipJSON(url):
           clip_details = item["media"]
         else:
           pass
-  
+
   return clip_details
 
 ####################################################################################################
-  
 def GetXML(url):
+
   clip_details = GetJSON(url)
   rss_url = clip_details['feed_urls']['xml']['url']
   feed = RSS.FeedFromURL(rss_url)
+
   for item in feed.entries:
     if item.link == url:
       return item
     else:
       pass
+
   return None
-  
