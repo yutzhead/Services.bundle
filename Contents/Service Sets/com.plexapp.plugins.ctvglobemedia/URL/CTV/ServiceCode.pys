@@ -15,18 +15,19 @@ SOURCE = {
   "spacecast.com"       : "Space",
   "muchmusic.com"       : "Much Music",
   "fashiontelevision.com":"Fashion Television"
-  }
+}
 
 ####################################################################################################
-
 def NormalizeURL(url):
+
   return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+  data = HTML.ElementFromURL(url)
+
   try:
-    data = HTML.ElementFromURL(url)
-    
     title = data.xpath('//meta[@name="title"]')[0].get('content').split(' : ')
     show_title = title[0]
     episode_title = title[1]
@@ -35,7 +36,7 @@ def MetadataObjectForURL(url):
     # Ensure that the thumb URL is well formed.
     thumbUrl = data.xpath('//meta[@name="Thumbnail"]')[0].get('content')
     thumbUrl = thumbUrl.replace(' ', '%20')
-  
+
     try: season = int(re.search('season\-([0-9]+)', url).group(1))
     except: season = None
     try: episode = int(re.search('-ep-([0-9]+)-', url).group(1).lstrip(season))
@@ -50,26 +51,34 @@ def MetadataObjectForURL(url):
       summary = summary,
       thumb = thumbUrl
     )
-  
+
   except:
     network = re.search('watch\.(.+\.c[a-z]{1,2})/.+', url).group(1)
-    clipId = re.search('clip([0-9]{6})', url).group(1)
-    
-    clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clipId)).content).group(1))
-    
+    clip_re = re.search('clip([0-9]{6})', url)
+
+    if clip_re:
+      clip_id = clip_re.group(1)
+    else:
+      clip_xpath = data.xpath('//meta[@name="EntityId"]')
+
+      if clip_xpath:
+        clip_id = clip_xpath[0].get('content')
+
+    clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clip_id)).content).group(1))
+
     title = clip_details['Title']
     summary = clip_details['Description']
     thumb = clip_details['Thumbnail']
-    
+
     mo = VideoClipObject(
       title = title,
       summary = summary,
       thumb = thumb
     )
-  
+
   source_site = re.search("http://watch.(.+\.(ca|com))/.*", url).group(1)
   source = SOURCE[source_site]
-  
+
   mo.source_title = source
   return mo
 
@@ -84,12 +93,13 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url):
+
   video_url = None
-  
+
   try:
     episode_id = HTML.ElementFromURL(url).xpath('//meta[@name="EntityId"]')[0].get('content')
     network = re.search('watch\.(.+?)/', url).group(1)
-  
+
     show = HTTP.Request(EPISODE_LOOKUP %(network, episode_id)).content
     expression = re.compile("EpisodePermalink:'(.+?)'", re.MULTILINE)
     permalink = expression.search(show).group(1)
@@ -107,8 +117,9 @@ def PlayVideo(url):
 
 ####################################################################################################
 def TestURLs():
+
     test_urls = []
-    
+
     for site in SITES:
         data = HTML.ElementFromURL('http://watch.%s' % site)
         try:
@@ -119,5 +130,5 @@ def TestURLs():
             test_urls.append(url)
         except:
           pass
-        
+
     return test_urls
