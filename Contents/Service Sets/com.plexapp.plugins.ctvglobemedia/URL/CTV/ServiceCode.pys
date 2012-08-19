@@ -64,6 +64,9 @@ def MetadataObjectForURL(url):
       if clip_xpath:
         clip_id = clip_xpath[0].get('content')
 
+        if not clip_id.isdigit():
+          return None
+
     clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clip_id)).content).group(1))
 
     title = clip_details['Title']
