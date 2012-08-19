@@ -45,12 +45,15 @@ def MetadataObjectForURL(url):
 		show_name = None
 
 	# Identify the root node of the specific show's episode
-	episode_node = show_xml.xpath("//episode/videoID[contains(text(), %s)]/.." % id)[0]
+	episode_node = show_xml.xpath("//episode/videoID[contains(text(), %s)]/.." % id)
+
+	if len(episode_node) < 1:
+		raise Ex.MediaNotAvailable
 
 	# Extract the available details
-	title = episode_node.xpath(".//epiTitle/text()")[0]
-	description = episode_node.xpath(".//epiDescription/text()")[0]
-	thumb = episode_node.xpath(".//epiImage/text()")[0]
+	title = episode_node[0].xpath(".//epiTitle/text()")[0]
+	description = episode_node[0].xpath(".//epiDescription/text()")[0]
+	thumb = episode_node[0].xpath(".//epiImage/text()")[0]
 
 	# We can use the config id to determine if the associated title is just a video clip, or a full on
 	# episode.
