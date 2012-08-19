@@ -1,7 +1,6 @@
-BASE_URL    	= 'http://www.studio100tv.be'
-VIDEO_FILE   	= '%s/videofile/%%s' % BASE_URL
-
-ICON		 	= 'icon-default.png'
+BASE_URL = 'http://www.studio100tv.be'
+VIDEO_FILE = '%s/videofile/%%s' % BASE_URL
+ICON = 'icon-default.png'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -12,15 +11,13 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	content = HTML.ElementFromURL(url)
-	
 	title = content.xpath('//title')[0].text
-	
+
 	try:
 		thumb = content.xpath('//link[@rel="image_src"]')[0].get('href')
 	except:
-		thumb = None
-	
-	
+		thumb = ''
+
 	return VideoClipObject(
 		title = title,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback=ICON)
@@ -28,24 +25,24 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      video_resolution = '720',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url):
-	
+
 	link = url.rsplit('/', 1)[1]
 	video = VIDEO_FILE % link
-	
+
 	return IndirectResponse(VideoClipObject, key = video)
-	
