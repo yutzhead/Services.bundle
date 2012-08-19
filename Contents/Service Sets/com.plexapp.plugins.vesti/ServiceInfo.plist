@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.vesti.ru/(doc.html\?id=[0-9]+|only_video.html\?vid=[0-9]+)?</string>
+				<string>http://www.vesti.ru/.+\?v?id=[0-9]+</string>
 			</array>
 		</dict>
 	</dict>
