@@ -82,6 +82,8 @@ def PlayVideo(url, HD=False):
 ####################################################################################################
 def GetXML(url):
 
+  video_id = None
+
   re_video_id = RE_VID_ID.search(url)
 
   if re_video_id:
