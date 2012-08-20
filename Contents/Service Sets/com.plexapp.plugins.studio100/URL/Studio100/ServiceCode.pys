@@ -14,7 +14,7 @@ def MetadataObjectForURL(url):
 	title = content.xpath('//title')[0].text
 
 	try:
-		thumb = content.xpath('//link[@rel="image_src"]')[0].get('href')
+		thumb = content.xpath('//link[@rel="image_src"]')[0].get('href').replace('/160x90', '/640x360')
 	except:
 		thumb = ''
 
