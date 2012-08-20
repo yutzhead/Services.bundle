@@ -46,7 +46,14 @@ def MetadataObjectForURL(url):
 		vc.duration =( (int(jsonDrOD['duration'].rsplit(':')[0])*360) +(int(jsonDrOD['duration'].rsplit(':')[1])*60)+(int(jsonDrOD['duration'].rsplit(':')[2]))) * 1000
 		vc.title = jsonDrOD['title']
 		vc.source_title = jsonDrOD['broadcastChannel']
-		vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+
+		if 'broadcastTime' in jsonDrOD:
+			if 'Date(' in jsonDrOD['broadcastTime']:
+				timestamp = float( jsonDrOD['broadcastTime'].split('(')[1].split('+')[0] ) / 1000
+				vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
+			else:
+				vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+
 		vc.summary = jsonDrOD['description']
 		vc.thumb = apiBaseURL % 'videos/'+id+'/images/512x512.jpg'
 
@@ -57,7 +64,14 @@ def MetadataObjectForURL(url):
 		vc.title = jsonDrOD['title']
 		vc.duration = ( (int(jsonDrOD['duration'].rsplit(':')[0])*360) +(int(jsonDrOD['duration'].rsplit(':')[1])*60)+(int(jsonDrOD['duration'].rsplit(':')[2]))) * 1000
 		vc.source_title = jsonDrOD['broadcastChannel']
-		vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+
+		if 'broadcastTime' in jsonDrOD:
+			if 'Date(' in jsonDrOD['broadcastTime']:
+				timestamp = float( jsonDrOD['broadcastTime'].split('(')[1].split('+')[0] ) / 1000
+				vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
+			else:
+				vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+
 		vc.summary = jsonDrOD['description']
 
 	return vc
