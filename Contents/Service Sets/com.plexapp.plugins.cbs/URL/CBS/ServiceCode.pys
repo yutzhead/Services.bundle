@@ -1,4 +1,4 @@
-RE_PID = Regex('pid=([^&]+)')
+RE_PID = Regex("pid\s*=\s*'?([^&']+)")
 RE_VIDEO_ID = Regex('CBSVideo.setVideoId\("([0-9]+)"\);')
 RE_VID_ID = Regex("vidId: '([0-9]+)'")
 RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
