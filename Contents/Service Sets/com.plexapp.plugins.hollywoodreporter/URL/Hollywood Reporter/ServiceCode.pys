@@ -1,29 +1,28 @@
 BASE_URL = 'http://www.hollywoodreporter.com'
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 RE_APP = Regex('rtmp://brightcove\..+?/(.+)')
-SWF_URL = "http://admin.brightcove.com/viewer/us20120810.1250/BrightcoveBootloader.swf"
+SWF_URL = 'http://admin.brightcove.com/viewer/us20120810.1250/BrightcoveBootloader.swf'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
 	data = DoAmfRequest(url)
-	Log.Debug(data)
-	
+
 	title = data['displayName']
 	summary = data['shortDescription']
-	thumbUrl = data['videoStillURL']
+	thumb_url = data['videoStillURL']
 	date = data['publishedDate']
 	duration = data['length']
-	
+
 	# Construct a metadata item
 	mo = VideoClipObject(
 		title = title,
 		originally_available_at = date,
 		summary = summary,
 		duration = int(duration),
-		thumb = thumbUrl
+		thumb = thumb_url
 	)
+
 	return mo
 
 ####################################################################################################
@@ -38,30 +37,28 @@ def MediaObjectsForURL(url):
 		)
 	]
 
-
 ####################################################################################################
 @indirect
 def PlayVideo(url):
 
 	data = DoAmfRequest(url)
-	
 	video_url = data['FLVFullLengthURL']
 
 	if video_url.endswith(".mp4"):
 		return IndirectResponse(VideoClipObject, key=video_url)
-	else :
+	else:
 		# this is rtmp based
 		video_url = data['FLVFullLengthURL'].split('&', 1)
 		player = video_url[0]
 		app = RE_APP.search(player).group(1)
 		playpathFull = video_url[1] # the passed argument ( -C in rtmpdump world ) needs the additional info for auth purposes
 		playpathClip = video_url[1].split('&')[0] # the actual clip needs to have anyting after & removed
-	
-		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpathClip, app=app, swf_url=SWF_URL, args=[False, playpathFull]))
 
+		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpathClip, app=app, swf_url=SWF_URL, args=[False, playpathFull]))
 
 ####################################################################################################
 def DoAmfRequest(url):
+
 	data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
 	playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
 	videoPlayer = data.xpath('./param[@name="videoID"]')[0].get('value')
@@ -75,18 +72,18 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 	endpoint = AMF_URL
 	if playerKey:
 		endpoint += '?playerKey=%s' % playerKey
-	
+
 	client = AMF.RemotingService(url=endpoint, user_agent='', amf_version=3)
 	service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
-	
+
 	AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
 	AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
-	
+
 	video_obj = ContentOverride(videoPlayer)
 	experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
-	
+
 	result = service.getDataForExperience('', experience)
-	
+
 	return result['programmedContent']['videoPlayer']['mediaDTO']
 
 ####################################################################################################
@@ -110,15 +107,17 @@ class ViewerExperienceRequest(object):
 		self.TTLToken = ''
 		self.URL = url
 		self.deliveryType = float('nan')
-		
+
 ####################################################################################################
-def TestURLs():	
+def TestURLs():
+
 	test_urls = []
 	data = HTML.ElementFromURL(BASE_URL + "/video").xpath("//ul[@class='thr-video-main-block thr-video-main-2']/li/div/div/a/@href")
+
 	for url in data:
-		if len(test_urls) < 6:
+		if len(test_urls) < 3:
 			test_urls.append(BASE_URL + url)
 		else:
 			break
-	
+
 	return test_urls
