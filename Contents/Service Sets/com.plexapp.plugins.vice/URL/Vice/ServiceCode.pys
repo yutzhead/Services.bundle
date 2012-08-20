@@ -13,13 +13,14 @@ def MetadataObjectForURL(url):
 
     data = HTML.ElementFromURL(url)
 
+    # Videos can come from their 'own' (Ooyala) site, but they also use other (YouTube) sites to
+    # host videos. Return None if that's the case and let Fallback -> Other service handle it.
+    if len( data.xpath('//meta[@property="og:video" and contains(@content, "player.ooyala.com")]') ) < 1:
+        return None
+
     # Extract the available information from the page
     title = data.xpath('//meta[@property="og:title"]')[0].get('content')
     description = data.xpath('//meta[@name="description"]')[0].get('content')
-
-#    try: description = String.Decode(description)
-#    except: pass
-
     thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
 
     try:
@@ -30,15 +31,18 @@ def MetadataObjectForURL(url):
             title = ep_name,
             show = show_name,
             summary = description,
-            thumb = thumb)
+            thumb = thumb
+        )
     except:
         return VideoClipObject(
             title = title,
             summary = description,
-            thumb = thumb)
+            thumb = thumb
+        )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
       MediaObject(
         video_codec = VideoCodec.H264,
@@ -53,7 +57,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url):
-    
+
     data = HTML.ElementFromURL(url)
 
     # The first thing that we need to obtain is the actual "embed code".
@@ -78,6 +82,7 @@ def PlayVideo(url):
 
 ####################################################################################################
 def TestURLs():
+
     test_urls = []
 
     data = HTML.ElementFromURL(BASE_URL % '/video')
