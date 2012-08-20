@@ -183,6 +183,8 @@ def PickMatch(fmts, index, match_format):
 @indirect
 def PlayVideo(url, default_fmt = None, **kwargs):
 
+  HTTP.ClearCookies()
+
   # Some videos require the user to authenticate in order for age verification to be successful. Since
   # this is currently not supported, we should detect the case and raise the suitable Framework
   # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
@@ -234,8 +236,10 @@ def PlayVideo(url, default_fmt = None, **kwargs):
       quality = int(map['itag'])
 
       if 'url' in map: # Just http (url) for now, not rtmp (stream)
-        if 'signature' in map['url']:
-          fmts_info[quality] = String.Unquote(map['url'])
+        video_url = String.Unquote(map['url'])
+
+        if 'signature' in video_url:
+          fmts_info[quality] = video_url
           fmts.append(quality)
 
   Log("Available formats: %s", str(fmts))
