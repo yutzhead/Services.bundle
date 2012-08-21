@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 
 PLAYER_KEY 	= Regex('\\\\"playerKey\\\\" value=\\\\"([^"]+)\\\\"')
@@ -25,7 +24,9 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	page = HTTP.Request(url).content
+	page = FixCharacters(page)
+	html = HTML.ElementFromString(page)
 
 	if 'net5.nl' in url:
 		base = CHANNELS['NET 5']['base']
@@ -37,22 +38,22 @@ def MetadataObjectForURL(url):
 		base = CHANNELS['Veronica']['base']
 
 	try:
-		thumb = page.xpath('//section[@class="s ajax"]/div/div/div[@class="i iBorder"]/a/img')[0].get('src')
+		thumb = html.xpath('//section[@class="s ajax"]/div/div/div[@class="i iBorder"]/a/img')[0].get('src')
 		thumb = base + thumb
 	except:
 		try:
-			thumb = page.xpath('//div[@class="i iGuide iGuideSlider"]/a/img')[0].get('src')
+			thumb = html.xpath('//div[@class="i iGuide iGuideSlider"]/a/img')[0].get('src')
 			thumb = base + thumb
 		except:
 			thumb = R('icon-default.png')
 
 	try:
-		title = page.xpath('//meta[@property="og:title"]')[0].get('content')
+		title = html.xpath('//meta[@property="og:title"]')[0].get('content')
 	except:
 		title = ""
 
 	try:
-		summary = page.xpath('//meta[@property="og:description"]')[0].get('content')
+		summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
 	except:
 		summary = ""
 
@@ -81,18 +82,18 @@ def PlayVideo(url):
 	amf_response = DoAmfRequest(url)
 	return IndirectResponse(VideoClipObject, key = amf_response)
 
-####################################################################################################	
+####################################################################################################
 def DoAmfRequest(url):
 
 	page_contents = HTTP.Request(url).content
 
-	player_id = PLAYER_ID.search(page_contents).groups()[0]
-	player_key = PLAYER_KEY.search(page_contents).groups()[0]
-	video_id = PLAYER.search(page_contents).groups()[0]
+	player_id = PLAYER_ID.search(page_contents).group(1)
+	player_key = PLAYER_KEY.search(page_contents).group(1)
+	video_id = PLAYER.search(page_contents).group(1)
 
 	return AmfRequest(url = url, playerID = player_id, playerKey = player_key, videoPlayer = video_id)
 
-####################################################################################################	
+####################################################################################################
 def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 
 	endpoint = AMF_URL
@@ -126,7 +127,7 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 
 	return video_url
 
-####################################################################################################		
+####################################################################################################
 class ContentOverride(object):
 	def __init__ (self, videoPlayer=None):
 		self.contentType = int(0)
@@ -138,7 +139,7 @@ class ContentOverride(object):
 		self.featuredId = float('nan')
 		self.contentRefId = None
 
-####################################################################################################	
+####################################################################################################
 class ViewerExperienceRequest(object):
 	def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
 		self.experienceId = int(playerID)
@@ -148,3 +149,36 @@ class ViewerExperienceRequest(object):
 		self.TTLToken = ''
 		self.URL = url
 		self.deliveryType = float('nan')
+
+####################################################################################################
+def FixCharacters(str):
+
+	mapping = {
+		'à': '&Atilde;&nbsp;',
+		'á': '&Atilde;&iexcl;',
+		'â': '&Atilde;&cent;',
+		'ä': '&Atilde;&curren;',
+		'è': '&Atilde;&uml;',
+		'é': '&Atilde;&copy;',
+		'ê': '&Atilde;&ordf;',
+		'ë': '&Atilde;&laquo;',
+		'ì': '&Atilde;&not;',
+		'í': '&Atilde;&shy;',
+		'î': '&Atilde;&reg;',
+		'ï': '&Atilde;&macr;',
+		'ò': '&Atilde;&sup2;',
+		'ó': '&Atilde;&sup3;',
+		'ô': '&Atilde;&acute;',
+		'ö': '&Atilde;&para;',
+		'ù': '&Atilde;&sup1;',
+		'ú': '&Atilde;&ordm;',
+		'û': '&Atilde;&raquo;',
+		'ü': '&Atilde;&frac14;'
+	}
+
+	str = str.replace('&amp;Atilde;&amp;', '&Atilde;&')
+
+	for k, v in mapping.iteritems():
+		str = str.replace(v, k)
+
+	return str
