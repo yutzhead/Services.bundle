@@ -177,6 +177,7 @@ def FixCharacters(str):
 	}
 
 	str = str.replace('&amp;Atilde;&amp;', '&Atilde;&')
+	str = str.replace('&amp;quot;', '&quot;')
 
 	for k, v in mapping.iteritems():
 		str = str.replace(v, k)
