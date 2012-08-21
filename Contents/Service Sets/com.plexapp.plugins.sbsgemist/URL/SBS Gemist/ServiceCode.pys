@@ -1,8 +1,8 @@
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 
-PLAYER_KEY 	= Regex('\\\\"playerKey\\\\" value=\\\\"([^"]+)\\\\"')
-PLAYER_ID	= Regex('\\\\"playerID\\\\" value=\\\\"([^"]+)\\\\"')
-PLAYER	 	= Regex('videoPlayer\\\\" value=\\\\"(.*?)\\\\"')
+PLAYER_KEY 	= Regex('"playerKey." value=."([^\\\]+)')
+PLAYER_ID	= Regex('"playerID." value=."([^\\\]+)')
+PLAYER	 	= Regex('"@videoPlayer." value=."([^\\\]+)')
 
 CHANNELS = {
 	'NET 5': {
@@ -68,9 +68,6 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			audio_codec = AudioCodec.AAC,
-			video_codec = VideoCodec.H264,
-			container = 'mp4',
 			parts = [PartObject(key=Callback(PlayVideo, url = url))]
 		)
 	]
@@ -79,8 +76,12 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	amf_response = DoAmfRequest(url)
-	return IndirectResponse(VideoClipObject, key = amf_response)
+	data = DoAmfRequest(url)
+	video_url = data['FLVFullLengthURL'].split('&', 1)
+	player = video_url[0]
+	playpath = video_url[1]
+
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 ####################################################################################################
 def DoAmfRequest(url):
@@ -91,7 +92,7 @@ def DoAmfRequest(url):
 	player_key = PLAYER_KEY.search(page_contents).group(1)
 	video_id = PLAYER.search(page_contents).group(1)
 
-	return AmfRequest(url = url, playerID = player_id, playerKey = player_key, videoPlayer = video_id)
+	return AmfRequest(url=url, playerID=player_id, playerKey=player_key, videoPlayer=video_id)
 
 ####################################################################################################
 def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
@@ -110,22 +111,7 @@ def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
 	experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
 	result = service.getDataForExperience('', experience)
 
-	Log("=====================================================================================")
-	Log(result)
-	Log("=====================================================================================")
-
-	clip = result['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
-	domain, file  = clip.split('/&')
-	play				= []
-	play_content_type   =   'video/x-flv'
-	play_rtmpurl        =   file
-	play_rtmpdomain     =   domain
-	crap, play_rtmpurl	= play_rtmpurl.split('mp4:')
-	video_url = play_rtmpdomain + "/" + play_rtmpurl
-
-	Log(" ---> " + video_url)
-
-	return video_url
+	return result['programmedContent']['videoPlayer']['mediaDTO']
 
 ####################################################################################################
 class ContentOverride(object):
