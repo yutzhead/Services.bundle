@@ -1,79 +1,67 @@
-## FIX Metadata
-BASE			= "http://www.earth-touch.com"
-SHOWS 			= BASE + "/shows/"
-VIMEO 			= "http://vimeo.com"
-NAMESPACES_A   = {
-    'itunes':'http://www.itunes.com/dtds/podcast-1.0.dtd',
-    'media':'http://search.yahoo.com/mrss/',
-    'feedburner':'http://rssnamespace.org/feedburner/ext/1.0'
-}
-
-####################################################################################################
-def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, format='hd'))],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      video_resolution = '720',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, format='sd'))],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      video_resolution = '480',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    )
-  ]
+BASE = "http://www.earth-touch.com"
+SHOWS = BASE + "/shows/"
+VIMEO = "http://vimeo.com/%s"
 
 ####################################################################################################
 def NormalizeURL(url):
 
+	url = url.split('?')[0]
+
+	if not url.endswith('/'):
+		url = '%s/' % url
+
 	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	series = SHOWS + url.split('/')[4] + "/mrss"
+	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)[0]
+
+	vimeolink = item_node.xpath('./enclosure')[0].get('url')
+	vimeolink = VIMEO % vimeolink.split('external/')[1]
+	vimeolink = vimeolink.split('.hd.mp4')[0]
+
+	return URLService.MetadataObjectForURL(vimeolink)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, format='hd'))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, format='sd'))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, format = None):
 
-	serie 	= SHOWS + url.split('/')[4] + "/mrss"
-	clip	= str.lower(url.split('/')[5])
+	series = SHOWS + url.split('/')[4] + "/mrss"
+	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)[0]
 
-	for video in XML.ElementFromURL(serie).xpath('//item', namespaces=NAMESPACES_A):
-		# Get MRSS feed for clip info to determine the actual vimeo player link
-		link = video.xpath('category', namespaces=NAMESPACES_A)[0].get('domain')
-		secondclip	= str.lower(link.split('/')[5])
+	vimeolink = item_node.xpath('./enclosure')[0].get('url')
+	vimeolink = VIMEO % vimeolink.split('external/')[1]
+	vimeolink = vimeolink.split('.hd.mp4')[0]
 
-		if secondclip == clip:
-			vimeolink 	= video.xpath('enclosure', namespaces=NAMESPACES_A)[0].get('url')
-			vimeolink	= VIMEO + vimeolink.split('external')[1]
-			vimeolink	= vimeolink.split('.hd.mp4')[0]
+	media = URLService.MediaObjectsForURL(vimeolink)
 
-			media = URLService.MediaObjectsForURL(vimeolink)
-			break
-			
-	if format == "hd":		
+	if format == "hd":
 		return Redirect(media[0].parts[0].key)
 	else:
 		return Redirect(media[1].parts[0].key)
-
-####################################################################################################
-def MetadataObjectForURL(url):
-	serie 	= SHOWS + url.split('/')[4] + "/mrss"
-	clip	= str.lower(url.split('/')[5])
-	
-	for video in XML.ElementFromURL(serie).xpath('//item', namespaces=NAMESPACES_A):
-		link = video.xpath('category', namespaces=NAMESPACES_A)[0].get('domain')
-		secondclip	= str.lower(link.split('/')[5])
-
-		if secondclip == clip:
-			vimeolink 	= video.xpath('enclosure', namespaces=NAMESPACES_A)[0].get('url')
-			vimeolink	= VIMEO + vimeolink.split('external')[1]
-			vimeolink	= vimeolink.split('.hd.mp4')[0]
-			break
-			
-	return URLService.MetadataObjectForURL(vimeolink)
