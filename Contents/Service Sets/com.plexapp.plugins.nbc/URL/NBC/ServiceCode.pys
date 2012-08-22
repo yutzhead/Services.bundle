@@ -2,7 +2,7 @@ BASE_URL = "http://www.nbc.com"
 VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
 
 CLIP_CONFIG_ID = "16009"
-RE_VIDEO_ID = Regex("(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.+/)?video/.+?/(?P<id>[0-9]{6,})")
+RE_VIDEO_ID = Regex("(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.+/)?video/.+?/(?P<id>[0-9]{4,})")
 
 ####################################################################################################
 def NormalizeURL(url):
