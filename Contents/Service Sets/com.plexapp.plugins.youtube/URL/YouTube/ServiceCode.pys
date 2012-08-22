@@ -238,6 +238,9 @@ def PlayVideo(url, default_fmt = None, **kwargs):
       if 'url' in map: # Just http (url) for now, not rtmp (stream)
         video_url = String.Unquote(map['url'])
 
+        if not 'signature' in video_url and 'sig' in map:
+          video_url = video_url + '&signature=' + map['sig']
+
         if 'signature' in video_url:
           fmts_info[quality] = video_url
           fmts.append(quality)
