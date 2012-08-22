@@ -1,5 +1,6 @@
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "x":"http://www.w3.org/1999/xhtml"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+SWF_URL = 'http://www.showcase.ca/video/swf/flvPlayer.swf'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -30,12 +31,40 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+	# pretty much all we get is 480p from these guys
 	return [
 		MediaObject(
+			video_resolution = "480",
 			audio_channels = 2,
-			parts = [PartObject(key = WebVideoURL(url))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
+
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	smil = GetSMIL(url)
+	details = GetSRC(smil)
+
+	src = details.get('src')
+	if 'akamai.net' in src:
+		# this is a direct mp4 video link
+		return IndirectResponse(VideoClipObject, key=src)
+	
+	# otherwise this is an rtmp/rtmpe link
+	src = src.split('{break}')	
+	# on a small handfull of their older videos it's <break> instead of {break}
+	# and needs different handling later
+	if len(src) < 2:
+		src = details.get('src').split('<break>')
+
+	player = src[0].split('ondemand/')[0]+'ondemand/'
+	app = 'ondemand' + src[0].split('ondemand')[1]
+	clip = src[1].replace(".flv","") # replace .flv needed if legacy <break> was used
+	
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, app=app, swf_url=SWF_URL))
 
 ####################################################################################################
 def GetSMIL(url):
@@ -47,7 +76,7 @@ def GetSMIL(url):
 ####################################################################################################
 def GetSRC(smil):
 	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-
+	
 	if src_list[0].get('src') == "Unavailable.flv":
 		if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
 			# content is geo blocked
@@ -60,7 +89,7 @@ def GetSRC(smil):
 		return src_list[0]
 	else:
 		for ref in src_list:
-			if "pfadx///video" in ref.get('src'):
+			if ref.get('src').startswith('pfadx'):
 				pass
 			elif ref.get('src').startswith('rtmp'):
 				return ref
