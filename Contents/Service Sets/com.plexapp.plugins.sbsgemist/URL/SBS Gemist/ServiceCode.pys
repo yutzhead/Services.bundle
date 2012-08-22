@@ -87,8 +87,13 @@ def PlayVideo(url):
 def DoAmfRequest(url):
 
 	page_contents = HTTP.Request(url).content
+	player_id_re = PLAYER_ID.search(page_contents)
 
-	player_id = PLAYER_ID.search(page_contents).group(1)
+	if player_id_re:
+		player_id = player_id_re.group(1)
+	else:
+		raise Ex.MediaNotAvailable
+
 	player_key = PLAYER_KEY.search(page_contents).group(1)
 	video_id = PLAYER.search(page_contents).group(1)
 
