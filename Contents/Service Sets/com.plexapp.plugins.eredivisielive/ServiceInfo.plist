@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Eredivisielive</key>
+		<key>Eredivisie Live</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)/?eredivisielive.nl/video/.*</string>
+				<string>http://(www\.)?eredivisielive.nl/video/.*</string>
 			</array>
 		</dict>
 	</dict>
