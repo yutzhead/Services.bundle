@@ -22,9 +22,9 @@ def MetadataObjectForURL(url):
 		for tag in data['tags']:
 			tags.append(tag['name'])
 
-	summary = data['description']
-	if summary != None:
-		summary = String.StripTags(RE_CONTROL_CHARS.sub('', summary))
+	summary = None
+	if 'description' in data:
+		summary = String.StripTags(RE_CONTROL_CHARS.sub('', data['description']))
 
 	video = VideoClipObject(
 		title = data['title'],
