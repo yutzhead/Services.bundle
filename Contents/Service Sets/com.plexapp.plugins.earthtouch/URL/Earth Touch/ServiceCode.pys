@@ -22,7 +22,14 @@ def MetadataObjectForURL(url):
 	vimeolink = VIMEO % vimeolink.split('external/')[1]
 	vimeolink = vimeolink.split('.hd.mp4')[0]
 
-	return URLService.MetadataObjectForURL(vimeolink)
+	metadata = URLService.MetadataObjectForURL(vimeolink)
+
+	if metadata is not None:
+		return metadata
+	else:
+		return VideoClipObject(
+			title = 'Test'
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -50,7 +57,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, format = None):
+def PlayVideo(url, format=None):
 
 	series = SHOWS + url.split('/')[4] + "/mrss"
 	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)[0]
@@ -59,7 +66,19 @@ def PlayVideo(url, format = None):
 	vimeolink = VIMEO % vimeolink.split('external/')[1]
 	vimeolink = vimeolink.split('.hd.mp4')[0]
 
-	media = URLService.MediaObjectsForURL(vimeolink)
+	metadata = URLService.MetadataObjectForURL(vimeolink)
+
+	if metadata is not None:
+		media = URLService.MediaObjectsForURL(vimeolink)
+
+	else:
+		iframe = HTML.ElementFromURL(url).xpath('//iframe[contains(@src, "vimeo.com")]')
+
+		if iframe:
+			embed_url = iframe[0].get('src')
+			media = URLService.MediaObjectsForURL('%s#referer=%s' % (embed_url, String.Quote(url)))
+		else:
+			raise Ex.MediaNotAvailable
 
 	if format == "hd":
 		return Redirect(media[0].parts[0].key)
