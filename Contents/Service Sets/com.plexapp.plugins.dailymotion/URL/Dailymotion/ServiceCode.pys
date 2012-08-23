@@ -19,9 +19,14 @@ def MetadataObjectForURL(url):
 	summary = video['description']
 	thumbUrl = video['thumbnail_large_url']
 	duration = int(video['duration'])*1000
-	dateString = thumbUrl.split('?')[-1]
-	date = '%s/%s/%s' % (dateString[4:6], dateString[6:8], dateString[0:4])
 	rating = float(video['rating'])
+
+	try:
+		dateString = thumbUrl.split('?')[-1]
+		date = '%s/%s/%s' % (dateString[4:6], dateString[6:8], dateString[0:4])
+		originally_available_at = Datetime.ParseDate(date).date()
+	except:
+		originally_available_at = None
 
 	# Construct a metadata item
 	vc = VideoClipObject(
@@ -29,7 +34,7 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		thumb = thumbUrl,
 		duration = duration,
-		originally_available_at = Datetime.ParseDate(date).date(),
+		originally_available_at = originally_available_at,
 		rating = rating
 	)
 
