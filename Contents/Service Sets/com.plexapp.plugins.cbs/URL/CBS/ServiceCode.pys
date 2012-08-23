@@ -267,7 +267,7 @@ def VideoFromSMIL(url, res):
         clip = smil.xpath('//b:ref[starts-with(@src, "video/")]', namespaces=SMIL_NAMESPACE)[0].get('src')
       
       if clip[-4:] == '.mp4':
-      clip = 'MP4:' + clip[:-4]
+        clip = 'MP4:' + clip[:-4]
 
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
