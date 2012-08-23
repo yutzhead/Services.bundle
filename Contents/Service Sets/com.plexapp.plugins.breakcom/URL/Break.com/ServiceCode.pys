@@ -1,20 +1,29 @@
 DETAILS_URL = 'http://api.break.com/invoke/content/%s/'
-RE_ID = Regex(".*/.*-(?P<id>[0-9]+)/?$")
+RE_ID = Regex(".+/.+-(?P<id>[0-9]+)/?$")
+
+####################################################################################################
+def NormalizeURL(url):
+
+    return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    
+
     # It's possible that the ID is actually contained within the url. If this is the case, then we
     # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
     # done this, we can load the XML page which contains all the meta data associated with the title.
     id = None
-    id_in_url = RE_ID.match(url)
+    id_in_url = RE_ID.search(url)
     if id_in_url != None:
-        id = id_in_url.groupdict()['id']
+        id = id_in_url.group('id')
     else:
          page = HTML.ElementFromURL(url)
-         voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
-         id = voting_button.get('contentid')
+         voting_button = page.xpath("//ul[@id='votingBar']/li/a")
+
+         if len(voting_button) < 1:
+             return None
+         else:
+             id = voting_button[0].get('contentid')
 
     details_page = XML.ElementFromURL(DETAILS_URL % id)
 
@@ -74,9 +83,9 @@ def PlayVideo(url, res):
     # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
     # done this, we can load the XML page which contains all the meta data associated with the title.
     id = None
-    id_in_url = RE_ID.match(url)
+    id_in_url = RE_ID.search(url)
     if id_in_url != None:
-        id = id_in_url.groupdict()['id']
+        id = id_in_url.group('id')
     else:
         page = HTML.ElementFromURL(url)
         voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
