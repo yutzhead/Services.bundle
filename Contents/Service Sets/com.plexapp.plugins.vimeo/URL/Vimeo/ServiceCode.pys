@@ -1,10 +1,10 @@
 import urlparse
 
 RE_VIDEO_ID = Regex("^/?(.+)?(?P<id>\d)+$")
-RE_CLIP_ID = Regex("clip_id=(\d+)")
-RE_VIMEO_ID = Regex("vimeo\.com/(\d+)")
-RE_HD = Regex('"hd":([0-9])')
-RE_SIG = Regex('"signature":"([0-9a-f]+)","timestamp":([0-9]+)')
+RE_CLIP_ID = Regex("clip_id=(?P<id>\d+)")
+RE_VIMEO_ID = Regex("vimeo\.com/(video/)?(?P<id>\d+)")
+RE_HD = Regex('"hd":(?P<hd>[0-9])')
+RE_SIG = Regex('"signature":"(?P<signature>[0-9a-f]+)","timestamp":(?P<timestamp>[0-9]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -12,7 +12,13 @@ def NormalizeURL(url):
   video_id = None
 
   if isinstance(url, basestring):
-    url = urlparse.urlparse(url)
+    # For a 'private' video we need the original url, so don't normalize
+    if '#referer=' in url:
+      return url
+    else:
+      url = urlparse.urlparse(url)
+  else:
+    return None
 
   # http://vimeo.com/staffpicks#24002628
   if RE_VIDEO_ID.match(url.fragment):
@@ -27,11 +33,11 @@ def NormalizeURL(url):
   if RE_VIDEO_ID.search(url.path):
     video_id = url.path[url.path.rfind('/')+1:]
 
-  # http://vimeo.com/moogaloop.swf?clip_id=1711302&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=ececec&amp;fullscreen=1&amp;autoplay=1
+  # http://vimeo.com/moogaloop.swf?clip_id=1711302&server=vimeo.com&show_title=1&show_byline=0&show_portrait=0&color=ececec&fullscreen=1&autoplay=0
   # http://vimeo.com/moogaloop.swf?clip_id=31856894
   clip_id = RE_CLIP_ID.search(url.query)
   if clip_id:
-    video_id = clip_id.group(1)
+    video_id = clip_id.group('id')
 
   if video_id:
     return "http://vimeo.com/%s" % video_id
@@ -41,12 +47,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+  # We can't get metadata from the API (or website) for private videos. Authors of services that use
+  # Vimeo need to find another way to get some metadata for their videos.
+  if '#referer=' in url:
+    return None
+
   # Figure out the URL to call.
   # Extract the video id
   vimeo_video_id = RE_VIMEO_ID.search(url)
 
   if vimeo_video_id:
-    vimeo_video_id = vimeo_video_id.group(1)
+    vimeo_video_id = vimeo_video_id.group('id')
   else:
     return None
 
@@ -58,7 +69,7 @@ def MetadataObjectForURL(url):
     json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
   except:
     Log('This is a private video.')
-    return
+    return None
 
   # Construct a metadata item.
   try:
@@ -82,12 +93,12 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  if not RE_VIMEO_ID.search(url):
+  if not RE_VIMEO_ID.search(url) and not '#referer=' in url:
     return None
 
   return [
     MediaObject(
-      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='hd', codecs='H264'))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, format='hd', codecs='H264'))],
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       video_resolution = '720',
@@ -96,7 +107,7 @@ def MediaObjectsForURL(url):
       optimized_for_streaming = True
     ),
     MediaObject(
-      parts = [PartObject(key=Callback(PlayVideoIndirect, url=url, format='sd', codecs='H264'))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, format='sd', codecs='H264'))],
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       video_resolution = '480',
@@ -109,8 +120,19 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetVideoURL(url, format=None, codecs=None):
 
-  key = url[url.rfind('/')+1:]
-  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; en-us) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5'}
+  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8) AppleWebKit/536.25 (KHTML, like Gecko) Version/6.0 Safari/536.25'}
+  referer = None
+
+  if '#referer=' in url:
+    (url, referer) = url.split('#referer=')
+    headers['Referer'] = String.Unquote(referer)
+
+    vimeo_video_id = RE_VIMEO_ID.search(url)
+    if vimeo_video_id:
+      key = vimeo_video_id.group('id')
+
+  else:
+    key = url[url.rfind('/')+1:]
 
   try:
     video = HTTP.Request(url, cacheTime=1, headers=headers).content
@@ -121,7 +143,7 @@ def GetVideoURL(url, format=None, codecs=None):
   m2 = RE_SIG.search(video)
 
   if m1 and m2:
-    hd = int(m1.groups()[0])
+    hd = int(m1.group('hd'))
 
     if hd == True and format == 'hd':
       format = 'hd'
@@ -134,21 +156,25 @@ def GetVideoURL(url, format=None, codecs=None):
       codecs = ''
 
     (sig, time) = m2.groups()
-    url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
+    video_url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
+
+    if referer is not None:
+      video_url += referer
 
     try:
-      HTTP.Request(url, headers = headers, follow_redirects = False).headers
+      HTTP.Request(video_url, headers = headers, follow_redirects = False).headers
     except Ex.RedirectError, e:
       try: return e.location
       except: pass
 
     # The requested video could not be found. This can happen if we have requested a specific format which is not available, e.g. a known case is when we 
     # request an SD video but HD is only available.
-    raise Ex.MediaNotAvailable   
+    raise Ex.MediaNotAvailable
 
 ####################################################################################################
 @indirect
-def PlayVideoIndirect(url, format=None, codecs=None):
+def PlayVideo(url, format=None, codecs=None):
+
   HTTP.ClearCookies()
 
   try:
