@@ -231,7 +231,12 @@ def VideoFromSMIL(url, res):
 
   if url.find('pid=') == -1:
     page = HTML.ElementFromURL(url)
-    url = page.xpath("//meta[@property = 'og:video']")[0].get('content')
+    url = page.xpath("//meta[@property = 'og:video']")
+
+    if len(url) < 1:
+      return None
+    else:
+      url = url[0].get('content')
 
   pid = RE_PID.search(url)
 
