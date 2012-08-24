@@ -1,5 +1,5 @@
 DETAILS_URL = 'http://www.absoluteradio.co.uk/_ajax2/media_player.php?mode=flash&id=%s'
-RE_ID = Regex("/player.*/(?P<id>[0-9]+)/")
+RE_ID = Regex("/player.*/(?P<id>\d+)/")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -55,7 +55,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
     # Request the details pages.
-    video_id = RE_ID.match(url).groupdict()['id']
+    video_id = RE_ID.search(url).group('id')
     details_page = XML.ElementFromURL(DETAILS_URL % video_id)
 
     # Obtain the video's url and replace with the required resolution, if appropriate
