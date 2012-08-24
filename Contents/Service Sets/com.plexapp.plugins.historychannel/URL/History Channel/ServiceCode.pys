@@ -1,5 +1,6 @@
 SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
 RE_MRSS = Regex('mrssData =[ ]+"([^"]+)')
+MRSS_NS = {'media': 'http://search.yahoo.com/mrss/'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -11,19 +12,34 @@ def MetadataObjectForURL(url):
 
   page = HTML.ElementFromURL(url)
 
-  show_title = page.xpath('//div[@class="show-heading"]/h2/text()')[0]
-  episode_title = item.xpath(".//title/text()")[0]
-  summary = item.xpath(".//media-description/text()")[0]
-  duration = int(item.xpath(".//media-content")[0].get('duration')) * 1000
-  thumb = item.xpath(".//media-thumbnail")[-1].get('url')
+  show_title = page.xpath('//div[@class="show-heading"]/h2/text()')
+  if len(show_title) < 1:
+    show_title = None
+  else:
+    show_title = show_title[0]
+    if '- New Episodes' in show_title:
+      show_title = show_title.rsplit('-', 1)[0].strip()
 
-  return EpisodeObject(
-    title = episode_title,
-    show = show_title,
-    duration = duration,
-    summary = summary,
-    thumb = thumb
-  )
+  episode_title = item.xpath("./title/text()")[0]
+  summary = item.xpath("./media:description/text()", namespaces=MRSS_NS)[0]
+  duration = int(item.xpath("./media:content", namespaces=MRSS_NS)[0].get('duration')) * 1000
+  thumb = item.xpath("./media:thumbnail", namespaces=MRSS_NS)[-1].get('url')
+
+  if show_title:
+    return EpisodeObject(
+      title = episode_title,
+      show = show_title,
+      duration = duration,
+      summary = summary,
+      thumb = thumb
+    )
+  else:
+    return VideoClipObject(
+      title = episode_title,
+      duration = duration,
+      summary = summary,
+      thumb = thumb
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -48,7 +64,7 @@ def PlayVideo(url):
   if not item:
     raise Ex.MediaNotAvailable
 
-  video_link = item.xpath(".//media-text[contains(text(), 'm3uUrl=')]/text()")[0].split('?')[0].replace('m3uUrl=', '')
+  video_link = item.xpath("./media:text[contains(text(), 'm3uUrl=')]/text()", namespaces=MRSS_NS)[0].split('?')[0].replace('m3uUrl=', '')
   video_id = video_link[video_link.find('/s/') + 3:]
 
   auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime = 0).content
@@ -67,7 +83,7 @@ def GetVideoItem(url):
   mrssdata = RE_MRSS.search(page_content)
 
   if mrssdata:
-    mrssdata = String.Unquote(String.Base64Decode(mrssdata.group(1))).replace('media:','media-')
+    mrssdata = String.Unquote(String.Base64Decode(mrssdata.group(1)))
     data = XML.ElementFromString(mrssdata)
 
     if url.find('#') != -1:
