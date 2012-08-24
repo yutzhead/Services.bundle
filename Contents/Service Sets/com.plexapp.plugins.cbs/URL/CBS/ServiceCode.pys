@@ -188,7 +188,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res=None):
+def PlayVideo(url, res=None, **kwargs):
   if ClipData(url):
     return VideoFromAPI(url, res)
   else:
