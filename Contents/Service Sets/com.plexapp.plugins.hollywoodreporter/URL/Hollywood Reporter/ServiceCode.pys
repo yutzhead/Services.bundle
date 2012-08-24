@@ -1,6 +1,6 @@
 BASE_URL = 'http://www.hollywoodreporter.com'
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
-RE_APP = Regex('rtmp://brightcove\..+?/(.+)')
+RE_APP = Regex('rtmpe?://.+?/(.+)')
 SWF_URL = 'http://admin.brightcove.com/viewer/us20120810.1250/BrightcoveBootloader.swf'
 
 ####################################################################################################
