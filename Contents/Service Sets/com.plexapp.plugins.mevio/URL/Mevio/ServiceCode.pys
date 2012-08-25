@@ -101,7 +101,8 @@ def PlayVideo(url, fmt=''):
 ####################################################################################################
 def GetJSON(url):
 
-  content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
+  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:14.0) Gecko/20100101 Firefox/14.0.1'}
+  content = HTTP.Request(url, cacheTime=CACHE_1HOUR, headers=headers).content
 
   try:
     data = RE_DEFAULT_MEDIA_JSON.search(content).group(1)
