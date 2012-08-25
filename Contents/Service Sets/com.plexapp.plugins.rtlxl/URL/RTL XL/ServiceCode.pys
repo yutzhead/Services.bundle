@@ -1,5 +1,3 @@
-import datetime
-
 XL_URL = 'http://www.rtl.nl/xl/#/u/%s/'
 XL_SNACKS_URL = 'http://www.rtl.nl/xl/#/snacks/u/%s/'
 XL_DATA_URL = 'http://www.rtl.nl/system/s4m/xldata/abstract/%s'
@@ -27,7 +25,12 @@ def MetadataObjectForURL(url):
 
 	uuid = RE_UUID.search(url).group(1)
 	url = XL_DATA_URL % uuid
-	data = HTML.ElementFromURL(url).xpath('//material[@key="' + uuid + '"]')[0]
+	material_node = HTML.ElementFromURL(url).xpath('//material[@key="' + uuid + '"]')
+
+	if len(material_node) < 1:
+		raise Ex.MediaNotAvailable
+	else:
+		data = material_node[0]
 
 	title = data.xpath('./title')[0].text
 	studio = data.xpath('./broadcast_station_display')[0].text
@@ -37,8 +40,8 @@ def MetadataObjectForURL(url):
 	except: pass
 
 	broadcast = data.xpath('./broadcast_date_display')[0].text
-	broadcast = datetime.date.fromtimestamp( float(broadcast) )
-	originally_available_at = Datetime.ParseDate( str(broadcast) ).date()
+	broadcast = Datetime.FromTimestamp(float(broadcast))
+	originally_available_at = Datetime.ParseDate(str(broadcast)).date()
 
 	duration = data.xpath('./length')[0].text
 
