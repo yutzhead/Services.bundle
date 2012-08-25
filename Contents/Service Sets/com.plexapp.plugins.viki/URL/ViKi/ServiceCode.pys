@@ -18,10 +18,7 @@ def MetadataObjectForURL(url):
   video_type = data.xpath('//meta[@property="og:type"]')[0].get('content').split('.')[1]
 
   if video_type == "episode":
-    try:
-        episode = HTML.ElementFromString(data).xpath('//h3')[0].text.strip()
-    except:
-        episode = data.xpath('//meta[@property="og:title"]')[0].get('content')
+    episode = data.xpath('//meta[@property="og:title"]')[0].get('content')
     return EpisodeMetadata(url, episode)
   elif video_type == "movie":
     return MovieMetadata(url)
@@ -60,7 +57,7 @@ def EpisodeMetadata(url, episode):
   title = episode
   show = data['title']
   summary = data['description']
-  absolute_index = int(episode.split(' ')[1])
+  absolute_index = int(episode.rsplit(' ',1)[1])
   thumb = data['thumbnail']
 
   ec = EpisodeObject(
