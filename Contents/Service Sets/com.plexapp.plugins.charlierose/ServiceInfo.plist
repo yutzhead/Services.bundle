@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.charlierose.com/view/interview/[0-9]+#?</string>
+				<string>http://www.charlierose.com/view/(clip|interview)/[0-9]+#?</string>
 			</array>
 		</dict>
 	</dict>
