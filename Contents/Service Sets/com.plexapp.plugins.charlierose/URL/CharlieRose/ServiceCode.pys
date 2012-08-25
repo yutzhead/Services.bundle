@@ -36,8 +36,13 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	content = HTTP.Request(url).content
-	flv_url = FLV_URL_PATTERN.search(content).group(1)
-	return Redirect(flv_url)
+	flv_url = FLV_URL_PATTERN.search(content)
+
+	if not flv_url:
+		return None
+	else:
+		return IndirectResponse(VideoClipObject, key=flv_url.group(1))
