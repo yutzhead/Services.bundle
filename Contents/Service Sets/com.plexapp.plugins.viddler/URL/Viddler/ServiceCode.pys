@@ -4,6 +4,9 @@ FLV_URL = 'http://www.viddler.com/file/d/%s.flv'
 ####################################################################################################
 def NormalizeURL(url):
 
+	if url[0:2] == '//':
+		url = 'http:%s' % url
+
 	if '/player/' in url:
 		url = url.replace('/player/', '/v/')
 	elif '/embed/' in url:
