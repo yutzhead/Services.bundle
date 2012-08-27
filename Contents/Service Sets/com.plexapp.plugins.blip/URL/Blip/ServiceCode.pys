@@ -152,5 +152,5 @@ def PlayVideo(url):
 		]
 	))
 
-	c.http_headers = {'User-Agent': ''}
+	c.http_headers = {'User-Agent': 'Shockwave Flash'}
 	return c
