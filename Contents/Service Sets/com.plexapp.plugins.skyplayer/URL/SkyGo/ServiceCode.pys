@@ -51,10 +51,13 @@ def MetadataObjectForEpisodeURL(item):
     episode = 0
     itemTitle = item.xpath("//div[@class='playerArea']//img/@title")[0].strip()
 
-    itemTitleComponents = RE_TITLE.match(itemTitle).groupdict()
-    if itemTitleComponents['title'] is not None:
-        title = itemTitleComponents['title']
-        episode = int(itemTitleComponents['episode_number'])
+    itemTitleComponents = RE_TITLE.match(itemTitle)
+    if itemTitleComponents:
+        itemTitleComponents = itemTitleComponents.groupdict()
+
+        if itemTitleComponents['title'] is not None:
+            title = itemTitleComponents['title']
+            episode = int(itemTitleComponents['episode_number'])
     else:
         title = itemTitle
 
