@@ -1,0 +1,131 @@
+RE_APP = Regex('rtmp://brightcove\..+?/(.+)')
+AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+SWF_URL = "http://admin.brightcove.com/viewer/us20120627.1407/BrightcoveBootloader.swf"
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = DoAmfRequest(url)
+
+	if not data:
+		return None
+
+	title = data['displayName']
+	show_title = data['displayName']
+	summary = data['shortDescription']
+	thumbUrl = data['videoStillURL']
+	date = data['publishedDate']
+	duration = data['length']
+	tags = []
+
+	for tag in data['tags']:
+		tags.append(tag['name'])
+
+	# Construct a metadata item
+	vc = VideoClipObject(
+		title = title,
+		originally_available_at = date,
+		summary = summary,
+		duration = int(duration),
+		thumb = thumbUrl,
+		tags = tags
+	)
+
+	return vc
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	data = DoAmfRequest(url)
+	video_url = data['FLVFullLengthURL'].split('&', 1)
+	player = video_url[0]
+	app = RE_APP.search(player).group(1)
+	playpath = video_url[1]
+
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, app=app, swf_url=SWF_URL, args=[False, playpath]))
+
+####################################################################################################
+def DoAmfRequest(url):
+
+	data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')
+
+	if len(data) == 0:
+		return None
+	else:
+		data = data[0]
+
+	playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
+	videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
+	result = AmfRequest(url=url, playerID=playerID, videoPlayer=videoPlayer)
+	Log(result)
+	return result
+
+####################################################################################################
+def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
+
+	endpoint = AMF_URL
+
+	if playerKey:
+		endpoint += '?playerKey=%s' % playerKey
+
+	client = AMF.RemotingService(url=endpoint, user_agent='', amf_version=3)
+	service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
+
+	AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
+	AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
+
+	video_obj = ContentOverride(videoPlayer)
+	experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
+
+	try:
+		result = service.getDataForExperience('', experience)
+
+		return result['programmedContent']['videoPlayer']['mediaDTO']
+	except:
+		raise Ex.MediaGeoblocked
+
+####################################################################################################
+class ContentOverride(object):
+	def __init__ (self, videoPlayer=None):
+		self.contentType = int(0)
+		self.contentIds = None
+		self.target = 'videoPlayer'
+		self.contentId = int(videoPlayer)
+		self.featuredRefId = None
+		self.contentRefIds = None
+		self.featuredId = float('nan')
+		self.contentRefId = None
+
+class ViewerExperienceRequest(object):
+	def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
+		self.experienceId = int(playerID)
+		self.playerKey = playerKey
+		self.contentOverrides = []
+		self.contentOverrides.append(video_obj)
+		self.TTLToken = ''
+		self.URL = url
+		self.deliveryType = float('nan')
+    
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	data = HTML.ElementFromURL('http://allrecipes.com/video/main.aspx')
+
+	for video in data.xpath('//ul[@class="ulHublistLeft"]//a'):
+		test_urls.append(video.get('href'))
+
+		if len(test_urls) > 2:
+			break
+
+	return test_urls
