@@ -67,7 +67,7 @@ def DoAmfRequest(url):
 	playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
 	videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
 	result = AmfRequest(url=url, playerID=playerID, videoPlayer=videoPlayer)
-	Log(result)
+
 	return result
 
 ####################################################################################################
