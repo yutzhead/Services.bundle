@@ -1,8 +1,5 @@
 httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:14.0) Gecko/20100101 Firefox/14.0.1' }
 
-RE_NAME = Regex('^\s*(\w+)\s*by\s*', Regex.IGNORECASE)
-RE_TITLE = Regex('^\s*([^,]*)\s*,\s*', Regex.IGNORECASE)
-
 ####################################################################################################
 def MetadataObjectForURL(url):
 
