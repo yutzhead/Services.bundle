@@ -1,93 +1,36 @@
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17' }
+httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:14.0) Gecko/20100101 Firefox/14.0.1' }
 
 RE_NAME = Regex('^\s*(\w+)\s*by\s*', Regex.IGNORECASE)
 RE_TITLE = Regex('^\s*([^,]*)\s*,\s*', Regex.IGNORECASE)
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-            # The title of the video
-            page = HTML.ElementFromURL(url, headers=httpHeaders)
-            title = page.xpath("//div[@class='story']/h1/text()")[0].strip()
+	page = HTML.ElementFromURL(url, headers=httpHeaders)
 
-            # The summary of the video
-            summary = page.xpath("//div[@class='story']//p[@class='summary']/text()")[0].strip()
-            
-            # Attempt to separate the credits. This includes the various titles along with the associated individual
-            credits = None
-            try: credits = ParseCredits(page)
-            except: pass
+	title = page.xpath('//meta[@name="dc.title"]')[0].get('content').strip()
+	summary = page.xpath('//meta[@name="dc.description"]')[0].get('content').strip()
+	date = page.xpath('//meta[@name="dc.date"]')[0].get('content')
+	originally_available_at = Datetime.ParseDate(date).date()
+	thumb = page.xpath('//meta[@property="og:image"]')[0].get('content').replace('-thumbWide.jpg', '-articleLarge.jpg')
 
-            # [Optional] - The directors
-            directed_by = None
-            if credits != None and credits.has_key('Directed'):
-                directed_by = credits['Directed']
+	# Attempt to separate the credits. This includes the various titles along with the associated individual
+	credits = None
+	try: credits = ParseCredits(page)
+	except: pass
 
-            # [Optional] - The producers
-            produced_by = None
-            if credits != None and credits.has_key('Produced'):
-                produced_by = credits['Produced']
-            if produced_by is None:
-                produced_by = []
-            
-            return VideoClipObject(
-                title = title,
-                summary = summary,
-                #directors = directed_by,
-                producers = produced_by)
-
-def ParseCredits(page):
-    dictionary = {}
-
-    try:
-        s = page.xpath("//p[@class='credit']/text()")[0] + ','
-
-        # Notes the previous group of Titles.
-        titles = []
-
-        # Notes whether the current position in the string is after a Name.
-        name_found = False
-
-        while len(s.strip()) > 0:
-            match = RE_NAME.match(s)
-
-            if match is not None:
-                # Title found
-                if name_found:
-                    # This is the first title after a name.  Reset the title state and the name_found state
-                    name_found = False
-                    titles = []
-                    
-                titles.append(match.groups()[0])
-                s = s.replace(match.group(), '', 1)  # Consume the first instance of the matched string
-            
-                continue
-            
-            match = RE_TITLE.match(s)
-            
-            if match is not None:
-                # Name found
-                name_found = True
-                
-                # Add name to dictionary under each title
-                for title in titles:
-                    dictionary[title] = dictionary.get(title, []) + [match.groups()[0]]
-                
-                s = s.replace(match.group(), '', 1)  # Consume the first instance of the matched string
-                
-                continue
-            
-            s = ''
-
-    except: pass
-
-    return dictionary
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		originally_available_at = originally_available_at,
+		thumb = thumb
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        parts = [PartObject(key = WebVideoURL(url))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key = WebVideoURL(url))]
+		)
+	]
