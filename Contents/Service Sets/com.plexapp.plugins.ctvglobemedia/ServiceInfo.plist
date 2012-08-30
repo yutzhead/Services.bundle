@@ -18,6 +18,13 @@
 				<string>http://www\.ctvolympics\.ca/videos/.+</string>
 			</array>
 		</dict>
+		<key>CTV News</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>http://www\.ctvnews\.ca/video\?(clipId|playlistId)=.+</string>
+			</array>
+		</dict>
 	</dict>
 </dict>
 </plist>
