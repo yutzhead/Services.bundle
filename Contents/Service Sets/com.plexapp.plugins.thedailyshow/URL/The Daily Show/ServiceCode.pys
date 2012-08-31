@@ -2,77 +2,72 @@ OG_NAMESPACE  = {'og':'http://www.w3.org/1999/xhtml'}
 RE_PLAYER = Regex('http://media.mtvnservices.com/(?P<id>.+(episode|video)[^"]+)')
 
 ####################################################################################################
-
 def NormalizeURL(url):
-  ### Add changes here if we start seeing non-"normal" urls
-  return url
+
+	return url
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  
-  try: videoType = data.xpath('//title')[0].text.split(' - ')[4].split('|')[0].strip(' ')
-  except: videoType = data.xpath('//title')[0].text.split(' - ')[3].split('|')[0].strip(' ')
-  
-  thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=OG_NAMESPACE)[0].get('content')
-  
-  if videoType == "Full Episode Video":
 
-    show_title = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
-    episode_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-    summary = data.xpath('//meta[@property="og:description"]', namespaces=OG_NAMESPACE)[0].get('content')
+	data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
 
-    try:
-      air_date = data.xpath('//title')[0].text.split(' - ')[0].strip(' ')
-      originally_available_at = Datetime.ParseDate(air_date).date()
-    except:
-      originally_available_at = None
+	try: videoType = data.xpath('//title')[0].text.split(' - ')[4].split('|')[0].strip(' ')
+	except: videoType = data.xpath('//title')[0].text.split(' - ')[3].split('|')[0].strip(' ')
 
-    # Construct a metadata item
-    eo = EpisodeObject(
-      title = episode_title,
-      show = show_title,
-      originally_available_at = originally_available_at,
-      summary = summary,
-      thumb = thumbUrl
-    )
-    return eo
-  
-  elif videoType == "Video Clip":
-  
-    clip_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-    summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=OG_NAMESPACE)[0].get('content')
 
-    try:
-      air_date = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
-      originally_available_at = Datetime.ParseDate(air_date).date()
-    except:
-      originally_available_at = None
+	if videoType == "Full Episode Video":
+		show_title = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
+		episode_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
+		summary = data.xpath('//meta[@property="og:description"]', namespaces=OG_NAMESPACE)[0].get('content')
 
-    # Construct a metadata item
-    co = EpisodeObject(
-      title = clip_title,
-      originally_available_at = originally_available_at,
-      summary = summary,
-      thumb = thumbUrl
-    )
-    return co
-  
+		try:
+			air_date = data.xpath('//title')[0].text.split(' - ')[0].strip(' ')
+			originally_available_at = Datetime.ParseDate(air_date).date()
+		except:
+			originally_available_at = None
+
+		return EpisodeObject(
+			title = episode_title,
+			show = show_title,
+			originally_available_at = originally_available_at,
+			summary = summary,
+			thumb = thumbUrl
+		)
+
+	elif videoType == "Video Clip":
+		clip_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
+		summary = data.xpath('//meta[@name="description"]')[0].get('content')
+
+		try:
+			air_date = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
+			originally_available_at = Datetime.ParseDate(air_date).date()
+		except:
+			originally_available_at = None
+
+		return EpisodeObject(
+			title = clip_title,
+			originally_available_at = originally_available_at,
+			summary = summary,
+			thumb = thumbUrl
+		)
+
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      parts = [PartObject(key = Callback(PlayVideo, url=url))],
-      protocol = 'webkit'
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [PartObject(key = Callback(PlayVideo, url=url))],
+			protocol = 'webkit'
+		)
+	]
 
 ####################################################################################################
-
+@indirect
 def PlayVideo(url):
-  content = HTTP.Request(url).content
-  flashlink = RE_PLAYER.search(content).group('id')
-  flashlink = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.1.12.1.swf?uri=' + flashlink + '&autoPlay=true'
-  return Redirect(WebVideoURL(flashlink))
+
+	content = HTTP.Request(url).content
+	video_id = RE_PLAYER.search(content).group('id')
+	flashlink = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.1.12.1.swf?uri=%s&autoPlay=true' % video_id
+
+	return IndirectResponse(VideoClipObject, key=WebVideoURL(flashlink))
