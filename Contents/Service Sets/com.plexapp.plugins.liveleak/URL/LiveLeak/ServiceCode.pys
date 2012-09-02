@@ -16,12 +16,16 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	page = HTTP.Request(url).content
 
-	# Extract the details available directly form the page.
-	title = page.xpath("//head//title/text()")[0]
-	description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
-	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+	if not RE_FILE_URL.search(page):
+		return None
+
+	html = HTML.ElementFromString(page)
+
+	title = html.xpath("//head/title/text()")[0]
+	description = html.xpath("//head/meta[@property='og:description']")[0].get('content')
+	thumb = html.xpath("//head/meta[@property='og:image']")[0].get('content')
 
 	return VideoClipObject(
 		title = title,
@@ -34,7 +38,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url = url))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			container = Container.MP4,
@@ -44,10 +48,13 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	page_content = HTTP.Request(url).content
 
 	# Find the video url from inside the player's config
 	video_url = RE_FILE_URL.search(page_content).group('url')
-	return Redirect(String.Unquote(video_url))
+	video_url = String.Unquote(video_url)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
