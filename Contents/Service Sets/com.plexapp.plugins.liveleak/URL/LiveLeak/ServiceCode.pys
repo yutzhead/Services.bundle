@@ -54,7 +54,11 @@ def PlayVideo(url):
 	page_content = HTTP.Request(url).content
 
 	# Find the video url from inside the player's config
-	video_url = RE_FILE_URL.search(page_content).group('url')
-	video_url = String.Unquote(video_url)
+	video_url = RE_FILE_URL.search(page_content)
+
+	if not video_url:
+		return None
+
+	video_url = String.Unquote(video_url.group('url'))
 
 	return IndirectResponse(VideoClipObject, key=video_url)
