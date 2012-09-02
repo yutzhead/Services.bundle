@@ -181,7 +181,10 @@ def PickMatch(fmts, index, match_format):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, default_fmt = None, **kwargs):
+def PlayVideo(url = None, default_fmt = None, **kwargs):
+
+  if not url:
+    return None
 
   HTTP.ClearCookies()
 
