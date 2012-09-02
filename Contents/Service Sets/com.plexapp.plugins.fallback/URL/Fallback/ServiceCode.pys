@@ -16,10 +16,11 @@ EMBEDDED_VIDEO = [
 # Use the iPad user agent to try to make websites give us <video> instead of Flash
 HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10'}
 
-HTTP.CacheTime = CACHE_1HOUR
+HTTP.CacheTime = 0
 
 RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|flv)[^&]*)')
 RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
@@ -255,6 +256,12 @@ def MediaObjectsForURL(url):
 
 			if video:
 				src = video.group('vid')
+
+				sub = RE_SUB_PATTERN.findall(src)
+
+				if len(sub) > 0:
+					src = sub[-1][0]
+
 				src = String.Unquote(src)
 				src = FixUrl(url, src)
 				Log.Debug(' --> [Media] Found a video using the regex: %s' % src)
