@@ -1,56 +1,53 @@
-OG_NAMESPACE  = {'og':'http://www.w3.org/1999/xhtml'}
 RE_PLAYER = Regex('http://media.mtvnservices.com/(?P<id>.+(episode|video)[^"]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	page_title = html.xpath('//title')[0].text
 
-	try: videoType = data.xpath('//title')[0].text.split(' - ')[4].split('|')[0].strip(' ')
-	except: videoType = data.xpath('//title')[0].text.split(' - ')[3].split('|')[0].strip(' ')
+	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
+	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
 
-	thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=OG_NAMESPACE)[0].get('content')
-
-	if videoType == "Full Episode Video":
-		show_title = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
-		episode_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-		summary = data.xpath('//meta[@property="og:description"]', namespaces=OG_NAMESPACE)[0].get('content')
+	if 'Full Episode' in page_title:
 
 		try:
-			air_date = data.xpath('//title')[0].text.split(' - ')[0].strip(' ')
+			air_date = html.xpath('//h1[@class="subTitle"]/text()')[0]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
 
 		return EpisodeObject(
-			title = episode_title,
-			show = show_title,
-			originally_available_at = originally_available_at,
+			show = 'The Daily Show',
+			title = title,
 			summary = summary,
-			thumb = thumbUrl
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			originally_available_at = originally_available_at
 		)
 
-	elif videoType == "Video Clip":
-		clip_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
-		summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	elif 'Video Clip' in page_title:
 
 		try:
-			air_date = data.xpath('//title')[0].text.split(' - ')[3].strip(' ')
+			air_date = html.xpath('//div[@class="airDate"]//a/text()')[0]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
 
-		return EpisodeObject(
-			title = clip_title,
-			originally_available_at = originally_available_at,
+		return VideoClipObject(
+			title = title,
 			summary = summary,
-			thumb = thumbUrl
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			originally_available_at = originally_available_at
 		)
+
+	else:
+		return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):
