@@ -1,5 +1,6 @@
 BASE_URL = "http://www.nbc.com"
 VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
+THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&path=/%s/%s_mezzn.jpg&trusted=yes'
 
 CLIP_CONFIG_ID = "16009"
 RE_VIDEO_ID = Regex("(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.+/)?video/.+?/(?P<id>[0-9]{4,})")
@@ -53,7 +54,15 @@ def MetadataObjectForURL(url):
 	# Extract the available details
 	title = episode_node[0].xpath(".//epiTitle/text()")[0]
 	description = episode_node[0].xpath(".//epiDescription/text()")[0]
-	thumb = episode_node[0].xpath(".//epiImage/text()")[0]
+
+	thumb_url = episode_node[0].xpath(".//epiImage/text()")[0]
+	thumb_id = thumb_url.rsplit('/', 1)[1].split('_', 1)[0]
+
+	video_type = 'nbc-hls'
+	if 'nbcrewind' in thumb_url:
+		video_type = 'nbcrewind2'
+
+	thumb = THUMB_URL % (video_type, thumb_id)
 
 	# We can use the config id to determine if the associated title is just a video clip, or a full on
 	# episode.
