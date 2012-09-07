@@ -29,8 +29,11 @@ def MetadataObjectForURL(url):
         Log.Exception("Error converting airdate: " + air_date)
         air_date = Datetime.Now()
 
-    duration = page.xpath("//div[@class='playVideoInfo']//span//strong/../text()")[3].split()[0]
-    duration = int(duration) * 60 * 1000 #millisecs
+    try:
+        duration = page.xpath("//div[@class='playVideoInfo']//span//strong/../text()")[3].split()[0]
+        duration = int(duration) * 60 * 1000 #millisecs
+    except:
+        duration = None
 
     thumb =  page.xpath("//div[@class='playVideoBox']//a[@id='player']//img/@src")[0]
 
