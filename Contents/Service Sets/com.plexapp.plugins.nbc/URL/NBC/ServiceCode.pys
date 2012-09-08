@@ -1,6 +1,6 @@
 BASE_URL = "http://www.nbc.com"
 VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
-THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&path=/%s/%s_mezzn.jpg&trusted=yes'
+THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted=yes&path=/%s/%s_mezzn.jpg'
 
 CLIP_CONFIG_ID = "16009"
 RE_VIDEO_ID = Regex("(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.+/)?video/.+?/(?P<id>[0-9]{4,})")
@@ -23,15 +23,6 @@ def MetadataObjectForURL(url):
 	show_xml = XML.ElementFromURL(show_details_url)
 
 	config_id = show_xml.xpath("//configId/text()")[0]
-
-	# The same background art is used for all episodes for this show. We can therefore
-	# simply extract it.
-	try:
-		background_art = show_xml.xpath("//backgroundImage/text()")[0]
-		if background_art.startswith('http') == False:
-			background_art = BASE_URL + background_art
-	except:
-		background_art = None
 
 	# The show title is actually the hardest thing to determine. The XML contains a list of shows
 	# but no specific linked relationship from the known episode id. We therefore match the permBaseURL
@@ -70,16 +61,14 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = description,
-			thumb = thumb,
-			art = background_art
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
 		)
 
 	return EpisodeObject(
 		title = title,
 		summary = description,
 		show = show_name,
-		thumb = thumb,
-		art = background_art
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
 	)
 
 ####################################################################################################
