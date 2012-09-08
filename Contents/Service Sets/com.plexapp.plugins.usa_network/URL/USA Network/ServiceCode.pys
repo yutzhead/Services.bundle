@@ -18,17 +18,18 @@ def MetadataObjectForURL(url):
 	thumbs = SortImages(episode['media$thumbnails'])
 	duration = int(float(episode['media$content'][0]['plfile$duration'])*1000)
 
-	try:
-		show = episode['categories'].split('Series/')[1]
+	if episode['pl1$fullEpisode']:
+		show = episode['pl1$subtitle']
 
 		return EpisodeObject(
+			show = show,
 			title = video_title,
 			summary = summary,
 			duration = duration,
-			show = show,
 			thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
 		)
-	except:
+
+	else:
 		return VideoClipObject(
 			title = video_title,
 			summary = summary,
@@ -77,8 +78,8 @@ def PlayVideo(url, res):
 	res_index = RES_MAP.index(res)
 	smil_url = None
 
-	if not episode or 'media$content' not in episode:
-		return None
+	if not 'media$content' in episode:
+		Ex.MediaNotAvailable
 
 	for video in episode['media$content']:
 		if video['plfile$format'] == "MPEG4":
@@ -88,9 +89,13 @@ def PlayVideo(url, res):
 			continue
 
 	if not smil_url:
-		return None
+		Ex.MediaNotAvailable
 
 	smil = XML.ElementFromURL(smil_url)
+
+	if len(smil.xpath('//a:*[contains(@title, "Geographic Restriction")]', namespaces=NAMESPACES)) > 0:
+		raise Ex.MediaGeoblocked
+
 	video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
 	video_url = None
 
