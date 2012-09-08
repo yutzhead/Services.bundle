@@ -1,12 +1,12 @@
 NAMESPACES = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
-FEED_URL = 'http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?&form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode&fileFields=duration,url,width,height,contentType,fileSize,format&byCategories=Series/%s&count=true'
+FEED_URL = 'http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?form=json&fields=guid,title,description,:subtitle,content,thumbnails,:fullEpisode&fileFields=duration,url,width,height,contentType,fileSize,format&byGuid=%s'
 RES_MAP = ['360', '504', '720']
-HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_6; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'
+HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_1) AppleWebKit/536.25 (KHTML, like Gecko) Version/6.0 Safari/536.25'
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?',1)[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -41,7 +41,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True,
@@ -50,7 +50,7 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
 		),
 		MediaObject(
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True,
@@ -59,7 +59,7 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url=url, res="504"))]
 		),
 		MediaObject(
-			container = Container.MP4,
+			container = 'mp4',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True,
@@ -70,10 +70,12 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
 	episode = GetVideoDetails(url)
 	res_index = RES_MAP.index(res)
+	smil_url = None
 
 	if not episode or 'media$content' not in episode:
 		return None
@@ -84,6 +86,9 @@ def PlayVideo(url, res):
 			break
 		else:
 			continue
+
+	if not smil_url:
+		return None
 
 	smil = XML.ElementFromURL(smil_url)
 	video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
@@ -100,7 +105,7 @@ def PlayVideo(url, res):
 		else:
 			res_index = res_index - 1
 
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def SortImages(images=[]):
@@ -116,23 +121,19 @@ def SortImages(images=[]):
 ####################################################################################################
 def GetVideoDetails(url):
 
-	show_name = String.Quote(url.split('/')[4].replace('%20', ' '), usePlus=True)
 	video_id = url.split('/vid:')[1]
-	data = JSON.ObjectFromURL(FEED_URL % show_name)
+	json = JSON.ObjectFromURL(FEED_URL % video_id)
 
-	for episode in data['entries']:
-		if episode['guid'] != video_id:
-			continue
-		elif episode['guid'] == video_id:
-			return episode
-
-	raise Ex.MediaNotAvailable
+	if 'entries' in json:
+		return json['entries'][0]
+	else:
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
 
 	test_urls = []
-	data = JSON.ObjectFromURL("http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?&form=json&fields=guid,:subtitle,:fullEpisode&byCustomValue={fullEpisode}{true}")
+	data = JSON.ObjectFromURL("http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?form=json&fields=guid,:subtitle,:fullEpisode&byCustomValue={fullEpisode}{true}")
 
 	for entry in data['entries']:
 		video_id = entry['guid']
