@@ -93,7 +93,7 @@ def PlayVideo(url, res):
 
 	smil = XML.ElementFromURL(smil_url)
 
-	if len(smil.xpath('//a:*[contains(@title, "Geographic Restriction")]', namespaces=NAMESPACES)) > 0:
+	if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
 		raise Ex.MediaGeoblocked
 
 	video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
