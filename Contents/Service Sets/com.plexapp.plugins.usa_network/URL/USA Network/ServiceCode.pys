@@ -1,5 +1,6 @@
 NAMESPACES = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
 FEED_URL = 'http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?form=json&fields=guid,title,description,:subtitle,content,thumbnails,:fullEpisode&fileFields=duration,url,width,height,contentType,fileSize,format&byGuid=%s'
+SWF_URL = 'http://www.usanetwork.com/videos/pdk/swf/flvPlayer.swf'
 RES_MAP = ['360', '504', '720']
 HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_1) AppleWebKit/536.25 (KHTML, like Gecko) Version/6.0 Safari/536.25'
 
@@ -75,42 +76,57 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
 	episode = GetVideoDetails(url)
-	res_index = RES_MAP.index(res)
-	smil_url = None
 
 	if not 'media$content' in episode:
 		raise Ex.MediaNotAvailable
 
+	res_index = RES_MAP.index(res)
+	smil_url = {'MPEG4': None, 'FLV': None}
+
 	for video in episode['media$content']:
 		if video['plfile$format'] == "MPEG4":
-			smil_url = video['plfile$url']
+			smil_url['MPEG4'] = video['plfile$url']
 			break
+		elif video['plfile$format'] == "FLV":
+			smil_url['FLV'] = video['plfile$url']
 		else:
 			continue
 
-	if not smil_url:
-		raise Ex.MediaNotAvailable
+	if smil_url['MPEG4']:
+		smil = XML.ElementFromURL(smil_url['MPEG4'])
 
-	smil = XML.ElementFromURL(smil_url)
+		if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
+			raise Ex.MediaGeoblocked
 
-	if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
-		raise Ex.MediaGeoblocked
+		video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
+		video_url = None
 
-	video_list = smil.xpath('//a:video[contains(@src, "http://")]', namespaces=NAMESPACES)
-	video_url = None
+		while res_index > -1:
+			for video in video_list:
+				if video.get('height') == RES_MAP[res_index]:
+					video_url = video.get('src')
+					break
 
-	while res_index > -1:
-		for video in video_list:
-			if video.get('height') == RES_MAP[res_index]:
-				video_url = video.get('src')
+			if video_url:
 				break
+			else:
+				res_index = res_index - 1
 
-		if video_url:
-			break
-		else:
-			res_index = res_index - 1
+		return IndirectResponse(VideoClipObject, key=video_url)
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	elif smil_url['FLV']:
+		smil = XML.ElementFromURL(smil_url['FLV'])
+
+		if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
+			raise Ex.MediaGeoblocked
+
+		url = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
+		clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
+
+		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, clip=clip, swf_url=SWF_URL))
+
+	else:
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def SortImages(images=[]):
