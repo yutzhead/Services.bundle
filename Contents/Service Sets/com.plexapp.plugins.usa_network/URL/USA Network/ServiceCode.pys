@@ -79,7 +79,7 @@ def PlayVideo(url, res):
 	smil_url = None
 
 	if not 'media$content' in episode:
-		Ex.MediaNotAvailable
+		raise Ex.MediaNotAvailable
 
 	for video in episode['media$content']:
 		if video['plfile$format'] == "MPEG4":
@@ -89,7 +89,7 @@ def PlayVideo(url, res):
 			continue
 
 	if not smil_url:
-		Ex.MediaNotAvailable
+		raise Ex.MediaNotAvailable
 
 	smil = XML.ElementFromURL(smil_url)
 
