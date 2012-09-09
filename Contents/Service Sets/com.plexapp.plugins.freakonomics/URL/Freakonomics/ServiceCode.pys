@@ -10,8 +10,13 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url)
+	artist = data.xpath('//span[@class="author-name"]/a')
+
+	if len(artist) < 1:
+		return None
+
+	artist = artist[0].text
 	title = data.xpath('//h1[@class="h1title"]')[0].text
-	artist = data.xpath('//span[@class="author-name"]/a')[0].text
 
 	try:
 		date = data.xpath('//p[@class="postmeta"]//text()')[-1].split(' | ')[0].strip()
