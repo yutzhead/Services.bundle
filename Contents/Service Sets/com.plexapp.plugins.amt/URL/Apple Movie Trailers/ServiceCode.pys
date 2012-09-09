@@ -1,7 +1,9 @@
 HTTP_HEADERS = {'User-Agent':'iTunes/10.6.3'}
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
 AMT_WEB_PLAYLIST = 'http://trailers.apple.com/%s/includes/playlists/web.inc'
-QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p']
+
+# 'Large' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
+QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large']
 
 RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?(/web)?$')
 
