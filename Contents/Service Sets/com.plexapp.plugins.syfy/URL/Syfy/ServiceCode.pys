@@ -40,7 +40,7 @@ def MediaObjectsForURL(url):
 def TestURLs():
 
 	test_urls= []
-	data = JSON.ObjectFromURL("http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?&form=json&fields=guid&byCustomValue={fullEpisode}{true}")
+	data = JSON.ObjectFromURL("http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?form=json&fields=guid")
 
 	for item in data['entries']:
 		url = "http://www.syfy.com/videos/vid:" + item['guid']
