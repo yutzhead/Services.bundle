@@ -6,7 +6,8 @@ IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 
 ####################################################################################################
 def NormalizeURL(url):
-	return url
+
+	return url.split('?')[0]
  
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -16,7 +17,6 @@ def MetadataObjectForURL(url):
 	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')[0]
 	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
 
-	originally_available_at = None
 	try:
 		date = data.xpath('//ul[@class="video-details"]/li')
 		if len(date) > 0:
@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
 			if date:
 				originally_available_at = Datetime.ParseDate(date.group(1)).date()
 	except:
-		pass
+		originally_available_at = None
 
 	vc = VideoClipObject(
 		title = title,
@@ -41,7 +41,7 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='3000000'))],
-			container = Container.MP4,
+			container = 'mp4',
 			video_resolution = '720',
 			aspect_ratio = '1.77',
 			bitrate = 3000,
@@ -52,7 +52,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500000'))],
-			container = Container.MP4,
+			container = 'mp4',
 			video_resolution = '540',
 			aspect_ratio = '1.77',
 			bitrate = 2500,
@@ -63,7 +63,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1000000'))],
-			container = Container.MP4,
+			container = 'mp4',
 			video_resolution = '360',
 			aspect_ratio = '1.77',
 			bitrate = 1000,
@@ -74,7 +74,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='500000'))],
-			container = Container.MP4,
+			container = 'mp4',
 			video_resolution = '360',
 			aspect_ratio = '1.77',
 			bitrate = 500,
@@ -86,26 +86,33 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate):
 
 	data = JSON.ObjectFromURL(CONFIG_URL % (url, String.Quote(url, usePlus=False), String.Quote(url, usePlus=False), String.Quote(url, usePlus=False)))
-	smil = XML.ElementFromURL(data['playlist']['media']['url'])
-	bitrate = BITRATES.index(bitrate)
+	media_url = data['playlist']['media']['url']
+	video_url = None
 
-	video_url = ''
+	if '.smil' in media_url:
+		smil = XML.ElementFromURL(data['playlist']['media']['url'])
+		bitrate = BITRATES.index(bitrate)
 
-	while bitrate > -1:
-		try:
-			video_url = smil.xpath('//smil:video[@system-bitrate="'+BITRATES[bitrate]+'"]', namespaces=IGN_NS)[0].get("src")
-			break
-		except:
-			bitrate = bitrate -1
+		while bitrate > -1:
+			try:
+				video_url = smil.xpath('//smil:video[@system-bitrate="'+BITRATES[bitrate]+'"]', namespaces=IGN_NS)[0].get("src")
+				break
+			except:
+				bitrate = bitrate -1
 
-	if video_url == '':
-		video_url = smil.xpath('//smil:video', namespaces=IGN_NS)[0].get("src")
+		if not video_url:
+			video_url = smil.xpath('//smil:video', namespaces=IGN_NS)[0].get("src")
+		else:
+			return None
+
 	else:
-		pass
+		video_url = media_url
 
-	video_url = 'http://%s' % video_url
+	if not video_url.startswith('http://'):
+		video_url = 'http://%s' % video_url
 
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
