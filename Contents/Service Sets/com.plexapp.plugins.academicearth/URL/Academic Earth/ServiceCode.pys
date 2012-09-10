@@ -12,7 +12,7 @@ def MetadataObjectForURL(url):
 	page = HTML.ElementFromURL(url)
 
 	# Extract the elements from the page
-	title = page.xpath("//h1[@class='pagetitledetails']/text()")[0]
+	title = page.xpath("//meta[@property='og:title']")[0].get('content')
 	description = page.xpath("//meta[@name='description']")[0].get('content')
 
 	try: show = page.xpath("//div[@id='lecture_number_link_box']/a/text()")[0]
@@ -83,7 +83,6 @@ def TestURLs():
 	page = HTML.ElementFromURL(BASE_URL)
 	featured = page.xpath('//div[@id="ae_recently_added"]//div[@class="items"]')[0]
 	for lecture in featured.xpath('.//a[normalize-space(@href != "")]'):
-		Log(HTML.StringFromElement(lecture))
 		test_urls.append(BASE_URL + lecture.get('href'))
 
 		if len(test_urls) >=3:
