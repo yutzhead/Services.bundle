@@ -1,5 +1,5 @@
 RE_ARTIST_SONG_PATH = Regex('http://www.bet.com/video/music/./(.+/.+?)(.html)?')
-RE_ID = Regex('videoId: ".+?"')
+RE_ID = Regex('videoId: "(.+?)"')
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 VEVO_URL = 'http://www.vevo.com/watch/%s/%s'
 
