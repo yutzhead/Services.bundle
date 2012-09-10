@@ -1,8 +1,7 @@
-import re
-
-CONFIG_URL = "%s.config?pagetype=mediavideoplayer&windowLocation=%s&page_url=%s&windowLocation=%s"
-BITRATES = ['500000','1000000','2500000','3000000']
+CONFIG_URL = "%s.config?windowLocation=%s"
 IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
+RE_DATE = Regex('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', Regex.IGNORECASE)
+RE_FLASHVARS_URL = Regex('flashvars.url = "([^"]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -17,32 +16,42 @@ def MetadataObjectForURL(url):
 	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')[0]
 	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
 
+	originally_available_at = None
 	try:
 		date = data.xpath('//ul[@class="video-details"]/li')
 		if len(date) > 0:
-			date = re.search('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', date[0].text, re.IGNORECASE)
+			date = RE_DATE.search(date[0].text)
 			if date:
 				originally_available_at = Datetime.ParseDate(date.group(1)).date()
 	except:
-		originally_available_at = None
+		pass
 
-	vc = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		thumb = thumb,
 		originally_available_at = originally_available_at
 	)
 
-	return vc
-
 ####################################################################################################
 def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='3000000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=5000000))],
 			container = 'mp4',
 			video_resolution = '720',
+			aspect_ratio = '1.77',
+			bitrate = 5000,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=3000000))],
+			container = 'mp4',
+			video_resolution = '540',
 			aspect_ratio = '1.77',
 			bitrate = 3000,
 			video_codec = VideoCodec.H264,
@@ -51,29 +60,29 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500000'))],
-			container = 'mp4',
-			video_resolution = '540',
-			aspect_ratio = '1.77',
-			bitrate = 2500,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1000000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1700000))],
 			container = 'mp4',
 			video_resolution = '360',
 			aspect_ratio = '1.77',
-			bitrate = 1000,
+			bitrate = 1700,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='500000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1200000))],
+			container = 'mp4',
+			video_resolution = '360',
+			aspect_ratio = '1.77',
+			bitrate = 1200,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=500000))],
 			container = 'mp4',
 			video_resolution = '360',
 			aspect_ratio = '1.77',
@@ -89,25 +98,27 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
 
-	data = JSON.ObjectFromURL(CONFIG_URL % (url, String.Quote(url, usePlus=False), String.Quote(url, usePlus=False), String.Quote(url, usePlus=False)))
+	page = HTTP.Request(url).content
+	flashvars = HTML.ElementFromString(page).xpath('//param[@name="flashvars"]')
+
+	if len(flashvars) >= 1:
+		video_page_url = flashvars[0].get('value').split('url=',1)[1]
+	else:
+		video_page_url = RE_FLASHVARS_URL.search(page).group(1)
+
+	data = JSON.ObjectFromURL(CONFIG_URL % (video_page_url, String.Quote(video_page_url, usePlus=False)))
 	media_url = data['playlist']['media']['url']
 	video_url = None
 
 	if '.smil' in media_url:
-		smil = XML.ElementFromURL(data['playlist']['media']['url'])
-		bitrate = BITRATES.index(bitrate)
+		smil = XML.ElementFromURL(media_url)
+		available_bitrates = smil.xpath('//smil:video[@system-bitrate]/@system-bitrate', namespaces=IGN_NS)
 
-		while bitrate > -1:
-			try:
-				video_url = smil.xpath('//smil:video[@system-bitrate="'+BITRATES[bitrate]+'"]', namespaces=IGN_NS)[0].get("src")
-				break
-			except:
-				bitrate = bitrate -1
+		if len(available_bitrates) < 1:
+			raise Ex.MediaNotAvailable
 
-		if not video_url:
-			video_url = smil.xpath('//smil:video', namespaces=IGN_NS)[0].get("src")
-		else:
-			return None
+		closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+		video_url = smil.xpath('//smil:video[@system-bitrate="' + closest + '"]', namespaces=IGN_NS)[0].get('src')
 
 	else:
 		video_url = media_url
