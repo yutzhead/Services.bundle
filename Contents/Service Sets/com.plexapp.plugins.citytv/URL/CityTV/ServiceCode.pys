@@ -84,7 +84,10 @@ def DoAmfRequest(url):
     data = HTML.ElementFromURL(url).xpath('//object[@class="BrightcoveExperience"]')[0]
     playerID = data.xpath('./param[@name="playerID"]')[0].get('value')
     videoPlayer = data.xpath('./param[@name="@videoPlayer"]')[0].get('value')
- 
+
+    if videoPlayer == '':
+        raise Ex.MediaGeoblocked
+
     return AmfRequest(url=url, playerID=playerID, videoPlayer=videoPlayer)
 
 ####################################################################################################
