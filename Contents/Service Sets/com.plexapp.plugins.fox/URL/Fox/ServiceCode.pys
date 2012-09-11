@@ -15,8 +15,11 @@ def MetadataObjectForURL(url):
 	duration = int(video['length'])*1000
 	index = int(video['episode'])
 	season = int(video['season'])
-	rating = video['rating']
 	date = Datetime.ParseDate(video['airdate']).date()
+
+	rating = None
+	try: rating = video['rating']
+	except: pass
 
 	return EpisodeObject(
 		title = episode_title,
