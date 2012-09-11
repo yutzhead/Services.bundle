@@ -9,25 +9,9 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    # It's possible that the ID is actually contained within the url. If this is the case, then we
-    # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
-    # done this, we can load the XML page which contains all the meta data associated with the title.
-
-    id = None
-    id_in_url = RE_ID.search(url)
-
-    if id_in_url != None:
-        id = id_in_url.group('id')
-    else:
-         page = HTML.ElementFromURL(url)
-         content_id = page.xpath('//input[@id="hdnContentId"]')
-
-         if len(content_id) < 1:
-             return None
-         else:
-             id = content_id[0].get('value')
-
-    details_page = XML.ElementFromURL(DETAILS_URL % id)
+    details_page = GetDetails(url)
+    if details_page == None:
+        return None
 
     # Extract the information available from the page.
     title = details_page.xpath("//ContentTitle/text()")[0]
@@ -81,21 +65,8 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, res):
 
-    # It's possible that the ID is actually contained within the url. If this is the case, then we
-    # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
-    # done this, we can load the XML page which contains all the meta data associated with the title.
-    id = None
-    id_in_url = RE_ID.search(url)
-    if id_in_url != None:
-        id = id_in_url.group('id')
-    else:
-        page = HTML.ElementFromURL(url)
-        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
-        id = voting_button.get('contentid')
-
-    details_page = XML.ElementFromURL(DETAILS_URL % id)
-
     # Find the associated video items
+    details_page = GetDetails(url)
     video_items = details_page.xpath("//media-group/media-content")
 
     # It's possible that the requested resolution is not actually available. Therefore we should clamp
@@ -109,3 +80,24 @@ def PlayVideo(url, res):
     index = max(0, min(index, len(video_items) - 1))
 
     return Redirect(video_items[index].get('url'))
+
+####################################################################################################
+def GetDetails(url):
+
+    # It's possible that the ID is actually contained within the url. If this is the case, then we
+    # can simply extract it from there. Otherwise, we need to load the page and find it. Once we've
+    # done this, we can load the XML page which contains all the meta data associated with the title.
+
+    id = None
+    id_in_url = RE_ID.search(url)
+    if id_in_url != None:
+        id = id_in_url.group('id')
+    else:
+        page = HTML.ElementFromURL(url)
+        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
+        id = voting_button.get('contentid')
+
+    if id != None:
+        return XML.ElementFromURL(DETAILS_URL % id)
+    else:
+        return None
