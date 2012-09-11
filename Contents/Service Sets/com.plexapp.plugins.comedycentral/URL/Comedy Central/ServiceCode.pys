@@ -55,7 +55,12 @@ def TestURLs():
 		if not url.startswith('http'):
 			url = 'http://www.comedycentral.com%s' % url
 
-		test_urls.append(url)
+		try:
+			# It appears that sometimes links can be invalid. We should quickly test it before considering
+			# using it as a Test URL.
+			headers = HTTP.Request(url).headers
+			test_urls.append(url)
+		except: pass
 
 		if len(test_urls) > 2:
 			break
