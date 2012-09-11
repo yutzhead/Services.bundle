@@ -1,33 +1,62 @@
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:14.0) Gecko/20100101 Firefox/14.0.1' }
+RE_DETAILS 			= Regex('var experienceJSON = (.+)};')
+VIDEO_DETAILS_URL 	= 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=1656678357001&@videoPlayer=%s'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url, headers=httpHeaders)
-
-	title = page.xpath('//meta[@name="dc.title"]')[0].get('content').strip()
-	summary = page.xpath('//meta[@name="dc.description"]')[0].get('content').strip()
-	date = page.xpath('//meta[@name="dc.date"]')[0].get('content')
-	originally_available_at = Datetime.ParseDate(date).date()
-	thumb = page.xpath('//meta[@property="og:image"]')[0].get('content').replace('-thumbWide.jpg', '-articleLarge.jpg')
-
-	# Attempt to separate the credits. This includes the various titles along with the associated individual
-	credits = None
-	try: credits = ParseCredits(page)
-	except: pass
-
+	details = GetExperience(url)
 	return VideoClipObject(
-		title = title,
-		summary = summary,
-		originally_available_at = originally_available_at,
-		thumb = thumb
+		title = details['displayName'],
+		summary = details['longDescription'],
+		originally_available_at = Datetime.FromTimestamp(float(details['publishedDate']) / 1000),
+		thumb = details['thumbnailURL']
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [PartObject(key = WebVideoURL(url))]
-		)
-	]
+    return [
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        video_resolution = "576",
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "576"))]
+      ),
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        video_resolution = "450",
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "450"))]
+      ),
+      MediaObject(
+        container = Container.MP4,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC,
+        audio_channels = 2,
+        video_resolution = "360",
+        parts = [PartObject(key=Callback(PlayVideo, url = url, res = "360"))]
+      )
+    ]
+
+####################################################################################################
+def PlayVideo(url, res):
+	details = GetExperience(url)
+	for rendition in details['renditions']:
+		if rendition['videoCodec'] == "H264" and rendition['frameHeight'] == res:
+			return Redirect(rendition['defaultURL'])
+	
+	return Redirect(details['FLVFullLengthURL'])
+
+####################################################################################################
+def GetExperience(url):
+	page = HTML.ElementFromURL(url)
+	video_id = page.xpath('//li[contains(@class, "nowplaying")]//a')[0].get('href')
+	video_id = video_id.replace('#', 'ref%3A')
+
+	details_page_contents = HTTP.Request(VIDEO_DETAILS_URL % video_id).content
+	experience = RE_DETAILS.search(details_page_contents).group(1) + '}'
+	return JSON.ObjectFromString(experience)['data']['programmedContent']['videoPlayer']['mediaDTO']

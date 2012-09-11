@@ -1,5 +1,4 @@
-SD_REGEX = Regex('"sd":{"src":"([^"]+)",')
-HD_REGEX = Regex('"hd":{"src":"([^"]+)",')
+RE_PLAYER_CONFIG = Regex('new FM.Player\([^{]+(.+)\);')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -64,21 +63,11 @@ def PlayVideo(url, res):
 
 	page = HTTP.Request(url).content
 
-	try: video_urlhd = HD_REGEX.findall(page)[0]
-	except: video_urlhd = None
+	player_config_src = RE_PLAYER_CONFIG.findall(page)[0]
+	player_config = JSON.ObjectFromString(player_config_src)
+	videos = player_config['video']['encodings']
 
-	try: video_urlsd = SD_REGEX.findall(page)[0]
-	except: video_urlsd = None
-
-	if not video_urlhd and not video_urlsd:
-		html = HTML.ElementFromString(page)
-		video = html.xpath('//div[contains(@class, "player")]//video[@src]')
-
-		if len(video) > 0:
-			video_url = video[0].get('src')
-			return Redirect(video_url)
-
-	if res == "hd" and video_urlhd:
-		return Redirect(video_urlhd)
-	elif video_urlsd:
-		return Redirect(video_urlsd)
+	if res == "hd" and len(videos['hd']['sources']) > 0:
+		return Redirect(videos['hd']['sources'][0]['src'])
+	else:
+		return Redirect(videos['sd']['sources'][0]['src'])
