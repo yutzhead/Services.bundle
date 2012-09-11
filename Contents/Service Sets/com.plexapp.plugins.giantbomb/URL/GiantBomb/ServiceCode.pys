@@ -10,6 +10,9 @@ def MetadataObjectForURL(url):
 
 	clip = GetClip(url)
 
+	if not clip:
+		return None
+
 	title = clip['name']
 	summary = clip['deck']
 	thumbUrl = clip['image']['super_url']
@@ -57,6 +60,9 @@ def PlayVideo(url, fmt=''):
 
 	clip = GetClip(url)
 
+	if not clip:
+		return None
+
 	if fmt == 'hi':
 		video_url = clip['high_url']
 	elif fmt == 'lo':
@@ -67,7 +73,16 @@ def PlayVideo(url, fmt=''):
 ####################################################################################################
 def GetClip(url):
 
+	# Try to get the video id from the url
 	video_id = url.split('-')[-1].strip('/')
-	clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
-	data = JSON.ObjectFromURL(clip_detail_url)
-	return(data['results'])
+
+	# Check if this is really a page containing a video
+	check = HTML.ElementFromURL(url).xpath('//div[@data-video-id="%s"]' % video_id)
+
+	if len(check) < 1:
+		return None
+	else:
+		clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
+		data = JSON.ObjectFromURL(clip_detail_url)
+
+		return(data['results'])
