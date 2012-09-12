@@ -8,9 +8,14 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.syfy\.com/videos/vid\:+</string>
+				<string>http://www\.syfy\.com/.+/vid\:[0-9]+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
+
 </dict>
 </plist>
