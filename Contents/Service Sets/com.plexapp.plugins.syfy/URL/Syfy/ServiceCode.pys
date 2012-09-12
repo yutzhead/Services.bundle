@@ -54,7 +54,7 @@ def TestURLs():
 def GetSMIL(url):
 
 	guid = url.split(':')[2]
-	infourl = "http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode,:disallowSharing%20&fileFields=url,duration,width,height,contentType,fileSize,format&byGuid="+guid
+	infourl = "http://feed.theplatform.com/f/hQNl-B/2g1gkJT0urp6/?form=json&fields=guid,title,description,:subtitle,content,thumbnails,categories,:fullEpisode&fileFields=url,duration,width,height,contentType,fileSize,format&byGuid="+guid
 
 	return JSON.ObjectFromURL(infourl)
 
@@ -62,22 +62,31 @@ def GetSMIL(url):
 def GetVideoSMIL(url):
 
 	data = GetSMIL(url)
+	smil_url = None
 
 	# only adding in the 720p video, provider is very wishy-washy on actually having
 	# other resolutions in place and working, even though they advertise a lot of them ...
 	# many times the others advertised don't exist when it comes down to actually trying to play them ...
 	for item in data['entries']:
 		for v in item['media$content']:
-			if v['plfile$format']=="MPEG4" and v['plfile$height']==720:
-				smilurl=v['plfile$url']
+			if v['plfile$format'] == "MPEG4" and v['plfile$height'] == 720:
+				smil_url = v['plfile$url']
+				break
 
-	smil = XML.ElementFromURL(smilurl)
+		if smil_url:
+			break
 
-	return smil
+	if smil_url:
+		smil = XML.ElementFromURL(smil_url)
+		return smil
+	else:
+		raise Ex.MediaNotAvailable
 
 #########################################################################################
+@indirect
 def PlayVideo(url):
 
 	smil = GetVideoSMIL(url)
 	video_url = smil.xpath("//a:video[1]/@src", namespaces=NAMESPACES)[0]
-	return Redirect(video_url)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
