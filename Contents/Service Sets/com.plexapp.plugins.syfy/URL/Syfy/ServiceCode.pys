@@ -1,4 +1,5 @@
 NAMESPACES = {"a":"http://www.w3.org/2005/SMIL21/Language"}
+SWF_URL="http://www.syfy.com/_utils/video/codebase/pdk/swf/flvPlayer.swf"
 
 #########################################################################################
 def NormalizeURL(url):
@@ -64,12 +65,12 @@ def GetVideoSMIL(url):
 	data = GetSMIL(url)
 	smil_url = None
 
-	# only adding in the 720p video, provider is very wishy-washy on actually having
+	# only adding in the first video (usually 720p if it's MPEG4), provider is very wishy-washy on actually having
 	# other resolutions in place and working, even though they advertise a lot of them ...
 	# many times the others advertised don't exist when it comes down to actually trying to play them ...
 	for item in data['entries']:
 		for v in item['media$content']:
-			if v['plfile$format'] == "MPEG4" and v['plfile$height'] == 720:
+			if (v['plfile$format'] == "MPEG4" and v['plfile$height'] == 720) or v['plfile$format'] == "FLV":
 				smil_url = v['plfile$url']
 				break
 
@@ -87,6 +88,15 @@ def GetVideoSMIL(url):
 def PlayVideo(url):
 
 	smil = GetVideoSMIL(url)
-	video_url = smil.xpath("//a:video[1]/@src", namespaces=NAMESPACES)[0]
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
+		raise Ex.MediaGeoblocked
+
+	video_url = smil.xpath("//a:video[1]/@src", namespaces=NAMESPACES)[0]
+	if video_url.endswith('.mp4'):
+		return IndirectResponse(VideoClipObject, key=video_url)
+	elif video_url.endswith('.flv'):
+		url = smil.xpath("//a:meta/@base", namespaces=NAMESPACES)[0]+video_url
+		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, swf_url=SWF_URL))
+		
+		
