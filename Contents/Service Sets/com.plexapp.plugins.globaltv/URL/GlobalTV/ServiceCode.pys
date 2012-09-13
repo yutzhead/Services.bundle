@@ -1,6 +1,7 @@
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.theplatform.com/mps/metadata/content/custom"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s"
 VIDEO_URL = 'http://www.globaltv.com/video/%s/video.html?v=%s&pid=%s#%s/video/full+episodes'
+RE_PID = Regex('pid: \"([^"]+)\"')
 
 #########################################################################################
 def NormalizeURL(url):
@@ -18,7 +19,6 @@ def MetadataObjectForURL(url):
 		duration = int(details.get('dur').strip('ms'))
 	except:
 		duration = 0
-# 	thumb = details.get('imagePlayerLargeA')
 
 	try:
 		show_title = details.get('tp:Show', namespaces=NAMESPACES)
@@ -48,29 +48,50 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			video_resolution = "480",
 			audio_channels = 2,
-			parts = [PartObject(key=WebVideoURL(url))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
 
 #########################################################################################
+@indirect
+def PlayVideo(url):
+	smil = GetSMIL(url)
+	details = GetSRC(smil)
+	src = details.get('src')
+	
+	# try splitting in {break} -- all newer content is done like this
+	src = src.split('{break}')	
+	# older videos it's <break> instead of {break} and needs different handling later
+	if len(src) < 2:
+		src = details.get('src').split('<break>')
+
+	player = src[0].split('ondemand/')[0]+'ondemand/'
+	app = 'ondemand' + src[0].split('ondemand')[1]
+	clip = src[1].replace(".flv","") # replace .flv needed if legacy <break> was used
+	
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, app=app))
+	
+
+
+
+#########################################################################################
 def GetSMIL(url):
-	pID = url.split('&pid=')[1].split('#')[0]
+	# from the plugin we get handed the pID as it's labour intesive/slow to extract it 
+	# manually for lists and when loading show lists from the platform in the plugin we  
+	# are provided these and include them in our key url
+	try:
+		pID = url.split('&pid=')[1].split('#')[0]
+	except:
+		# if this didn't work we're loading in myplex or an otherwise direct url
+		# or didn't get it passed so we can parse it out of the page content
+		src = HTTP.Request(url.replace(' ','%20')).content
+		pID = RE_PID.findall(src)[0]
+
 	smil = XML.ElementFromURL(SMIL_URL % pID)
 	return smil
 
 def GetSRC(smil):
-	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-	if len(src_list) == 1:
-		return src_list[0]
-	else:
-		for ref in src_list:
-			if "pfadx///video" in ref.get('src'):
-				pass
-			elif ref.get('src').startswith('rtmp'):
-				return ref
-			else:
-				return ref
-	return None
+	return smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=NAMESPACES)[0]
 
 #########################################################################################
 def TestURLs():
