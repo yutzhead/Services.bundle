@@ -145,7 +145,7 @@ def GetVideoDetails(url):
 	video_id = url.split('/vid:')[1]
 	json = JSON.ObjectFromURL(FEED_URL % video_id)
 
-	if 'entries' in json:
+	if 'entries' in json and len(json['entries']) > 0:
 		return json['entries'][0]
 	else:
 		raise Ex.MediaNotAvailable
