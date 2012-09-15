@@ -86,6 +86,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate):
 
 	id_url = RE_ID_URL.search(url)
@@ -105,4 +106,4 @@ def PlayVideo(url, bitrate):
 	xml = HTTP.Request(POPS_URL % (bitrate, id)).content
 	sid = RE_SID.search(xml).group(1)
 
-	return Redirect(VIDEO_URL % sid)
+	return IndirectResponse(VideoClipObject, key=VIDEO_URL % sid)
