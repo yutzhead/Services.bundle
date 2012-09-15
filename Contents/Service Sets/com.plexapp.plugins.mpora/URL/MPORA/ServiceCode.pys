@@ -67,7 +67,7 @@ def PlayVideo(url, res):
 	player_config = JSON.ObjectFromString(player_config_src)
 	videos = player_config['video']['encodings']
 
-	if res == "hd" and len(videos['hd']['sources']) > 0:
+	if res == "hd" and 'hd' in videos and len(videos['hd']['sources']) > 0:
 		return Redirect(videos['hd']['sources'][0]['src'])
 	else:
 		return Redirect(videos['sd']['sources'][0]['src'])
