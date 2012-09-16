@@ -1,9 +1,9 @@
-BASE_URL = "http://www.nbc.com"
-VIDEO_DETAILS = "/video/episodes/init.xml?videoId=%s"
+BASE_URL = 'http://www.nbc.com'
+VIDEO_DETAILS = '/video/episodes/init.xml?videoId=%s'
 THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted=yes&path=/%s/%s_mezzn.jpg'
 
-CLIP_CONFIG_ID = "16009"
-RE_VIDEO_ID = Regex("(nbc|latenightwithjimmyfallon|jaylenosgarage).com/(.+/)?video/.+?/(?P<id>[0-9]{4,})")
+CLIP_CONFIG_ID = '16009'
+RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>[0-9]{4,})')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,7 +15,12 @@ def MetadataObjectForURL(url):
 
 	# The given url should contain the video ID. We need this in order to use a different
 	# url to obtain the specific details in a sensible format.
-	id = RE_VIDEO_ID.search(url).group('id')
+	video_id = RE_VIDEO_ID.search(url)
+
+	if not video_id:
+		return None
+
+	id = video_id.group('id')
 
 	# Request the page that contains the details of the title.
 	show_url = url.split("/video/")[0]
@@ -74,8 +79,14 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	video_id = url.rstrip('/').rsplit('/',1)[1]
-	video_url = 'http://plexapp.tv/embed/nbc.php?vid=%s' % video_id
+	video_id = RE_VIDEO_ID.search(url)
+
+	if not video_id:
+		return None
+
+	id = video_id.group('id')
+
+	video_url = 'http://plexapp.tv/embed/nbc.php?vid=%s' % id
 
 	return [
 		MediaObject(
