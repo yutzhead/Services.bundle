@@ -77,4 +77,4 @@ def GetExternalSource(url):
 
   # Obtain the page
   page = HTML.ElementFromURL(url)
-  return page.xpath('//link[@rel = "video_src"]')[0].get('href')
+  return page.xpath('//meta[@property = "og:video"]')[0].get('content')
