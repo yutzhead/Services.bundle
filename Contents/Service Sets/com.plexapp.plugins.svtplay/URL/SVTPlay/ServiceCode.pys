@@ -78,7 +78,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
     JSON_ARG = "?output=json"
     playerurl = getPlayerUrl(url)
-    page = HTML.ElementFromURL(url)
+
+    try:
+        page = HTML.ElementFromURL(url, cacheTime = 0)
+    except:
+        raise Ex.MediaNotAvailable
+
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     videos = JSON.ObjectFromURL(BASE_URL + jsonurl + JSON_ARG)
 
@@ -147,7 +152,13 @@ def getContentBitrateURLs(d, bitrate):
     return ""
 
 def getPlayerUrl(url):
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url, cacheTime = 0)
+    except:
+        raise Ex.MediaNotAvailable
+
+
+
     jsonurl = page.xpath("//a[@id='player']//@data-json-href")[0]
     jspage = None
     for sp in page.xpath("//script/@src"):
