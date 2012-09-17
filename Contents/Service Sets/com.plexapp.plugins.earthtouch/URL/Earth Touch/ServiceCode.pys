@@ -16,9 +16,12 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	series = SHOWS + url.split('/')[4] + "/mrss"
-	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)[0]
+	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)
 
-	vimeolink = item_node.xpath('./enclosure')[0].get('url')
+	if len(item_node) < 1:
+		return None
+
+	vimeolink = item_node[0].xpath('./enclosure')[0].get('url')
 	vimeolink = VIMEO % vimeolink.split('external/')[1]
 	vimeolink = vimeolink.split('.hd.mp4')[0]
 
@@ -60,9 +63,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, format=None):
 
 	series = SHOWS + url.split('/')[4] + "/mrss"
-	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)[0]
+	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)
 
-	vimeolink = item_node.xpath('./enclosure')[0].get('url')
+	if len(item_node) < 1:
+		return None
+
+	vimeolink = item_node[0].xpath('./enclosure')[0].get('url')
 	vimeolink = VIMEO % vimeolink.split('external/')[1]
 	vimeolink = vimeolink.split('.hd.mp4')[0]
 
