@@ -27,7 +27,10 @@ def MetadataObjectForURL(url):
 	show_details_url = show_url + (VIDEO_DETAILS % id)
 	show_xml = XML.ElementFromURL(show_details_url)
 
-	config_id = show_xml.xpath("//configId/text()")[0]
+	try:
+		config_id = show_xml.xpath("//configId/text()")[0]
+	except:
+		raise Ex.MediaNotAvailable
 
 	# The show title is actually the hardest thing to determine. The XML contains a list of shows
 	# but no specific linked relationship from the known episode id. We therefore match the permBaseURL
