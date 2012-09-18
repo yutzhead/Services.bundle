@@ -11,7 +11,7 @@ def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url)
 
-	try: #try to return an episode object first
+	try: # Try to return an episode object first
 		show_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[1]
 		episode_title = data.xpath('//h2[@id="video_title"]')[0].text
 		summary = data.xpath('//p[@id="video_desc"]')[0].text
@@ -23,7 +23,7 @@ def MetadataObjectForURL(url):
 		thumb_url = data.xpath('//link[@rel="image_src"]')[0].get('href')
 
 		# Construct a metadata item
-		mo = EpisodeObject(
+		return EpisodeObject(
 			title = episode_title,
 			show = show_title,
 			duration = duration, 
@@ -33,19 +33,18 @@ def MetadataObjectForURL(url):
 			thumb = thumb_url
 		)
 
-	except: #if it's not an episode return a clip object
+	except: # If it's not an episode return a clip object
 		clip_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[0]
+
 		try:
 			thumb_url = data.xpath('//div[@id="show_callout"]/img')[0].get('src')
 		except:
 			thumb_url = ''
 
-		mo = VideoClipObject(
+		return VideoClipObject(
 			title = clip_title,
 			thumb = Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-default.png')
 		)
-
-	return mo
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -78,6 +77,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate):
 
 	video_id = url.split('/')[-2]
@@ -92,7 +92,7 @@ def PlayVideo(url, bitrate):
 	streamer = 'rtmp://cp88586.edgefcs.net/abcondemand'
 	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')
 
-	return Redirect(RTMPVideoURL(streamer, clip))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=streamer, clip=clip))
 
 ####################################################################################################
 def TestURLs():
