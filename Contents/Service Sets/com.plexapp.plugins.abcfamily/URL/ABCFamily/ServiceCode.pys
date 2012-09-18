@@ -1,12 +1,10 @@
 FEED_URL = "http://cdn.abc.go.com/vp2/ws/s/contents/2000/utils/mov/13/9024/%s/432"
-BITRATES = ['500','700','1000','1600']
-
 RE_THUMB = Regex("var thumbnail = '(http://.+\.jpg)';")
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -92,25 +90,25 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1600'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1600))],
 			protocol = Protocol.RTMP,
 			bitrate = 1600,
 			aspect_ratio = "1.78"
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1000'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1000))],
 			protocol = Protocol.RTMP,
 			bitrate = 1000,
 			aspect_ratio = "1.78"
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='700'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=700))],
 			protocol = Protocol.RTMP,
 			bitrate = 700,
 			aspect_ratio = "1.78"
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='500'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=500))],
 			protocol = Protocol.RTMP,
 			bitrate = 500,
 			aspect_ratio = "1.78"
@@ -122,38 +120,30 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
 
 	video_id = url.split('/')[-2]
-	index = BITRATES.index(bitrate)
+	data = XML.ElementFromURL(FEED_URL % video_id)
+	available_bitrates = data.xpath('//videos/video[not(@src="")]/@bitrate')
 
-	content = XML.ElementFromURL(FEED_URL % video_id)
+	if len(available_bitrates) < 1:
+		raise Ex.MediaNotAvailable
 
-	available = False
-	clip = None
+	closest = min((abs(bitrate - int(i)), i) for i in available_bitrates)[1]
 
-	while not available and index >= 0:
-		path = '//video[@bitrate="%s"]' % BITRATES[index]
-		res = content.xpath(path)
-		if len(res) > 0 and len(res[0].get('src')) > 0:
-			clip = res[0].get('src')
-			available = True
-		index = index - 1
+	streamer = 'rtmp://cp88586.edgefcs.net/ondemand/'
+	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')
 
-	player = "rtmp://cp88586.edgefcs.net/ondemand/"
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(player, clip))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=streamer, clip=clip))
 
 ####################################################################################################
 def TestURLs():
 
 	test_urls = []
+	data = HTML.ElementFromURL('http://abcfamily.go.com/')
 
-	page = HTML.ElementFromURL('http://abcfamily.go.com/')
-	results = page.xpath("//div[contains(@class, 'chartbeattoppages_videos')]//li[contains(@class, 'contentArea')]//a")
+	for video in data.xpath("//div[contains(@class, 'chartbeattoppages_videos')]//li[contains(@class, 'contentArea')]//a"):
+		url = video.get('href')
 
-	for item in results:
-		if len(test_urls) < 4:
-			url = item.get('href')
-
-			if url not in test_urls:
-				test_urls.append(url)
+		if len(test_urls) < 3 and url not in test_urls:
+			test_urls.append(url)
 		else:
 			break
 
