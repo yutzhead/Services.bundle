@@ -1,4 +1,4 @@
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0' }
+httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
 RE_ID_PATTERN = Regex('([0-9]{7})')
 
 ####################################################################################################
@@ -8,8 +8,14 @@ def NormalizeURL(url):
 
   if find_id:
     id = find_id.group(1)
-    url = url.rsplit('4od', 1)[0]
-    url = url + '4od/player/' + id
+  else:
+    assetid = HTML.ElementFromURL(url).xpath('//li[@data-assetid]')
+
+    if len(assetid) > 0:
+      id = assetid[0].get('data-assetid')
+
+  url = url.rsplit('/4od', 1)[0]
+  url = '%s/4od/player/%s' % (url, id)
 
   return url
 
@@ -19,7 +25,11 @@ def MetadataObjectForURL(url):
   (url, id) = url.rsplit('/player/', 1)
 
   xpath = '//li[@data-assetid="%s"]' % id
-  ep = HTML.ElementFromURL(url, headers=httpHeaders).xpath(xpath)[0]
+
+  try:
+    ep = HTML.ElementFromURL(url, headers=httpHeaders).xpath(xpath)[0]
+  except:
+    raise Ex.MediaNotAvailable
 
   try:
     broadcast = ep.get('data-txDate')
