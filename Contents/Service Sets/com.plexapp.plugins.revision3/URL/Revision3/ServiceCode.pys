@@ -7,7 +7,7 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+  data = HTML.ElementFromURL(url, cacheTime=7200)
 
   show_title = data.xpath('//meta[@name="description"]')[0].get('content').split(': ')[0]
   episode_title = data.xpath('.//div[@id="show-notes"]/h2')[0].text
@@ -33,8 +33,7 @@ def MetadataObjectForURL(url):
     except:
       thumb = None
 
-  # Construct a metadata item
-  mo = EpisodeObject(
+  return EpisodeObject(
     title = episode_title,
     show = show_title,
     duration = duration, 
@@ -42,7 +41,6 @@ def MetadataObjectForURL(url):
     summary = summary,
     thumb = thumbUrl
   )
-  return mo
   
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -78,19 +76,21 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, fmt):
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+  data = HTML.ElementFromURL(url, cacheTime=7200)
 
   videos = data.xpath('//div[@id="action-panels-download-MP4"]')[0]
   available_videos = videos.xpath('.//a[@class="sizename"]')
 
   # There appears to be a small number of SD/480p videos which are not available. Therefore, for these few
   # we will simply grab the lowest quality available, so for SD, it will be 480p and for 480p it will be SD
-  try: video = available_videos[FMT_INDEX[fmt]]
+  try:
+    video = available_videos[FMT_INDEX[fmt]]
   except:
     if fmt == 'SD' or fmt == '480p':
       video = available_videos[-1]
 
   video_url = video.get('href')
 
-  return Redirect(video_url)
+  return IndirectResponse(VideoClipObject, key=video_url)
