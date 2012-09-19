@@ -21,11 +21,18 @@ def MetadataObjectForURL(url):
 	if len(item_node) < 1:
 		return None
 
-	vimeolink = item_node[0].xpath('./enclosure')[0].get('url')
-	vimeolink = VIMEO % vimeolink.split('external/')[1]
-	vimeolink = vimeolink.split('.hd.mp4')[0]
+	vimeo_link = item_node[0].xpath('./enclosure')[0].get('url')
 
-	metadata = URLService.MetadataObjectForURL(vimeolink)
+	if not 'vimeo.com' in vimeo_link:
+		try:
+			HTTP.Request(vimeo_link, follow_redirects=False).headers
+		except Ex.RedirectError, e:
+			vimeo_link = e.location
+
+	vimeo_link = VIMEO % vimeo_link.split('external/')[1]
+	vimeo_link = vimeo_link.split('.hd.mp4')[0]
+
+	metadata = URLService.MetadataObjectForURL(vimeo_link)
 
 	if metadata is not None:
 		return metadata
@@ -42,7 +49,7 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url=url, format='hd'))],
 			container = 'mp4',
 			video_codec = VideoCodec.H264,
-			video_resolution = '720',
+			video_resolution = 720,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
@@ -51,7 +58,7 @@ def MediaObjectsForURL(url):
 			parts = [PartObject(key=Callback(PlayVideo, url=url, format='sd'))],
 			container = 'mp4',
 			video_codec = VideoCodec.H264,
-			video_resolution = '480',
+			video_resolution = 480,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
@@ -68,14 +75,19 @@ def PlayVideo(url, format=None):
 	if len(item_node) < 1:
 		return None
 
-	vimeolink = item_node[0].xpath('./enclosure')[0].get('url')
-	vimeolink = VIMEO % vimeolink.split('external/')[1]
-	vimeolink = vimeolink.split('.hd.mp4')[0]
+	if not 'vimeo.com' in vimeo_link:
+		try:
+			HTTP.Request(vimeo_link, follow_redirects=False).headers
+		except Ex.RedirectError, e:
+			vimeo_link = e.location
 
-	metadata = URLService.MetadataObjectForURL(vimeolink)
+	vimeo_link = VIMEO % vimeo_link.split('external/')[1]
+	vimeo_link = vimeo_link.split('.hd.mp4')[0]
+
+	metadata = URLService.MetadataObjectForURL(vimeo_link)
 
 	if metadata is not None:
-		media = URLService.MediaObjectsForURL(vimeolink)
+		media = URLService.MediaObjectsForURL(vimeo_link)
 
 	else:
 		iframe = HTML.ElementFromURL(url).xpath('//iframe[contains(@src, "vimeo.com")]')
