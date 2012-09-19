@@ -1,66 +1,64 @@
-import re
+RE_DOCUMENT_FILTER = Regex('http://www.vesti.ru/doc.html\?id=[0-9]+')
+RE_VIDEO_ID = Regex('id=(?P<id>[0-9]+)')
 
-DOCUMENT_FILTER = "http://www.vesti.ru/doc.html\?id=[0-9]+"
 PLAYLIST_DETAILS = "http://www.vesti.ru/xml/playlist.html?type=%s"
-
 VH_URL = "http://player.rutv.ru/index/play/cid/%s"
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    if re.match(DOCUMENT_FILTER, url) != None:
-        url = VideoURLFromDocumentURL(url)
+	if RE_DOCUMENT_FILTER.match(url) != None:
+		url = VideoURLFromDocumentURL(url)
 
-    video_id = re.match(".+id=(?P<id>[0-9]+)", url).groupdict()['id']
-    details = JSON.ObjectFromURL(PLAYLIST_DETAILS % video_id)[0]
+	video_id = RE_VIDEO_ID.search(url).group('id')
+	details = JSON.ObjectFromURL(PLAYLIST_DETAILS % video_id)[0]
 
-    return VideoClipObject(
-        title = details['title'],
-        thumb = details['picture'],
-        originally_available_at = Datetime.ParseDate(details['date1']))
+	return VideoClipObject(
+		title = details['title'],
+		thumb = details['picture'],
+		originally_available_at = Datetime.ParseDate(details['date1'])
+	)
 
 ####################################################################################################
-
 def VideoURLFromDocumentURL(url):
 
-    page = HTML.ElementFromURL(url)
-    video_id = page.xpath("//div[@class='doc_photo_block ']//a[@class='video_ico']")[0].get('data-vid')
-    return "http://www.vesti.ru/only_video.html?vid=" + video_id
-    
+	page = HTML.ElementFromURL(url)
+	video_id = page.xpath("//div[@class='doc_photo_block ']//a[@class='video_ico']")[0].get('data-vid')
+
+	return "http://www.vesti.ru/only_video.html?vid=" + video_id
+
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
 
-    if re.match(DOCUMENT_FILTER, url) != None:
-        url = VideoURLFromDocumentURL(url)
+	if RE_DOCUMENT_FILTER.match(url) != None:
+		url = VideoURLFromDocumentURL(url)
 
-    video_id = re.match(".+id=(?P<id>[0-9]+)", url).groupdict()['id']
-    details = JSON.ObjectFromURL(PLAYLIST_DETAILS % video_id)[0]
+	video_id = RE_VIDEO_ID.search(url).group('id')
+	details = JSON.ObjectFromURL(PLAYLIST_DETAILS % video_id)[0]
 
-    if details['video'].endswith('.flv'):
-        return [
-            MediaObject(
-                container = 'flv',
-                audio_codec = AudioCodec.MP3,
-                video_codec = VideoCodec.VP6,
-                parts = [PartObject(key = details['video'])]
-            )
-        ]
+	if details['video'].endswith('.flv'):
+		return [
+			MediaObject(
+				container = 'flv',
+				audio_codec = AudioCodec.MP3,
+				video_codec = VideoCodec.VP6,
+				parts = [PartObject(key = details['video'])]
+			)
+		]
 
-    if details['vhid'] != None:
+	if details['vhid'] != None:
+		media = []
+		further_details = JSON.ObjectFromURL(VH_URL % details['vhid'])
 
-        media = []
-        further_details = JSON.ObjectFromURL(VH_URL % details['vhid'])
-        
-        for quality in further_details['path']['quality']:
-            media.append(MediaObject(
-                container = Container.MP4,
-                video_codec = VideoCodec.H264,
-                audio_codec = AudioCodec.AAC,
-                video_resolution = quality['height'],
-                bitrate = quality['bitrate'],
-                parts = [PartObject(key = quality['url'])]
-            ))
+		for quality in further_details['path']['quality']:
+			media.append(MediaObject(
+				container = Container.MP4,
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				video_resolution = quality['height'],
+				bitrate = quality['bitrate'],
+				parts = [PartObject(key = quality['url'])]
+			))
 
-        return media
+		return media
