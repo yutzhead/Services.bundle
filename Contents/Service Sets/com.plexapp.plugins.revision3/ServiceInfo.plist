@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://revision3\.com/.+</string>
+				<string>http://revision3\.com/.+/.+</string>
 			</array>
 		</dict>
 	</dict>
