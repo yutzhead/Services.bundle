@@ -37,3 +37,18 @@ def PlayVideo(url):
 	video_url = RE_VIDEO.search(page_content).group(1)
 
 	return IndirectResponse(VideoClipObject, key=video_url)
+	
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	data = HTML.ElementFromURL(BASE + '/videos/')
+	oc = ObjectContainer()
+
+	for video in data.xpath('//span[contains (@class, "field-content")]/a'):
+		video_url = BASE + video.xpath('./@href')[0]
+		test_urls.append(video_url)
+		if len(test_urls) > 2:
+			break
+				
+	return test_urls
