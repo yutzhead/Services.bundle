@@ -3,18 +3,20 @@ SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s"
 VIDEO_URL = 'http://www.globaltv.com/video/%s/video.html?v=%s&pid=%s#%s/video/full+episodes'
 RE_PID = Regex('pid: \"([^"]+)\"')
 
-#########################################################################################
+####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
-
-#########################################################################################
+####################################################################################################
 def MetadataObjectForURL(url):
+
 	smil = GetSMIL(url)
 	details = GetSRC(smil)
-	
+
 	title = details.get('title')
 	summary = details.get('abstract')
+
 	try:
 		duration = int(details.get('dur').strip('ms'))
 	except:
@@ -41,24 +43,26 @@ def MetadataObjectForURL(url):
 			duration = duration,
 			thumb = R('icon-default.png')
 		)
-	
-#########################################################################################
+
+####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
-			video_resolution = "480",
+			video_resolution = 480,
 			audio_channels = 2,
 			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
 
-#########################################################################################
+####################################################################################################
 @indirect
 def PlayVideo(url):
+
 	smil = GetSMIL(url)
 	details = GetSRC(smil)
 	src = details.get('src')
-	
+
 	# try splitting in {break} -- all newer content is done like this
 	src = src.split('{break}')	
 	# older videos it's <break> instead of {break} and needs different handling later
@@ -68,14 +72,12 @@ def PlayVideo(url):
 	player = src[0].split('ondemand/')[0]+'ondemand/'
 	app = 'ondemand' + src[0].split('ondemand')[1]
 	clip = src[1].replace(".flv","") # replace .flv needed if legacy <break> was used
-	
+
 	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, app=app))
-	
 
-
-
-#########################################################################################
+####################################################################################################
 def GetSMIL(url):
+
 	# from the plugin we get handed the pID as it's labour intesive/slow to extract it 
 	# manually for lists and when loading show lists from the platform in the plugin we  
 	# are provided these and include them in our key url
@@ -90,11 +92,34 @@ def GetSMIL(url):
 	smil = XML.ElementFromURL(SMIL_URL % pID)
 	return smil
 
+####################################################################################################
 def GetSRC(smil):
-	return smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=NAMESPACES)[0]
 
-#########################################################################################
+	src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
+
+	if src_list[0].get('src') == "Unavailable.flv":
+		if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
+			# content is geo blocked
+			raise Ex.MediaGeoblocked
+		else:
+			# just a general failure of the media not being available
+			raise Ex.MediaNotAvailable
+
+	if len(src_list) == 1:
+		return src_list[0]
+	else:
+		for ref in src_list:
+			if "pfadx///video" in ref.get('src'):
+				pass
+			elif ref.get('src').startswith('rtmp'):
+				return ref
+			else:
+				return ref
+	return None
+
+####################################################################################################
 def TestURLs():
+
 	# NB:  We are limiting the amount of entries in the JSON items via the URL query
 	# 10 for the main list (we have to make sure we get at least one or two Full Episodes)
 	# and 20 for the actual show queries (Some shows have the first 4 as the same PID we
@@ -120,11 +145,12 @@ def TestURLs():
 			# corner case for "Who's the Boss?" (they strip out the ? instead of encoding it)
 			# -- Gerk - 2012/06/04
 			showtitle = showtitle.replace('?', '')
-
 			test_urls.append(VIDEO_URL % (showtitle, iid, PID, showtitle))
+
 			if len(test_urls) > 5:
 				break
+
 		if len(test_urls) > 5:
 			break
-	
+
 	return test_urls
