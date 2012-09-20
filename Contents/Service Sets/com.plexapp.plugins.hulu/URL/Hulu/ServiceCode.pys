@@ -1,5 +1,5 @@
-HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
 API_URL = 'http://www.hulu.com/api/oembed.json?url=%s'
+HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,30 +9,26 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	json_obj = JSON.ObjectFromURL(API_URL % url, cacheTime=CACHE_1HOUR)
+	json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), cacheTime=CACHE_1HOUR)
 	eid = json_obj['embed_url'].split('?eid=')[1]
-
 	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR)
 
-	desc = details.xpath('//video/description')[0].text
+	title = details.xpath('//video/title')[0].text
+	summary = details.xpath('//video/description')[0].text
 
 	try:
 		airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
 	except:
 		airdate = None
 
-	duration =  int(float(details.xpath('//video/duration')[0].text)*1000)
+	duration = int(float(details.xpath('//video/duration')[0].text)*1000)
 	thumb = details.xpath('//video/thumbnail-url')[0].text.split('?')[0] + '?size=512x288'
+	rating = float(details.xpath('//video/user-star-rating')[0].text)
 
-	rating =  float(details.xpath('//video/user-star-rating')[0].text)
-	plusonly =  details.xpath('//video/is-plus-web-only')[0].text
+	plus_only = details.xpath('//video/is-plus-web-only')[0].text
 
-	if (plusonly == 'true'):
-		plustext = "HuluPlus - "
-	else:
-		plustext = ""
-
-	title =  plustext + details.xpath('//video/title')[0].text
+	if (plus_only == 'true'):
+		title = 'HuluPlus - %s' % title
 
 	try:
 		show_title = details.xpath('//video/show/name')[0].text
@@ -46,7 +42,7 @@ def MetadataObjectForURL(url):
 			season = int(season),
 			index = int(episode),
 			originally_available_at = airdate,
-			summary = desc,
+			summary = summary,
 			thumb = thumb
 		)
 	except:
@@ -54,7 +50,7 @@ def MetadataObjectForURL(url):
 			title = title,
 			duration = duration,
 			originally_available_at = airdate,
-			summary = desc,
+			summary = summary,
 			thumb = thumb
 		)
 
