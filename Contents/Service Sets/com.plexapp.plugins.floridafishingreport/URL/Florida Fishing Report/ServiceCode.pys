@@ -1,0 +1,39 @@
+BASE="http://www.floridainsiderfishingreport.com"
+RE_VIDEO = Regex('swfMovie=(.+?)&')
+RE_THUMB = Regex('swfThumb=(.+?)&')
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+	page_content = HTTP.Request(url).content
+	data = HTML.ElementFromString(page_content)
+	title = data.xpath('//h1[@class="page-title"]/text()')
+	thumb_url = BASE+'/'+RE_THUMB.search(page_content).group(1)
+
+	return EpisodeObject(
+		title = title,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-default.png')
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	page_content = HTTP.Request(url).content
+	video_url = RE_VIDEO.search(page_content).group(1)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
