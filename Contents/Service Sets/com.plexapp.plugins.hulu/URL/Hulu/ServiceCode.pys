@@ -1,69 +1,71 @@
-CACHE_INTERVAL = 3600
 HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
+API_URL = 'http://www.hulu.com/api/oembed.json?url=%s'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  api_address = "http://www.hulu.com/api/oembed.json?url="+url
+	json_obj = JSON.ObjectFromURL(API_URL % url, cacheTime=CACHE_1HOUR)
+	eid = json_obj['embed_url'].split('?eid=')[1]
 
-  try:
-    jsonObj = JSON.ObjectFromURL(api_address, cacheTime=CACHE_INTERVAL)
-  except: 
-    jsonObj = JSON.ObjectFromURL(api_address.rsplit('/',1)[0], cacheTime=CACHE_INTERVAL)
+	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR)
 
-  eid = jsonObj['embed_url'].split('embed/')[1].split('/')[0]
+	desc = details.xpath('//video/description')[0].text
 
-  details = XML.ElementFromURL(HULU_ASSETS %eid, cacheTime=CACHE_INTERVAL)
+	try:
+		airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
+	except:
+		airdate = None
 
-  desc = details.xpath('//video/description')[0].text
+	duration =  int(float(details.xpath('//video/duration')[0].text)*1000)
+	thumb = details.xpath('//video/thumbnail-url')[0].text.split('?')[0] + '?size=512x288'
 
-  try:
-    airdate = Datetime.ParseDate(details.xpath('//video/original-premiere-date')[0].text).date()
-  except:
-    airdate = None
+	rating =  float(details.xpath('//video/user-star-rating')[0].text)
+	plusonly =  details.xpath('//video/is-plus-web-only')[0].text
 
-  duration =  int(float(details.xpath('//video/duration')[0].text)*1000)
-  thumb = details.xpath('//video/thumbnail-url')[0].text
+	if (plusonly == 'true'):
+		plustext = "HuluPlus - "
+	else:
+		plustext = ""
 
-  rating =  float(details.xpath('//video/user-star-rating')[0].text)
-  plusonly =  details.xpath('//video/is-plus-web-only')[0].text
-  if (plusonly == 'true'):
-    plustext = "HuluPlus - "
-  else:
-    plustext = ""
-  title =  plustext + details.xpath('//video/title')[0].text
+	title =  plustext + details.xpath('//video/title')[0].text
 
-  try:
-    show_title = details.xpath('//video/show/name')[0].text
-    season = details.xpath('//video/season-number')[0].text
-    episode = details.xpath('//video/episode-number')[0].text
+	try:
+		show_title = details.xpath('//video/show/name')[0].text
+		season = details.xpath('//video/season-number')[0].text
+		episode = details.xpath('//video/episode-number')[0].text
 
-    # Construct a metadata item
-    obj = EpisodeObject(
-      title = title,
-      show = show_title,
-      duration = duration,
-      season = int(season),
-      index = int(episode),
-      originally_available_at = airdate,
-      summary = desc,
-      thumb = thumb
-    )
-  except:
-    obj = MovieObject(
-      title = title,
-      duration = duration,
-      originally_available_at = airdate,
-      summary = desc,
-      thumb = thumb
-    )
-  return obj
+		return EpisodeObject(
+			title = title,
+			show = show_title,
+			duration = duration,
+			season = int(season),
+			index = int(episode),
+			originally_available_at = airdate,
+			summary = desc,
+			thumb = thumb
+		)
+	except:
+		return MovieObject(
+			title = title,
+			duration = duration,
+			originally_available_at = airdate,
+			summary = desc,
+			thumb = thumb
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        parts = [PartObject(key = WebVideoURL(url))],
-        audio_channels = 2
-      )
-    ]
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key = WebVideoURL(url))
+			],
+			audio_channels = 2
+		)
+	]
