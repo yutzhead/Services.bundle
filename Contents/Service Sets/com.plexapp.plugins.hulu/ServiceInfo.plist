@@ -15,6 +15,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>http://(www\.)?hulu.com/watch/[0-9]+</string>
+				<string>http://player.hulu.com/express/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>
