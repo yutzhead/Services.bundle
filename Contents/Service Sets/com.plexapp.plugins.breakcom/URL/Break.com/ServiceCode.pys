@@ -94,8 +94,12 @@ def GetDetails(url):
         id = id_in_url.group('id')
     else:
         page = HTML.ElementFromURL(url)
-        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")[0]
-        id = voting_button.get('contentid')
+        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")
+
+        if len(voting_button) < 1:
+            return None
+
+        id = voting_button[0].get('contentid')
 
     if id != None:
         return XML.ElementFromURL(DETAILS_URL % id)
