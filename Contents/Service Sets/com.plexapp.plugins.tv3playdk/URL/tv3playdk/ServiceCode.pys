@@ -2,6 +2,12 @@ PATH_INFO   = 'http://viastream.viasat.tv/PlayProduct/%s'
 
 ####################################################################################################
 
+def NormalizeURL(url):
+
+    return url
+
+####################################################################################################
+
 def MetadataObjectForURL(url):
     try:
         
@@ -16,11 +22,9 @@ def MetadataObjectForURL(url):
         
         # create video object
         video_obj = VideoClipObject(
-                    title       = title, 
                     summary     = summary, 
                     art         = art,
-                    thumb       = thumb,
-                    duration    = duration, 
+                    thumb       = thumb, 
                     originally_available_at = date)
         
         return video_obj
@@ -32,31 +36,45 @@ def MetadataObjectForURL(url):
 
 def MediaObjectsForURL(url):
      
+    # create and return media obj
+    return [
+        MediaObject(
+          audio_channels = 2,
+          parts = [PartObject(key=Callback(PlayVideo, url = url))]
+        )
+    ]         
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+    
     # get video xml
     xml = GetVideoXML(url)
     video_url = GetVideo(xml)
     
-    # create media obj
-    media_objects = []
+    # create objs
+    oc = ObjectContainer()
+    video_obj = VideoClipObject(key = url) 
     media_obj = MediaObject()
     
     # add pre ad to media
-    if xml.find('AdCalls/preroll') is not None and Client.Platform <> ClientPlatform.iOS:
-        for pre_ad in XML.ElementFromURL(xml.find('AdCalls/preroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
-            media_obj.add(PartObject(key = RTMPVideoURL(url = pre_ad.text)))
+    #if xml.find('AdCalls/preroll') is not None and Client.Platform <> ClientPlatform.iOS:
+    #    for pre_ad in XML.ElementFromURL(xml.find('AdCalls/preroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
+    #        media_obj.add(PartObject(key = url))
         
     # add main video part to media
     media_obj.add(PartObject(key = RTMPVideoURL(url = video_url)))
     
     # add post ad to media
-    if xml.find('AdCalls/postroll') is not None and Client.Platform <> ClientPlatform.iOS:
-       for post_ad in XML.ElementFromURL(xml.find('AdCalls/postroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
-            media_obj.add(PartObject(key = RTMPVideoURL(url = post_ad.text)))
+    #if xml.find('AdCalls/postroll') is not None and Client.Platform <> ClientPlatform.iOS:
+    #   for post_ad in XML.ElementFromURL(xml.find('AdCalls/postroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
+    #        media_obj.add(PartObject(key = RTMPVideoURL(url = post_ad.text)))
      
     # append media to list
-    media_objects.append(media_obj)
+    video_obj.add(media_obj)
+    oc.add(video_obj)
     
-    return media_objects          
+    return oc
 
 ####################################################################################################
 
