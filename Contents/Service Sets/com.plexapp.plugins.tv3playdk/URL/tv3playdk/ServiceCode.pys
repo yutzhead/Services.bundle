@@ -1,0 +1,103 @@
+PATH_INFO   = 'http://viastream.viasat.tv/PlayProduct/%s'
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+    try:
+        
+        # get video xml
+        xml = GetVideoXML(url)
+    
+        # set variables
+        date        = Datetime.ParseDate(xml.findtext('BroadcastDate'))
+        summary     = xml.findtext('LongDescription')
+        art         = GetThumb(xml, 'PlayImage')
+        thumb       = GetThumb(xml)
+        
+        # create video object
+        video_obj = VideoClipObject(
+                    title       = title, 
+                    summary     = summary, 
+                    art         = art,
+                    thumb       = thumb,
+                    duration    = duration, 
+                    originally_available_at = date)
+        
+        return video_obj
+
+    except:
+        Log.Exception("An error occurred while attempting to retrieve the required meta data.")
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+     
+    # get video xml
+    xml = GetVideoXML(url)
+    video_url = GetVideo(xml)
+    
+    # create media obj
+    media_objects = []
+    media_obj = MediaObject()
+    
+    # add pre ad to media
+    if xml.find('AdCalls/preroll') is not None and Client.Platform <> ClientPlatform.iOS:
+        for pre_ad in XML.ElementFromURL(xml.find('AdCalls/preroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
+            media_obj.add(PartObject(key = RTMPVideoURL(url = pre_ad.text)))
+        
+    # add main video part to media
+    media_obj.add(PartObject(key = RTMPVideoURL(url = video_url)))
+    
+    # add post ad to media
+    if xml.find('AdCalls/postroll') is not None and Client.Platform <> ClientPlatform.iOS:
+       for post_ad in XML.ElementFromURL(xml.find('AdCalls/postroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
+            media_obj.add(PartObject(key = RTMPVideoURL(url = post_ad.text)))
+     
+    # append media to list
+    media_objects.append(media_obj)
+    
+    return media_objects          
+
+####################################################################################################
+
+def GetVideoXML(url):
+    
+    # find id
+    href = url.split('/')
+    id = href[len(href) - 2]
+    
+    try:
+        xml = XML.ElementFromURL(PATH_INFO % id)
+        return xml.xpath('//Product')[0]
+    except:
+        xml = XML.ElementFromURL('http://viastream.player.mtgnewmedia.se/xml/xmltoplayer.php?type=Products&category=' + id)
+        return False
+
+####################################################################################################
+
+def GetVideo(xml):
+    
+    url = ''
+    
+    node = xml.find('Videos/Video')
+    url = node.findtext('Url')
+    
+    new_xml = XML.ElementFromURL(url).xpath('//GeoLock')[0]
+    url = new_xml.findtext('Url')
+    
+    return url;
+
+####################################################################################################
+
+def GetThumb(xml, type='Boxart_small'):
+    
+    url = ''
+    
+    for node in xml.findall('Images/ImageMedia'):
+        if node.findtext('Usage') == type:
+            url = node.findtext('Url')
+            break
+    
+    return url;
+
+####################################################################################################
