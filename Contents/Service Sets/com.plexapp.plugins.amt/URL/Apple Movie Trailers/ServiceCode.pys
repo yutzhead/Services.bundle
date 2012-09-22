@@ -1,4 +1,4 @@
-HTTP_HEADERS = {'User-Agent':'iTunes/10.6.3'}
+HTTP_HEADERS = {'User-Agent':'iTunes/10.7'}
 AMT_VIDEOS_NS = {'a':'http://www.apple.com/itms/'}
 AMT_WEB_PLAYLIST = 'http://trailers.apple.com/%s/includes/playlists/web.inc'
 
