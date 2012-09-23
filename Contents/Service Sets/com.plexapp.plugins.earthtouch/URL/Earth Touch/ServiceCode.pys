@@ -66,7 +66,6 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-@indirect
 def PlayVideo(url, format=None):
 
 	series = SHOWS + url.split('/')[4] + "/mrss"
@@ -75,30 +74,6 @@ def PlayVideo(url, format=None):
 	if len(item_node) < 1:
 		return None
 
-	if not 'vimeo.com' in vimeo_link:
-		try:
-			HTTP.Request(vimeo_link, follow_redirects=False).headers
-		except Ex.RedirectError, e:
-			vimeo_link = e.location
-
-	vimeo_link = VIMEO % vimeo_link.split('external/')[1]
-	vimeo_link = vimeo_link.split('.hd.mp4')[0]
-
-	metadata = URLService.MetadataObjectForURL(vimeo_link)
-
-	if metadata is not None:
-		media = URLService.MediaObjectsForURL(vimeo_link)
-
-	else:
-		iframe = HTML.ElementFromURL(url).xpath('//iframe[contains(@src, "vimeo.com")]')
-
-		if iframe:
-			embed_url = iframe[0].get('src')
-			media = URLService.MediaObjectsForURL('%s#referer=%s' % (embed_url, String.Quote(url)))
-		else:
-			raise Ex.MediaNotAvailable
-
-	if format == "hd":
-		return Redirect(media[0].parts[0].key)
-	else:
-		return Redirect(media[1].parts[0].key)
+	video_link = item_node.xpath('./enclosure')[0].get('url')
+	video_link = video_link.replace('format=hd', 'format=%s' % format)
+	return Redirect(video_link)
