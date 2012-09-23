@@ -66,14 +66,16 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, format=None):
+@indirect
+def PlayVideo(url, format='hd'):
 
 	series = SHOWS + url.split('/')[4] + "/mrss"
 	item_node = XML.ElementFromURL(series).xpath('//item/category[@domain="%s"]/parent::item' % url)
 
 	if len(item_node) < 1:
-		return None
+		raise Ex.MediaNotAvailable
 
 	video_link = item_node[0].xpath('./enclosure')[0].get('url')
 	video_link = video_link.replace('format=hd', 'format=%s' % format)
-	return Redirect(video_link)
+
+	return IndirectResponse(VideoClipObject, key=video_link)
