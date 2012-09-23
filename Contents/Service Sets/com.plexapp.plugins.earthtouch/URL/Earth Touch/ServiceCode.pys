@@ -74,6 +74,6 @@ def PlayVideo(url, format=None):
 	if len(item_node) < 1:
 		return None
 
-	video_link = item_node.xpath('./enclosure')[0].get('url')
+	video_link = item_node[0].xpath('./enclosure')[0].get('url')
 	video_link = video_link.replace('format=hd', 'format=%s' % format)
 	return Redirect(video_link)
