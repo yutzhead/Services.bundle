@@ -15,12 +15,14 @@ def MetadataObjectForURL(url):
 
     # set variables
     date    = Datetime.ParseDate(xml.findtext('BroadcastDate'))
+    title   = xml.findtext('Title')
     summary = xml.findtext('LongDescription')
     art     = GetThumb(xml, 'PlayImage')
     thumb   = GetThumb(xml)
 
     # create video object
     return VideoClipObject(
+        title       = title,
         summary     = summary,
         art         = art,
         thumb       = thumb,
