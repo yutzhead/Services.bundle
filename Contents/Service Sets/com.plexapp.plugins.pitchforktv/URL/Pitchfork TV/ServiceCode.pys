@@ -49,7 +49,7 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         container = Container.MP4,
-        video_resolution = '540',
+        video_resolution = 540,
         optimized_for_streaming = True,
         audio_channels = 2,
         parts = [PartObject(key=Callback(PlayVideo, url = url))]
@@ -57,6 +57,7 @@ def MediaObjectsForURL(url):
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
     page_content = HTTP.Request(url).content
@@ -90,4 +91,4 @@ def PlayVideo(url):
     stream_json = stream_json.decode('unicode_escape')[2:]
     stream_details = JSON.ObjectFromString(stream_json)
 
-    return Redirect(stream_details[0]['ipad_url'])
+    return IndirectResponse(VideoClipObject, key=stream_details[0]['ipad_url'])
