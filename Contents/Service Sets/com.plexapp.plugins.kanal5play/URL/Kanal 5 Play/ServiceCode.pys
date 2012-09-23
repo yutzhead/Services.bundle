@@ -12,11 +12,11 @@ def MetadataObjectForURL(url):
 	data = HTML.ElementFromURL(url)
 
 	episode_title = data.xpath('//h2[@class="title"]')[0].text
-	show_title = data.xpath('//h1[@class="header"]/a')[0].text
+	show_title = data.xpath('//h1')[0].text
 	episode_summary = data.xpath('//p[@class="description"]')[0].text.strip()
 	episode_duration = int(data.xpath('//div[@class="summary"]//div[@class="text"]')[1].text.split(' ')[0])*60*1000
 	episode_thumb = data.xpath('//img[@class="poster"]')[0].get('src').rsplit('=s',1)[0]
-	season_episode = data.xpath('//div[@class="sub-header"]')[0].text_content().strip()
+	season_episode = data.xpath('//div[@class="rider"]')[0].text_content().strip()
 	season_index = RE_SE_INDEX.search(season_episode).group(1)
 	episode_index = RE_EP_INDEX.search(season_episode).group(1)
 
