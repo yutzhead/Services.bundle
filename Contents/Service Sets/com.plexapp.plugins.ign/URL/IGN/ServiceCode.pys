@@ -11,6 +11,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	video_page_url = VideoPageURL(url)
+	if not video_page_url:
+		return None
+
 	data = HTML.ElementFromURL(url)
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
 	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')[0]
@@ -40,8 +44,8 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=5000000))],
 			container = 'mp4',
-			video_resolution = '720',
-			aspect_ratio = '1.77',
+			video_resolution = 720,
+			aspect_ratio = 1.77,
 			bitrate = 5000,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -51,8 +55,8 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=3000000))],
 			container = 'mp4',
-			video_resolution = '540',
-			aspect_ratio = '1.77',
+			video_resolution = 540,
+			aspect_ratio = 1.77,
 			bitrate = 3000,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -62,8 +66,8 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1700000))],
 			container = 'mp4',
-			video_resolution = '360',
-			aspect_ratio = '1.77',
+			video_resolution = 360,
+			aspect_ratio = 1.77,
 			bitrate = 1700,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -73,8 +77,8 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1200000))],
 			container = 'mp4',
-			video_resolution = '360',
-			aspect_ratio = '1.77',
+			video_resolution = 360,
+			aspect_ratio = 1.77,
 			bitrate = 1200,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -84,8 +88,8 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=500000))],
 			container = 'mp4',
-			video_resolution = '360',
-			aspect_ratio = '1.77',
+			video_resolution = 360,
+			aspect_ratio = 1.77,
 			bitrate = 500,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -95,16 +99,29 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url, bitrate):
+def VideoPageURL(url):
 
 	page = HTTP.Request(url).content
 	flashvars = HTML.ElementFromString(page).xpath('//param[@name="flashvars"]')
 
 	if len(flashvars) >= 1:
 		video_page_url = flashvars[0].get('value').split('url=',1)[1]
+		return video_page_url
 	else:
-		video_page_url = RE_FLASHVARS_URL.search(page).group(1)
+		video_page_url = RE_FLASHVARS_URL.search(page)
+
+		if video_page_url:
+			return video_page_url.group(1)
+
+	return None
+
+####################################################################################################
+@indirect
+def PlayVideo(url, bitrate):
+
+	video_page_url = VideoPageURL(url)
+	if not video_page_url:
+		return None
 
 	data = JSON.ObjectFromURL(CONFIG_URL % (video_page_url, String.Quote(video_page_url, usePlus=False)))
 	media_url = data['playlist']['media']['url']
