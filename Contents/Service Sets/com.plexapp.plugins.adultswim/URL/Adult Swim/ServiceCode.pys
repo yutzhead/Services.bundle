@@ -115,7 +115,16 @@ def PlayVideo(url):
 def GetDetails(url):
 
 	data = HTML.ElementFromURL(url)
-	id = data.xpath('//link[@rel="video_src"]')[0].get('href').split('id=')[1]
+	title = data.xpath('//title')[0].text
+	video_src = data.xpath('//link[@rel="video_src"]')
+
+	if len(video_src) < 1:
+		if 'Gold Episodes' in title:
+			raise Ex.MediaNotAuthorized
+		else:
+			raise Ex.MediaNotAvailable
+
+	id = video_src[0].get('href').split('id=')[1]
 	details = XML.ElementFromURL(DETAIL_URL % id)
 
 	if details.xpath('//episodes[@totalItems]')[0].get('totalItems') == '0':
