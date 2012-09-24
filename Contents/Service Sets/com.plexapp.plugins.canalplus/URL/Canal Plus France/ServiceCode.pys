@@ -78,7 +78,7 @@ def PlayVideo(url, quality):
 		raise Ex.MediaNotAvailable
 
 	if video_url.startswith('rtmp'):
-		rtmp_params = RE_RTMP_PARAMS.search(rtmp_url).groupdict()
+		rtmp_params = RE_RTMP_PARAMS.search(video_url).groupdict()
 		player = rtmp_params['player']
 		playpath = rtmp_params['playpath']
 
