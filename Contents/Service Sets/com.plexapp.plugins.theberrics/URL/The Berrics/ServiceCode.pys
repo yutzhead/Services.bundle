@@ -7,10 +7,14 @@ def MetadataObjectForURL(url):
     page = HTML.ElementFromURL(url)
 
     # Get a description from the main page.
-    description = page.xpath("//div[@class='text-item']/text()")[0].strip()
+    description = page.xpath("//div[@class='text-item']/text()")
+    if len(description) < 1:
+        summary = None
+    else:
+        summary = description[0].strip()
 
     # Extract the configuration of the player, to determine the id of the associated content
-    config_json = page.xpath("//div[@class='video-file']/div")[0].get('media_file')
+    config_json = page.xpath("//div[@media_file]")[0].get('media_file')
     config = JSON.ObjectFromString(config_json)
     id = config['MediaFile']['id']
 
@@ -22,7 +26,7 @@ def MetadataObjectForURL(url):
 
     return VideoClipObject(
         title = title,
-        summary = description,
+        summary = summary,
         thumb = thumb,
         originally_available_at = date
     )
