@@ -15,49 +15,29 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	vc = VideoClipObject()
+	
+	# LIVE TV
+	if re.search('http://(.+\.)?dr.dk/TV/live/.+', url):
+		slug = url.rsplit('/',1)[1]
+		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='TV'&Slug='%s'" % slug)
+		vc.title = drMeta['Data'][0]['Title']
+		vc.summary = drMeta['Data'][0]['Description']
 
-	### Live TV
-	if re.search('http://.*dr.dk/nu/live#/.+', url):
-		jsonDrLive = JSON.ObjectFromString(HTTP.Request(jsDrLive).content.split("'liveStreams':")[1].split("};")[0])
-		jsonNowNext = JSON.ObjectFromURL(apiBaseURL % 'nownext')
-
-		for channels in jsonNowNext['channels']:
-			if channels['channel'] == url.rsplit("#/")[1]:
-				if channels['current'] is not None:
-					vc.title = channels['current']['channelName']
-					vc.original_title = channels['current']['programTitle']
-					vc.summary = channels['current']['description']
-					if channels['current']['punchline'] is not None:
-						vc.tagline = channels['current']['punchline']
-				break
-
+	
+	# ON-Demand TV
+	elif re.search('http://(.+\.)?dr.dk/TV/se/.*/.+',url):
+		slug = url.split('/')[6].rsplit('#',1)[0]
+		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/ProgramCard?Slug='%s'" % slug)
+		vc.title = drMeta['Data'][0]['Title']
+		vc.summary = drMeta['Data'][0]['Description']
+		
 	## Live Radio
 	elif re.search('http://.*.dr.dk/radio/player/\?[^i][^d].*', url):
-		jsonDrLive = JSON.ObjectFromURL(jsDrRadioLive)
-		for channel in jsonDrLive:
-			if String.Encode(channel['source_url']) == String.Encode(url.rsplit('/?', 1)[1]):
-				vc = VideoClipObject(title=channel['title'], url="http://www.dr.dk/radio/player/?" + String.Encode(channel['source_url']))
-				break
-
-	## TV Ondemand
-	elif re.search('http://.*dr.dk/nu/player/#/.*/.+|http://.*.dr.dk/.+/#/\d+', url):
-		id = url.rsplit('/',1)[1]
-		jsonDrOD = JSON.ObjectFromURL(apiBaseURL % 'videos/' + id)
-		vc.duration =( (int(jsonDrOD['duration'].rsplit(':')[0])*360) +(int(jsonDrOD['duration'].rsplit(':')[1])*60)+(int(jsonDrOD['duration'].rsplit(':')[2]))) * 1000
-		vc.title = jsonDrOD['title']
-		vc.source_title = jsonDrOD['broadcastChannel']
-
-		if 'broadcastTime' in jsonDrOD:
-			if 'Date(' in jsonDrOD['broadcastTime']:
-				timestamp = float( jsonDrOD['broadcastTime'].split('(')[1].split('+')[0] ) / 1000
-				vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
-			else:
-				vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
-
-		vc.summary = jsonDrOD['description']
-		vc.thumb = apiBaseURL % 'videos/'+id+'/images/512x512.jpg'
-
-	##Radio On demand from Weburl
+		slug = url.rsplit('?',1)[1]
+		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='RADIO'&SourceUrl=$eq('dr.dk/mas/whatson/channel/%s')" % slug)
+		vc.title = drMeta['Data'][0]['Title']
+		vc.summary = drMeta['Data'][0]['Description']
+#	 ON_DEMAND RADIO
 	elif re.search('http://.*.dr.dk/radio/player/\?[i][d]/\d+',url):
 		id = url.rsplit('/',1)[1]
 		jsonDrOD = JSON.ObjectFromURL(apiBaseRadioWebURL % 'MediaItem/' + id)
@@ -71,37 +51,36 @@ def MetadataObjectForURL(url):
 				vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
 			else:
 				vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
-
-		vc.summary = jsonDrOD['description']
-
 	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
 	mol = []
-
-	## Live TV
-	if re.search('http://.*dr.dk/nu/live#/.+', url):
-		jsonDrLive = JSON.ObjectFromString(HTTP.Request(jsDrLive).content.split("'liveStreams':")[1].split("};")[0])
-
-		for livestream in jsonDrLive:
-			if url.rsplit('/', 1)[1] == livestream['channelName']:
-
-				for mediafiles in livestream['mediaFiles']:
-					if bwInt[Prefs['quality']] >= mediafiles['kbps']:
-						if isinstance(mediafiles['mediaFile'], list):
-
-							for mediafile in mediafiles['mediaFile']:
-								mo = MediaObject(bitrate=mediafiles['kbps'], parts=[PartObject(key=RTMPVideoURL(mediafile.rsplit('/', 1)[0], clip=mediafile.rsplit('/', 1)[1], width=830, height=467, live=True))])
-								mol.append(mo)
-
-						elif isinstance(mediafiles['mediaFile'], basestring):
-							mediafile = mediafiles['mediaFile']
-							mo = MediaObject(bitrate=mediafiles['kbps'], parts=[PartObject(key=RTMPVideoURL(mediafile.rsplit('/', 1)[0], clip=mediafile.rsplit('/', 1)[1], width=830, height=467, live=True))])
-							mol.append(mo)
-				break
-
+	# LIVE TV
+	if re.search('http://(.+\.)?dr.dk/TV/live/.+', url):
+		slug = url.rsplit('/',1)[1]
+		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='TV'&Slug='%s'" % slug)
+		for streamingservers in drMeta['Data'][0]['StreamingServers']:
+			if(streamingservers['LinkType'] == "Streaming"):
+				for qualities in streamingservers['Qualities']:
+					for streams in qualities['Streams']:
+						mol.append(MediaObject(bitrate=qualities['Kbps'], parts=[PartObject(key=RTMPVideoURL(streamingservers['Server'], clip = streams['Stream'], width=None,height=None, live=True))]))
+	# ON-DEMAND TV
+	elif re.search('http://(.+\.)?dr.dk/TV/se/.*/.+',url):
+		slug = url.split('/')[6].rsplit('#',1)[0]
+		
+		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/ProgramCard?Slug='%s'" % slug)
+		for assets in drMeta['Data'][0]['Assets']:
+			if assets['Kind'] == "VideoResource":
+				drResource = JSON.ObjectFromURL(assets['Uri'])
+				for links in drResource['links']:
+					if links['fileType'] == 'mp4':
+						mo = MediaObject(bitrate = links['bitrateKbps'], parts = [PartObject(key = RTMPVideoURL(links['uri'].split('mp4:')[0], clip = 'mp4:' +  links['uri'].split('mp4:')[1], width = None if 'width' not in links else links['width'], height = None if 'height' not in links else links['height'], live = False) )])
+					elif links['fileType'] == 'wmv':
+						mo = MediaObject(bitrate = links['bitrateKbps'], parts = [PartObject(key = WindowsMediaVideoURL(links['uri'], width=None if 'width' not in links else links['width'], height=None if 'height' not in links else links['height']))])
+					mol.append(mo)
+					
 	## Live Radio
 	elif re.search("http://.*.dr.dk/radio/player/\?[^i][^d].*", url):
 		jsonDrLive = JSON.ObjectFromURL(jsDrRadioLive)
@@ -117,38 +96,9 @@ def MediaObjectsForURL(url):
 				elif isinstance(livestream['mediaFile'], basestring):
 					mo = MediaObject(parts=[PartObject(key=RTMPVideoURL(livestream['mediafile'].rsplit('/', 1)[0], clip=livestream['mediafile'].rsplit('/', 1)[1], height=None, width=None, live=True))])
 					mol.append(mo)
-				break
-
-	## On-Demand Video
-	elif re.search('http://.*dr.dk/nu/player/#/.*/.+|http://.*.dr.dk/.+/#/\d+', url):
-		mol = ondemandVideo(url)
-
-	## On-Demand Radio from URL
-	elif re.search('http://.*.dr.dk/radio/player/\?[i][d]/\d+',url):
-		mol = ondemandRadioFromURL(url)
-
+				break		
 	return mol
 
-####################################################################################################
-@deferred
-def ondemandVideo(url):
-
-	mol = []
-	jsonDrOD = JSON.ObjectFromURL(apiBaseURL % 'videos/' + url.rsplit('/', 1)[1])
-
-	try:	
-		jsonMedia =  JSON.ObjectFromURL(jsonDrOD['videoResourceUrl'])
-
-		for links in jsonMedia['links']:
-			if links['fileType'] == 'mp4':
-				mo = MediaObject(parts = [PartObject(key = RTMPVideoURL(links['uri'].split('mp4:')[0], clip = 'mp4:' +  links['uri'].split('mp4:')[1], width = None if 'width' not in links else links['width'], height = None if 'height' not in links else links['height'], live = False) )])
-			elif links['fileType'] == 'wmv':
-				mo = MediaObject(parts = [PartObject(key = WindowsMediaVideoURL(links['uri'], width=None if 'width' not in links else links['width'], height=None if 'height' not in links else links['height']))])
-			mol.append(mo)
-	except:
-		mol.append(MediaObject(parts = [PartObject(key = jsonDrOD['videoManifestUrl'] )]))
-
-	return mol
 
 ####################################################################################################
 @deferred

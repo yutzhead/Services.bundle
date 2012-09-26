@@ -8,14 +8,13 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.dr.dk/nu/live#/DR1</string>
+				<string>http://www.dr.dk/TV/live/dr1</string>
 				<string>http://www.dr.dk/radio/player/?P1D</string>
 				<string>http://www.dr.dk/nu/player/#/barda/37</string>
-				<string>http://www.dr.dk/radio/player/?id/2837</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?dr.dk/nu/live#/.+|http://(.+\.)?dr.dk/radio/player/\?.+|http://(.+\.)?dr.dk/nu/player/#/.*/.+|http://(.+\.)?dr.dk/radio/player/\?[i][d]/\d+</string>
+				<string>http://(.+\.)?dr.dk/TV/live/.+|http://(.+\.)?dr.dk/radio/player/\?.+|http://(.+\.)?dr.dk/TV/se/.*/.+|http://(.+\.)?dr.dk/radio/player/\?[i][d]/\d+</string>
 			</array>
 		</dict>
 	</dict>
