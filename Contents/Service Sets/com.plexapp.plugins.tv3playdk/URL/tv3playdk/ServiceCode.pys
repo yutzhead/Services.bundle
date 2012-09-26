@@ -12,6 +12,8 @@ def MetadataObjectForURL(url):
 
     # get video xml
     xml = GetVideoXML(url)
+    if xml is None:
+        return None
 
     # set variables
     date    = Datetime.ParseDate(xml.findtext('BroadcastDate'))
@@ -47,6 +49,9 @@ def PlayVideo(url):
 
     # get video xml
     xml = GetVideoXML(url)
+    if xml is None:
+        return None
+
     video_url = GetVideo(xml)
 
     # create objs
@@ -82,9 +87,15 @@ def GetVideoXML(url):
 
     try:
         xml = XML.ElementFromURL(PATH_INFO % id)
-        return xml.xpath('//Product')[0]
     except:
-        xml = XML.ElementFromURL('http://viastream.player.mtgnewmedia.se/xml/xmltoplayer.php?type=Products&category=' + id)
+        try:
+            xml = XML.ElementFromURL('http://viastream.player.mtgnewmedia.se/xml/xmltoplayer.php?type=Products&category=' + id)
+        except:
+            return None
+
+    if len(xml.xpath('//Product')) < 1:
+        return None
+    else:
         return xml.xpath('//Product')[0]
 
 ####################################################################################################
