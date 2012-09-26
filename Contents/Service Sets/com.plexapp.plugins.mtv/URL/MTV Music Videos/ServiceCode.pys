@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 	date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
 
 	try:
-		thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+		thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').split('?')[0]
 	except:
 		try:
 			thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
