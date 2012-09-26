@@ -20,7 +20,14 @@ def MetadataObjectForURL(url):
 	video_title = data.xpath('//meta[@name="mtvn_title"]')[0].get('content')
 	title = '%s - %s' % (artist, video_title)
 	date = Datetime.ParseDate(data.xpath('//meta[@name="mtvn_date"]')[0].get('content')).date()
-	thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
+
+	try:
+		thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+	except:
+		try:
+			thumb = data.xpath('//meta[@name="thumbnail"]')[0].get('content')
+		except:
+			thumb = ''
 
 	vc = VideoClipObject(
 		title = title,
