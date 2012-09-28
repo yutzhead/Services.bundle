@@ -137,7 +137,7 @@ def MetadataObjectForURL(url):
 			doc = HTML.ElementFromString(req.content)
 
 			# HTML5 Video
-			videos = doc.xpath('//video')
+			videos = doc.xpath('//video[@src and not(@src="")]|//video/source/parent::video')
 
 			if len(videos) > 0:
 				Log.Debug(' --> [Metadata] Found an HTML5 video')
@@ -208,7 +208,7 @@ def MediaObjectsForURL(url):
 			doc = HTML.ElementFromString(req.content)
 
 			# HTML5 Video
-			videos = doc.xpath('//video')
+			videos = doc.xpath('//video[@src and not(@src="")]|//video/source/parent::video')
 
 			if len(videos) > 0:
 				Log.Debug(' --> [Media] Found an HTML5 video')
