@@ -8,7 +8,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    content = HTTP.Request(url).content
+    content = HTTP.Request(url, encoding='latin1').content
     data = HTML.ElementFromString(content)
 
     # Extract the available information from the page
