@@ -1,5 +1,10 @@
 OG_NAMESPACE = {'og':'http://www.w3.org/1999/xhtml'}
+NAMESPACES = {"media":"http://search.yahoo.com/mrss/", "mtvn":"http://media.mtvnservices.com/scheme/mtvn", "mediaad":"http://blip.tv/mediaad"}
+
 RE_DATE = Regex('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+
+MRSS_URL = 'http://shadow.comedycentral.com/feeds/video_player/mrss/?uri=%s'
+MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -53,20 +58,199 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-	return [
-		MediaObject(
-			parts = [PartObject(key = Callback(PlayVideo, url=url))],
-			protocol = 'webkit'
-		)
-	]
+	if '/full-episodes/' in url:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3))
+					],
+				bitrate = 3500,
+				container = Container.MP4,
+				video_resolution = '720',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3))
+					],
+				bitrate = 2200,
+				container = Container.MP4,
+				video_resolution = '540',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3))
+					],
+				bitrate = 1700,
+				container = Container.MP4,
+				video_resolution = '432',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+				),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3))
+					],
+				bitrate = 1200,
+				container = Container.MP4,
+				video_resolution = '360',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3))
+					],
+				bitrate = 750,
+				container = Container.MP4,
+				video_resolution = '288',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=3))
+					],
+				bitrate = 450,
+				container = Container.MP4,
+				video_resolution = '252',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
+	else:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
+					],
+				bitrate = 3500,
+				container = Container.MP4,
+				video_resolution = '720',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
+					],
+				bitrate = 2200,
+				container = Container.MP4,
+				video_resolution = '540',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
+					],
+				bitrate = 1700,
+				container = Container.MP4,
+				video_resolution = '432',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+				),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
+					],
+				bitrate = 1200,
+				container = Container.MP4,
+				video_resolution = '360',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
+					],
+				bitrate = 750,
+				container = Container.MP4,
+				video_resolution = '288',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0))
+					],
+				bitrate = 450,
+				container = Container.MP4,
+				video_resolution = '252',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url):
+def PlayVideo(url, bitrate, index):
+	BITRATES = ['200', '450', '750', '1200', '1700', '2200', '3500']
 
-	content = HTML.ElementFromURL(url)
-	video_id = content.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
-	flashlink = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.1.12.1.swf?uri=%s&autoPlay=true' % video_id
+	data = HTML.ElementFromURL(url)
+	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 
-	return IndirectResponse(VideoClipObject, key=WebVideoURL(flashlink))
+	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
+
+	player_data = XML.ElementFromURL(player_url)
+	try:
+		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
+	except:
+		rtmp_url = ''
+		index = BITRATES.index(bitrate)
+		while index > -1:
+			try:
+				rtmp_url = player_data.xpath('//rendition/src')[index].text
+				break
+			except:
+				index = index - 1
+
+	stream_url = rtmp_url.split('/viacomccstrm/')[1]
+	mp4_url = MP4_URL % stream_url
+
+	return Redirect(mp4_url)
