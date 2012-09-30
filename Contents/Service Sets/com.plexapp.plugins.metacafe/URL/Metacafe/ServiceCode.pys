@@ -4,10 +4,12 @@ RE_RANK = Regex('&rank=(?P<rank>[^&]*)')
 RE_DURATION = Regex('&duration=(?P<duration>[^&]*)')
 RE_MEDIA = Regex('mediaData=(?P<media>[^&]+)')
 
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
+
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	title = page.xpath('//meta[@property="og:title"]')[0].get('content')
 	summary = page.xpath('//meta[@property="og:description"]')[0].get('content')
@@ -56,9 +58,10 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
-	page = HTML.ElementFromURL(url, cacheTime=0)
+	page = HTML.ElementFromURL(url, cacheTime=0, headers=HTTP_HEADERS)
 
 	flash_vars_encoded = page.xpath('//object/param[@id="flashVars"]')[0].get('value')
 	flash_vars = String.Unquote(flash_vars_encoded)
@@ -75,4 +78,4 @@ def PlayVideo(url, res):
 		video_url = media['flv']['mediaURL']
 		key = media['flv']['access'][0]['value']
 
-	return Redirect(VIDEO_URL % (video_url.replace(' ', '%20'), key))
+	return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
