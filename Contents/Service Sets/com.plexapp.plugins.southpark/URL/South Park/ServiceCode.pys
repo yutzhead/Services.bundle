@@ -5,7 +5,7 @@ RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
 MRSS_URL = 'http://www.southparkstudios.com/feeds/video-player/mrss/mgid%3Acms%3Acontent%3Asouthparkstudios.com%3A'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
-NAMESPACES = {"media":"http://search.yahoo.com/mrss/", "mtvn":"http://media.mtvnservices.com/scheme/mtvn", "mediaad":"http://blip.tv/mediaad"}
+NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 ####################################################################################################
 def NormalizeURL(url):
 

@@ -1,5 +1,4 @@
-OG_NAMESPACE = {'og':'http://www.w3.org/1999/xhtml'}
-NAMESPACES = {"media":"http://search.yahoo.com/mrss/", "mtvn":"http://media.mtvnservices.com/scheme/mtvn", "mediaad":"http://blip.tv/mediaad"}
+NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
 RE_DATE = Regex('[0-9]{4}-[0-9]{2}-[0-9]{2}')
 
@@ -19,7 +18,7 @@ def MetadataObjectForURL(url):
 	try: video_type = data.xpath('//title')[0].text.split(' - ')[4].split('|')[0].strip(' ')
 	except: video_type = data.xpath('//title')[0].text.split(' - ')[3].split('|')[0].strip(' ')
 
-	try: thumb_url = data.xpath('//meta[@property="og:image"]', namespaces=OG_NAMESPACE)[0].get('content')
+	try: thumb_url = data.xpath('//meta[@property="og:image"]')[0].get('content')
 	except: thumb_url = data.xpath('//a[@class="play_arrow "]/img')[0].get('src').split('?')[0]
 
 	if video_type == "Full Episode Video":
@@ -37,7 +36,7 @@ def MetadataObjectForURL(url):
 		)
 
 	elif video_type == "Video Clip":
-		clip_title = data.xpath('//meta[@property="og:title"]', namespaces=OG_NAMESPACE)[0].get('content')
+		clip_title = data.xpath('//meta[@property="og:title"]')[0].get('content')
 		summary = data.xpath('//meta[@name="description"]')[0].get('content')
 		full_title = data.xpath('//title')[0].text
 
