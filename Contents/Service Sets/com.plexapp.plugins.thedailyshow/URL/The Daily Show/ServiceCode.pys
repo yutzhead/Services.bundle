@@ -202,6 +202,10 @@ def PlayVideo(url, bitrate, index):
 
 	content = HTTP.Request(url).content
 	uri = RE_PLAYER.search(content).group('id')
+	uri = uri.strip('.swf')
+	if '/' in uri:
+		uri = uri.split('/')[1]
+	
 	
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
