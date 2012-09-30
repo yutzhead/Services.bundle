@@ -91,7 +91,6 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-@indirect
 def PlayVideo(url, bitrate, index):
 	
 	content = HTTP.Request(url).content
