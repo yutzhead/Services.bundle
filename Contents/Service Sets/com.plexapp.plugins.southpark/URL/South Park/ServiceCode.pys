@@ -93,26 +93,15 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, bitrate, index):
-
-	#content = HTTP.Request(url).content
-	#player_url = RE_PLAYER.search(content)
-
-	#if player_url:
-	#	url = player_url.group(1)
-	#	return Redirect(WebVideoURL(url))
-	#else:
-	#	return None
 	
 	content = HTTP.Request(url).content
 	uri = RE_URI.search(content).group(1)
 
 	mrss_data = XML.ElementFromURL(MRSS_URL + uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
-	Log(player_url)
 	
 	player_data = XML.ElementFromURL(player_url)
 	rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
-	Log(rtmp_url)
 	stream_url = rtmp_url.split('/viacomspstrm/')[1]
 	mp4_url = MP4_URL % stream_url
 	
