@@ -105,7 +105,12 @@ def PlayVideo(url, bitrate, index):
 		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
 	except:
 		index = BITRATES.index(bitrate)
-		rtmp_url = player_data.xpath('//rendition/src')[index].text
+		while index > -1:
+			try:
+				rtmp_url = player_data.xpath('//rendition/src')[index].text
+				break
+			except:
+				index = index - 1
 	stream_url = rtmp_url.split('/viacomspstrm/')[1]
 	mp4_url = MP4_URL % stream_url
 	
