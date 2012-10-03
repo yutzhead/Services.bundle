@@ -11,10 +11,20 @@ def NormalizeURL(url):
 	if 'player.hulu.com' in url:
 		url = 'http://www.hulu.com/watch/%s' % GetId(url)
 
+	if not '/watch/' in url:
+		try:
+			HTTP.Request(url, follow_redirects=False).headers
+		except Ex.RedirectError, e:
+			if 'Location' in e.headers:
+				return e.headers['Location']
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+	if not '/watch/' in url:
+		return None
 
 	json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), cacheTime=CACHE_1HOUR)
 	eid = json_obj['embed_url'].split('?eid=')[1]
