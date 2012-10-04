@@ -130,6 +130,10 @@ def PlayVideo(url, bitrate, res=None):
             if index == 0:
                 if video_url == '':
                     video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+        
+        if not video_url.startswith('http://'):
+            http_base = smil.xpath('//a:meta[@name="httpBase"]', namespaces=NAMESPACES)[0].get('content')
+            video_url = http_base + video_url
 
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
