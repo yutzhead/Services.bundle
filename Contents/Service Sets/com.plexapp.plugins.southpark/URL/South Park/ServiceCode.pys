@@ -1,6 +1,7 @@
 RE_EP_DATA = Regex('.+Season (?P<season>[0-9]+), Episode (?P<episode>[0-9]+).+')
 RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
 RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
+RE_AMPERSANDS = Regex('&(?!amp;)')
 
 MRSS_URL = 'http://www.southparkstudios.com/feeds/video-player/mrss/mgid%3Acms%3Acontent%3Asouthparkstudios.com%3A'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
@@ -97,7 +98,10 @@ def PlayVideo(url, bitrate, index):
 	content = HTTP.Request(url).content
 	uri = RE_URI.search(content).group(1)
 
-	mrss_data = XML.ElementFromURL(MRSS_URL + uri)
+	mrss_data = HTTP.Request(MRSS_URL + uri).content
+	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
 	
 	player_data = XML.ElementFromURL(player_url)
