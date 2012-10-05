@@ -1,3 +1,5 @@
+NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
+
 YOUTUBE_BASE = 'http://www.youtube.com/watch?v=%s'
 DETAILS_URL  = 'http://api.vevo.com/mobile/v1/video/%s.json?extended=true'
 AUTH_URL     = 'http://videoplayer.vevo.com/VideoService/AuthenticateVideo?isrc=%s'
@@ -131,10 +133,6 @@ def PlayVideo(url, bitrate, res=None):
                 if video_url == '':
                     video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
         
-        if not video_url.startswith('http://'):
-            http_base = smil.xpath('//a:meta[@name="httpBase"]', namespaces=NAMESPACES)[0].get('content')
-            video_url = http_base + video_url
-
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
         try:
@@ -145,6 +143,7 @@ def PlayVideo(url, bitrate, res=None):
                     break
                 except:
                     continue
+                
             return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(hls_url % id))
         except:
             try:
@@ -153,7 +152,7 @@ def PlayVideo(url, bitrate, res=None):
                         smil = XML.ElementFromURL(smil_url % (id, id.lower()))
                     except:
                         continue
-                player = smil.xpath('//a:meta', namespaves=NAMESPACES)[0].get('src')
+                player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('src')
                 while index > -1:
                     try:
                         video_url = smil.xpath('//a:video[@system-bitrate="'+BITRATES[index]+'"]', namespaces=NAMESPACES)[0].get('src')
