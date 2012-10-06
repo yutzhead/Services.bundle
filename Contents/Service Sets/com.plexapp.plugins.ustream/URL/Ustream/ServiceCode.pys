@@ -7,10 +7,7 @@ USTREAM_REC_JSON  = 'http://api.ustream.tv/json/video/%s/getInfo?key=%s'
 USTREAM_RPIN      = 'rpin.020926383682605014'
 USTREAM_RGW_URL   = 'http://rgw.ustream.tv/gateway.php'
 USTREAM_SWF_URL   = 'http://www.ustream.tv/flash/viewer.swf'
-
-RE_RTMP_URL       = Regex('(rtmp\:\/\/[^\x00]+)')
-RE_STREAM_NAME    = Regex('streamName(?:\W+)([^\x00]+)')
-RE_STATUS         = Regex('status(?:\W+)([^\x00]+)')
+USTREAM_SHIM_HOST = 'http://static-cdn1.ustream.tv/swf/live/viewer3:51.swf?vrsl=c:304&amp;ulbr=100'
 
 ####################################################################################################
 
@@ -102,19 +99,26 @@ def PlayVideo(url):
 
 		html = HTML.ElementFromURL(url)
 		video_id = html.xpath('//a[@data-content-id]')[0].get('data-content-id')
-		amf_url = (USTREAM_AMF_URL % video_id)
-		amf_content = HTTP.Request(amf_url).content
-		status = RE_STATUS.search(amf_content).group(1)
+
+		client = AMF.RemotingService(
+			url='http://rgw.ustream.tv/gateway.php',
+			user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_1) AppleWebKit/536.25 (KHTML, like Gecko) Version/6.0 Safari/536.25',
+			amf_version=3
+		)
+		service = client.getService('Viewer')
+		AMF.RegisterClass(GetVideoInfo,'getStream')
+		streamInfoAMF = GetStreamInfo(rpin=USTREAM_RPIN,channel_id=video_id,page_url=url,)
+		stream_info = service.getStream(streamInfoAMF)
+		
+		status = stream_info['status']
 
 		if status != 'offline':
-			rtmp_url = RE_RTMP_URL.search(amf_content).group(1)
-			stream_name = RE_STREAM_NAME.search(amf_content).group(1)
-			if 'flash' in rtmp_url:
-				rtmp_url = rtmp_url + '/' + stream_name
-				swf = None
-			else:
-				swf = USTREAM_SWF_URL
-			return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmp_url, clip=stream_name, swf_url=swf, live=True))
+			stream_name = stream_info['streamName']
+			try:
+				rtmp_url = stream_info['cdnUrl']
+			except:
+				rtmp_url = stream_info['fmsUrl'] + '/' + stream_name
+			return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmp_url, clip=stream_name, swf_url=USTREAM_SWF_URL, live=True))
 		else:
 			Log('Channel at ' + url + ' is currently ' + status + '.')
 			return None
@@ -130,6 +134,21 @@ class GetVideoInfo(object):
 		self.locale = 'en_US'
 		self.brandId = '1'
 
+####################################################################################################
+class GetStreamInfo(object):
+
+	def __init__ (self,rpin,channel_id,page_url):
+		self.locale = 'en_US'
+		self.shimHost = USTREAM_SHIM_HOST
+		self.rpin = rpin
+		self.channelId = channel_id
+		self.pageUrl = page_url
+		self.umsEanbled = 1
+		self.channelCode = channel_id
+		self.autoplay = True
+		self.brandId = 1
+		self.sessionId = 'false'
+		
 ####################################################################################################
 def NormalizeURL(url):
 
