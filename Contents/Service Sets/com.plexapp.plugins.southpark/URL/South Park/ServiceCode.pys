@@ -7,6 +7,7 @@ MRSS_URL = 'http://www.southparkstudios.com/feeds/video-player/mrss/mgid%3Acms%3
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -93,17 +94,21 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, bitrate, index):
-	BITRATES = ['450', '750', '1200']
-	
-	content = HTTP.Request(url).content
-	uri = RE_URI.search(content).group(1)
 
-	mrss_data = HTTP.Request(MRSS_URL + uri).content
+	BITRATES = ['450', '750', '1200']
+
+	content = HTTP.Request(url).content
+	uri = RE_URI.search(content)
+
+	if not uri:
+		raise Ex.MediaNotAvailable
+
+	mrss_data = HTTP.Request(MRSS_URL + uri.group(1)).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
-	
+
 	player_data = XML.ElementFromURL(player_url)
 	try:
 		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
@@ -117,5 +122,5 @@ def PlayVideo(url, bitrate, index):
 				index = index - 1
 	stream_url = rtmp_url.split('/viacomspstrm/')[1]
 	mp4_url = MP4_URL % stream_url
-	
+
 	return Redirect(mp4_url)
