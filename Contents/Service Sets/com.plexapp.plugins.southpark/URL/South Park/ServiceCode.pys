@@ -11,7 +11,7 @@ NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -93,7 +93,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, bitrate, index):
+def PlayVideo(url, bitrate='1200', index=0):
 
 	BITRATES = ['450', '750', '1200']
 

@@ -8,7 +8,7 @@ MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtv
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -57,6 +57,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	if '/full-episodes/' in url:
 		return [
 			MediaObject(
@@ -227,7 +228,8 @@ def MediaObjectsForURL(url):
 		]
 
 ####################################################################################################
-def PlayVideo(url, bitrate, index):
+def PlayVideo(url, bitrate='1700', index=0):
+
 	BITRATES = ['200', '450', '750', '1200', '1700', '2200', '3500']
 
 	data = HTML.ElementFromURL(url)
