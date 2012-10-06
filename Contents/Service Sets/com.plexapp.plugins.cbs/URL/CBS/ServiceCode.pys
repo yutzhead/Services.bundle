@@ -221,8 +221,10 @@ def VideoFromAPI(url, res):
       break
 
   # Return the first match.
-  if not video_url:
-    video_url = video_dict[0]
+  if not video_url and len(video_dict) > 0:
+    video_url = video_dict[video_dict.keys()[0]]
+  else:
+    raise Ex.MediaNotAvailable
 
   return IndirectResponse(VideoClipObject, key=video_url)
 
