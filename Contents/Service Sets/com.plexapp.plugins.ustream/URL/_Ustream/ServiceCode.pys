@@ -13,13 +13,13 @@ RE_RTMP_URL       = Regex('(rtmp\:\/\/[^\x00]+)')
 RE_STREAM_NAME    = Regex('streamName(?:\W+)([^\x00]+)')
 RE_STATUS         = Regex('status(?:\W+)([^\x00]+)')
 
-###############################################################################
+####################################################################################################
 
 # Test live URL for PMS: http://localhost:32400/system/services/url/lookup?url=http%3A//www.ustream.tv/channel/live-iss-stream
 # Test recorded URL for PMS: http://localhost:32400/system/services/url/lookup?url=http%3A//www.ustream.tv/recorded/23088640
 # API: http://api.ustream.tv/[html|json|xml|php]/[subject]/[subjectUID|scope]/[command]/[otherparams]/?page=[n]&limit=[l]&key=[devkey]    
 
-###############################################################################
+####################################################################################################
 def MetadataObjectForURL(url):
 
 	if '/recorded/' in url:
@@ -32,7 +32,7 @@ def MetadataObjectForURL(url):
 		html = HTTP.Request(url=url, cacheTime=3).content
 		video_id = RE_CHANNEL_ID.search(html).group(1)
 		json = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id, USTREAM_KEY))
-	
+
 	video = json['results']
 	clip_url = video['embedTagSourceUrl']
 	title = video['title']
@@ -57,17 +57,17 @@ def MetadataObjectForURL(url):
 			thumb = thumb
 		)
 
-###############################################################################
+####################################################################################################
 def MediaObjectsForURL(url):
 
 	return [
-		 MediaObject(
-				 audio_channels = 2,
-				 parts = [PartObject(key=Callback(PlayVideo, url = url))]
-		 )
+		MediaObject(
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
 	]
  
-###############################################################################
+####################################################################################################
 @indirect
 def PlayVideo(url):
 
@@ -82,7 +82,7 @@ def PlayVideo(url):
 		except Exception, e:
 			if e.headers.has_key('Location'):
 				swf_url = e.headers['Location']
-		
+
 		# Log('videoId : ' + video_id)  
 		# Log('pageUrl : ' + url)
 		# Log('swfUrl  : ' + swf_url)
@@ -105,7 +105,7 @@ def PlayVideo(url):
 		amf_url = (USTREAM_AMF_URL % video_id)
 		amf_content = HTTP.Request(amf_url).content
 		status = RE_STATUS.search(amf_content).group(1)
-		
+
 		if status != 'offline':
 			rtmp_url = RE_RTMP_URL.search(amf_content).group(1)
 			stream_name = RE_STREAM_NAME.search(amf_content).group(1)
