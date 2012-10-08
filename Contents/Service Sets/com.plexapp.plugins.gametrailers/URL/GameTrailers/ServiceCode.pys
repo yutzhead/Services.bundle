@@ -1,4 +1,4 @@
-NAMESPACES = {"media":"http://search.yahoo.com/mrss/", "mediaad":"http://blip.tv/mediaad"}
+NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
 MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
@@ -18,7 +18,7 @@ def MetadataObjectForURL(url):
 	description = video.summary
 	duration = int(float(video.media_content[0]['duration'])*1000)
 	thumb = video.media_thumbnail[0]['url']
-	
+
 	return VideoClipObject(
 		title = title,
 		originally_available_at = Datetime.ParseDate(date).date(),
@@ -29,6 +29,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))],
@@ -95,7 +96,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0):
 
-	BITRATES = ['400', '750', '1200']
+	BITRATES = ['400', '750', '1200', '1700', '2200', '3500']
 
 	uri = GetURI(url)
 
@@ -122,6 +123,8 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 ####################################################################################################
 def GetURI(url):
+
 	data = HTML.ElementFromURL(url)
 	uri = data.xpath('//div[@id="video-player"]')[0].get('data-mgid')
+
 	return uri
