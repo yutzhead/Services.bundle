@@ -1,0 +1,3 @@
+''' API ID and API Secret are expected to be encoded with Plex Framework String.Encode() for obfuscation prior to saving '''
+API_ID = 'RnJlZUNhYmxlLTgxMzQyMmE5LTg0YWMtNDdjYy1iYzVhLTliMDZhY2NlM2I2YQ__' #REPLACE WITH OFFICIAL PLEX PBS_API_KEY
+API_SECRET = 'MDEyYzcxMDgtNWJiNS00YmFlLWI1MWYtMDRkMTIzNGZjZWRk' #REPLACE WITH OFFICIAL PLEX PBS_API_SECRET
