@@ -26,7 +26,12 @@ def MetadataObjectForURL(url):
 	else:
 		# For live channels, look for a video ID in the HTML...
 		html = HTML.ElementFromURL(url)
-		video_id = html.xpath('//a[@data-content-id]')[0].get('data-content-id')
+		content_id = html.xpath('//a[@data-content-id]')
+
+		if len(content_id) < 1:
+			raise Ex.MediaNotAvailable
+
+		video_id = content_id[0].get('data-content-id')
 		json = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id, USTREAM_KEY))
 
 	video = json['results']
@@ -98,7 +103,12 @@ def PlayVideo(url):
 	else:
 
 		html = HTML.ElementFromURL(url)
-		video_id = html.xpath('//a[@data-content-id]')[0].get('data-content-id')
+		content_id = html.xpath('//a[@data-content-id]')
+
+		if len(content_id) < 1:
+			raise Ex.MediaNotAvailable
+
+		video_id = content_id[0].get('data-content-id')
 
 		client = AMF.RemotingService(
 			url='http://rgw.ustream.tv/gateway.php',
