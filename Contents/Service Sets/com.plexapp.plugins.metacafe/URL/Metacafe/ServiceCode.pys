@@ -1,3 +1,5 @@
+import urllib2
+
 API_URL = 'http://www.metacafe.com/api/item/%s/'
 API_NS = {'media':'http://search.yahoo.com/mrss/'}
 VIDEO_URL = '%s?__gda__=%s'
@@ -8,13 +10,10 @@ HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	item_id = RE_ITEM_ID.search(url)
+	data = GetXml(url)
 
-	if item_id is None:
+	if not data:
 		raise Ex.MediaNotAvailable
-
-	video_id = item_id.group('id')
-	data = XML.ElementFromURL(API_URL % video_id).xpath('//item/id[text()="'+video_id+'"]/parent::item')[0]
 
 	title = data.xpath('./media:title', namespaces=API_NS)[0].text
 	summary = data.xpath('./media:description', namespaces=API_NS)[0].text
@@ -45,7 +44,7 @@ def MediaObjectsForURL(url):
 			container = 'mp4',
 			video_resolution = '720',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, res='hd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
 		),
 		MediaObject(
 			video_codec = VideoCodec.H264,
@@ -53,29 +52,88 @@ def MediaObjectsForURL(url):
 			container = 'mp4',
 			video_resolution = 'sd',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, res='sd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
 		)
 	]
+
+####################################################################################################
+def GetXml(url):
+
+	item_id = RE_ITEM_ID.search(url)
+
+	if item_id is None:
+		return None
+
+	video_id = item_id.group('id')
+	data = XML.ElementFromURL(API_URL % video_id, cacheTime=CACHE_1DAY).xpath('//item/id[text()="'+video_id+'"]/parent::item')
+
+	if len(data) < 1:
+		return None
+	else:
+		return data[0]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, res):
 
-	page = HTML.ElementFromURL(url, cacheTime=0, headers=HTTP_HEADERS)
+	data = GetXml(url)
 
-	flash_vars_encoded = page.xpath('//object/param[@id="flashVars"]')[0].get('value')
-	flash_vars = String.Unquote(flash_vars_encoded)
+	if not data:
+		raise Ex.MediaNotAvailable
 
-	media = JSON.ObjectFromString(RE_MEDIA.search(flash_vars).group('media'))
+	player_url = data.xpath('./media:content', namespaces=API_NS)[0].get('url')
 
-	if res == 'hd' and 'highDefinitionMP4' in media:
-		video_url = media['highDefinitionMP4']['mediaURL']
-		key = media['highDefinitionMP4']['access'][0]['value']
-	elif 'MP4' in media:
-		video_url = media['MP4']['mediaURL']
-		key = media['MP4']['access'][0]['value']
+	'''
+	try:
+		req = HTTP.Request(player_url, follow_redirects=False).headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			data = String.Unquote(e.headers['Location'])
+			media = JSON.ObjectFromString(RE_MEDIA.search(data).group('media'))
+
+			if res == 'hd' and 'highDefinitionMP4' in media:
+				video_url = media['highDefinitionMP4']['mediaURL']
+				key = media['highDefinitionMP4']['access'][0]['value']
+			elif 'MP4' in media:
+				video_url = media['MP4']['mediaURL']
+				key = media['MP4']['access'][0]['value']
+			else:
+				video_url = media['flv']['mediaURL']
+				key = media['flv']['access'][0]['value']
+
+			return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
+
+		else:
+			raise Ex.MediaNotAvailable
+	'''
+
+	request = urllib2.Request(player_url, None, HTTP_HEADERS)
+	opener = urllib2.build_opener(SmartRedirectHandler)
+	f = opener.open(request)
+
+	if f.status == 303:
+		data = String.Unquote(f.url)
+		media = JSON.ObjectFromString(RE_MEDIA.search(data).group('media'))
+
+		if res == 'hd' and 'highDefinitionMP4' in media:
+			video_url = media['highDefinitionMP4']['mediaURL']
+			key = media['highDefinitionMP4']['access'][0]['value']
+		elif 'MP4' in media:
+			video_url = media['MP4']['mediaURL']
+			key = media['MP4']['access'][0]['value']
+		else:
+			video_url = media['flv']['mediaURL']
+			key = media['flv']['access'][0]['value']
+
+		return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
+
 	else:
-		video_url = media['flv']['mediaURL']
-		key = media['flv']['access'][0]['value']
+		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
+####################################################################################################
+class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
+
+	def http_error_303(self, req, fp, code, msg, headers):
+		result = urllib2.HTTPRedirectHandler.http_error_303(self, req, fp, code, msg, headers)
+		result.status = code
+		return result
