@@ -1,0 +1,107 @@
+from CoveAPI import connect as PBS
+from SortThumbs import SortThumbs
+from PBS_API import API_ID, API_SECRET
+
+NAMESPACES = {'a':'http://www.w3.org/2001/SMIL20/Language'}
+
+RE_TP_ID    =   Regex('http://video.pbs.org/video/([0-9]+)')
+
+PBS_URL     = 'http://video.pbs.org/'
+
+METADATA    = '/cove/v1/videos/?fields=associated_images&filter_tp_media_object_id=%s'
+VIDEO_FILES = '/cove/v1/videos/?fields=mediafiles&filter_tp_media_object_id=%s'
+    
+def NormalizeURL(url):
+    return url
+
+def MetadataObjectForURL(url):
+    tp_id = RE_TP_ID.search(url).group(1)
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(METADATA % tp_id)['results'][0]
+    thumbs = SortThumbs(video['associated_images'])
+    airdate = Datetime.ParseDate(video['airdate']).date()
+    summary = video['long_description']
+    title = video['title']
+    return  VideoClipObject(
+        title=title,
+        summary=summary,
+        originally_available_at=airdate,
+        thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+    )
+
+def MediaObjectsForURL(url):
+    return [
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, index=2))],
+            container = Container.MP4,
+            video_resolution = 'HD',
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            audio_channels = 2,
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, index=1))],
+            container = Container.MP4,
+            video_resolution = 'SD',
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            audio_channels = 2,
+        ),
+        MediaObject(
+            parts = [PartObject(key=Callback(PlayVideo, url=url, index=0))],
+            container = Container.MP4,
+            video_resolution = 'Lo',
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            optimized_for_streaming = True,
+            audio_channels = 2,
+        )
+        
+    ]
+
+@indirect
+def PlayVideo(url, index):
+    tp_id = RE_TP_ID.search(url).group(1)
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(VIDEO_FILES % tp_id)['results'][0]
+    while index > -1:
+        try:
+            video_url = video['mediafiles'][index]['original_location']
+            break
+        except:
+            index = index -1
+    
+    if not video_url:
+        video_url = video['mediafiles'][0]['original_location']
+    if '.m3u8' in video_url:
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
+    else:
+        return IndirectResponse(VideoClipObject, key=video_url)
+    
+    ### Keeping this code just in case MP4s aren't available for all videos ###
+    '''
+    video_url = video['mediafiles'][-1]['video_data_url']
+    Log(HTTP.Request(video_url + '&format=SMIL').content)
+    smil = XML.ElementFromURL(video_url + '&format=SMIL')
+    base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
+    clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
+    
+    if base.startswith('http'):
+        final_url = base + clip
+        if '.m3u8' in clip:
+            Log('HTTPLiveStreamURL: %s' % final_url)
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
+        else:
+            return IndirectResponse(VideoClipObject, key=final_url)
+    else:
+        clip = 'MP4:' + clip.split('.mp4')[0]
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
+    '''
+    
+def TestURLs():
+    test_urls = []
+    while len(test_urls) < 3:
+        for show in HTML.ElementFromURL(PBS_URL).xpath('//div[@id="most-watched-videos"]//li'):
+            url = show.xpath('.//div/a')[0].get('href')
+            test_urls.append(url)
+    return test_urls

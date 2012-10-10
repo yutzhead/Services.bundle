@@ -1,0 +1,7 @@
+def SortThumbs(thumbs):
+  ''' take a list of JSON thumbnail objects and return a list of urls sorted by descending size'''
+  sorted_thumbs = sorted(thumbs, key = lambda thumb: thumb['type']['height'], reverse=True)
+  thumb_urls = []
+  for thumb in sorted_thumbs:
+    thumb_urls.append(thumb['url'])
+  return thumb_urls[:3]
