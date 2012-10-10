@@ -68,6 +68,7 @@ def PlayVideo(url, index):
             video_url = video['mediafiles'][index]['original_location']
             break
         except:
+            video_url = None
             index = index -1
     
     if not video_url:
