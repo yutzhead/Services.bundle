@@ -22,8 +22,17 @@ def MetadataObjectForURL(url):
 	date = Datetime.ParseDate(date)
 	duration = data.xpath('./media:content', namespaces=API_NS)[0].get('duration')
 	duration = int(duration) * 1000
-	rating = data.xpath('./rank')[0].text
-	rating = float(rating) * 2
+
+	try:
+		rating = data.xpath('./rank')[0].text
+		rating = float(rating) * 2
+	except:
+		rating = None
+
+	try:
+		tags = data.xpath('./media:keywords', namespaces=API_NS)[0].text.split(',')
+	except:
+		tags = []
 
 	return VideoClipObject(
 		title = title,
@@ -31,7 +40,8 @@ def MetadataObjectForURL(url):
 		thumb = thumb,
 		originally_available_at = date,
 		duration = duration,
-		rating = rating
+		rating = rating,
+		tags = tags
 	)
 
 ####################################################################################################
