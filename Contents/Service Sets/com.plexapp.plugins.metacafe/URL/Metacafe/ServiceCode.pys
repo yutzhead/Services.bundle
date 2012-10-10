@@ -1,29 +1,30 @@
+API_URL = 'http://www.metacafe.com/api/item/%s/'
+API_NS = {'media':'http://search.yahoo.com/mrss/'}
 VIDEO_URL = '%s?__gda__=%s'
-
-RE_RANK = Regex('&rank=(?P<rank>[^&]*)')
-RE_DURATION = Regex('&duration=(?P<duration>[^&]*)')
+RE_ITEM_ID = Regex('/watch/(?P<id>\d+)')
 RE_MEDIA = Regex('mediaData=(?P<media>[^&]+)')
-
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
+HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	item_id = RE_ITEM_ID.search(url)
 
-	title = page.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = page.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = page.xpath('//meta[@property="og:image"]')[0].get('content')
-	tags = page.xpath('//dl[@id="Tags"]/dd/a/text()')
-	date = page.xpath('//div[@id="MetaData"]//li/strong[text()="Added :"]/following-sibling::text()')[0].strip()
+	if item_id is None:
+		raise Ex.MediaNotAvailable
+
+	video_id = item_id.group('id')
+	data = XML.ElementFromURL(API_URL % video_id).xpath('//item/id[text()="'+video_id+'"]/parent::item')[0]
+
+	title = data.xpath('./media:title', namespaces=API_NS)[0].text
+	summary = data.xpath('./media:description', namespaces=API_NS)[0].text
+	thumb = data.xpath('./media:thumbnail', namespaces=API_NS)[0].get('url')
+	date = data.xpath('./pubDate')[0].text.split(' ')[0]
 	date = Datetime.ParseDate(date)
-
-	# The flash variables actually contain additional information about the title. We should therefore extract this from here too.
-	flash_vars_encoded = page.xpath('//object/param[@id="flashVars"]')[0].get('value')
-	flash_vars = String.Unquote(flash_vars_encoded)
-
-	rating = float(RE_RANK.search(flash_vars).group('rank'))
-	duration = int(RE_DURATION.search(flash_vars).group('duration')) * 1000
+	duration = data.xpath('./media:content', namespaces=API_NS)[0].get('duration')
+	duration = int(duration) * 1000
+	rating = data.xpath('./rank')[0].text
+	rating = float(rating) * 2
 
 	return VideoClipObject(
 		title = title,
@@ -31,8 +32,7 @@ def MetadataObjectForURL(url):
 		thumb = thumb,
 		originally_available_at = date,
 		duration = duration,
-		rating = rating,
-		tags = tags
+		rating = rating
 	)
 
 ####################################################################################################
@@ -45,7 +45,7 @@ def MediaObjectsForURL(url):
 			container = 'mp4',
 			video_resolution = '720',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, res='hd'))]
 		),
 		MediaObject(
 			video_codec = VideoCodec.H264,
@@ -53,7 +53,7 @@ def MediaObjectsForURL(url):
 			container = 'mp4',
 			video_resolution = 'sd',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, res='sd'))]
 		)
 	]
 
