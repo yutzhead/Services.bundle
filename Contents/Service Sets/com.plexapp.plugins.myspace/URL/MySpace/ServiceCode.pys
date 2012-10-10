@@ -1,50 +1,55 @@
-import re
-
 DETAILS_PAGE = 'http://mediaservices.myspace.com/services/rss.ashx?type=video&videoID=%s'
-NAMESPACES = { 'media': 'http://search.yahoo.com/mrss/', 'myspace': 'http://myspace.com/' }
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
+RE_VIDEO_ID = Regex('/([0-9]+)$')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-    return url.split('#')[0]
+	return url.split('#')[0]
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    # Find the appropriate details page
-    video_id = re.search('/([0-9]+)$', url).group(1)
-    details_page = XML.ElementFromURL(DETAILS_PAGE % video_id)
+	# Find the appropriate details page
+	video_id = RE_VIDEO_ID.search(url).group(1)
+	details_page = XML.ElementFromURL(DETAILS_PAGE % video_id)
 
-    # Extract the available information from the details page.
-    title = details_page.xpath("//item/media:content/media:title/text()", namespaces = NAMESPACES)[0]
-    summary = details_page.xpath("//item/media:content/media:description/text()", namespaces = NAMESPACES)[0]
-    thumb = details_page.xpath("//item/media:still", namespaces = NAMESPACES)[0].get('url')
+	# Check for geoblock (statusCode=4). Other statusCode checks can be added later if necessary.
+	status_code = details_page.xpath('//statusCode')
+	if len(status_code) > 0:
+		if status_code[0].text == '4':
+			raise Ex.MediaGeoblocked
 
-    return VideoClipObject(
-        title = title,
-        summary = summary,
-        thumb = thumb
-    )
+	# Extract the available information from the details page.
+	title = details_page.xpath('//item/media:content/media:title/text()', namespaces=NAMESPACES)[0]
+	summary = details_page.xpath('//item/media:content/media:description/text()', namespaces=NAMESPACES)[0]
+	thumb = details_page.xpath('//item/media:still', namespaces=NAMESPACES)[0].get('url')
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb
+	)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+		)
+	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
-    # Find the appropriate details page
-    video_id = re.search('/([0-9]+)$', url).group(1)
-    details_page = XML.ElementFromURL(DETAILS_PAGE % video_id, cacheTime = 0)
+	# Find the appropriate details page
+	video_id = RE_VIDEO_ID.search(url).group(1)
+	details_page = XML.ElementFromURL(DETAILS_PAGE % video_id, cacheTime=0)
 
-    video_url = details_page.xpath("//item/media:content", namespaces = NAMESPACES)[0].get('url')
-    return Redirect(video_url)
+	video_url = details_page.xpath('//item/media:content', namespaces=NAMESPACES)[0].get('url')
+	IndirectResponse(VideoClipObject, key=video_url)
