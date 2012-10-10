@@ -33,31 +33,30 @@ def MediaObjectsForURL(url):
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, index=2))],
             container = Container.MP4,
-            video_resolution = 'HD',
+            video_resolution = '720',
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             optimized_for_streaming = True,
-            audio_channels = 2,
+            audio_channels = 2
         ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, index=1))],
             container = Container.MP4,
-            video_resolution = 'SD',
+            video_resolution = 'sd',
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             optimized_for_streaming = True,
-            audio_channels = 2,
+            audio_channels = 2
         ),
         MediaObject(
             parts = [PartObject(key=Callback(PlayVideo, url=url, index=0))],
             container = Container.MP4,
-            video_resolution = 'Lo',
+            video_resolution = 'sd',
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             optimized_for_streaming = True,
-            audio_channels = 2,
+            audio_channels = 2
         )
-        
     ]
 
 @indirect
@@ -100,8 +99,12 @@ def PlayVideo(url, index):
     
 def TestURLs():
     test_urls = []
-    while len(test_urls) < 3:
-        for show in HTML.ElementFromURL(PBS_URL).xpath('//div[@id="most-watched-videos"]//li'):
-            url = show.xpath('.//div/a')[0].get('href')
-            test_urls.append(url)
+
+    for show in HTML.ElementFromURL(PBS_URL).xpath('//div[@id="most-watched-videos"]//li'):
+        url = show.xpath('.//div/a')[0].get('href')
+        test_urls.append(url)
+
+        if len(test_urls) == 3:
+            break
+
     return test_urls
