@@ -6,6 +6,8 @@ NAMESPACES = {'a':'http://www.w3.org/2001/SMIL20/Language'}
 
 RE_TP_ID    =   Regex('http://video.pbs.org/video/([0-9]+)')
 
+PBS_URL     = 'http://video.pbs.org/'
+
 METADATA    = '/cove/v1/videos/?fields=associated_images&filter_tp_media_object_id=%s'
 VIDEO_FILES = '/cove/v1/videos/?fields=mediafiles&filter_tp_media_object_id=%s'
     
@@ -70,9 +72,11 @@ def PlayVideo(url, index):
             index = index -1
     
     if not video_url:
-        video_url = video['mediafiles'][-1]['original_location']
-    Log(video_url)
-    return IndirectResponse(VideoClipObject, key=video_url)
+        video_url = video['mediafiles'][0]['original_location']
+    if '.m3u8' in video_url:
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
+    else:
+        return IndirectResponse(VideoClipObject, key=video_url)
     
     ### Keeping this code just in case MP4s aren't available for all videos ###
     '''
@@ -93,3 +97,11 @@ def PlayVideo(url, index):
         clip = 'MP4:' + clip.split('.mp4')[0]
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
     '''
+    
+def TestURLs():
+    test_urls = []
+    while len(test_urls) < 3:
+        for show in HTML.ElementFromURL(PBS_URL).xpath('//div[@id="most-watched-videos"]//li'):
+            url = show.xpath('.//div/a')[0].get('href')
+            test_urls.append(url)
+    return test_urls
