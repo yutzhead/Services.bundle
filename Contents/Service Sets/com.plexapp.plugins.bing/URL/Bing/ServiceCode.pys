@@ -1,93 +1,90 @@
-JSON_URL = 'http://www.bing.com/videos/services/videodata/?callback=jsonp1315225675238&responseEncoding=json&ids=%s&detailed=true&v=2'
+JSON_URL = 'http://www.bing.com/videos/services/videodata/?responseEncoding=json&ids=%s&detailed=true&v=2'
 RE_UUID = Regex("uuid: '([^']+)'")
+
+####################################################################################################
+def NormalizeURL(url):
+
+    return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    # Request the url and determine the uuid associated with the title
-    page_content = HTTP.Request(url).content
-    re_uuid = RE_UUID.search(page_content)
+	# Request the url and determine the uuid associated with the title
+	page_content = HTTP.Request(url).content
+	uuid = RE_UUID.search(page_content)
 
-    if re_uuid:
-        uuid = re_uuid.group(1)
-    else:
-        return None
+	if not uuid:
+		return None
 
-    # Obtain the JSON representation of the title's details
-    json_content = HTTP.Request(JSON_URL % uuid).content
-    start = json_content.find('{')
-    end = json_content.rfind('}') + 1
-    details = JSON.ObjectFromString(json_content[start:end])
+	# Obtain the JSON representation of the title's details
+	json = JSON.ObjectFromURL(JSON_URL % uuid.group(1))
+	video = json['videos'][0]
 
-    # Extract the available information
-    video = details['videos'][0]
-    title = video['title']
-    description = video['description']
-    thumb = video['thumb']
-    duration = int(video['durationSecs']) * 1000
-    date = Datetime.ParseDate(video['startDate'])
+	title = video['title']
+	description = video['description']
+	thumb = video['thumb']
+	duration = int(video['durationSecs']) * 1000
+	date = Datetime.ParseDate(video['startDate'])
 
-    tags = []
-    for tag in video['tags']:
-        tags.append(tag['value'])
+	tags = []
+	for tag in video['tags']:
+		tags.append(tag['value'])
 
-    return VideoClipObject(
-        title = title,
-        summary = description,
-        thumb = thumb,
-        duration = duration,
-        originally_available_at = date,
-        tags = tags
-    )
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+		duration = duration,
+		originally_available_at = date,
+		tags = tags
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 720,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, formatCode = '103'))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 360,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, formatCode = '102'))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 180,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, formatCode = '101'))]
-      )
-    ]
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 720,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, formatCode='103'))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 360,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, formatCode='102'))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 180,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, formatCode='101'))]
+		)
+	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, formatCode):
 
-    # Request the url and determine the uuid associated with the title
-    page_content = HTTP.Request(url).content
-    re_uuid = RE_UUID.search(page_content)
+	# Request the url and determine the uuid associated with the title
+	page_content = HTTP.Request(url).content
+	uuid = RE_UUID.search(page_content)
 
-    if re_uuid:
-        uuid = re_uuid.group(1)
-    else:
-        return None
+	if not uuid:
+		raise Ex.MediaNotAvailable
 
-    # Obtain the JSON representation of the title's details
-    json_content = HTTP.Request(JSON_URL % uuid).content
-    start = json_content.find('{')
-    end = json_content.rfind('}') + 1
-    details = JSON.ObjectFromString(json_content[start:end])
+	# Obtain the JSON representation of the title's details
+	json = JSON.ObjectFromURL(JSON_URL % uuid.group(1))
+	video_files = json['videos'][0]['files']
 
-    resolutions = ['103', '102', '101']
-    index = resolutions.index(formatCode)
-    for available_resolution in range(index, len(resolutions)):
-      for video in details['videos'][0]['files']:
-        if video['formatCode'] == resolutions[available_resolution]:
-            return Redirect(video['url'])
+	resolutions = ['103', '102', '101']
+	index = resolutions.index(formatCode)
+
+	for available_resolution in range(index, len(resolutions)):
+		for video in video_files:
+			if video['formatCode'] == resolutions[available_resolution]:
+				return IndirectResponse(VideoClipObject, key=video['url'])
