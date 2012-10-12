@@ -88,3 +88,5 @@ def PlayVideo(url, formatCode):
 		for video in video_files:
 			if video['formatCode'] == resolutions[available_resolution]:
 				return IndirectResponse(VideoClipObject, key=video['url'])
+
+	raise Ex.MediaNotAvailable
