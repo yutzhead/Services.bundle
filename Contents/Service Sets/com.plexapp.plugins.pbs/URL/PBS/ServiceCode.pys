@@ -8,50 +8,32 @@ RE_TP_ID    =   Regex('http://video.pbs.org/video/([0-9]+)')
 
 PBS_URL     = 'http://video.pbs.org/'
 
-METADATA    = '/cove/v1/videos/?fields=associated_images&filter_tp_media_object_id=%s'
-VIDEO_FILES = '/cove/v1/videos/?fields=mediafiles&filter_tp_media_object_id=%s'
+DETAILS = '/cove/v1/videos/?fields=mediafiles%2Cassociated_images&filter_tp_media_object_id='
     
 def NormalizeURL(url):
     return url
 
 def MetadataObjectForURL(url):
     tp_id = RE_TP_ID.search(url).group(1)
-    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(METADATA % tp_id)['results'][0]
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)['results'][0]
     thumbs = SortThumbs(video['associated_images'])
     airdate = Datetime.ParseDate(video['airdate']).date()
     summary = video['long_description']
     title = video['title']
+    duration = int(video['mediafiles'][0]['length_mseconds'])
     return  VideoClipObject(
         title=title,
         summary=summary,
         originally_available_at=airdate,
+        duration=duration,
         thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
     )
 
 def MediaObjectsForURL(url):
     return [
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, index=2))],
+            parts = [PartObject(key=Callback(PlayVideo, url=url))],
             container = Container.MP4,
-            video_resolution = '720',
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            optimized_for_streaming = True,
-            audio_channels = 2
-        ),
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, index=1))],
-            container = Container.MP4,
-            video_resolution = 'sd',
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            optimized_for_streaming = True,
-            audio_channels = 2
-        ),
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, index=0))],
-            container = Container.MP4,
-            video_resolution = 'sd',
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             optimized_for_streaming = True,
@@ -60,21 +42,20 @@ def MediaObjectsForURL(url):
     ]
 
 @indirect
-def PlayVideo(url, index):
+def PlayVideo(url):
     tp_id = RE_TP_ID.search(url).group(1)
-    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(VIDEO_FILES % tp_id)['results'][0]
-    while index > -1:
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)['results'][0]
+    
+    for media in video['mediafiles']:
         try:
-            video_url = video['mediafiles'][index]['original_location']
-            break
+            video_url = media['video_download_url']
+            if video_url:
+                break
         except:
             video_url = None
-            index = index -1
     
     if not video_url:
-        video_url = video['mediafiles'][0]['original_location']
-    if '.m3u8' in video_url:
-        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
+        raise Ex.MediaNotAvailable
     else:
         return IndirectResponse(VideoClipObject, key=video_url)
     
