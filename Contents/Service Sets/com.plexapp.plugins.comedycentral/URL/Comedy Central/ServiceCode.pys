@@ -1,5 +1,3 @@
-RE_MGID = Regex('var url = "http://media.mtvnservices.com/(mgid.+)')
-
 MRSS_PATH = "http://www.comedycentral.com/feeds/mrss?uri=%s"
 MRSS_NS = {"media": "http://search.yahoo.com/mrss/"}
 PLAYER_URL = 'http://media.mtvnservices.com/%s'
@@ -32,19 +30,9 @@ def MetadataObjectForURL(url):
 	return vc
 
 ####################################################################################################
-'''
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
-			protocol = 'webkit'
-		)
-	]
-'''
-def MediaObjectsForURL(url):
-
-	if '/full-episodes/' in url:
+	if '/full-episodes/' in url or '/episodes/' in url:
 		return [
 			MediaObject(
 				parts = [
