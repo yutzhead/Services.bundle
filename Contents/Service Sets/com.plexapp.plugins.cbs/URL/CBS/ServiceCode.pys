@@ -282,8 +282,8 @@ def VideoFromSMIL(url, res):
       if clip[-4:] == '.mp4':
         clip = 'MP4:' + clip[:-4]
       else:
-        clip.replace('.flv', '')
-
+        clip = clip.replace('.flv', '')
+      
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
 ####################################################################################################
