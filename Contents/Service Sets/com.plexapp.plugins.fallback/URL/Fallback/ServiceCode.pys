@@ -41,6 +41,8 @@ def FixUrl(parent_url, url):
 	else:
 		final_url = url
 
+	final_url = final_url.replace('&amp;', '&').replace('&amp;', '&') # Twice in case we have &amp;amp;
+
 	return final_url
 
 ####################################################################################################
