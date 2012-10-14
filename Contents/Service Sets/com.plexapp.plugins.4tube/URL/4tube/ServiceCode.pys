@@ -7,7 +7,7 @@ VIDEO_CONFIG = 'http://www.4tube.com/player/videoconfig?v=%s'
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0].rsplit('/',1)[0]
+	return url.split('?')[0].rstrip('/').rsplit('/',1)[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -74,6 +74,21 @@ def PlayVideo(url):
 	video_url = String.Unquote(video_url)
 
 	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	urls = HTML.ElementFromURL('http://www.4tube.com/').xpath('//a[contains(@href, "/videos/")]/@href')
+
+	for url in urls:
+		if url not in test_urls:
+			test_urls.append(url)
+
+		if len(test_urls) == 3:
+			break
+
+	return test_urls
 
 ####################################################################################################
 def TimeToMs(timecode):
