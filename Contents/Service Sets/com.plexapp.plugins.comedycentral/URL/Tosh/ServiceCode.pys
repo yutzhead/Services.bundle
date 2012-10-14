@@ -35,7 +35,8 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4))
 					],
 				bitrate = 3500,
 				container = Container.MP4,
@@ -50,7 +51,8 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4))
 					],
 				bitrate = 2200,
 				container = Container.MP4,
@@ -65,7 +67,8 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4))
 					],
 				bitrate = 1700,
 				container = Container.MP4,
@@ -80,7 +83,8 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4))
 					],
 				bitrate = 1200,
 				container = Container.MP4,
@@ -95,7 +99,8 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=4))
 					],
 				bitrate = 750,
 				container = Container.MP4,
@@ -110,9 +115,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=4))
 					],
-				bitrate = 450,
+				bitrate = 400,
 				container = Container.MP4,
 				video_resolution = '252',
 				video_codec = VideoCodec.H264,
