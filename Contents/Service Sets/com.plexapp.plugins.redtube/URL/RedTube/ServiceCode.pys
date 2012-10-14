@@ -1,40 +1,42 @@
-TITLE = 'RedTubeURLService'
 RE_VIDEO_URL = Regex('<source src="(?P<video_url>[^"]+)" type="video/mp4">')
+RE_VIDEO_ID = Regex('redtube\.com/(?P<video_id>\d+)')
+API_URL = 'http://api.redtube.com/?data=redtube.Videos.getVideoById&video_id=%s&output=json'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	HTTP.Headers['Referer'] = 'http://plexchannels.com'
-	id = url.replace('http://www.redtube.com/','')
-	page = XML.ElementFromURL('http://api.redtube.com/?data=redtube.Videos.getVideoById&video_id=%s&output=xml&thumbsize=big' % (id))
-	title = page.xpath("/video/title/text()")[0]
-	thumb = page.xpath("/video/@thumb")[0].replace('m.jpg','b.jpg')
-	duration = None
-	try: duration = GetDurationFromString(page.xpath("/video/@duration")[0])
-	except: pass
-	rating = None
-	try: rating = round((float(page.xpath("/video/@rating")[0])*2),2)
-	except: pass
+
+	video_id = RE_VIDEO_ID.search(url)
+
+	if not video_id:
+		return None
+
+	data = JSON.ObjectFromURL(API_URL % video_id.group('video_id'))['video']
+
+	title = data['title']
+	thumb = data['thumb'].replace('m.jpg', 'b.jpg')
+
+	try: duration = TimeToMs(data['duration'])
+	except: duration = None
+
+	try: rating = float(data['rating']) * 2
+	except: rating = None
+
 	tags = []
-	try:
-		for tag in page.xpath("/video/tags/tag/text()"):
-			if tag not in tags:
-				tags.append(tag)
-		for tag in page.xpath("/video/stars/star/text()"):
-			if tag not in tags:
-				tags.append(tag)
-		tags.sort()
-	except: pass
-	originally_available_at = None
-	try: originally_available_at = Datetime.ParseDate(page.xpath("/video/@publish_date")[0])
-	except: pass
-	year = None
-	try:
-		year = page.xpath("/video/@publish_date")[0].split('-')
-		year = int(year[0])
-	except: pass
-	tagline = None
-	try: tagline = 'Views: '+str(page.xpath("/video/@views")[0])+' | Ratings: '+str(page.xpath("/video/@ratings")[0])
-	except: pass
+	if 'tags' in data:
+		for tag in data['tags']:
+			tags.append(tag)
+
+	try: originally_available_at = Datetime.ParseDate(data['publish_date']).date()
+	except: originally_available_at = None
+
+	try: year = int(data['publish_date'].split('-')[0])
+	except: year = None
+
 	return VideoClipObject(
 		title = title,
 		thumb = thumb,
@@ -43,16 +45,14 @@ def MetadataObjectForURL(url):
 		tags = tags,
 		originally_available_at = originally_available_at,
 		year = year,
-		tagline = tagline,
-		summary = tagline,
 		genres = ['XXX','Adult','18+'],
-		content_rating = 'XXX',
 		content_rating_age = 18,
 		source_title = 'RedTube'
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
 			video_codec = VideoCodec.H264,
@@ -63,42 +63,37 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
-	HTTP.Headers['Referer'] = 'http://plexchannels.com'
+
 	page = HTTP.Request(url).content
 	video_url = RE_VIDEO_URL.search(page).group('video_url')
-	return Redirect(video_url)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def TestURLs():
-	HTTP.Headers['Referer'] = 'http://plexchannels.com'
+
 	test_urls = []
-	page = XML.ElementFromURL('http://api.redtube.com/?data=redtube.Videos.searchVideos&output=xml')
-	for link in page.xpath("//videos/video/@url"):
-		if len(test_urls) < 10:
-			if link not in test_urls:
-				test_urls.append(link)
-		else:
+	data = JSON.ObjectFromURL('http://api.redtube.com/?data=redtube.Videos.searchVideos&output=json')
+
+	for video in data['videos']:
+		url = video['video']['url']
+		test_urls.append(url)
+
+		if len(test_urls) == 3:
 			break
-	#log_urls = ' '.join(test_urls)
+
 	return test_urls
 
 ####################################################################################################
-def GetDurationFromString(duration):
-	try:
-		durationArray = duration.split(":")
-		if len(durationArray) == 3:
-			hours = int(durationArray[0])
-			minutes = int(durationArray[1])
-			seconds = int(durationArray[2])
-		elif len(durationArray) == 2:
-			hours = 0
-			minutes = int(durationArray[0])
-			seconds = int(durationArray[1])
-		elif len(durationArray)	==	1:
-			hours = 0
-			minutes = 0
-			seconds = int(durationArray[0])
-		return int(((hours)*3600 + (minutes*60) + seconds)*1000)
-	except:
-		return 0
+def TimeToMs(timecode):
+
+	seconds  = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000
