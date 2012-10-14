@@ -93,29 +93,8 @@ def PlayVideo(url, res):
 
 	player_url = data.xpath('./media:content', namespaces=API_NS)[0].get('url')
 
-	'''
-	try:
-		req = HTTP.Request(player_url, follow_redirects=False).headers
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers:
-			data = String.Unquote(e.headers['Location'])
-			media = JSON.ObjectFromString(RE_MEDIA.search(data).group('media'))
-
-			if res == 'hd' and 'highDefinitionMP4' in media:
-				video_url = media['highDefinitionMP4']['mediaURL']
-				key = media['highDefinitionMP4']['access'][0]['value']
-			elif 'MP4' in media:
-				video_url = media['MP4']['mediaURL']
-				key = media['MP4']['access'][0]['value']
-			else:
-				video_url = media['flv']['mediaURL']
-				key = media['flv']['access'][0]['value']
-
-			return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
-
-		else:
-			raise Ex.MediaNotAvailable
-	'''
+	if player_url == '':
+		raise Ex.MediaNotAvailable
 
 	request = urllib2.Request(player_url, None, HTTP_HEADERS)
 	opener = urllib2.build_opener(SmartRedirectHandler)
