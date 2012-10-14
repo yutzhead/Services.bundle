@@ -216,7 +216,10 @@ def PlayVideo(url, bitrate='1700', index=0):
 	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 
 	mrss_data = XML.ElementFromURL(MRSS_PATH % uri)
-	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=MRSS_NS)[index].get('url')
+	try:
+		player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=MRSS_NS)[index].get('url')
+	except:
+		return None
 
 	player_data = XML.ElementFromURL(player_url)
 	try:
