@@ -158,7 +158,6 @@ def MetadataObjectFromPAGE(url):
 def MediaObjectsForURL(url):
   return [
     MediaObject(
-      container = Container.MP4,
       video_resolution = '720',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
@@ -167,7 +166,6 @@ def MediaObjectsForURL(url):
       parts = [PartObject(key=Callback(PlayVideo, url = url, res = 720))],
     ),
     MediaObject(
-      container = Container.MP4,
       video_resolution = '480',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
@@ -176,7 +174,6 @@ def MediaObjectsForURL(url):
       parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))],
     ),
     MediaObject(
-      container = Container.MP4,
       video_resolution = 'sd',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
@@ -250,7 +247,7 @@ def VideoFromSMIL(url, res):
     except:
       smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
       thePlatform_feed = 'feeds3'
-
+    
     if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
       raise Ex.MediaGeoblocked
 
@@ -258,6 +255,11 @@ def VideoFromSMIL(url, res):
     for profile in PROFILES:
       try:
         video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
+        try:
+          headers = HTTP.Request(video_url).headers
+        except Ex.HTTPError, e:
+          video_url = None
+          raise e
         break
       except:
         pass
@@ -279,6 +281,8 @@ def VideoFromSMIL(url, res):
       
       if clip[-4:] == '.mp4':
         clip = 'MP4:' + clip[:-4]
+      else:
+        clip.replace('.flv', '')
 
     return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
 
