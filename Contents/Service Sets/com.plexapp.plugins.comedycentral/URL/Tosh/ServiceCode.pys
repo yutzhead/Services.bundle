@@ -1,6 +1,6 @@
-RE_MGID = Regex('var url = "http://media.mtvnservices.com/(mgid.+)')
+RE_MGID = Regex('var url = "http.+?/(mgid.+?)"')
 
-MRSS_PATH = "http://www.comedycentral.com/feeds/mrss?uri=%s"
+MRSS_PATH = 'http://shadow.comedycentral.com/feeds/video_player/mrss/?uri=%s'
 MRSS_NS = {"media": "http://search.yahoo.com/mrss/"}
 PLAYER_URL = 'http://media.mtvnservices.com/%s'
 
@@ -8,40 +8,24 @@ MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtv
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	try:
-		id = HTML.ElementFromURL(url).xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
-	except:
-		return None
+	id = GetURI(url)
+	if not id: return None
+	
+	mrss_data = GetMRSS(id)
 
-	item = XML.ElementFromURL(MRSS_PATH % id).xpath('//item')[0]
-
-	title = item.xpath('./title')[0].text
-	summary = item.xpath('./description')[0].text
-	date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
-	thumb = item.xpath('.//media:thumbnail', namespaces=MRSS_NS)[0].get('url')
-	duration = int(float(item.xpath('.//media:content', namespaces=MRSS_NS)[0].get('duration')) * 1000)
+	title = mrss_data.xpath('//title')[0].text
+	summary = mrss_data.xpath('//description')[0].text
+	thumb = mrss_data.xpath('.//media:thumbnail', namespaces=MRSS_NS)[0].get('url')
 
 	vc = VideoClipObject(
 		title = title,
 		summary = summary,
-		originally_available_at = date,
-		duration = duration,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
 	)
 
 	return vc
 
 ####################################################################################################
-'''
-def MediaObjectsForURL(url):
-
-	return [
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
-			protocol = 'webkit'
-		)
-	]
-'''
 def MediaObjectsForURL(url):
 
 	if '/full-episodes/' in url:
@@ -218,10 +202,9 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	BITRATES = ['400', '750', '1200', '1700', '2200', '3500']
 
-	data = HTML.ElementFromURL(url)
-	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	uri = GetURI(url)
 
-	mrss_data = XML.ElementFromURL(MRSS_PATH % uri)
+	mrss_data = GetMRSS(uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=MRSS_NS)[index].get('url')
 
 	player_data = XML.ElementFromURL(player_url)
@@ -243,24 +226,17 @@ def PlayVideo(url, bitrate='1700', index=0):
 	return Redirect(mp4_url)
 
 ####################################################################################################
-def TestURLs():
+def GetURI(url):
+	try:
+		content = HTTP.Request(url).content
+		id = RE_MGID.search(content).group(1)
+		return id
+	except:
+		return None
 
-	test_urls = []
+####################################################################################################
+def GetMRSS(id):
+	mrss_data = XML.ElementFromURL(MRSS_PATH % id)
+	return mrss_data
 
-	for episode in HTML.ElementFromURL('http://www.comedycentral.com/shows').xpath('//a[contains(@href, "/episodes/")]'):
-		url = episode.get('href')
-
-		if not url.startswith('http'):
-			url = 'http://www.comedycentral.com%s' % url
-
-		try:
-			# It appears that sometimes links can be invalid. We should quickly test it before considering
-			# using it as a Test URL.
-			headers = HTTP.Request(url).headers
-			test_urls.append(url)
-		except: pass
-
-		if len(test_urls) > 2:
-			break
-
-	return test_urls
+####################################################################################################
