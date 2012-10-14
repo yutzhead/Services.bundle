@@ -1,0 +1,88 @@
+RE_VIDEO_ID = Regex('/player/videoconfig\?v=([^%]+)')
+RE_DURATION = Regex('Length: (\d+m\d+)s')
+RE_VIDEO_URL = Regex("videoUrl = '([^']+)'")
+
+VIDEO_CONFIG = 'http://www.4tube.com/player/videoconfig?v=%s'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0].rsplit('/',1)[0]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTTP.Request(url).content
+	html = HTML.ElementFromString(page)
+
+	title = html.xpath('//title')[0].text.split(' | ')[0]
+	video_id = RE_VIDEO_ID.search(page).group(1)
+	config = XML.ElementFromURL(VIDEO_CONFIG % video_id)
+	thumb = config.xpath('//image')[0].text
+
+	try:
+		duration = html.xpath('//meta[@name="description"]')[0].get('content')
+		duration = RE_DURATION.search(duration).group(1).replace('m', ':')
+		duration = TimeToMs(duration)
+	except:
+		duration = None
+
+	tags = []
+	try:
+		tags_html = html.xpath('//span[@class="tags"]/a/text()')
+
+		for tag in tags_html:
+			tags.append(tag.strip())
+	except:
+		pass
+
+	try:
+		stars = html.xpath('//span[@id="videoRatingStars"]//span[@class="star"]')
+		rating = float(len(stars) * 2)
+	except:
+		rating = None
+
+	return VideoClipObject(
+		title = title,
+		thumb = thumb,
+		duration = duration,
+		tags = tags,
+		rating = rating,
+		genres = ['XXX','Adult','18+'],
+		content_rating_age = 18
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = 'mp4',
+			video_resolution = 'sd',
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	page = HTTP.Request(url).content
+	video_url = RE_VIDEO_URL.search(page).group(1)
+	video_url = String.Unquote(video_url)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def TimeToMs(timecode):
+
+	seconds  = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000
