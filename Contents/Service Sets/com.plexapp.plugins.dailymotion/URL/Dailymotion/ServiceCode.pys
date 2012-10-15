@@ -83,8 +83,14 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt):
 
-	json = HTTP.Request(url).content
-	video = JSON.ObjectFromString(json)
+	try:
+		data = HTTP.Request(url).content
+		if not data[0:1] == '{':
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
+
+	video = JSON.ObjectFromString(data)
 
 	if fmt == 'hd':
 		if video['stream_h264_hd_url']:
