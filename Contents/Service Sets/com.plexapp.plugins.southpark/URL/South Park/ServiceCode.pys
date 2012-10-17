@@ -96,6 +96,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate='1200', index=0):
 
 	BITRATES = ['450', '750', '1200']
+	rtmp_url = None
 
 	content = HTTP.Request(url).content
 	uri = RE_URI.search(content)
@@ -108,19 +109,24 @@ def PlayVideo(url, bitrate='1200', index=0):
 	mrss_data = XML.ElementFromString(mrss_data)
 
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
-
 	player_data = XML.ElementFromURL(player_url)
+
 	try:
 		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
 	except:
 		index = BITRATES.index(bitrate)
+
 		while index > -1:
 			try:
 				rtmp_url = player_data.xpath('//rendition/src')[index].text
 				break
 			except:
 				index = index - 1
-	stream_url = rtmp_url.split('/viacomspstrm/')[1]
-	mp4_url = MP4_URL % stream_url
 
-	return Redirect(mp4_url)
+	if rtmp_url:
+		stream_url = rtmp_url.split('/viacomspstrm/')[1]
+		mp4_url = MP4_URL % stream_url
+
+		return Redirect(mp4_url)
+	else:
+		raise Ex.MediaNotAvailable
