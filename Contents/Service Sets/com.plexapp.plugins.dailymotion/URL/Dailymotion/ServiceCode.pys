@@ -13,17 +13,21 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	video_id = url.rsplit('/',1)[1]
-	video = JSON.ObjectFromURL(JSON_URL % video_id)
+
+	try:
+		video = JSON.ObjectFromURL(JSON_URL % video_id)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = video['title']
 	summary = video['description']
-	thumbUrl = video['thumbnail_large_url']
+	thumb_url = video['thumbnail_large_url']
 	duration = int(video['duration'])*1000
 	rating = float(video['rating'])
 
 	try:
-		dateString = thumbUrl.split('?')[-1]
-		date = '%s/%s/%s' % (dateString[4:6], dateString[6:8], dateString[0:4])
+		date_string = thumb_url.split('?')[-1]
+		date = '%s/%s/%s' % (date_string[4:6], date_string[6:8], date_string[0:4])
 		originally_available_at = Datetime.ParseDate(date).date()
 	except:
 		originally_available_at = None
@@ -32,7 +36,7 @@ def MetadataObjectForURL(url):
 	vc = VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumbUrl,
+		thumb = thumb_url,
 		duration = duration,
 		originally_available_at = originally_available_at,
 		rating = rating
