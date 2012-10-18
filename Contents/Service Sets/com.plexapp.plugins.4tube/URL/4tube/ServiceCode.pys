@@ -15,9 +15,12 @@ def MetadataObjectForURL(url):
 	page = HTTP.Request(url).content
 	html = HTML.ElementFromString(page)
 
+	video_id = RE_VIDEO_ID.search(page)
+	if not video_id:
+		return None
+
 	title = html.xpath('//title')[0].text.split(' | ')[0]
-	video_id = RE_VIDEO_ID.search(page).group(1)
-	config = XML.ElementFromURL(VIDEO_CONFIG % video_id)
+	config = XML.ElementFromURL(VIDEO_CONFIG % video_id.group(1))
 	thumb = config.xpath('//image')[0].text
 
 	try:
