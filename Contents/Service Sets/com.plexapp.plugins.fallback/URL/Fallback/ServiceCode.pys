@@ -15,7 +15,7 @@ EMBEDDED_VIDEO = [
 
 # Use the iPad user agent to try to make websites give us <video> instead of Flash
 HTTP_IPAD_UA = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10'}
-HTTP_DESKTOP_UA = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
+HTTP_DESKTOP_UA = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.14 (KHTML, like Gecko) Version/6.0.1 Safari/536.26.14'}
 
 RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
@@ -121,10 +121,10 @@ def MetadataObjectForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if '#desktop-ua' in url:
-			headers = HTTP_DESKTOP_UA
-		else:
+		if '#ipad-ua' in url:
 			headers = HTTP_IPAD_UA
+		else:
+			headers = HTTP_DESKTOP_UA
 
 		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
 
@@ -187,8 +187,8 @@ def MetadataObjectForURL(url):
 				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
 
-		if not '#desktop-ua' in url:
-			return URLService.MetadataObjectForURL('%s#desktop-ua' % url)
+		if not '#ipad-ua' in url:
+			return URLService.MetadataObjectForURL('%s#ipad-ua' % url)
 
 	except:
 		return None
@@ -200,10 +200,10 @@ def MediaObjectsForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if '#desktop-ua' in url:
-			headers = HTTP_DESKTOP_UA
-		else:
+		if '#ipad-ua' in url:
 			headers = HTTP_IPAD_UA
+		else:
+			headers = HTTP_DESKTOP_UA
 
 		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
 
@@ -284,8 +284,8 @@ def MediaObjectsForURL(url):
 						)
 					]
 
-		if not '#desktop-ua' in url:
-			return URLService.MediaObjectsForURL('%s#desktop-ua' % url)
+		if not '#ipad-ua' in url:
+			return URLService.MediaObjectsForURL('%s#ipad-ua' % url)
 
 	except:
 		return None
