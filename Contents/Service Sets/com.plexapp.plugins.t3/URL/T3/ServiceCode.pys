@@ -3,8 +3,10 @@ def MetadataObjectForURL(url):
     # Retrieve the page and obtain the video and player ids. We then use this to make a AMF
     # request which has all the information associated with the title.
     page = HTML.ElementFromURL(url)
-    playerId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='playerID']")[0].get('value')
-    videoId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='@videoPlayer']")[0].get('value')
+    video_url = page.xpath('//meta[@property="og:video"]')[0].get('content')
+    args = String.ParseQueryString(video_url)
+    playerId = args['playerID'][0]
+    videoId = args['videoId'][0]
     result = DoAmfRequest(playerId, videoId)
 
     # Extract the available information
@@ -42,8 +44,10 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
     page = HTML.ElementFromURL(url)
-    playerId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='playerID']")[0].get('value')
-    videoId = page.xpath("//object[@class='BrightcoveExperience']/param[@name='@videoPlayer']")[0].get('value')
+    video_url = page.xpath('//meta[@property="og:video"]')[0].get('content')
+    args = String.ParseQueryString(video_url)
+    playerId = args['playerID'][0]
+    videoId = args['videoId'][0]
     result = DoAmfRequest(playerId, videoId)
 
     result = DoAmfRequest(playerId, videoId)
