@@ -4,18 +4,19 @@ RE_DOCID = Regex('docid=(.+)&type=flv')
 ####################################################################################################
 def NormalizeURL(url):
 
-	if 'teatro.php' in url:
-		url = url.replace('teatro.php', 'int.php')
+	if 'int.php' in url:
+		url = url.replace('int.php', 'teatro.php')
 
 	return url.split('&')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
-
-	if len(data.xpath('//*[contains(@data|@src|@value, "youtube.com")]')) > 0:
+	if len(HTML.ElementFromURL(url).xpath('//*[contains(@data|@src|@value, "youtube.com")]')) > 0:
+		Log('YouTube embed found!!')
 		return None
+
+	data = HTML.ElementFromURL(url.replace('teatro.php', 'int.php'))
 
 	title = data.xpath('//div[@class="inside"]/div[@class="title"]')[0].text.strip()
 	summary = data.xpath('//div[@class="title"]/following-sibling::div')[7].text.strip()
@@ -47,9 +48,8 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url):
+def PlayVideo(url, fmt=None):
 
-	url = url.replace('int.php', 'teatro.php')
 	data = HTTP.Request(url).content
 	docid = RE_DOCID.search(data)
 
