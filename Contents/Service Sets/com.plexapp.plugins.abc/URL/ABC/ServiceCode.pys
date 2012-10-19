@@ -78,7 +78,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate):
+def PlayVideo(url, bitrate=1600):
 
 	video_id = url.split('/')[-2]
 	data = XML.ElementFromURL(FEED_URL % video_id)
