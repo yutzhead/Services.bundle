@@ -94,7 +94,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, bitrate='1700', index=0):
+def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 
 	BITRATES = ['400', '750', '1200', '1700', '2200', '3500']
 
