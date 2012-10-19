@@ -52,4 +52,4 @@ def PlayVideo(url):
 	details_page = XML.ElementFromURL(DETAILS_PAGE % video_id, cacheTime=0)
 
 	video_url = details_page.xpath('//item/media:content', namespaces=NAMESPACES)[0].get('url')
-	IndirectResponse(VideoClipObject, key=video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
