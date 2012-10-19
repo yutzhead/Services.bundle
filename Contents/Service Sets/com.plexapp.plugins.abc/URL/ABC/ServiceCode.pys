@@ -4,7 +4,7 @@ FEED_URL = "http://cdn.abc.go.com/vp2/ws/s/contents/2000/utils/mov/13/9024/%s/43
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url.split('?')[0].replace(' ', '%20')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
