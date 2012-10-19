@@ -87,7 +87,7 @@ def PlayVideo(url, bitrate=1600):
 	if len(available_bitrates) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+	closest = min((abs(int(bitrate) - int(i.split('.')[0])), i) for i in available_bitrates)[1]
 
 	streamer = 'rtmp://cp88586.edgefcs.net/abcondemand'
 	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')
