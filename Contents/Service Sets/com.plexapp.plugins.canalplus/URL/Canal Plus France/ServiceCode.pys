@@ -60,21 +60,21 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, quality):
 
 	index = QUALITIES.index(quality)
-	videos = GetXML(url).xpath('//VIDEOS')[0]
-	video_url = ''
+	data = GetXML(url)
+	video_url = None
 
 	while index > -1:
 		try:
-			video_url = videos.xpath('//'+QUALITIES[index]+'')[0].text
+			video_url = data.xpath('./MEDIA/VIDEOS/%s' % QUALITIES[index])[0].text
 
-			if video_url != '':
+			if video_url is not None and video_url != '':
 				break
 			else:
 				index = index -1
 		except:
 			index = index -1
 
-	if video_url == '':
+	if not video_url:
 		raise Ex.MediaNotAvailable
 
 	if video_url.startswith('rtmp'):
@@ -95,7 +95,7 @@ def GetXML(url):
 	id = RE_VIDEO_ID.search(url)
 
 	if id:
-		return XML.ElementFromURL(XML_URL % id.group(1))
+		return XML.ElementFromURL(XML_URL % id.group(1)).xpath('//VIDEO/ID[text()="%s"]/parent::VIDEO' % id.group(1))[0]
 	else:
 		return None
 
