@@ -18,8 +18,13 @@ def MetadataObjectForURL(url):
 	title = data.xpath('./media:title', namespaces=API_NS)[0].text
 	summary = data.xpath('./media:description', namespaces=API_NS)[0].text
 	thumb = data.xpath('./media:thumbnail', namespaces=API_NS)[0].get('url')
-	date = data.xpath('./pubDate')[0].text.split(' ')[0]
-	date = Datetime.ParseDate(date)
+
+	try:
+		date = data.xpath('./pubDate')[0].text.split(' ')[0]
+		date = Datetime.ParseDate(date)
+	except:
+		date = None
+
 	duration = data.xpath('./media:content', namespaces=API_NS)[0].get('duration')
 	duration = int(duration) * 1000
 
