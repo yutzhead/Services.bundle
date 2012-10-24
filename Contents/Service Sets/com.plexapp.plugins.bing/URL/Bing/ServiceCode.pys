@@ -4,7 +4,10 @@ RE_UUID = Regex("uuid: '([^']+)'")
 ####################################################################################################
 def NormalizeURL(url):
 
-    return url.split('?')[0]
+	if '?videoId=' in url:
+		return url.split('&')[0]
+	else:
+		return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):

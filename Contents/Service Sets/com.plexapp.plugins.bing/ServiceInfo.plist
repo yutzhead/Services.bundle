@@ -8,12 +8,12 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.bing.com/videos/watch/video/captured-yvonne-the-cow-gets-her-happy-ending/6sqvggf</string>
-				<string>http://www.bing.com/videos/watch/video/the-waltons-40-years-later/6lmnx76</string>
+				<string>http://www.bing.com/videos/watch/video/cheetah-jumps-on-safari-jeep/2008vznj</string>
+				<string>http://www.bing.com/videos/browse?videoId=de7a8ac4-0c06-44e1-96d8-e6410246ac64</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.bing.com/videos/watch/video/.+</string>
+				<string>http://www.bing.com/videos/(watch/video/[^/]+|browse\?videoId=).+</string>
 			</array>
 		</dict>
 	</dict>
