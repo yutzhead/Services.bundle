@@ -11,6 +11,10 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	uri = GetURI(url)
+
+	if not uri:
+		return None
+
 	feed = RSS.FeedFromURL(MRSS_URL % uri)
 	video = feed.entries[0]
 	title = video.title
@@ -100,6 +104,9 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 
 	uri = GetURI(url)
 
+	if not uri:
+		return None
+
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
 
@@ -125,6 +132,9 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 def GetURI(url):
 
 	data = HTML.ElementFromURL(url)
-	uri = data.xpath('//div[@id="video-player"]')[0].get('data-mgid')
+	uri = data.xpath('//div[@id="video-player"]')
 
-	return uri
+	if len(uri) < 1:
+		return None
+	else:
+		return uri[0].get('data-mgid')
