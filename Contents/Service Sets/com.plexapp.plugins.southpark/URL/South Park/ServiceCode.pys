@@ -28,74 +28,127 @@ def MetadataObjectForURL(url):
 				return None
 
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
-	ep_title = title.split(' (')[0]
-	ep_data = RE_EP_DATA.search(title).groupdict()
-	season = ep_data['season']
-	index = ep_data['episode']
-	summary = data.xpath('//meta[@name="og:description"]')[0].get('content')
+	summary = summary = data.xpath('//meta[@name="og:description"]')[0].get('content')
 	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
 
-	return EpisodeObject(
-		title = ep_title,
-		show = "South Park",
-		season = int(season),
-		index = int(index),
-		summary = summary,
-		thumb = thumb
-	)
+	if 'clips' in url:
+		return VideoClipObject(
+			title = title,
+			summary = summary,
+			thumb = thumb
+		)
+
+	else:
+		ep_title = title.split(' (')[0]
+		ep_data = RE_EP_DATA.search(title).groupdict()
+		season = ep_data['season']
+		index = ep_data['episode']
+		
+		return EpisodeObject(
+			title = ep_title,
+			show = "South Park",
+			season = int(season),
+			index = int(index),
+			summary = summary,
+			thumb = thumb
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2))
-				],
-			bitrate = 1200,
-			container = Container.MP4,
-			video_resolution = '720',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2))
-				],
-			bitrate = 750,
-			container = Container.MP4,
-			video_resolution = '432',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=1)),
-				PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2))
-				],
-			bitrate = 450,
-			container = Container.MP4,
-			video_resolution = '288',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)
-	]
+	if 'clips' in url:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="600", index=0)),
+					],
+				bitrate = 600,
+				container = Container.MP4,
+				video_resolution = '480',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="500", index=0)),
+					],
+				bitrate = 500,
+				container = Container.MP4,
+				video_resolution = '480',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="300", index=0)),
+					],
+				bitrate = 300,
+				container = Container.MP4,
+				video_resolution = '480',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
+
+	else:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2))
+					],
+				bitrate = 1200,
+				container = Container.MP4,
+				video_resolution = '720',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2))
+					],
+				bitrate = 750,
+				container = Container.MP4,
+				video_resolution = '432',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=1)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2))
+					],
+				bitrate = 450,
+				container = Container.MP4,
+				video_resolution = '288',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
 
 ####################################################################################################
 def PlayVideo(url, bitrate='1200', index=0):
 
-	BITRATES = ['450', '750', '1200']
+	if 'clips' in url:
+		BITRATES = ['300','500','600']
+	else:
+		BITRATES = ['450', '750', '1200']
 	rtmp_url = None
 
 	content = HTTP.Request(url).content
