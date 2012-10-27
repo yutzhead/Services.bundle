@@ -38,7 +38,7 @@ def MediaObjectsForURL(url):
 			container = Container.MP4,
 			optimized_for_streaming = True,
 			video_resolution = 'sd',
-			aspect_ratio = '1.77',
+			#aspect_ratio = '1.78',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2

@@ -48,7 +48,7 @@ def MediaObjectsForURL(url):
       container = Container.MP4,
       bitrate = '1600',
       video_resolution = '720',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC
     ),
@@ -57,7 +57,7 @@ def MediaObjectsForURL(url):
       container = Container.MP4,
       bitrate = '1000',
       video_resolution = '544',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC
     ),
@@ -66,7 +66,7 @@ def MediaObjectsForURL(url):
       container = Container.MP4,
       bitrate = '500',
       video_resolution = 'sd',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC
     )

@@ -42,7 +42,7 @@ def MediaObjectsForURL(url):
       parts = [PartObject(key=Callback(PlayVideo, url=url, HD=True))],
       container = 'flv',
       video_resolution = '540',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       bitrate = '2000',
       video_codec = VideoCodec.VP6,
       audio_codec = AudioCodec.MP3
@@ -50,9 +50,9 @@ def MediaObjectsForURL(url):
     MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url, HD=False))],
       container = 'flv',
-      aspect_ratio = '1.33',
-      bitrate = '704',
       video_resolution = 'sd',
+      #aspect_ratio = '1.33',
+      bitrate = '704',
       video_codec = VideoCodec.VP6,
       audio_codec = AudioCodec.MP3
     )

@@ -65,7 +65,7 @@ def MediaObjectsForURL(url):
     MediaObject(
       parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
       video_resolution = 'sd',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       audio_channels = 2
     )
   ]

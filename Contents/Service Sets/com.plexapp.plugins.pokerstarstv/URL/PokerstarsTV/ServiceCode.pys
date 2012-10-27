@@ -44,7 +44,7 @@ def MediaObjectsForURL(url):
       parts = [PartObject(key=Callback(PlayVideo, url=url))],
       container = Container.MP4,
       video_resolution = '360',
-      aspect_ratio = '1.77',
+      #aspect_ratio = '1.78',
       bitrate = '868',
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.MP3
