@@ -129,10 +129,10 @@ def PlayVideo(url):
 				rtmp_url = stream_info['cdnUrl']
 			except:
 				rtmp_url = stream_info['fmsUrl'] + '/' + stream_name
-			return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url=rtmp_url, clip=stream_name, swf_url=USTREAM_SWF_URL, live=True))
+			return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=stream_name, swf_url=USTREAM_SWF_URL, live=True))
 		else:
 			Log('Channel at ' + url + ' is currently ' + status + '.')
-			return None
+			raise Ex.LiveMediaNotStarted
 
 ####################################################################################################
 class GetVideoInfo(object):
