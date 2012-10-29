@@ -52,12 +52,15 @@ def MediaObjectsForURL(url):
       video_resolution = '360',
       optimized_for_streaming = True,
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url))]
+      parts = [PartObject(key=Callback(PlayVideo, url=url))]
     )
   ]
 
 ####################################################################################################
-def PlayVideo(url):
+def PlayVideo(url=None, **kwargs):
+
+  if not url:
+    return None
 
   item = GetVideoItem(url)
 
@@ -67,7 +70,7 @@ def PlayVideo(url):
   video_link = item.xpath("./media:text[contains(text(), 'm3uUrl=')]/text()", namespaces=MRSS_NS)[0].split('?')[0].replace('m3uUrl=', '')
   video_id = video_link[video_link.find('/s/') + 3:]
 
-  auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime = 0).content
+  auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime=0).content
   video_url = video_link + '?format=redirect&sig=' + auth_token
 
   return Redirect(video_url)
