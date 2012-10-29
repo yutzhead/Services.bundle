@@ -81,7 +81,12 @@ def PlayVideo(url, formatCode):
 		raise Ex.MediaNotAvailable
 
 	# Obtain the JSON representation of the title's details
-	json = JSON.ObjectFromURL(JSON_URL % uuid.group(1))
+	json = HTTP.Request(JSON_URL % uuid.group(1)).content
+
+	if not json[0:1] == '{':
+		raise Ex.MediaNotAvailable
+
+	json = JSON.ObjectFromString(json)
 	video_files = json['videos'][0]['files']
 
 	resolutions = ['103', '102', '101']
