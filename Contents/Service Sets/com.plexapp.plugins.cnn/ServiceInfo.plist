@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>CNN News</key>
+		<key>CNN</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.|edition\.)?cnn\.com/video/.+</string>
+				<string>http://(www\.|edition\.)?cnn\.com/video/(?!flashLive).+</string>
 			</array>
 		</dict>
 	</dict>

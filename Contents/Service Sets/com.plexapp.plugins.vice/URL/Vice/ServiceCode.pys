@@ -2,7 +2,7 @@ import re
 
 BASE_URL = "http://www.vice.com%s"
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
-MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
+MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js?%s'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -66,19 +66,22 @@ def PlayVideo(url):
 
     # Once we've got this, we can then request the main JS page to do with the actual player. Since it
     # only actually contains JS source, we simply obtain the content.
-    player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime = 0).content
+    player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime=0).content
 
     # The player page will contain a reference to the mobile JS page (including all required parameters).
     # We therefore search for the known url.
-    mobile_player_page_args = re.match('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', player_page, re.DOTALL).groupdict()['args'] + 'ipad'
-    mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime = 0).content
+    mobile_player_page_args = re.search('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"', player_page).group(1) + 'ipad'
+    mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime=0).content
 
-    # We now have the mobile JS player page. 
-    stream_json = re.search('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', mobile_player_page, re.DOTALL).group('json')
-    stream_json = stream_json.decode('unicode_escape')[1:-1]
-    stream_details = JSON.ObjectFromString(stream_json)
+    # We now have the mobile JS player page.
+    try:
+        stream_json = re.search('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', mobile_player_page, re.DOTALL).group('json')
+        stream_json = stream_json.decode('unicode_escape')[1:-1]
+        stream_details = JSON.ObjectFromString(stream_json)
 
-    return Redirect(stream_details['ipad_url'])
+        return Redirect(stream_details['ipad_url'])
+    except:
+        raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():

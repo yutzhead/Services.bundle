@@ -3,6 +3,11 @@ AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 SWF_URL = "http://admin.brightcove.com/viewer/us20120627.1407/BrightcoveBootloader.swf"
 
 ####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
 	data = DoAmfRequest(url)
@@ -122,8 +127,9 @@ def TestURLs():
 	test_urls = []
 	data = HTML.ElementFromURL('http://allrecipes.com/video/main.aspx')
 
-	for video in data.xpath('//ul[@class="ulHublistLeft"]//a'):
-		test_urls.append(video.get('href'))
+	for video in data.xpath('//a[contains(@href, "/video/")]/@href'):
+		if video not in test_urls:
+			test_urls.append(video)
 
 		if len(test_urls) > 2:
 			break

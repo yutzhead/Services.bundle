@@ -85,10 +85,18 @@ def PlayVideo(url):
 		return Redirect(WebVideoURL(FULL_EPISODE % video_id))
 
 	else:
+		xml = XML.ElementFromURL(VIDEO_INFO % video_id)
+
+		if len(xml.xpath('//files/file')) < 1:
+			raise Ex.MediaNotAvailable
+
 		try:
-			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@bitrate="embed"]')[0].text
+			video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
 		except:
-			video_url = XML.ElementFromURL(VIDEO_INFO % video_id).xpath('//file[@type="standard"]')[0].text
+			try:
+				video_url = xml.xpath('//file[@type="standard"]')[0].text
+			except:
+				raise Ex.MediaNotAvailable
 
 		return Redirect(video_url)
 

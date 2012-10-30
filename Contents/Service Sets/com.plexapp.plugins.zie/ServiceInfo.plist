@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.zie.nl/video/.+/.+/m1[a-z0-9]+</string>
+				<string>http://www.zie.nl/video/.+/m1[a-z0-9]+</string>
 			</array>
 		</dict>
 	</dict>

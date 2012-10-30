@@ -45,7 +45,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetDetails(url):
 
-	content = HTTP.Request(url).content
+	try:
+		content = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	video_details = RE_VIDEO_DETAILS.search(content)
 
 	if video_details:

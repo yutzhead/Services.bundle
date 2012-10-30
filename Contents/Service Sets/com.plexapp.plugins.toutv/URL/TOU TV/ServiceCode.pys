@@ -100,7 +100,10 @@ def GetSMIL(url):
     try:
         pID = RE_EPISODE_ID.search(data).group(1)
     except:
-        pID = RE_MEDIA_ID.search(data).group(1)
+        try:
+            pID = RE_MEDIA_ID.search(data).group(1)
+        except:
+            raise Ex.MediaNotAvailable
 
     content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
     smil = XML.ElementFromString(content)

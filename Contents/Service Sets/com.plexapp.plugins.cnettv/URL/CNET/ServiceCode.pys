@@ -3,9 +3,7 @@ API_URL = "http://api.cnet.com/restApi/v1.0/video?videoId=%s&orderBy=productionD
 
 ####################################################################################################
 def NormalizeURL(url):
-  if url.find('?') != -1:
-    return url[0:url.find('?')]
-  return url
+  return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -14,7 +12,7 @@ def MetadataObjectForURL(url):
   if not video_id:
     return None
 
-  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200, errors='ignore')
+  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200)
 
   episode_title = data.xpath("//l:Title", namespaces=CNET_NAMESPACE)[0].text
   summary = data.xpath("//l:Description", namespaces=CNET_NAMESPACE)[0].text
@@ -99,7 +97,7 @@ def PlayVideo(url, res):
   if not video_id:
     return None
 
-  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200, errors='ignore')
+  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200)
   videos = data.xpath("//l:VideoMedia", namespaces=CNET_NAMESPACE)
 
   video_dict = {}
@@ -123,10 +121,10 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetVideoIdFromUrl(url):
 
-  if url.find('cnettv') != -1:
+  if 'cnettv' in url and '.html' in url:
     video_id = url.split('-')[-1].strip('.html')
   else:
-    data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+    data = HTML.ElementFromURL(url, cacheTime=7200)
     try:
       video_id = data.xpath('//div[@id="universalVideo"]')[0].get('videoid')
     except:

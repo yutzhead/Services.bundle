@@ -10,17 +10,16 @@ EMBEDDED_VIDEO = [
 	("//iframe", "src"), 
 	("//embed", "src"), 
 	("//object", "data"), 
-	("//param[@name = 'flashvars']", "value")
+	("//param[@name='flashvars']", "value")
 ]
 
 # Use the iPad user agent to try to make websites give us <video> instead of Flash
-HTTP_IPAD_UA = {'User-Agent' : 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10'}
-
-HTTP.CacheTime = 0
+HTTP_IPAD_UA = {'User-Agent':'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10'}
+HTTP_DESKTOP_UA = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.14 (KHTML, like Gecko) Version/6.0.1 Safari/536.26.14'}
 
 RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
-RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
-RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|flv)[^&]*)')
+RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|m4v|flv)[^&]*)')
 RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
@@ -39,6 +38,8 @@ def FixUrl(parent_url, url):
 		final_url = '%s://%s%s/%s' % (parent_url.scheme, parent_url.netloc, parent_url.path.rsplit('/',1)[0], url)
 	else:
 		final_url = url
+
+	final_url = final_url.replace('&amp;', '&').replace('&amp;', '&') # Twice in case we have &amp;amp;
 
 	return final_url
 
@@ -89,11 +90,12 @@ def FindExternalSource(req):
 		for video in doc.xpath(select):
 			try:
 				node_url = video.get(node)
-				for sources_check in URLService.AllPatterns:
-					try: 
-						if len(node_url) > 0 and len(Regex(sources_check).findall(node_url)) > 0:
-							return node_url
-					except: pass
+				if isinstance(node_url, basestring) and node_url.startswith('http'):
+					for sources_check in URLService.AllPatterns:
+						try:
+							if len(Regex(sources_check).findall(node_url)) > 0:
+								return node_url
+						except: pass
 			except: pass
 
 	return None
@@ -109,13 +111,23 @@ def CodecsForVideoTypeValue(value):
 		return RE_WHITESPACE.split(match.groups()[0])
 
 ####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
 	try:
 		if not ValidURL(url):
 			return None
 
-		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+		if '#ipad-ua' in url:
+			headers = HTTP_IPAD_UA
+		else:
+			headers = HTTP_DESKTOP_UA
+
+		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
 
 		try:
 			req.headers
@@ -137,7 +149,7 @@ def MetadataObjectForURL(url):
 			doc = HTML.ElementFromString(req.content)
 
 			# HTML5 Video
-			videos = doc.xpath('//video')
+			videos = doc.xpath('//video[@src and not(@src="")]|//video/source/parent::video')
 
 			if len(videos) > 0:
 				Log.Debug(' --> [Metadata] Found an HTML5 video')
@@ -176,6 +188,9 @@ def MetadataObjectForURL(url):
 				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
 
+		if not '#ipad-ua' in url:
+			return URLService.MetadataObjectForURL('%s#ipad-ua' % url)
+
 	except:
 		return None
 
@@ -186,7 +201,12 @@ def MediaObjectsForURL(url):
 		if not ValidURL(url):
 			return None
 
-		req = HTTP.Request(url, headers=HTTP_IPAD_UA, follow_redirects=False)
+		if '#ipad-ua' in url:
+			headers = HTTP_IPAD_UA
+		else:
+			headers = HTTP_DESKTOP_UA
+
+		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
 
 		try:
 			req.headers
@@ -199,16 +219,10 @@ def MediaObjectsForURL(url):
 
 		if ShouldParse(req):
 
-			# Embedded Video
-			source_url = FindExternalSource(req)
-			if source_url is not None:
-				Log.Debug(' --> [Media] Found an embedded video: %s' % source_url)
-				return URLService.MediaObjectsForURL(source_url)
-
 			doc = HTML.ElementFromString(req.content)
 
 			# HTML5 Video
-			videos = doc.xpath('//video')
+			videos = doc.xpath('//video[@src and not(@src="")]|//video/source/parent::video')
 
 			if len(videos) > 0:
 				Log.Debug(' --> [Media] Found an HTML5 video')
@@ -243,14 +257,6 @@ def MediaObjectsForURL(url):
 
 				return result
 
-			# Meta tag refresh
-			refresh = RE_META_REFRESH.search(req.content)
-
-			if refresh:
-				if refresh.group('url').split('://',1)[1] != url.split('://',1)[1]:
-					Log.Debug(' --> [Media] Found a meta refresh tag with a new URL: %s' % refresh.group('url'))
-					return URLService.MediaObjectsForURL(refresh.group('url'))
-
 			# Regex Video
 			video = RE_PATTERN.search(req.content)
 
@@ -279,13 +285,8 @@ def MediaObjectsForURL(url):
 						)
 					]
 
-			# Regex Video YouTube
-			youtube = RE_YOUTUBE.search(req.content)
-
-			if youtube:
-				youtube_url = youtube.group('vid').replace('\\', '')
-				Log.Debug(' --> [Media] Found a YouTube video using the YouTube regex: %s' % youtube_url)
-				return URLService.MediaObjectsForURL(youtube_url)
+		if not '#ipad-ua' in url:
+			return URLService.MediaObjectsForURL('%s#ipad-ua' % url)
 
 	except:
 		return None

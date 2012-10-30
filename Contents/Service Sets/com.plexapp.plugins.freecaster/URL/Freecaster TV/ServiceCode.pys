@@ -73,6 +73,10 @@ def PlayVideo(url, res):
     
     info = GetInfo(url)
     mp4Streams = info.xpath('//html_streams/stream')
+
+    if len(mp4Streams) < 1:
+        return None
+
     # Convert the requested resolution, into a suitable indexer into the mp4 list. It's possible that the requested quality
     # is not available. Therefore, we must clamp it to the size of the list.
     index = 0

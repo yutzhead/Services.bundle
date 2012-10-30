@@ -8,36 +8,33 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url, errors='ignore')
+	html = HTML.ElementFromURL(url)
 
-	title = data.xpath('//div[@class="content"]//h1')[0].text
+	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
+	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
 
-	''' need to figure out how to grab date and duration details from the html '''
-	date = data.xpath('//div[@class="details"]//p/text()')[1].strip()
-	duration = data.xpath('//div[@class="details"]//p/text()')[2].strip()
-	durationParts = duration.split(':')
-	duration = (int(durationParts[0])*60 + int(durationParts[1]))*1000
+	date = html.xpath('//strong[text()="Published"]/following-sibling::text()')[0].strip()
+	originally_available_at = Datetime.ParseDate(date).date()
 
-	summary = data.xpath('//div[@class="details"]//p')[1].text.strip()
-	video_id = data.xpath('//div[@class="video-wrapper"]/div')[0].get('id').strip('video-')
-	thumb_url = GetThumb(DATA_URL % video_id)
+	duration = html.xpath('//strong[text()="Duration"]/following-sibling::text()')[0].strip()
+	duration = duration.replace(' minutes ', ':').split(' ')[0]
+	duration = TimeToMs(duration)
 
-	vc = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		originally_available_at = Datetime.ParseDate(date).date(),
 		duration = duration,
-		thumb = thumb_url
+		thumb = thumb
 	)
-
-	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
 			video_resolution = '720',
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
@@ -48,25 +45,27 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, fmt):
+@indirect
+def PlayVideo(url, fmt=None):
 
 	# Obtain the id of the video
-	page = HTML.ElementFromURL(url)
-	id = page.xpath("//div[@class='video-wrapper']/div")[0].get('id').strip('video-')
+	html = HTML.ElementFromURL(url)
+	id = html.xpath('//div[@class="video-wrapper"]/div')[0].get('id').strip('video-')
 
 	# Look up the associated JSON to extract the MP4 url
-	data = JSON.ObjectFromURL(DATA_URL % id, cacheTime = 0)
+	data = JSON.ObjectFromURL(DATA_URL % id, cacheTime=0)
 	mp4_url = data[0]['file']
 
-	return Redirect(mp4_url)
+	return IndirectResponse(VideoClipObject, key=mp4_url)
 
 ####################################################################################################
-def GetThumb(data_url):
+def TimeToMs(timecode):
 
-	content = HTTP.Request(data_url).content.strip('[').strip(']')
-	data = JSON.ObjectFromString(content)
+	seconds  = 0
+	duration = timecode.split(':')
+	duration.reverse()
 
-	if 'image' in data:
-		return data['image']
-	else:
-		return None
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000

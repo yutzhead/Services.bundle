@@ -44,7 +44,7 @@ def MetadataObjectForURL(url):
 	data = XML.ElementFromURL(data_url, cacheTime=7200, errors='ignore')
 
 	thumb_list = data.xpath('//image')
-	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb.get("height")), reverse=True)
+	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb.get("height")), reverse=True)[0:2]
 	summary = data.xpath('//description')[0].text
 	date = data.xpath('//dateCreated')[0].text
 	duration = data.xpath('//length')[0].text

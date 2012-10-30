@@ -4,7 +4,7 @@ FEED_URL = "http://cdn.abc.go.com/vp2/ws/s/contents/2000/utils/mov/13/9024/%s/43
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url.split('?')[0].replace(' ', '%20')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -78,7 +78,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate):
+def PlayVideo(url, bitrate=1600):
 
 	video_id = url.split('/')[-2]
 	data = XML.ElementFromURL(FEED_URL % video_id)
@@ -87,7 +87,7 @@ def PlayVideo(url, bitrate):
 	if len(available_bitrates) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+	closest = min((abs(int(bitrate) - int(i.split('.')[0])), i) for i in available_bitrates)[1]
 
 	streamer = 'rtmp://cp88586.edgefcs.net/abcondemand'
 	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')

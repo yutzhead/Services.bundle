@@ -4,15 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>RoosterTeeth</key>
+		<key>4tube</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://roosterteeth.com/archive/?id=3511</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?roosterteeth\.com/.+</string>
+				<string>http://www.4tube.com/videos/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>PU-TV</key>
+		<key>RedTube</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)/?pu.nl/pu-tv/.+</string>
+				<string>http://www.redtube.com/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

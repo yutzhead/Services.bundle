@@ -4,15 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>HowToBecomeTV</key>
+		<key>GameTrailers</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://howtobecome.tv/how-to-become-a-teacher/</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www.)?howtobecome\.tv/.+</string>
+				<string>http://www.gametrailers.com/.+</string>
 			</array>
 		</dict>
 	</dict>

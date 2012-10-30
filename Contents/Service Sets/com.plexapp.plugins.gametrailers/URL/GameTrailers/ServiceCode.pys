@@ -1,0 +1,130 @@
+NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
+
+MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
+MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	uri = GetURI(url)
+	feed = RSS.FeedFromURL(MRSS_URL % uri)
+	video = feed.entries[0]
+	title = video.title
+	date = video.updated
+	description = video.summary
+	duration = int(float(video.media_content[0]['duration'])*1000)
+	thumb = video.media_thumbnail[0]['url']
+
+	return VideoClipObject(
+		title = title,
+		originally_available_at = Datetime.ParseDate(date).date(),
+		summary = description,
+		duration = duration,
+		thumb = thumb
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))],
+			bitrate = 3500,
+			container = Container.MP4,
+			video_resolution = '720',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))],
+			bitrate = 2200,
+			container = Container.MP4,
+			video_resolution = '540',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))],
+			bitrate = 1700,
+			container = Container.MP4,
+			video_resolution = '432',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))],
+			bitrate = 1200,
+			container = Container.MP4,
+			video_resolution = '360',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))],
+			bitrate = 750,
+			container = Container.MP4,
+			video_resolution = '288',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0))],
+			bitrate = 400,
+			container = Container.MP4,
+			video_resolution = '216',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, bitrate='1700', index=0, fmt=None):
+
+	BITRATES = ['400', '750', '1200', '1700', '2200', '3500']
+
+	uri = GetURI(url)
+
+	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
+
+	player_data = XML.ElementFromURL(player_url)
+	try:
+		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
+	except:
+		rtmp_url = ''
+		index = BITRATES.index(bitrate)
+		while index > -1:
+			try:
+				rtmp_url = player_data.xpath('//rendition/src')[index].text
+				break
+			except:
+				index = index - 1
+
+	stream_url = rtmp_url.split('/mtvnorigin/')[1]
+	mp4_url = MP4_URL % stream_url
+
+	return Redirect(mp4_url)
+
+####################################################################################################
+def GetURI(url):
+
+	data = HTML.ElementFromURL(url)
+	uri = data.xpath('//div[@id="video-player"]')[0].get('data-mgid')
+
+	return uri

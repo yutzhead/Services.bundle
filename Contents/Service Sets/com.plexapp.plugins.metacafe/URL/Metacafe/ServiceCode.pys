@@ -1,27 +1,43 @@
-VIDEO_URL = '%s?__gda__=%s'
+import urllib2
 
-RE_RANK = Regex('&rank=(?P<rank>[^&]*)')
-RE_DURATION = Regex('&duration=(?P<duration>[^&]*)')
+API_URL = 'http://www.metacafe.com/api/item/%s/'
+API_NS = {'media':'http://search.yahoo.com/mrss/'}
+VIDEO_URL = '%s?__gda__=%s'
+RE_ITEM_ID = Regex('/watch/(?P<id>\d+)')
 RE_MEDIA = Regex('mediaData=(?P<media>[^&]+)')
+HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	data = GetXml(url)
 
-	title = page.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = page.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = page.xpath('//meta[@property="og:image"]')[0].get('content')
-	tags = page.xpath('//dl[@id="Tags"]/dd/a/text()')
-	date = page.xpath('//div[@id="MetaData"]//li/strong[text()="Added :"]/following-sibling::text()')[0].strip()
-	date = Datetime.ParseDate(date)
+	if not data:
+		raise Ex.MediaNotAvailable
 
-	# The flash variables actually contain additional information about the title. We should therefore extract this from here too.
-	flash_vars_encoded = page.xpath('//object/param[@id="flashVars"]')[0].get('value')
-	flash_vars = String.Unquote(flash_vars_encoded)
+	title = data.xpath('./media:title', namespaces=API_NS)[0].text
+	summary = data.xpath('./media:description', namespaces=API_NS)[0].text
+	thumb = data.xpath('./media:thumbnail', namespaces=API_NS)[0].get('url')
 
-	rating = float(RE_RANK.search(flash_vars).group('rank'))
-	duration = int(RE_DURATION.search(flash_vars).group('duration')) * 1000
+	try:
+		date = data.xpath('./pubDate')[0].text.split(' ')[0]
+		date = Datetime.ParseDate(date)
+	except:
+		date = None
+
+	duration = data.xpath('./media:content', namespaces=API_NS)[0].get('duration')
+	duration = int(duration) * 1000
+
+	try:
+		rating = data.xpath('./rank')[0].text
+		rating = float(rating) * 2
+	except:
+		rating = None
+
+	try:
+		tags = data.xpath('./media:keywords', namespaces=API_NS)[0].text.split(',')
+	except:
+		tags = []
 
 	return VideoClipObject(
 		title = title,
@@ -56,23 +72,62 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+def GetXml(url):
+
+	item_id = RE_ITEM_ID.search(url)
+
+	if item_id is None:
+		return None
+
+	video_id = item_id.group('id')
+	data = XML.ElementFromURL(API_URL % video_id, cacheTime=CACHE_1DAY).xpath('//item/id[text()="'+video_id+'"]/parent::item')
+
+	if len(data) < 1:
+		return None
+	else:
+		return data[0]
+
+####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
-	page = HTML.ElementFromURL(url, cacheTime=0)
+	data = GetXml(url)
 
-	flash_vars_encoded = page.xpath('//object/param[@id="flashVars"]')[0].get('value')
-	flash_vars = String.Unquote(flash_vars_encoded)
+	if not data:
+		raise Ex.MediaNotAvailable
 
-	media = JSON.ObjectFromString(RE_MEDIA.search(flash_vars).group('media'))
+	player_url = data.xpath('./media:content', namespaces=API_NS)[0].get('url')
 
-	if res == 'hd' and 'highDefinitionMP4' in media:
-		video_url = media['highDefinitionMP4']['mediaURL']
-		key = media['highDefinitionMP4']['access'][0]['value']
-	elif 'MP4' in media:
-		video_url = media['MP4']['mediaURL']
-		key = media['MP4']['access'][0]['value']
+	if player_url == '':
+		raise Ex.MediaNotAvailable
+
+	request = urllib2.Request(player_url, None, HTTP_HEADERS)
+	opener = urllib2.build_opener(SmartRedirectHandler)
+	f = opener.open(request)
+
+	if f.status == 303:
+		data = String.Unquote(f.url)
+		media = JSON.ObjectFromString(RE_MEDIA.search(data).group('media'))
+
+		if res == 'hd' and 'highDefinitionMP4' in media:
+			video_url = media['highDefinitionMP4']['mediaURL']
+			key = media['highDefinitionMP4']['access'][0]['value']
+		elif 'MP4' in media:
+			video_url = media['MP4']['mediaURL']
+			key = media['MP4']['access'][0]['value']
+		else:
+			video_url = media['flv']['mediaURL']
+			key = media['flv']['access'][0]['value']
+
+		return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
+
 	else:
-		video_url = media['flv']['mediaURL']
-		key = media['flv']['access'][0]['value']
+		raise Ex.MediaNotAvailable
 
-	return Redirect(VIDEO_URL % (video_url.replace(' ', '%20'), key))
+####################################################################################################
+class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
+
+	def http_error_303(self, req, fp, code, msg, headers):
+		result = urllib2.HTTPRedirectHandler.http_error_303(self, req, fp, code, msg, headers)
+		result.status = code
+		return result

@@ -9,7 +9,7 @@ YOUTUBE_VIDEORES =      ['sd',       'sd',     '480',  '720',  '1080']
 YOUTUBE_VIDEOCODEC =    ['h264',     'h264',   'h264', 'h264', 'h264']
 YOUTUBE_AUDIOCODEC =    ['aac',      'aac',    'aac',  'aac',  'aac']
 
-httpHeaders = { 'X-GData-Key' : "key="+DEVELOPER_KEY }
+httpHeaders = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
 RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
 RE_PATH_1 = Regex('^/(watch|details)(_popup)?')
@@ -101,6 +101,9 @@ def MetadataObjectForURL(url):
     return None
   else:
     video_id = url[url.find('?v=')+3:].split('&')[0]
+
+    if video_id == '':
+      raise Ex.MediaNotAvailable
 
   try:
     details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']

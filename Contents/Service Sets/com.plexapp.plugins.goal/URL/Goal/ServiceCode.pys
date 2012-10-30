@@ -88,9 +88,9 @@ def GetVideoXML(url):
 	content = HTTP.Request(url).content
 	player_vars = RE_PLAYER_VARS.search(content).groupdict()
 	xml_content = XML.ElementFromURL(XML_URL % (player_vars['part1'], player_vars['part2'], player_vars['part3']))
-	video_item = xml_content.xpath('.//guid[contains(text(), "'+player_vars['part3']+'")]/parent::item')
+	video_item = xml_content.xpath('.//guid[contains(text(), "%s")]/parent::item' % player_vars['part3'])
 
 	if len(video_item) < 1:
-		return None
+		raise Ex.MediaExpired
 	else:
 		return video_item[0]
