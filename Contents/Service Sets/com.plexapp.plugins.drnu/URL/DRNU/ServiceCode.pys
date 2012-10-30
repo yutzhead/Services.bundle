@@ -92,9 +92,9 @@ def MediaObjectsForURL(url):
 				if assets.get('Kind') == "VideoResource":
 					drAsset = JSON.ObjectFromURL(assets['Uri'])
 					for links in drAsset.get('links'):
-						if links.get('fileType') == 'mp4':
+						if links.get('fileType') == 'mp4' and links.get('linkType') == 'Streaming':
 							mol.append( MediaObject(bitrate = links.get('bitrateKbps', None),parts = [PartObject(key = RTMPVideoURL(links['uri'].split('mp4:')[0], clip = 'mp4:' +  links['uri'].split('mp4:')[1], width = links.get('width', None), height = links.get('height',None), live = False) )]))
-						elif links.get('filetype') == 'wmv':
+						elif links.get('filetype') == 'wmv' and links.get('linkType') == 'Streaming':
 							mol.append( MediaObject(bitrate = links.get('bitrateKbps', None),parts = [PartObject(key = WindowsMediaVideoURL(links['uri'], width=links.get('width', None), height=links.get('height', None)))]))
 						
 						
