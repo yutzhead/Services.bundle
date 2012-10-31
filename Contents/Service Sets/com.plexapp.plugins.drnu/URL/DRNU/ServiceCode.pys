@@ -81,7 +81,6 @@ def MediaObjectsForURL(url):
 			if(streamingservers['LinkType'] == "Streaming"):
 				for qualities in streamingservers['Qualities']:
 					for streams in qualities['Streams']:
-						
 						mol.append(MediaObject(bitrate=qualities['Kbps'], parts=[PartObject(key=RTMPVideoURL(streamingservers['Server'], clip = streams['Stream'], width=None,height=None, live=True))]))
 	# ON-DEMAND TV
 	elif re.search('http://(.+\.)?dr.dk/TV/se/.*/.+',url):
