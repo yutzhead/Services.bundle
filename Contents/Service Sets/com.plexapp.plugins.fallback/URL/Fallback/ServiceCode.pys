@@ -133,9 +133,13 @@ def MetadataObjectForURL(url):
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
+				if '://' not in e.headers['Location']:
+					e.headers['Location'] = FixUrl(url, e.headers['Location'])
+
 				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					Log.Debug(' --> [Metadata] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
 					return URLService.MetadataObjectForURL(e.headers['Location'])
+
 				return None
 
 		if ShouldParse(req):
@@ -212,9 +216,13 @@ def MediaObjectsForURL(url):
 			req.headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
+				if '://' not in e.headers['Location']:
+					e.headers['Location'] = FixUrl(url, e.headers['Location'])
+
 				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					Log.Debug(' --> [Media] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
 					return URLService.MediaObjectsForURL(e.headers['Location'])
+
 				return None
 
 		if ShouldParse(req):
