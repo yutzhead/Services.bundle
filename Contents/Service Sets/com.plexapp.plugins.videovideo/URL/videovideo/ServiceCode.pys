@@ -1,0 +1,54 @@
+####################################################################################################
+
+def NormalizeURL(url):
+
+    return url.rstrip('/')
+
+####################################################################################################
+
+def MetadataObjectForURL(url):
+ 
+    # create video object
+    return VideoClipObject()
+
+####################################################################################################
+
+def MediaObjectsForURL(url):
+    
+   
+    # create and return media obj
+    return [
+        MediaObject(
+                container = Container.MP4,
+                video_codec = VideoCodec.H264,
+                video_resolution = '720',
+                audio_codec = AudioCodec.AAC,
+                audio_channels = 2,
+                parts = [PartObject(key = Callback(PlayVideo, url = url))]
+        )
+    ]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+    
+    # create objs
+    oc = ObjectContainer()
+    video_obj = VideoClipObject(key = url)
+    media_obj = MediaObject(
+                        container = Container.MP4,
+                        video_codec = VideoCodec.H264,
+                        video_resolution = '720',
+                        audio_codec = AudioCodec.AAC,
+                        audio_channels = 2)
+ 
+    # add main video part to media
+    media_obj.add(PartObject(key = RTMPVideoURL(url = url)))
+
+    # append media to list
+    video_obj.add(media_obj)
+    oc.add(video_obj)
+
+    return oc
+
+####################################################################################################
