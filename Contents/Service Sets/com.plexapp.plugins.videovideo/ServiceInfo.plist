@@ -2,24 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>PlexFrameworkFlags</key>
-	<array>
-		<string>UseRealRTMP</string>
-	</array>
 	<key>URL</key>
 	<dict>
 		<key>videovideo</key>
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://vv-railgun-tv.s3.amazonaws.com/248/1179-480.mp4</string>
-				<string>http://vv-newz-tv.s3.amazonaws.com/270/1271-720.mp4</string>
-        <string>http://vv-filmz-tv.s3.amazonaws.com/289/1320-480.mp4</string>
-        <string>http://vv-filmz-exclusive.s3.amazonaws.com/272/1278-480.mp4</string>
+				<string>http://videovideo.dk/episode/filmz-tv/84-eksklusive-transformers-3-interviews-del-1</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://vv-(.*)\.s3\.amazonaws\.com/\d+/(.*)\.mp4</string>
+				<string>http://videovideo.dk/episode/.+/.+</string>
+				<string>http://videovideo.dk/e/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>
