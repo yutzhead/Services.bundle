@@ -14,9 +14,13 @@ def MetadataObjectForURL(url):
 	video_id = RE_VIDEO_ID.search(url).group(1)
 	details_page = XML.ElementFromURL(DETAILS_PAGE % video_id)
 
-	# Check for geoblock (statusCode=4). Other statusCode checks can be added later if necessary.
+	# Check statusCode for errors:
+	# 2 = copyright violation
+	# 4 = geoblock
 	status_code = details_page.xpath('//statusCode')
 	if len(status_code) > 0:
+		if status_code[0].text == '2':
+			raise Ex.MediaNotAvailable
 		if status_code[0].text == '4':
 			raise Ex.MediaGeoblocked
 
@@ -50,6 +54,16 @@ def PlayVideo(url):
 	# Find the appropriate details page
 	video_id = RE_VIDEO_ID.search(url).group(1)
 	details_page = XML.ElementFromURL(DETAILS_PAGE % video_id, cacheTime=0)
+
+	# Check statusCode for errors:
+	# 2 = copyright violation
+	# 4 = geoblock
+	status_code = details_page.xpath('//statusCode')
+	if len(status_code) > 0:
+		if status_code[0].text == '2':
+			raise Ex.MediaNotAvailable
+		if status_code[0].text == '4':
+			raise Ex.MediaGeoblocked
 
 	video_url = details_page.xpath('//item/media:content', namespaces=NAMESPACES)[0].get('url')
 	return IndirectResponse(VideoClipObject, key=video_url)
