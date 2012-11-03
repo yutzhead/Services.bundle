@@ -1,7 +1,7 @@
 CONFIG_URL = "%s.config?windowLocation=%s"
 IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
 RE_DATE = Regex('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', Regex.IGNORECASE)
-RE_FLASHVARS_URL = Regex('flashvars.url = "([^"]+)')
+RE_FLASHVARS_URL = Regex('var videoUrl = "([^"]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
