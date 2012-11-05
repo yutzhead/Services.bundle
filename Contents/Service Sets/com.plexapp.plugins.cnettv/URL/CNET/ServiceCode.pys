@@ -27,8 +27,8 @@ def MetadataObjectForURL(url):
     for thumb in data.xpath("//l:Images/l:Image", namespaces=CNET_NAMESPACE):
       res = int(thumb.get('width'))
       url = thumb.xpath('l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
-      asp = thumb.get('aspectRatio')
-      if asp == '16:9':
+
+      if thumb.get('aspectRatio') == '16:9':
         thumb_dict_169[res] = url
       else:
         thumb_dict_43[res] = url
@@ -43,11 +43,10 @@ def MetadataObjectForURL(url):
 
     thumbUrl = thumb_dict[keys[0]]
   except:
-    raise
     thumbUrl = None
 
   # Construct a metadata item
-  ec = EpisodeObject(
+  return EpisodeObject(
     title = episode_title,
     show = show_title,
     duration = duration,
@@ -55,8 +54,6 @@ def MetadataObjectForURL(url):
     summary = summary,
     thumb = thumbUrl
   )
-
-  return ec
 
 ####################################################################################################
 def MediaObjectsForURL(url):
