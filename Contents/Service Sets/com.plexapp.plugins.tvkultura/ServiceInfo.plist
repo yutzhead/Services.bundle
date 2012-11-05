@@ -8,7 +8,7 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.tvkultura.ru/issue.html?id=115878</string>
+				<string>http://tvkultura.ru/video/show/brand_id/20898/video_id/170286</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
