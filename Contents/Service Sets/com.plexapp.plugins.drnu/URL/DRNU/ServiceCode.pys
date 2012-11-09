@@ -9,15 +9,15 @@ bwInt = {"high":1000, "medium":500, "low":250, "auto":20000}
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.lower()
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	vc = VideoClipObject()
 	
-	# LIVE TV
-	if re.search('http://(.+\.)?dr.dk/TV/live/.+', url):
+	# LIVE tv
+	if re.search('http://(.+\.)?dr.dk/tv/live/.+', url):
 		slug = url.rsplit('/',1)[1]
 		try:
 			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='TV'&Slug='%s'" % slug)
@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 
 	
 	# ON-Demand TV
-	elif re.search('http://(.+\.)?dr.dk/TV/se/.*/.+',url):
+	elif re.search('http://(.+\.)?dr.dk/tv/se/.*/.+',url):
 		slug = url.split('/')[6].rsplit('#',1)[0]
 		try:
 			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/ProgramCard?Slug='%s'" % slug)
@@ -70,7 +70,7 @@ def MediaObjectsForURL(url):
 
 	mol = []
 	# LIVE TV
-	if re.search('http://(.+\.)?dr.dk/TV/live/.+', url):
+	if re.search('http://(.+\.)?dr.dk/tv/live/.+', url):
 		
 		slug = url.rsplit('/',1)[1]
 		try:
@@ -83,7 +83,7 @@ def MediaObjectsForURL(url):
 					for streams in qualities['Streams']:
 						mol.append(MediaObject(bitrate=qualities['Kbps'], parts=[PartObject(key=RTMPVideoURL(streamingservers['Server'], clip = streams['Stream'], width=None,height=None, live=True))]))
 	# ON-DEMAND TV
-	elif re.search('http://(.+\.)?dr.dk/TV/se/.*/.+',url):
+	elif re.search('http://(.+\.)?dr.dk/tv/se/.*/.+',url):
 		slug = url.split('/')[6].rsplit('#',1)[0]
 		drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/ProgramCard?Slug='%s'" % slug)['Data'][0]
 		if drMeta.get('Assets'):
