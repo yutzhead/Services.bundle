@@ -1,4 +1,4 @@
-CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
+CNET_NAMESPACE = {'l':'http://api.cnet.com/rest/v1.0/ns'}
 API_URL = "http://api.cnet.com/restApi/v1.0/video?videoId=%s&orderBy=productionDate~desc,createDate~desc&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,&partTag=cntv&showBroadcast=true"
 
 ####################################################################################################
@@ -65,7 +65,7 @@ def MediaObjectsForURL(url):
       audio_codec = AudioCodec.AAC,
       audio_channels = 2,
       optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 720))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))],
     ),
     MediaObject(
       container = Container.MP4,
@@ -74,7 +74,7 @@ def MediaObjectsForURL(url):
       audio_codec = AudioCodec.AAC,
       audio_channels = 2,
       optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))],
     ),
     MediaObject(
       container = Container.MP4,
@@ -83,7 +83,7 @@ def MediaObjectsForURL(url):
       audio_codec = AudioCodec.AAC,
       audio_channels = 2,
       optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 360))],
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res=360))],
     )
   ]
 

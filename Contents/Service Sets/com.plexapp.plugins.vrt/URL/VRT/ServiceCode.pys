@@ -1,90 +1,81 @@
-import urllib2
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27' }
-
-RE_THUMB = Regex("\['thumb'\].+?'([^']+)")
-RE_SERVER = Regex("\['rtmpServer'\].+?'([^']+)")
-RE_PATH = Regex("\['rtmpPath'\].+?'([^']+)")
-RE_FLV_EXT = Regex('\.flv$')
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
+PERMALINK_URL = 'http://%s/permalink/%s'
+CM_URL = 'http://%s/cm/%s'
+CM_JSON_URL = '%s?mode=json'
+CM_ID = Regex('1\.\d+')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  if url.find('/permalink/') != -1:
-    request = urllib2.Request(url)
-    opener = urllib2.build_opener(SmartRedirectHandler)
-    f = opener.open(request)
-    if f.status == 301 or f.status == 302:
-      url = f.url.split('?')[0]
-      return '%s?view=shortcutArticle&shortcutView=popupPlayer' % url
-    else:
-      Log(' --> No redirect for url: ' + url)
-      Log(' --> HTTP status code: ' + f.status)
-  else:
-    url = url.split('?')[0]
-    return '%s?view=shortcutArticle&shortcutView=popupPlayer' % url
+	id = CM_ID.findall(url)
+
+	if len(id) < 1:
+		return None
+
+	return PERMALINK_URL % (GetHost(url), id[0])
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  details = HTTP.Request(url, cacheTime=CACHE_1DAY, headers=httpHeaders).content
-  video_details = HTML.ElementFromString(details)
+	id = CM_ID.findall(url)
 
-  title = video_details.xpath('//div[@id="videoMetaData"]/h1/text()[normalize-space(.)]')[0].strip()
+	if len(id) < 1:
+		return None
 
-  try:
-    summary = video_details.xpath('//div[@id="videoMetaData"]//div[@class="longdesc"]/p')[0].text
-  except:
-    summary = ''
+	cm_url_html = CM_URL % (GetHost(url), id[0])
+	cm_url_json = CM_JSON_URL % cm_url_html
 
-  try:
-    thumb = RE_THUMB.search(details).group(1).replace('\/', '/')
+	html = HTML.ElementFromString(HTTP.Request(cm_url_html).content.replace('&ndash;', '-'))
+	json = JSON.ObjectFromURL(cm_url_json)
 
-    if thumb[0:4] != 'http':
-      thumb = 'http://%s%s' % (url.split('/')[2], thumb)
-  except:
-    thumb = None
+	title = json['title']
+	thumb = json['imageData']['imageURL']
 
-  video = VideoClipObject(
-    title = title,
-    summary = summary,
-    thumb = thumb
-  )
+	if not thumb.startswith('http://'):
+		thumb = 'http://%s%s' % (GetHost(url), thumb)
 
-  return video
+	try:
+		summary = html.xpath('//span[@class="byline"]/p/text()')[0]
+	except:
+		summary = None
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url))],
-      protocol = Protocol.RTMP
-    )
-  ]
+	return [
+		MediaObject(
+			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+			container = 'mpegts',
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 def PlayVideo(url):
 
-  details = HTTP.Request(url, cacheTime=CACHE_1DAY).content
+	id = CM_ID.findall(url)
 
-  try:
-    rtmpServer = RE_SERVER.search(details).group(1).replace('\/', '/')
-    rtmpPath = RE_PATH.search(details).group(1).replace('\/', '/')
-    rtmpPath = RE_FLV_EXT.sub('', rtmpPath)
+	if len(id) < 1:
+		return None
 
-    return Redirect(RTMPVideoURL(url=rtmpServer, clip=rtmpPath))
-  except:
-    Log(' --> Could not find RTMP video for url: ' + url)
-    return None
+	cm_url_html = CM_URL % (GetHost(url), id[0])
+	cm_url_json = CM_JSON_URL % cm_url_html
+	json = JSON.ObjectFromURL(cm_url_json)
+	video_url = '%s/playlist.m3u8' % json['iphoneURL']['url']
+
+	return Redirect(video_url)
 
 ####################################################################################################
-class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
-  def http_error_301(self, req, fp, code, msg, headers):
-    result = urllib2.HTTPRedirectHandler.http_error_301(self, req, fp, code, msg, headers)
-    result.status = code
-    return result
+def GetHost(url):
 
-  def http_error_302(self, req, fp, code, msg, headers):
-    result = urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
-    result.status = code
-    return result
+	return url.split('//',1)[1].split('/',1)[0].strip('www.')
