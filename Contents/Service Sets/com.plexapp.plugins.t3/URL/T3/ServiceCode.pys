@@ -1,88 +1,31 @@
+VIDEO_INFO_URL = 'http://endpoint.vams.futurecdn.net/vams/search.php?source=new&searchType=embed&id=%s'
+YT_URL = 'http://www.youtube.com/watch?v=%s'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0].split('#')[0]
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
-    # Retrieve the page and obtain the video and player ids. We then use this to make a AMF
-    # request which has all the information associated with the title.
-    page = HTML.ElementFromURL(url)
-    video_url = page.xpath('//meta[@property="og:video"]')[0].get('content')
-    args = String.ParseQueryString(video_url)
-    playerId = args['playerID'][0]
-    videoId = args['videoId'][0]
-    result = DoAmfRequest(playerId, videoId)
-
-    # Extract the available information
-    title = result['programmedContent']['videoPlayer']['mediaDTO']['linkText']
-    description = result['programmedContent']['videoPlayer']['mediaDTO']['shortDescription']
-    thumb = result['programmedContent']['videoPlayer']['mediaDTO']['videoStillURL']
-    date = result['programmedContent']['videoPlayer']['mediaDTO']['publishedDate']
-
-    # It appears that for some unknown reason, some of the videos do not have a known title by the 
-    # player. If we detect this, we should simply extract it from the actual page.
-    if title == None:
-        title = page.xpath("//article/h1[@class='hXL']/text()")[0].strip()
-
-    return VideoClipObject(
-        title = title,
-        summary = description,
-        thumb = thumb,
-        originally_available_at = date
-    )
+	return URLService.MetadataObjectForURL(GetYouTubeURL(url))
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-    return [
-        MediaObject(
-          video_codec = VideoCodec.H264,
-          audio_codec = AudioCodec.AAC,
-          container = Container.MP4,
-          parts = [PartObject(key=Callback(PlayVideo, url=url))]
-        )
-    ]
+	# Since there isn't a T3 channel, do it the 'easy' way
+	return URLService.MediaObjectsForURL(GetYouTubeURL(url))
 
 ####################################################################################################
-@indirect
-def PlayVideo(url):
+def GetYouTubeURL(url):
 
-    page = HTML.ElementFromURL(url)
-    video_url = page.xpath('//meta[@property="og:video"]')[0].get('content')
-    args = String.ParseQueryString(video_url)
-    playerId = args['playerID'][0]
-    videoId = args['videoId'][0]
-    result = DoAmfRequest(playerId, videoId)
+	video_id = HTML.ElementFromURL(url).xpath('//*[@data-vams-id]/@data-vams-id')
 
-    result = DoAmfRequest(playerId, videoId)
-    url = result['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
-    rtmp_details = url.split('&')
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_details[0], clip = rtmp_details[1]))
+	if len(video_id) < 1:
+		return None
 
-####################################################################################################
-class ContentOverride(object):
-    def __init__ (self, videoId=None):
-        self.contentType = int(0)
-        self.contentIds = None
-        self.target = 'videoPlayer'
-        self.contentId = int(videoId)
-        self.featuredRefId = None
-        self.contentRefIds = None
-        self.featuredId = float('nan')
-        self.contentRefId = None
+	json_obj = JSON.ObjectFromURL(VIDEO_INFO_URL % video_id[0])
+	yt_id = json_obj['result']['provider_refs']['youtube']
 
-class ViewerExperienceRequest(object):
-    def __init__ (self, playerId=None, video=None):
-        self.experienceId = int(playerId)
-        self.contentOverrides = []
-        self.contentOverrides.append(video)
-        self.TTLToken = ''
-        self.URL = ''
-
-####################################################################################################
-def DoAmfRequest(playerId, videoId):
-    client = AMF.RemotingService('http://c.brightcove.com/services/messagebroker/amf', user_agent='', amf_version=3)
-    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
-    
-    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
-    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
-    
-    video = ContentOverride(videoId)
-    experience = ViewerExperienceRequest(playerId, video)
-    return service.getDataForExperience('', experience)
+	return YT_URL % yt_id
