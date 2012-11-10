@@ -14,8 +14,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.dr.dk/tv/live/.+</string>
-				<string>http://www.dr.dk/tv/se/.+</string>
+				<string>http://www.dr.dk/(tv|TV)/live/.+</string>
+				<string>http://www.dr.dk/(tv|TV)/se/.+</string>
 				<string>http://www.dr.dk/radio/player/\?.+</string>
 			</array>
 		</dict>
