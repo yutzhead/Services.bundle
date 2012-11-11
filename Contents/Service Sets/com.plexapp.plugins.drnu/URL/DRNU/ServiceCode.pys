@@ -1,10 +1,7 @@
 import re
 
-jsDrLive = "http://www.dr.dk/nu/embed/live?height=467&width=830"
-jsDrRadioLive = "http://www.dr.dk/radio/channels/channels.json.drxml/"
-apiBaseURL = "http://www.dr.dk/nu/api/%s"
-apiBaseRadioWebURL = 'http://www.dr.dk/tjenester/medieapi/api/%s'
-bwInt = {"high":1000, "medium":500, "low":250, "auto":20000}
+DR_LIVE_RADIO = 'http://www.dr.dk/radio/channels/channels.json.drxml'
+###bwInt = {"high":1000, "medium":500, "low":250, "auto":20000}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,54 +12,65 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	vc = VideoClipObject()
-	
-	# LIVE tv
-	if re.search('http://(.+\.)?dr.dk/tv/live/.+', url):
+
+	# Live TV
+	if 'dr.dk/tv/live/' in url:
 		slug = url.rsplit('/',1)[1]
+
 		try:
-			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='TV'&Slug='%s'" % slug)
+			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType=Channel&DrChannel=true&ChannelType=TV&Slug='%s'" % slug)
+			vc.title = drMeta['Data'][0]['Title']
+			vc.summary = drMeta['Data'][0]['Description']
 		except:
 			raise Ex.MediaNotAvailable
-		vc.title = drMeta['Data'][0]['Title']
-		vc.summary = drMeta['Data'][0]['Description']
 
-	
-	# ON-Demand TV
-	elif re.search('http://(.+\.)?dr.dk/tv/se/.*/.+',url):
+	# On Demand TV
+	elif 'dr.dk/tv/se/' in url:
 		slug = url.split('/')[6].rsplit('#',1)[0]
+
 		try:
 			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/ProgramCard?Slug='%s'" % slug)
+			vc.title = drMeta['Data'][0]['Title']
+			vc.summary = drMeta['Data'][0]['Description']
+			vc.originally_available_at = Datetime.ParseDate(drMeta['Data'][0]['CreatedTime']).date()
+
+			for asset in drMeta['Data'][0]['Assets']:
+				if asset['Kind'] == 'VideoResource':
+					vc.duration = asset['DurationInMilliseconds']
+				if asset['Kind'] == 'Image':
+					vc.thumb = asset['Uri']
 		except:
 			raise Ex.MediaNotAvailable
-		vc.title = drMeta['Data'][0]['Title']
-		vc.summary = drMeta['Data'][0]['Description']
-		
-	## Live Radio
-	elif re.search('http://.*.dr.dk/radio/player/\?[^i][^d].*', url):
+
+	# Live Radio
+	elif 'dr.dk/radio/player/' in url and not '/?id/' in url:
 		slug = url.rsplit('?',1)[1]
 		try:
-			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType='Channel'&DrChannel=true&ChannelType='RADIO'&SourceUrl=$eq('dr.dk/mas/whatson/channel/%s')" % slug)
+			drMeta = JSON.ObjectFromURL("http://www.dr.dk/mu/Bundle/?BundleType=Channel&DrChannel=true&ChannelType=RADIO&SourceUrl=$eq('dr.dk/mas/whatson/channel/%s')" % slug)
+			vc.title = drMeta['Data'][0]['Title']
+			vc.summary = drMeta['Data'][0]['Description']
 		except:
 			raise Ex.MediaNotAvailable
-		vc.title = drMeta['Data'][0]['Title']
-		vc.summary = drMeta['Data'][0]['Description']
-#	 ON_DEMAND RADIO
-	elif re.search('http://.*.dr.dk/radio/player/\?[i][d]/\d+',url):
-		id = url.rsplit('/',1)[1]
-		try:
-			jsonDrOD = JSON.ObjectFromURL(apiBaseRadioWebURL % 'MediaItem/' + id)
-		except:
-			raise Ex.MediaNotAvailable
-		vc.title = jsonDrOD['title']
-		vc.duration = ( (int(jsonDrOD['duration'].rsplit(':')[0])*360) +(int(jsonDrOD['duration'].rsplit(':')[1])*60)+(int(jsonDrOD['duration'].rsplit(':')[2]))) * 1000
-		vc.source_title = jsonDrOD['broadcastChannel']
 
-		if 'broadcastTime' in jsonDrOD:
-			if 'Date(' in jsonDrOD['broadcastTime']:
-				timestamp = float( jsonDrOD['broadcastTime'].split('(')[1].split('+')[0] ) / 1000
-				vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
-			else:
-				vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+	# On Demand Radio
+	elif 'dr.dk/radio/player/?id/' in url:
+		id = url.rsplit('/',1)[1]
+
+		try:
+			jsonDrOD = JSON.ObjectFromURL("http://www.dr.dk/tjenester/medieapi/api/MediaItem/%s" % id)
+			vc.title = jsonDrOD['title']
+			vc.duration = TimeToMs(jsonDrOD['duration'])
+			vc.source_title = jsonDrOD['broadcastChannel']
+
+			if 'broadcastTime' in jsonDrOD:
+				if 'Date(' in jsonDrOD['broadcastTime']:
+					timestamp = float( jsonDrOD['broadcastTime'].split('(')[1].split('+')[0] ) / 1000
+					vc.originally_available_at = Datetime.FromTimestamp(timestamp).date()
+				else:
+					vc.originally_available_at = Datetime.ParseDate(jsonDrOD['broadcastTime']).date()
+		except:
+			raise Ex.MediaNotAvailable
+
 	return vc
 
 ####################################################################################################
@@ -128,7 +136,7 @@ def MediaObjectsForURL(url):
 	## Live Radio
 	elif re.search("http://.*.dr.dk/radio/player/\?[^i][^d].*", url):
 		try:
-			jsonDrLive = JSON.ObjectFromURL(jsDrRadioLive)
+			jsonDrLive = JSON.ObjectFromURL(DR_LIVE_RADIO)
 		except:
 			raise Ex.MediaNotAvailable
 
@@ -146,36 +154,14 @@ def MediaObjectsForURL(url):
 				break		
 	return mol
 
-
 ####################################################################################################
-@deferred
-def ondemandRadioFromURL(url):
+def TimeToMs(timecode):
 
-	mol = []
-	mo = MediaObject()
-	id = url.rsplit('/',1)[1]
-	try:
-		jsonDrOD = JSON.ObjectFromURL(apiBaseRadioWebURL % 'MediaItem/' + str(id))
-	except:
-		raise Ex.MediaNotAvailable
+	seconds  = 0
+	duration = timecode.split(':')
+	duration.reverse()
 
-	try:	
-		jsonMedia =  JSON.ObjectFromURL(jsonDrOD['mediaItemResourceUrl'])
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
 
-		for links in jsonMedia['links']:
-			if links['fileType'] == 'mp4':
-				mo = MediaObject(parts = [PartObject(key = RTMPVideoURL(links['uri'].split('mp4:')[0], clip = 'mp4:' +  links['uri'].split('mp4:')[1], width = None if 'width' not in links else links['width'], height = None if 'height' not in links else links['height'], live = False) )])
-			elif links['fileType'] == 'wma':
-				mo = MediaObject(parts = [PartObject(key = WindowsMediaVideoURL(links['uri'], width=None if 'width' not in links else links['width'], height=None if 'height' not in links else links['height']))])
-			elif links['fileType'] == 'mp3':
-				mo = MediaObject(parts = [PartObject(key = Callback(PlayMP3, url = links['uri'], ext='.mp3'))])
-			mol.append(mo)
-	except:
-		mol.append(MediaObject(parts = [PartObject(key = jsonDrOD['mediaItemResourceUrl'] )]))
-
-	return mol
-
-####################################################################################################
-def PlayMP3(url):
-
-	return Redirect(url)
+	return seconds * 1000
