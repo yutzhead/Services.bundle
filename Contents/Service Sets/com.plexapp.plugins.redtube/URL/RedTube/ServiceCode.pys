@@ -72,9 +72,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	page = HTTP.Request(url).content
-	video_url = RE_VIDEO_URL.search(page).group('video_url')
+	video_url = RE_VIDEO_URL.search(page)
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if not video_url:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url.group('video_url'))
 
 ####################################################################################################
 def TestURLs():
