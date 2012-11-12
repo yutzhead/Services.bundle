@@ -298,6 +298,9 @@ def PlayVideo(url, bitrate='1700', index=0):
 			except:
 				index = index - 1
 
+	if rtmp_url == '':
+		raise Ex.MediaGeoblocked
+
 	stream_url = rtmp_url.split('/mtvnorigin/')[1]
 	mp4_url = MP4_URL % stream_url
 
