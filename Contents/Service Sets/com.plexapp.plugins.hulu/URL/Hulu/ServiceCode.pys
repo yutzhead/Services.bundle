@@ -2,6 +2,7 @@ import md5
 
 API_URL = 'http://www.hulu.com/api/oembed.json?url=%s'
 HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -13,7 +14,7 @@ def NormalizeURL(url):
 
 	if not '/watch/' in url:
 		try:
-			HTTP.Request(url, follow_redirects=False).headers
+			HTTP.Request(url, follow_redirects=False, headers=HTTP_HEADERS).headers
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
 				return e.headers['Location']
@@ -26,9 +27,9 @@ def MetadataObjectForURL(url):
 	if not '/watch/' in url:
 		return None
 
-	json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), cacheTime=CACHE_1HOUR)
+	json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)
 	eid = json_obj['embed_url'].split('?eid=')[1]
-	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR)
+	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)
 
 	title = details.xpath('//video/title')[0].text
 	summary = details.xpath('//video/description')[0].text
@@ -90,7 +91,7 @@ def GetId(url):
 	m = md5.new('%sMAZxpK3WwazfARjIpSXKQ9cmg9nPe5wIOOfKuBIfz7bNdat6gQKHj69ZWNWNVB1' % cid).digest()
 	eid = String.Base64Encode(m).replace('+', '-').replace('/', '_').replace('=', '').replace('\n', '')
 
-	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR)
+	details = XML.ElementFromURL(HULU_ASSETS % eid, cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)
 	id = details.xpath('//video/id')[0].text
 
 	return id
