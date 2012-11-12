@@ -323,14 +323,16 @@ def SortImages(images=[]):
 
   thumbs = []
   for image in images:
-      height = image.get('height')
-      url = image.xpath('./l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
-      thumbs.append({'height':height, 'url':url})
+    height = image.get('height')
+    url = image.xpath('./l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
+    thumbs.append({'height':height, 'url':url})
 
   sorted_thumbs = sorted(thumbs, key=lambda thumb : int(thumb['height']), reverse=True)
   thumb_list = []
   for thumb in sorted_thumbs:
-      thumb_list.append(thumb['url'])
+    thumb_list.append(thumb['url'])
+    if len(thumb_list) > 2:
+      break
 
   return thumb_list
 
