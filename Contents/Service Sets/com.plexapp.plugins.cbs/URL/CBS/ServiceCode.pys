@@ -206,11 +206,11 @@ def VideoFromAPI(url, res):
       video_dict[res] = url
     else:
       pass
-
+  
   resolutions = video_dict.keys()
   resolutions.sort()
   resolutions.reverse()
-
+  
   # Find the best match.
   for resolution in resolutions:
     if resolution <= res:
@@ -218,10 +218,12 @@ def VideoFromAPI(url, res):
       break
 
   # Return the first match.
-  if not video_url and len(video_dict) > 0:
-    video_url = video_dict[video_dict.keys()[0]]
-  else:
-    raise Ex.MediaNotAvailable
+  #if not video_url:
+  if not video_url:
+    try:
+      video_url = video_dict[video_dict.keys()[0]]
+    except:
+      raise Ex.MediaNotAvailable
 
   return IndirectResponse(VideoClipObject, key=video_url)
 
