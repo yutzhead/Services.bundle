@@ -218,7 +218,6 @@ def VideoFromAPI(url, res):
       break
 
   # Return the first match.
-  #if not video_url:
   if not video_url:
     try:
       video_url = video_dict[video_dict.keys()[0]]

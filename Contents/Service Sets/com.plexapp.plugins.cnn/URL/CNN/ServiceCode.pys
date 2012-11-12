@@ -134,7 +134,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 def PlayVideo(url, resolution):
-	
+
 	data_url = XML_URL % url.split('/?/video/')[1]
 	data = XML.ElementFromURL(data_url, cacheTime=7200)
 	
@@ -147,7 +147,7 @@ def PlayVideo(url, resolution):
 		clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
 		video = base + clip
 	except: pass
-	
+
 	if video is None:
 		videos = data.xpath("//file")
 		found = False
@@ -167,7 +167,7 @@ def PlayVideo(url, resolution):
 				else:
 					continue
 			i = i+1
-			
+
 	# Some videos do not have the appropriate base URL
 	if video != None and video.startswith("http://") == False:
 		video = MEDIA_URL % video
