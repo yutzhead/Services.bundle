@@ -1,5 +1,7 @@
 RE_VID_ID = Regex('vid=([0-9]+)')
 DETAIL_URL = 'http://player.rutv.ru/index/play/vid/%s'
+BASE_URL = 'http://rutv.ru'
+
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -68,3 +70,16 @@ def GetDetails(url):
 	swf_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
 	vid_id = RE_VID_ID.search(swf_url).group(1)
 	return JSON.ObjectFromURL(DETAIL_URL % vid_id)
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	data = HTML.ElementFromURL(BASE_URL + '/brand/brandlist')
+	for vid in data.xpath('//div[@class="video-list-item-img"]'):
+		url = BASE_URL + vid.xpath('./a')[0].get('href')
+		test_urls.append(url)
+		if len(test_urls) > 2:
+			break
+	
+	return test_urls
+	
