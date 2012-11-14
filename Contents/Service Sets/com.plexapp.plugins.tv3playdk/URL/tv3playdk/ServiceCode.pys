@@ -1,4 +1,5 @@
 PATH_INFO = 'http://viastream.viasat.tv/PlayProduct/%s'
+SWF_URL = 'http://flvplayer.viastream.viasat.tv/play/swf/player121025.swf'
 
 ####################################################################################################
 
@@ -62,15 +63,15 @@ def PlayVideo(url):
     # add pre ad to media
     #if xml.find('AdCalls/preroll') is not None and Client.Platform <> ClientPlatform.iOS:
     #    for pre_ad in XML.ElementFromURL(xml.find('AdCalls/preroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
-    #        media_obj.add(PartObject(key = url))
+    #        media_obj.add(PartObject(key = pre_ad.text))
 
     # add main video part to media
-    media_obj.add(PartObject(key = RTMPVideoURL(url = video_url)))
+    media_obj.add(PartObject(key = RTMPVideoURL(url = video_url, swf_url = SWF_URL)))
 
     # add post ad to media
     #if xml.find('AdCalls/postroll') is not None and Client.Platform <> ClientPlatform.iOS:
-    #   for post_ad in XML.ElementFromURL(xml.find('AdCalls/postroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
-    #        media_obj.add(PartObject(key = RTMPVideoURL(url = post_ad.text)))
+    #    for post_ad in XML.ElementFromURL(xml.find('AdCalls/postroll').get('url')).findall('Ad/InLine/Creatives/Creative/Linear/MediaFiles/MediaFile'):
+    #        media_obj.add(PartObject(key = post_ad.text))
 
     # append media to list
     video_obj.add(media_obj)
