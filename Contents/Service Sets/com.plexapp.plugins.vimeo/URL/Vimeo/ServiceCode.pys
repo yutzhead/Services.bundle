@@ -4,7 +4,8 @@ RE_VIDEO_ID = Regex("^/?(.+)?(?P<id>\d)+$")
 RE_CLIP_ID = Regex("clip_id=(?P<id>\d+)")
 RE_VIMEO_ID = Regex("vimeo\.com/(video/)?(?P<id>\d+)")
 RE_HD = Regex('"hd":(?P<hd>[0-9])')
-RE_SIG = Regex('"signature":"(?P<signature>[0-9a-f]+)","timestamp":(?P<timestamp>[0-9]+)')
+RE_TIMESTAMP = Regex('"timestamp":(?P<timestamp>[0-9]+)')
+RE_SIGNATURE = Regex('"signature":"(?P<signature>[0-9a-f]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -136,14 +137,19 @@ def GetVideoURL(url, format=None, codecs=None):
 
   try:
     video = HTTP.Request(url, cacheTime=1, headers=headers).content
+    Log("video =======")
+    Log(video)
   except:
     raise Ex.MediaNotAvailable
 
-  m1 = RE_HD.search(video)
-  m2 = RE_SIG.search(video)
+  hd = RE_HD.search(video)
+  timestamp = RE_TIMESTAMP.search(video)
+  signature = RE_SIGNATURE.search(video)
 
-  if m1 and m2:
-    hd = int(m1.group('hd'))
+  if hd and timestamp and signature:
+    hd = int(hd.group('hd'))
+    timestamp = timestamp.group('timestamp')
+    signature = signature.group('signature')
 
     if hd == True and format == 'hd':
       format = 'hd'
@@ -155,14 +161,13 @@ def GetVideoURL(url, format=None, codecs=None):
     else:
       codecs = ''
 
-    (sig, time) = m2.groups()
-    video_url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, sig, time, format, codecs)
+    video_url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, signature, timestamp, format, codecs)
 
     if referer is not None:
       video_url += referer
 
     try:
-      HTTP.Request(video_url, headers = headers, follow_redirects = False).headers
+      HTTP.Request(video_url, headers=headers, follow_redirects=False).headers
     except Ex.RedirectError, e:
       try: return e.location
       except: pass
