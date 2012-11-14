@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://rutv\.ru/.+/?id/[0-9]+</string>
+				<string>http://rutv\.ru/brand/show/(episode|id)/\d+</string>
 			</array>
 		</dict>
 	</dict>

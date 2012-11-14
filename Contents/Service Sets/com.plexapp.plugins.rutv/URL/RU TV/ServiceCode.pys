@@ -2,14 +2,26 @@ RE_VID_ID = Regex('vid=([0-9]+)')
 DETAIL_URL = 'http://player.rutv.ru/index/play/vid/%s'
 BASE_URL = 'http://rutv.ru'
 
-
 ####################################################################################################
 def NormalizeURL(url):
+
+	if not '/episode/' in url:
+		data = HTML.ElementFromURL(url)
+		swf_url = data.xpath('//meta[@property="og:video"]')
+
+		if len(swf_url) < 1:
+			return None
+
+		vid_id = RE_VID_ID.search(swf_url[0].get('content')).group(1)
+		url = 'http://rutv.ru/brand/show/episode/%s' % vid_id
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
 	details = GetDetails(url)
+
 	return VideoClipObject(
 		title = details['title'],
 		summary = details['anons'],
@@ -22,50 +34,44 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_resolution = '528',
+			container = 'mp4',
+			video_resolution = '720',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 528))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))]
 		),
 		MediaObject(
+			container = 'mp4',
 			video_resolution = '480',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))]
-		),
-		MediaObject(
-			video_resolution = '336',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 336))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))]
 		)
 	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, res):
+
 	details = GetDetails(url)
-	
 	video_url = None
-	
+
 	for stream in details['path']['quality']:
-		if int(stream['height']) == 'res':
+		if int(stream['height']) == res:
 			video_url = stream['url']
-	
+
 	if video_url == None:
 		video_url = details['path']['quality'][-1]['url']
-	
-	return IndirectResponse(VideoClipObject, key=video_url)
 
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetDetails(url):
+
 	data = HTML.ElementFromURL(url)
 	swf_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
 	vid_id = RE_VID_ID.search(swf_url).group(1)
@@ -73,13 +79,15 @@ def GetDetails(url):
 
 ####################################################################################################
 def TestURLs():
+
 	test_urls = []
 	data = HTML.ElementFromURL(BASE_URL + '/brand/brandlist')
+
 	for vid in data.xpath('//div[@class="video-list-item-img"]'):
 		url = BASE_URL + vid.xpath('./a')[0].get('href')
 		test_urls.append(url)
+
 		if len(test_urls) > 2:
 			break
-	
+
 	return test_urls
-	
