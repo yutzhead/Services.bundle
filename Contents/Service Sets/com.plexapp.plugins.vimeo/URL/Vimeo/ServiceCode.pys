@@ -137,8 +137,6 @@ def GetVideoURL(url, format=None, codecs=None):
 
   try:
     video = HTTP.Request(url, cacheTime=1, headers=headers).content
-    Log("video =======")
-    Log(video)
   except:
     raise Ex.MediaNotAvailable
 
@@ -175,6 +173,9 @@ def GetVideoURL(url, format=None, codecs=None):
     # The requested video could not be found. This can happen if we have requested a specific format which is not available, e.g. a known case is when we 
     # request an SD video but HD is only available.
     raise Ex.MediaNotAvailable
+
+  Log("Couldn't find all the required info to play this video.")
+  raise Ex.MediaNotAvailable
 
 ####################################################################################################
 @indirect
