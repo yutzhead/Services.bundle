@@ -47,19 +47,29 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
+#	return [
+#		MediaObject(
+#			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+#			video_resolution = '480',
+#			audio_channels = 2,
+#			optimized_for_streaming = True
+#		)
+#	]
+
 	return [
 		MediaObject(
-			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
-			container = 'mpegts',
-			video_codec = VideoCodec.H264,
-			video_resolution = '480',
-			audio_codec = AudioCodec.AAC,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = 'flv',
+			video_codec = 'vp6',
+			video_resolution = 'sd',
+			audio_codec = 'mp3',
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	id = CM_ID.findall(url)
@@ -70,9 +80,12 @@ def PlayVideo(url):
 	cm_url_html = CM_URL % (GetHost(url), id[0])
 	cm_url_json = CM_JSON_URL % cm_url_html
 	json = JSON.ObjectFromURL(cm_url_json)
-	video_url = '%s/playlist.m3u8' % json['iphoneURL']['url']
 
-	return Redirect(video_url)
+#	video_url = '%s/playlist.m3u8' % json['iphoneURL']['url']
+#	return Redirect(video_url)
+
+	video_url = json['videoURL']
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetHost(url):
