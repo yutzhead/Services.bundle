@@ -106,7 +106,7 @@ def MetadataObjectForURL(url):
       raise Ex.MediaNotAvailable
 
   try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders, cacheTime=CACHE_1HOUR)['data']
   except:
     raise Ex.MediaNotAuthorized
 
