@@ -24,7 +24,15 @@ def MetadataObjectForURL(url):
 	thumb = xml.xpath('//a:mezznimagepath', namespaces=XML_NS)[0].text
 	thumb = THUMB_URL % thumb
 
-	if xml.xpath('//a:clipContentType', namespaces=XML_NS)[0].text == 'Full Episode':
+	try:
+		if xml.xpath('//a:clipContentType', namespaces=XML_NS)[0].text == 'Full Episode':
+			video_type = "Full Episode"
+		else:
+			video_type = "Clip"
+	except:
+		video_type = "Clip"
+
+	if video_type == 'Full Episode':
 		return EpisodeObject(
 			show = show,
 			title = title,
