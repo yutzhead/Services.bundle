@@ -17,7 +17,7 @@ def NormalizeURL(url):
 			if 'Location' in e.headers:
 				return e.headers['Location']
 
-	return url
+	return '/'.join(url.split('/')[:5])
 
 ####################################################################################################
 def MetadataObjectForURL(url):
