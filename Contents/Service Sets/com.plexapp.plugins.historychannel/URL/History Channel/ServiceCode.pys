@@ -68,3 +68,23 @@ def PlayVideo(url=None):
     return Ex.MediaNotAvailable
   else:
     return Redirect(video_url)
+
+####################################################################################################
+def TestURLs():
+
+    test_urls = []
+
+    page = HTML.ElementFromURL('http://www.history.com/shows')
+
+    for link in page.xpath("//a[@class='watch more']"):
+        if len(test_urls) < 3:
+            url = link.get('href')
+            url = "http://www.history.com" + url
+
+            if url not in test_urls:
+                test_urls.append(url)
+
+        else:
+            break
+
+    return test_urls
