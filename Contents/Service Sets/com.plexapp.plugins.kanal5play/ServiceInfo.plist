@@ -12,9 +12,13 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.kanal5play.se/(program|play)/(program|play)/.+</string>
+				<string>http://www.kanal5play.se/.+?/?video/.+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>
