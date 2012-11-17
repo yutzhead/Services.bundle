@@ -5,6 +5,8 @@ RE_SE_INDEX 	= Regex('song ([0-9]+)')
 
 API_URL = 'http://www.kanal5play.se/api/getVideoCached?cacheToken=%s&format=FLASH&videoId=%s&withTheme=true'
 
+RSS_URLS = ['http://www.kanal5play.se/rss?type=CLIP', 'http://www.kanal5play.se/rss?type=PROGRAM']
+
 ####################################################################################################
 def NormalizeURL(url):
 	if '#!' in url:
@@ -93,3 +95,17 @@ def GetDetails(url):
 	details = JSON.ObjectFromURL(API_URL % (cacheToken, vid_id))
 	
 	return details
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	for url in RSS_URLS:
+		data = XML.ElementFromURL(url)
+		count = 0
+		for item in data.xpath('//item/link'):
+			test_urls.append(item.text)
+			count = count+1
+			if count > 1:
+				break
+	
+	return test_urls
