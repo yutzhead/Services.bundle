@@ -3,15 +3,6 @@ FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?conte
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 
 ####################################################################################################
-def TestURLs():
-	test_urls = []
-
-	for url in HTML.ElementFromURL('http://teamcoco.com/video').xpath('//ul[contains(@class,"videos")]/li[position() < 4]/a'):
-		test_urls.append( url.get('href') )
-
-	return test_urls
-
-####################################################################################################
 def MetadataObjectForURL(url):
 
 	try:
@@ -52,7 +43,7 @@ def MediaObjectsForURL(url):
 
 		return [
 			MediaObject(
-				parts = [PartObject(key = Callback(PlayVideo, url = url))],
+				parts = [PartObject(key = Callback(PlayVideo, url=url))],
 				protocol = 'webkit'
 			)
 		]
@@ -60,7 +51,7 @@ def MediaObjectsForURL(url):
 	else:
 		return [
 			MediaObject(
-				parts = [PartObject(key = Callback(PlayVideo, url = url))],
+				parts = [PartObject(key = Callback(PlayVideo, url=url))],
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				container = Container.MP4,
@@ -123,7 +114,7 @@ def GetVideoId(url):
 ####################################################################################################
 def Duration(timecode):
 
-	if timecode == None or timecode == '':
+	if not isinstance(timecode, basestring):
 		return None
 
 	seconds = 0
@@ -134,3 +125,13 @@ def Duration(timecode):
 		seconds += int(duration[i]) * (60**i)
 
 	return seconds * 1000
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+
+	for url in HTML.ElementFromURL('http://teamcoco.com/video').xpath('//ul[contains(@class,"videos")]/li[position() < 4]/a'):
+		test_urls.append(url.get('href'))
+
+	return test_urls
