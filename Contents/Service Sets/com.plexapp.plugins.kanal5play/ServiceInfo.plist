@@ -6,10 +6,6 @@
 	<dict>
 		<key>Kanal 5 Play</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.kanal5play.se/play/program/232017/video/283027</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>http://www.kanal5play.se/.+?/?video/.+</string>
