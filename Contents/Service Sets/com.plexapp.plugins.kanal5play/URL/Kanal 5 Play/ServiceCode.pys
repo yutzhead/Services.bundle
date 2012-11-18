@@ -91,9 +91,14 @@ def PlayVideo(url, bitrate):
 ####################################################################################################
 def GetDetails(url):
 
-	vid_id = RE_VIDEO_ID.search(url).group(1)
 	content = HTTP.Request(url).content
 	cacheToken = RE_CACHETOKEN.search(content).group(1)
+	try:
+		vid_id = RE_VIDEO_ID.search(url).group(1)
+	except:
+		data = HTML.ElementFromString(content)
+		og_url = data.xpath('//meta[@property="og:url"]')[0].get('content')
+		vid_id = RE_VIDEO_ID.search(url).group(1)
 
 	details = JSON.ObjectFromURL(API_URL % (cacheToken, vid_id))
 
