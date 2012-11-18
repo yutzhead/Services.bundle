@@ -3,30 +3,26 @@ SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  vc = None
   page = HTTP.Request(url).content
   pl = page[page.find('playlist = ')+11:]
   pl = pl[:pl.find(';\n</script')]
-  playlistJSON = JSON.ObjectFromString(pl)
+  playlist_json = JSON.ObjectFromString(pl)
 
   if '#' in url:
     slug = url[url.rfind('#')+1:]
   else:
     slug = url[url.rfind('/')+1:]
 
-  for video in playlistJSON:
+  for video in playlist_json:
     if slug == video['display']['slug']:
-      vc = VideoClipObject(
+      return VideoClipObject(
         title = video['display']['title'],
         duration = int(video['display']['duration']) * 1000,
         summary = video['display']['description'],
         thumb = video['display']['thumbUrl']
       )
 
-  if vc is not None:
-    return vc
-  else:
-    raise Ex.MediaNotAvailable
+  raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -36,7 +32,7 @@ def MediaObjectsForURL(url):
       container = Container.MP4,
       video_codec = VideoCodec.H264,
       audio_codec = AudioCodec.AAC,
-      video_resolution = '360',
+      video_resolution = 'sd',
       optimized_for_streaming = True,
       audio_channels = 2,
       parts = [PartObject(key=Callback(PlayVideo, url=url))]
@@ -46,45 +42,44 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url=None):
 
-  video_url = None
   page = HTTP.Request(url).content
   pl = page[page.find('playlist = ')+11:]
   pl = pl[:pl.find(';\n</script')]
-  playlistJSON = JSON.ObjectFromString(pl)
+  playlist_json = JSON.ObjectFromString(pl)
 
   if '#' in url:
     slug = url[url.rfind('#')+1:]
   else:
     slug = url[url.rfind('/')+1:]
 
-
-  for video in playlistJSON:
+  for video in playlist_json:
     if slug == video['display']['slug']:
       sig = HTTP.Request(SIGNATURE_REQUEST % video['videoURLs']['html5ReleaseURL'], cacheTime=0).content
       release_xml = XML.ElementFromURL(video['videoURLs']['html5ReleaseURL'] + "?sig=" + sig)
       video_url = release_xml.xpath('//a:video', namespaces={'a':'http://www.w3.org/2005/SMIL21/Language'})[0].get('src')
 
-  if video_url is None:
-    return Ex.MediaNotAvailable
-  else:
-    return Redirect(video_url)
+      return Redirect(video_url)
+
+  return Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
 
-    test_urls = []
+  test_urls = []
+  page = HTTP.Request('http://www.history.com/videos').content
 
-    page = HTML.ElementFromURL('http://www.history.com/shows')
+  shows = page[page.find('var shows = ')+12:]
+  shows = shows[:shows.find('\n')]
+  shows = JSON.ObjectFromString(shows)
 
-    for link in page.xpath("//a[@class='watch more']"):
-        if len(test_urls) < 3:
-            url = link.get('href')
-            url = "http://www.history.com" + url
+  for show in shows:
+    if len(test_urls) < 3:
+      url = show['items'][0]['videos'][0]['url']
 
-            if url not in test_urls:
-                test_urls.append(url)
+      if url not in test_urls:
+        test_urls.append(url)
 
-        else:
-            break
+    else:
+      break
 
-    return test_urls
+  return test_urls
