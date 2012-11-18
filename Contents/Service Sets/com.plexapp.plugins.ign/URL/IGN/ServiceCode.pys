@@ -111,7 +111,7 @@ def VideoPageURL(url):
 		video_page_url = RE_FLASHVARS_URL.search(page)
 
 		if video_page_url:
-			return video_page_url.group(1)
+			return video_page_url.group(1).replace('\\x3A', ':').replace('\\x2F', '/').replace('\\x2D', '-')
 
 	return None
 
