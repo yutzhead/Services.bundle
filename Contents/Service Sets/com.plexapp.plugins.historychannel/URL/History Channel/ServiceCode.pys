@@ -1,45 +1,32 @@
 SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
-RE_MRSS = Regex('mrssData =[ ]+"([^"]+)')
-MRSS_NS = {'media': 'http://search.yahoo.com/mrss/'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  item = GetVideoItem(url)
+  vc = None
+  page = HTTP.Request(url).content
+  pl = page[page.find('playlist = ')+11:]
+  pl = pl[:pl.find(';\n</script')]
+  playlistJSON = JSON.ObjectFromString(pl)
 
-  if not item:
+  if '#' in url:
+    slug = url[url.rfind('#')+1:]
+  else:
+    slug = url[url.rfind('/')+1:]
+
+  for video in playlistJSON:
+    if slug == video['display']['slug']:
+      vc = VideoClipObject(
+        title = video['display']['title'],
+        duration = int(video['display']['duration']) * 1000,
+        summary = video['display']['description'],
+        thumb = video['display']['thumbUrl']
+      )
+
+  if vc is not None:
+    return vc
+  else:
     raise Ex.MediaNotAvailable
-
-  page = HTML.ElementFromURL(url)
-
-  show_title = page.xpath('//div[@class="show-heading"]/h2/text()')
-  if len(show_title) < 1:
-    show_title = None
-  else:
-    show_title = show_title[0]
-    if '- New Episodes' in show_title:
-      show_title = show_title.rsplit('-', 1)[0].strip()
-
-  episode_title = item.xpath("./title/text()")[0]
-  summary = item.xpath("./media:description/text()", namespaces=MRSS_NS)[0]
-  duration = int(item.xpath("./media:content", namespaces=MRSS_NS)[0].get('duration')) * 1000
-  thumb = item.xpath("./media:thumbnail", namespaces=MRSS_NS)[-1].get('url')
-
-  if show_title:
-    return EpisodeObject(
-      title = episode_title,
-      show = show_title,
-      duration = duration,
-      summary = summary,
-      thumb = thumb
-    )
-  else:
-    return VideoClipObject(
-      title = episode_title,
-      duration = duration,
-      summary = summary,
-      thumb = thumb
-    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -57,53 +44,30 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
-def PlayVideo(url=None, **kwargs):
+def PlayVideo(url=None):
 
-  if not url:
-    return None
+  video_url = None
+  page = HTTP.Request(url).content
+  pl = page[page.find('playlist = ')+11:]
+  pl = pl[:pl.find(';\n</script')]
+  playlistJSON = JSON.ObjectFromString(pl)
 
-  item = GetVideoItem(url)
-
-  if not item:
-    raise Ex.MediaNotAvailable
-
-  video_link = item.xpath("./media:text[contains(text(), 'm3uUrl=')]/text()", namespaces=MRSS_NS)[0].split('?')[0].replace('m3uUrl=', '')
-  video_id = video_link[video_link.find('/s/') + 3:]
-
-  auth_token = HTTP.Request(SIGNATURE_REQUEST % video_id, cacheTime=0).content
-  video_url = video_link + '?format=redirect&sig=' + auth_token
-
-  return Redirect(video_url)
-
-####################################################################################################
-def GetVideoItem(url):
-
-  try:
-    page_content = HTTP.Request(url).content
-  except:
-    return None
-
-  mrssdata = RE_MRSS.search(page_content)
-
-  if mrssdata:
-    mrssdata = String.Unquote(String.Base64Decode(mrssdata.group(1)))
-    data = XML.ElementFromString(mrssdata)
-
-    if url.find('#') != -1:
-      video_name = url[url.find('#') + 1:]
-      item = data.xpath("//item/link[contains(text(), '%s')]/.." % video_name)
-
-      if len(item) < 1:
-        raise Ex.MediaNotAvailable
-      else:
-        return item[0]
-
-    else:
-      item = data.xpath("//item")[0]
-      return item
-
+  if '#' in url:
+    slug = url[url.rfind('#')+1:]
   else:
-    return None
+    slug = url[url.rfind('/')+1:]
+
+
+  for video in playlistJSON:
+    if slug == video['display']['slug']:
+      sig = HTTP.Request(SIGNATURE_REQUEST % video['videoURLs']['html5ReleaseURL'], cacheTime=0).content
+      release_xml = XML.ElementFromURL(video['videoURLs']['html5ReleaseURL'] + "?sig=" + sig)
+      video_url = release_xml.xpath('//a:video', namespaces={'a':'http://www.w3.org/2005/SMIL21/Language'})[0].get('src')
+
+  if video_url is None:
+    return Ex.MediaNotAvailable
+  else:
+    return Redirect(video_url)
 
 ####################################################################################################
 def TestURLs():
