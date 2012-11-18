@@ -1,4 +1,4 @@
-VIDEO_DETAILS = 'http://videoservices.nbcuni.com/player/clip?clear=true&geoIP=&clipId=%s'
+VIDEO_DETAILS = 'http://videoservices.nbcuni.com/player/clip?clear=true&geoIP=US&clipId=%s'
 XML_NS = {'a':'http://videoservices.nbcuni.com/schema/player'}
 THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted=yes&path=/%s'
 RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n?[0-9]{4,})')
