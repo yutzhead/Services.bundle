@@ -1,12 +1,17 @@
 SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
+RE_PLAYLIST_JSON = Regex('var playlist = (?P<json>\[.+\]);')
+RE_SHOWS_JSON = Regex('var shows = (?P<json>\[.+\])')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
   page = HTTP.Request(url).content
-  pl = page[page.find('playlist = ')+11:]
-  pl = pl[:pl.find(';\n</script')]
-  playlist_json = JSON.ObjectFromString(pl)
+  playlist_json = RE_PLAYLIST_JSON.search(page)
+
+  if not playlist_json:
+    return None
+
+  playlist_json = JSON.ObjectFromString(playlist_json.group('json'))
 
   if '#' in url:
     slug = url[url.rfind('#')+1:]
@@ -43,9 +48,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url=None):
 
   page = HTTP.Request(url).content
-  pl = page[page.find('playlist = ')+11:]
-  pl = pl[:pl.find(';\n</script')]
-  playlist_json = JSON.ObjectFromString(pl)
+  playlist_json = RE_PLAYLIST_JSON.search(page)
+
+  if not playlist_json:
+    return None
+
+  playlist_json = JSON.ObjectFromString(playlist_json.group('json'))
 
   if '#' in url:
     slug = url[url.rfind('#')+1:]
@@ -68,11 +76,10 @@ def TestURLs():
   test_urls = []
   page = HTTP.Request('http://www.history.com/videos').content
 
-  shows = page[page.find('var shows = ')+12:]
-  shows = shows[:shows.find('\n')]
-  shows = JSON.ObjectFromString(shows)
+  shows_json = RE_SHOWS_JSON.search(page)
+  shows_json = JSON.ObjectFromString(shows_json.group('json'))
 
-  for show in shows:
+  for show in shows_json:
     if len(test_urls) < 3:
       url = show['items'][0]['videos'][0]['url']
 
