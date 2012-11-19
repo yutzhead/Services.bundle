@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
         title = video['display']['title'],
         duration = int(video['display']['duration']) * 1000,
         summary = video['display']['description'],
-        thumb = video['display']['thumbUrl']
+        thumb = video['display']['thumbUrl'].replace('_small_150x100.jpg', '_still_624x352.jpg')
       )
 
   raise Ex.MediaNotAvailable
