@@ -5,7 +5,7 @@ def MetadataObjectForURL(url):
 
 	# Request the actual page
 	page = HTML.ElementFromURL(url)
-	
+
 	# Extract the information available from the page.
 	title = page.xpath("//meta[@name='title']")[0].get('content')
 	description = page.xpath("//meta[@name='description']")[0].get('content')
@@ -13,7 +13,7 @@ def MetadataObjectForURL(url):
 	tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
 	date = page.xpath("//meta[@name='date']")[0].get('content')
 	date = Datetime.ParseDate(date)
-	
+
 	return VideoClipObject(
 		title = title,
 		summary = description,
@@ -29,12 +29,12 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			bitrate = 1000,
 			protocol = 'rtmp',
-			parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate = "1000"))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1000"))]
 		),
 		MediaObject(
 			bitrate = 500,
 			protocol = 'rtmp',
-			parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate = "500"))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="500"))]
 		)
 	]
 
@@ -58,4 +58,4 @@ def PlayVideo(url, bitrate):
 			break
 
 	# Redirect to the RTMP video...
-	return Redirect(RTMPVideoURL(url, clip = clip))
+	return Redirect(RTMPVideoURL(url, clip=clip))
