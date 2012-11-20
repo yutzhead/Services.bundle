@@ -1,10 +1,11 @@
-BASE = "http://www.earth-touch.com"
+BASE = "http://www.earthtouch.tv"
 SHOWS = BASE + "/shows/"
 VIMEO = "http://vimeo.com/%s"
 
 ####################################################################################################
 def NormalizeURL(url):
 
+	url = url.replace('http://www.earth-touch.com', 'http://www.earthtouch.tv')
 	url = url.split('?')[0]
 
 	if not url.endswith('/'):

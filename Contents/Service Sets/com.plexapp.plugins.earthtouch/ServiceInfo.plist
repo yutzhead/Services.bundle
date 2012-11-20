@@ -8,12 +8,13 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
+				<string>http://(www\.)?earthtouch\.tv/shows/.+</string>
 				<string>http://(www\.)?earth-touch\.com/shows/.+</string>
 			</array>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.earth-touch.com/shows/wild-warp/hawk-kills-mouse/</string>
-				<string>http://www.earth-touch.com/shows/lion-empire/lion-empire-episode-1/</string>
+				<string>http://www.earthtouch.tv/shows/wild-warp/hawk-kills-mouse/</string>
+				<string>http://www.earthtouch.tv/shows/lion-empire/lion-empire-episode-1/</string>
 			</array>
 		</dict>
 	</dict>
