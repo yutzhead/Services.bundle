@@ -8,11 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.rottentomatoes.com/m/harry_potter_and_the_deathly_hallows_part_2/trailers/11142791/</string>
+				<string>http://www.rottentomatoes.com/m/skyfall/trailers/11163570/</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.rottentomatoes.com/.+/trailers/[0-9]{8}/?</string>
+				<string>http://www.rottentomatoes.com/.+/trailers/</string>
 			</array>
 		</dict>
 	</dict>

@@ -1,32 +1,27 @@
-RSS_URL = 'http://www.videodetective.net/flash/players/mrssplaylist.aspx?videokbrate=2500&version=5.2&customerid=300120&fmt=4&publishedid=%s&sub=RTO'
-RE_PUBLISHED = Regex('&publishedid=([0-9]+)&playlistid=')
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 5_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B176 Safari/7534.48.3'}
 
 ####################################################################################################
 def NormalizeURL(url):
 
 	return url
-    
+
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	feed = RSS.FeedFromURL(GetRSS(url))
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	video = html.xpath('//video')
 
-	video = feed['items'][0]
-	title = video['title']
-	summary = video['description']
-	thumb = video['media_thumbnail'][0]['url']
+	if len(video) < 0:
+		return None
 
-	try:
-		duration = video['media_content'][0]['duration']
-		duration = int(float(duration)*1000)
-	except:
-		duration = None
+	title = html.xpath('//meta[@property="og:title"]')[0].get('content').rsplit(' Trailer')[0]
+	summary = html.xpath('//meta[@property="og:description"]')[0].get('content').split('%s: ' % title)[1]
+	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
-		duration = duration
+		thumb = thumb
 	)
 
 ####################################################################################################
@@ -37,56 +32,24 @@ def MediaObjectsForURL(url):
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			container = Container.MP4,
-			video_resolution = '720',
+			video_resolution = 'sd',
 			optimized_for_streaming = True,
 			audio_channels = 2,
-			bitrate = '2500',
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2500'))]
-		),
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
-			video_resolution = '304',
-			optimized_for_streaming = True,
-			audio_channels = 2,
-			bitrate = '1500',
-			parts = [PartObject(key=Callback(PlayVideo, url = url, bitrate='1500'))]
-		),
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
-			video_resolution = '208',
-			optimized_for_streaming = True,
-			audio_channels = 2,
-			bitrate = '750',
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='750'))]
+			bitrate = 750,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
 
 ####################################################################################################
-def GetRSS(url):
+@indirect
+def PlayVideo(url, bitrate=None):
 
-	content = HTTP.Request(url).content
-	published_id = RE_PUBLISHED.search(content).group(1)
-	rss_url = RSS_URL % published_id
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	video = html.xpath('//video')
 
-	return rss_url
+	if len(video) < 0:
+		return None
 
-####################################################################################################
-def PlayVideo(url, bitrate):
+	video_url = video[0].get('src')
 
-	BITRATES = ['2500', '1500', '750', '450', '250', '212']
-	feed = RSS.FeedFromURL(GetRSS(url), cacheTime=0)
-	video = feed['items'][0]
-	index = BITRATES.index(bitrate)
-
-	for bitrate_index in range(index, len(BITRATES)):
-		current_bitrate = BITRATES[bitrate_index]
-
-		for media_element in video['media_content']:
-			if current_bitrate == media_element['bitrate']:
-				return Redirect(media_element['url'])
-
-	return Redirect(video['media_content'][-1]['url'])
+	return IndirectResponse(VideoClipObject, key=video_url)
