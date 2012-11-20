@@ -1,56 +1,41 @@
-RE_VIDEO_ID = Regex('/player/videoconfig\?v=([^%]+)')
-RE_DURATION = Regex('Length: (\d+m\d+)s')
-RE_VIDEO_URL = Regex("videoUrl = '([^']+)'")
-
-VIDEO_CONFIG = 'http://www.4tube.com/player/videoconfig?v=%s'
-
-####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0].rstrip('/').rsplit('/',1)[0]
+	url = url.split('?')[0].rstrip('/')
+	url = 'http://www.4tube.com/%s' % url.split('4tube.com/')[1]
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTTP.Request(url).content
-	html = HTML.ElementFromString(page)
+	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
+	html = HTML.ElementFromURL(url)
+	video = html.xpath('//video')
 
-	video_id = RE_VIDEO_ID.search(page)
-	if not video_id:
+	if len(video) < 0:
 		return None
 
-	title = html.xpath('//title')[0].text.split(' | ')[0]
-	config = XML.ElementFromURL(VIDEO_CONFIG % video_id.group(1))
-	thumb = config.xpath('//image')[0].text
+	title = html.xpath('//title')[0].text.rsplit(' - ')[0]
+	summary = html.xpath('//meta[@name="description"]')[0].get('content')
+	thumb = video[0].get('poster')
 
 	try:
-		duration = html.xpath('//meta[@name="description"]')[0].get('content')
-		duration = RE_DURATION.search(duration).group(1).replace('m', ':')
-		duration = TimeToMs(duration)
+		duration = html.xpath('//div[@id="mediaplayer"]')[0].get('data-length')
+		duration = int(duration) * 1000
 	except:
 		duration = None
 
-	tags = []
 	try:
-		tags_html = html.xpath('//span[@class="tags"]/a/text()')
-
-		for tag in tags_html:
-			tags.append(tag.strip())
+		date = html.xpath('//*[@class="datetime"]')[0].text
+		originally_available_at = Datetime.ParseDate(date).date()
 	except:
-		pass
-
-	try:
-		stars = html.xpath('//span[@id="videoRatingStars"]//span[@class="star"]')
-		rating = float(len(stars) * 2)
-	except:
-		rating = None
+		originally_available_at = None
 
 	return VideoClipObject(
 		title = title,
 		thumb = thumb,
 		duration = duration,
-		tags = tags,
-		rating = rating,
+		originally_available_at = originally_available_at,
 		genres = ['XXX','Adult','18+'],
 		content_rating_age = 18
 	)
@@ -72,9 +57,14 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	page = HTTP.Request(url).content
-	video_url = RE_VIDEO_URL.search(page).group(1)
-	video_url = String.Unquote(video_url)
+	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
+	html = HTML.ElementFromURL(url)
+	video = html.xpath('//video')
+
+	if len(video) < 0:
+		return None
+
+	video_url = video[0].get('src')
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
@@ -92,15 +82,3 @@ def TestURLs():
 			break
 
 	return test_urls
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds  = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
