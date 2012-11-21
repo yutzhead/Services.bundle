@@ -1,6 +1,7 @@
 SIGNATURE_REQUEST = 'http://www.history.com/components/get-signed-signature?url=%s'
 RE_PLAYLIST_JSON = Regex('var playlist = (?P<json>\[.+\]);')
 RE_SHOWS_JSON = Regex('var shows = (?P<json>\[.+\])')
+SMIL_NS = {'a':'http://www.w3.org/2005/SMIL21/Language'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -64,11 +65,21 @@ def PlayVideo(url=None):
     if slug == video['display']['slug']:
       sig = HTTP.Request(SIGNATURE_REQUEST % video['videoURLs']['html5ReleaseURL'], cacheTime=0).content
       release_xml = XML.ElementFromURL(video['videoURLs']['html5ReleaseURL'] + "?sig=" + sig)
-      video_url = release_xml.xpath('//a:video', namespaces={'a':'http://www.w3.org/2005/SMIL21/Language'})[0].get('src')
+      video = release_xml.xpath('//a:video', namespaces=SMIL_NS)
 
+      if len(video) < 1:
+        ref = release_xml.xpath('//a:ref', namespaces=SMIL_NS)
+
+        if len(ref) < 0:
+          raise Ex.MediaNotAvailable
+
+        if ref[0].get('title') == 'Expired':
+          raise Ex.MediaExpired
+
+      video_url = video[0].get('src')
       return Redirect(video_url)
 
-  return Ex.MediaNotAvailable
+  raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
