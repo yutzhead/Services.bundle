@@ -1,10 +1,10 @@
-HTTP.CacheTime = CACHE_1DAY
-POPS_URL = 'http://cosmos.bcst.yahoo.com/rest/v2/pops;element=stream;bw=%d;tech=mp4;id=%s'
+POPS_URL = 'http://cosmos.bcst.yahoo.com/rest/v2/pops;element=stream;bw=%d;dynamicstream=1;outputformat=mrss;tech=flv,mp4;lmsoverride=1;id=%s'
 VIDEO_URL = 'http://playlist.yahoo.com/makeplaylist.dll?sdm=web&pt=rd&sid=%s'
 
-RE_ID_URL = Regex('\-([0-9]+)\.html')
 RE_ID_EMBED = Regex('vid=([0-9]+)')
 RE_SID = Regex('<cms.+sid=.([0-9]+)')
+
+HTTP.CacheTime = CACHE_1DAY
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -31,13 +31,11 @@ def MetadataObjectForURL(url):
 		thumb = 'http:%s' % thumb.rsplit('/http:', 1)[1]
 		thumb = thumb.replace('.jpg.cf.png', '.jpg')
 
-	video = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		thumb = thumb
 	)
-
-	return video
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -89,21 +87,16 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
 
-	id_url = RE_ID_URL.search(url)
+	page = HTTP.Request(url).content
+	id_embed = RE_ID_EMBED.search(page)
 
-	if id_url:
-		id = id_url.group(1)
+	if id_embed:
+		id = id_embed.group(1)
 	else:
-		page = HTTP.Request(url).content
-		id_embed = RE_ID_EMBED.search(page)
+		Log("Couldn't find video id.")
+		return None
 
-		if id_embed:
-			id = id_embed.group(1)
-		else:
-			Log("Couldn't find video id.")
-			return None
-
-	xml = HTTP.Request(POPS_URL % (bitrate, id)).content
+	xml = HTTP.Request(POPS_URL % (bitrate, id), cacheTime=0).content
 	sid = RE_SID.search(xml).group(1)
 
 	return IndirectResponse(VideoClipObject, key=VIDEO_URL % sid)
