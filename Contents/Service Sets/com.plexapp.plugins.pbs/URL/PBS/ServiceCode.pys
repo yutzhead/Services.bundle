@@ -4,10 +4,8 @@ from PBS_API import API_ID, API_SECRET
 
 NAMESPACES = {'a':'http://www.w3.org/2001/SMIL20/Language'}
 
-RE_TP_ID    =   Regex('http://video.pbs.org/video/([0-9]+)')
-
-PBS_URL     = 'http://video.pbs.org/'
-
+RE_TP_ID =   Regex('http://video.pbs.org/video/([0-9]+)')
+PBS_URL = 'http://video.pbs.org/'
 DETAILS = '/cove/v1/videos/?fields=mediafiles%2Cassociated_images&filter_tp_media_object_id='
     
 def NormalizeURL(url):
@@ -15,12 +13,18 @@ def NormalizeURL(url):
 
 def MetadataObjectForURL(url):
     tp_id = RE_TP_ID.search(url).group(1)
-    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)['results'][0]
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)
+
+    if len(video['results']) < 1:
+        raise Ex.MediaNotAvailable
+
+    video = video['results'][0]
     thumbs = SortThumbs(video['associated_images'])
     airdate = Datetime.ParseDate(video['airdate']).date()
     summary = video['long_description']
     title = video['title']
     duration = int(video['mediafiles'][0]['length_mseconds'])
+
     return  VideoClipObject(
         title=title,
         summary=summary,
@@ -86,7 +90,7 @@ def TestURLs():
         url = show.xpath('.//div/a')[0].get('href')
         test_urls.append(url)
 
-        if len(test_urls) == 3:
+        if len(test_urls) > 2:
             break
 
     return test_urls
