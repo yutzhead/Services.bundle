@@ -44,7 +44,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate=None):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=0)
 	video = html.xpath('//video')
 
 	if len(video) < 0:
