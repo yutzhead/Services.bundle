@@ -75,6 +75,13 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
 
 	details = GetDetails(url)
+
+	if 'reasonsForNoStreams' in details:
+		if "Videon är inte tillgänglig i din region." in details['reasonsForNoStreams']:
+			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
+
 	rtmp_url = details['streamBaseUrl']
 	playpath = ''
 
