@@ -7,7 +7,7 @@ NAMESPACES = {'a':'http://www.w3.org/2001/SMIL20/Language'}
 RE_TP_ID =   Regex('http://video.pbs.org/video/([0-9]+)')
 PBS_URL = 'http://video.pbs.org/'
 DETAILS = '/cove/v1/videos/?fields=mediafiles%2Cassociated_images&filter_tp_media_object_id='
-    
+
 def NormalizeURL(url):
     return url
 
@@ -48,8 +48,13 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
     tp_id = RE_TP_ID.search(url).group(1)
-    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)['results'][0]
-    
+    video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)
+
+    if len(video['results']) < 1:
+        raise Ex.MediaNotAvailable
+
+    video = video['results'][0]
+
     for media in video['mediafiles']:
         try:
             video_url = media['video_download_url']
@@ -62,7 +67,7 @@ def PlayVideo(url):
         raise Ex.MediaNotAvailable
     else:
         return IndirectResponse(VideoClipObject, key=video_url)
-    
+
     ### Keeping this code just in case MP4s aren't available for all videos ###
     '''
     video_url = video['mediafiles'][-1]['video_data_url']
@@ -70,7 +75,7 @@ def PlayVideo(url):
     smil = XML.ElementFromURL(video_url + '&format=SMIL')
     base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
     clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
-    
+
     if base.startswith('http'):
         final_url = base + clip
         if '.m3u8' in clip:
@@ -82,7 +87,7 @@ def PlayVideo(url):
         clip = 'MP4:' + clip.split('.mp4')[0]
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
     '''
-    
+
 def TestURLs():
     test_urls = []
 
