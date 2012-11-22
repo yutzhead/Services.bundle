@@ -18,6 +18,15 @@ def MetadataObjectForURL(url):
 
 	xml = XML.ElementFromURL(VIDEO_DETAILS % video_id.group('id'))
 
+	# Check for errors
+	error = xml.xpath('//a:errordis', namespaces=XML_NS)
+
+	if len(error) == 1:
+		if error[0].text == 'clip expired':
+			raise Ex.MediaExpired
+		else:
+			raise Ex.MediaNotAvailable
+
 	show = xml.xpath('//a:show', namespaces=XML_NS)[0].text
 	title = xml.xpath('//a:headline', namespaces=XML_NS)[0].text
 	summary = xml.xpath('//a:description', namespaces=XML_NS)[0].text
