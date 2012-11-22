@@ -1,4 +1,5 @@
 API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -18,14 +19,12 @@ def MetadataObjectForURL(url):
 	thumbUrl = clip['image']['super_url']
 	date = Datetime.ParseDate(clip['publish_date']).date()
 
-	vc = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		thumb = thumbUrl,
 		originally_available_at = date
 	)
-
-	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -56,6 +55,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, fmt=''):
 
 	clip = GetClip(url)
@@ -68,7 +68,7 @@ def PlayVideo(url, fmt=''):
 	elif fmt == 'lo':
 		video_url = clip['low_url']
 
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetClip(url):
@@ -77,7 +77,7 @@ def GetClip(url):
 	video_id = url.split('-')[-1].strip('/')
 
 	# Check if this is really a page containing a video
-	check = HTML.ElementFromURL(url).xpath('//div[@data-video-id="%s"]' % video_id)
+	check = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//div[@data-video-id="%s"]' % video_id)
 
 	if len(check) < 1:
 		return None
