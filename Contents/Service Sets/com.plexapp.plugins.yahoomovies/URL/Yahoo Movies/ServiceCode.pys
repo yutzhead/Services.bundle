@@ -109,19 +109,26 @@ def PlayVideo(url, bitrate):
 ####################################################################################################
 def FindVideoURL(url, video):
 
-	video = String.Unquote(video)
+	video = String.Unquote(video).lower()
 	page = HTTP.Request(url).content
-	json = Regex(CAROUSEL_REGEX % video).search(page)
+	json = Regex(CAROUSEL_REGEX % video, Regex.IGNORECASE).search(page)
 
 	if not json:
 		return url
 
 	json = json.group(1).replace(',"total"', '}')
 	json = JSON.ObjectFromString(json)
+	smallest_distance = None
 
 	for key in json['items'].keys():
-		if video in json['items'][key]['ttle']:
+		title = json['items'][key]['ttle_x'].lower()
+		distance = String.LevenshteinDistance(title, video)
+
+		if video in title:
+			distance = distance - 2*len(video)
+
+		if not smallest_distance or distance < smallest_distance:
+			smallest_distance = distance
 			url = json['items'][key]['plnk_vita_shareurl']
-			break
 
 	return url
