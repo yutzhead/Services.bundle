@@ -3,11 +3,16 @@ VIDEO_URL = 'http://playlist.yahoo.com/makeplaylist.dll?sdm=web&pt=rd&sid=%s'
 
 RE_ID_EMBED = Regex('vid=([0-9]+)')
 RE_SID = Regex('<cms.+sid=.([0-9]+)')
+CAROUSEL_REGEX = '(\{"items":\{.*?"ttle":".*?%s.*?".*?,"total")'
 
 HTTP.CacheTime = CACHE_1DAY
 
 ####################################################################################################
 def NormalizeURL(url):
+
+	if '#' in url:
+		(url, video) = url.split('#', 1)
+		url = FindVideoURL(url, video)
 
 	return url.split(';', 1)[0]
 
@@ -100,3 +105,23 @@ def PlayVideo(url, bitrate):
 	sid = RE_SID.search(xml).group(1)
 
 	return IndirectResponse(VideoClipObject, key=VIDEO_URL % sid)
+
+####################################################################################################
+def FindVideoURL(url, video):
+
+	video = String.Unquote(video)
+	page = HTTP.Request(url).content
+	json = Regex(CAROUSEL_REGEX % video).search(page)
+
+	if not json:
+		return url
+
+	json = json.group(1).replace(',"total"', '}')
+	json = JSON.ObjectFromString(json)
+
+	for key in json['items'].keys():
+		if video in json['items'][key]['ttle']:
+			url = json['items'][key]['plnk_vita_shareurl']
+			break
+
+	return url
