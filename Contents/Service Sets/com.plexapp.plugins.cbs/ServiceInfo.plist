@@ -13,6 +13,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>http://(?!bwp\.)(.+\.)?cbs(news|sports)?\.com/(.*?/)?video/.+</string>
+				<string>http://can.cbs.com/thunder/player/iframe/index.php\?.+?pid=.+</string>
 			</array>
 		</dict>
 	</dict>
