@@ -13,18 +13,27 @@ def NormalizeURL(url):
 	if '#' in url:
 		(url, video) = url.split('#', 1)
 		url = FindVideoURL(url, video)
+	else:
+		url = url.split(';', 1)[0]
 
-	return url.split(';', 1)[0]
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+	if '|' in url:
+		(url, title) = url.split('|', 1)
+		title = String.Unquote(title)
+	else:
+		title = None
 
 	try:
 		html = HTML.ElementFromURL(url)
 	except:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
+	if not title:
+		title = html.xpath('//meta[@property="og:title"]')[0].get('content')
 
 	try: summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
 	except: summary = None
@@ -92,6 +101,9 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
 
+	if '|' in url:
+		(url, title) = url.split('|', 1)
+
 	page = HTTP.Request(url).content
 	id_embed = RE_ID_EMBED.search(page)
 
@@ -129,6 +141,10 @@ def FindVideoURL(url, video):
 
 		if not smallest_distance or distance < smallest_distance:
 			smallest_distance = distance
-			url = json['items'][key]['plnk_vita_shareurl']
+			url = json['items'][key]['plnk']
+			if not url.startswith('http://'):
+				url = 'http://movies.yahoo.com%s' % url
 
-	return url
+			video_title = json['items'][key]['ttle_x']
+
+	return '%s|%s' % (url, String.Quote(video_title))
