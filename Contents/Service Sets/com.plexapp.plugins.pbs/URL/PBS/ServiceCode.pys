@@ -47,6 +47,7 @@ def MediaObjectsForURL(url):
 
 @indirect
 def PlayVideo(url):
+    video_url = None
     tp_id = RE_TP_ID.search(url).group(1)
     video = PBS(String.Decode(API_ID), String.Decode(API_SECRET)).videos.get(DETAILS + tp_id)
 
@@ -62,7 +63,7 @@ def PlayVideo(url):
                 break
         except:
             video_url = None
-    
+
     if not video_url:
         raise Ex.MediaNotAvailable
     else:
