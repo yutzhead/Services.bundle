@@ -28,12 +28,17 @@ def MetadataObjectForURL(url):
 	episode_summary = details['description']
 	episode_duration = int(details['length'])
 	episode_thumb = details['posterUrl']
-	season_index = int(details['seasonNumber'])
-	episode_index = int(details['episodeNumber'])
 
-	originally_available_at = Datetime.FromTimestamp(details['shownOnTvDateTimestamp']/1000)
+	try: season_index = int(details['seasonNumber'])
+	except: season_index = None
 
-	if "SEGMENT" in details['type']:
+	try: episode_index = int(details['episodeNumber'])
+	except: episode_index = None
+
+	try: originally_available_at = Datetime.FromTimestamp(details['shownOnTvDateTimestamp']/1000)
+	except: originally_available_at = None
+
+	if "SEGMENT" in details['type'] or episode_index is None:
 		return VideoClipObject(
 			title = show_title + ' - ' + episode_title,
 			summary = episode_summary,
