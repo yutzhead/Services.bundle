@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.|edition\.)?cnn\.com/video/(?!flashLive).+</string>
+				<string>^(?!.*(flashLive|cvptve))http://(www\.|edition\.)?cnn\.com/video/.+</string>
 			</array>
 		</dict>
 	</dict>
