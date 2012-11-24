@@ -57,7 +57,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3))
-					],
+				],
 				bitrate = 3500,
 				container = Container.MP4,
 				video_resolution = '720',
@@ -72,7 +72,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3))
-					],
+				],
 				bitrate = 2200,
 				container = Container.MP4,
 				video_resolution = '540',
@@ -87,7 +87,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3))
-					],
+				],
 				bitrate = 1700,
 				container = Container.MP4,
 				video_resolution = '432',
@@ -102,7 +102,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3))
-					],
+				],
 				bitrate = 1200,
 				container = Container.MP4,
 				video_resolution = '360',
@@ -117,7 +117,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3))
-					],
+				],
 				bitrate = 750,
 				container = Container.MP4,
 				video_resolution = '288',
@@ -132,7 +132,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=3))
-					],
+				],
 				bitrate = 450,
 				container = Container.MP4,
 				video_resolution = '252',
@@ -147,7 +147,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=3))
-					],
+				],
 				bitrate = 400,
 				container = Container.MP4,
 				video_resolution = '216',
@@ -162,7 +162,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=3))
-					],
+				],
 				bitrate = 150,
 				container = Container.MP4,
 				video_resolution = '216',
@@ -177,7 +177,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
-					],
+				],
 				bitrate = 3500,
 				container = Container.MP4,
 				video_resolution = '720',
@@ -189,7 +189,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
-					],
+				],
 				bitrate = 2200,
 				container = Container.MP4,
 				video_resolution = '540',
@@ -201,7 +201,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
-					],
+				],
 				bitrate = 1700,
 				container = Container.MP4,
 				video_resolution = '432',
@@ -213,7 +213,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
-					],
+				],
 				bitrate = 1200,
 				container = Container.MP4,
 				video_resolution = '360',
@@ -225,7 +225,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
-					],
+				],
 				bitrate = 750,
 				container = Container.MP4,
 				video_resolution = '288',
@@ -237,7 +237,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0))
-					],
+				],
 				bitrate = 450,
 				container = Container.MP4,
 				video_resolution = '252',
@@ -249,7 +249,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0)),
-					],
+				],
 				bitrate = 400,
 				container = Container.MP4,
 				video_resolution = '216',
@@ -261,7 +261,7 @@ def MediaObjectsForURL(url):
 			MediaObject(
 				parts = [
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=0))
-					],
+				],
 				bitrate = 150,
 				container = Container.MP4,
 				video_resolution = '216',
@@ -279,13 +279,16 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	data = HTML.ElementFromURL(url)
 	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
-	
+
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
-	
+	guids = mrss_data.xpath('//guid')
+
+	if index >= len(guids):
+		return None
+
 	segment_uri = mrss_data.xpath('//guid')[index].text
-	
 	player_data = XML.ElementFromURL(FEED_URL % segment_uri)
-	
+
 	try:
 		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
 	except:
@@ -308,12 +311,13 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 ####################################################################################################
 def TestURLs():
+
 	test_urls = []
-	
+
 	data1 = HTML.ElementFromURL('http://www.spike.com/video-clips/')
 	test_urls.append(data1.xpath('//div[@class="block b_video_orange"]//h3/a')[0].get('href'))
-	
+
 	data2 = HTML.ElementFromURL('http://www.spike.com/full-episodes/')
 	test_urls.append(data2.xpath('//div[@class="module latest_full_episodes"]//h3/a')[0].get('href'))
-	
+
 	return test_urls
