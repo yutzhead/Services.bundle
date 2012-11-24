@@ -69,6 +69,9 @@ def PlayVideo(url, res):
     details_page = GetDetails(url)
     video_items = details_page.xpath("//media-group/media-content")
 
+    if len(video_items) < 1:
+        raise Ex.MediaNotAvailable
+
     # It's possible that the requested resolution is not actually available. Therefore we should clamp
     # the requested index by the length of actual video items. This should still provide a suitable
     # video as it is in ascending or of quality.
