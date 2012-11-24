@@ -84,18 +84,18 @@ def MetadataObjectFromPAGE(url):
   page = HTTP.Request(url, cacheTime=7200).content
   data = HTML.ElementFromString(page)
 
+  title = data.xpath('//meta[@property="og:title"]')  
+
+  if len(title) < 1:
+    return MetadataObjectFromSMIL(url)
+  else:
+    title = title[0].get('content')
+    
   if len( data.xpath('//div[@id="video-metadata-display-container"]//*[contains(text(), "Full Episode")]') ) > 0:
     video_type = "Full Episode"
   else:
     video_type = "Clip"
-
-  title = data.xpath('//meta[@property="og:title"]')
-
-  if len(title) < 1:
-    return None
-  else:
-    title = title[0].get('content')
-
+  
   if ' - ' in title:
     try:
       (show_title, episode_title, junk) = title.split(' - ', 2)
@@ -153,6 +153,61 @@ def MetadataObjectFromPAGE(url):
       thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
     )
     return co
+
+####################################################################################################
+def MetadataObjectFromSMIL(url):
+  try:
+    pid = RE_PID.search(url).group(1)
+  except:
+    return None
+  
+  try:
+    smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
+    thePlatform_feed = 'feeds2'
+  except:
+    smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
+    thePlatform_feed = 'feeds3'
+    
+  if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
+    raise Ex.MediaGeoblocked
+  
+  if thePlatform_feed == 'feeds3':
+    # Check for geoblock
+    if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
+      raise Ex.MediaGeoblocked
+
+    details = smil.xpath('//b:ref[starts-with(@src, "video/")]', namespaces=SMIL_NAMESPACE)[0]
+    title = details.get('title')
+    summary = details.get('abstract')
+    duration = int(details.get('dur').strip('ms'))
+    keywords = details.get('keywords')
+    if 'Full episode' in keywords:
+      episode = int(smil.xpath('//b:param[@name="EpisodeNumber"]', namespaces=SMIL_NAMESPACE)[0].get('value'))
+      season = int(smil.xpath('//b:param[@name="SeasonNumber"]', namespaces=SMIL_NAMESPACE)[0].get('value'))
+      series = smil.xpath('//b:param[@name="SeriesTitle"]', namespaces=SMIL_NAMESPACE)[0].get('value')
+      
+      return EpisodeObject(
+        title=title,
+        summary=summary,
+        duration=duration,
+        index = episode,
+        season = season,
+        show = series,
+        thumb = 'icon-default.png'
+      )
+    else:
+      return VideoClipObject(
+        title=title,
+        summary=summary,
+        duration=duration,
+        thumb = 'icon-default.png'
+      )
+    
+    title = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
+  else:
+    return None
+
+  return
 
 ####################################################################################################
 def MediaObjectsForURL(url):
