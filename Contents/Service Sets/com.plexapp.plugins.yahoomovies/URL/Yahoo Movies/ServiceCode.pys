@@ -122,6 +122,13 @@ def PlayVideo(url, bitrate):
 def FindVideoURL(url, video):
 
 	video = String.Unquote(video).lower()
+
+	url = url.rstrip('/')
+	if not url.endswith('/trailers'):
+		url = '%s/trailers/' % url
+	else:
+		url = '%s/' % url
+
 	page = HTTP.Request(url).content
 	json = Regex(CAROUSEL_REGEX % video, Regex.IGNORECASE).search(page)
 
