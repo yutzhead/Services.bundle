@@ -126,6 +126,10 @@ def MetadataObjectForURL(url):
   except:
     tags = []
 
+  duration = details['duration'] * 1000
+  if not isinstance(duration, int):
+    raise Ex.MediaNotAvailable
+
   video = VideoClipObject(
     title = details['title'],
     summary = details['description'],
@@ -133,7 +137,7 @@ def MetadataObjectForURL(url):
     rating = rating,
     tags = tags,
     originally_available_at = Datetime.ParseDate(details['uploaded']).date(),
-    duration = details['duration'] * 1000,
+    duration = duration,
     genres = [details['category']]
   )
 
