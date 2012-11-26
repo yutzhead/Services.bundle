@@ -4,9 +4,13 @@ MRSS_URL = "http://www.logotv.com/player/includes/rss.jhtml?uri=%s"
 PLAYLIST_URL = "http://www.logotv.com/player/includes/mediaGen.jhtml?uri=%s&vid=%s"
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
-RE_EPISODE_URI 	= Regex('MTVN.Player.episodeUri = \"(.+?)\"')
+RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
 RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
-RE_TITLE_PARTS	= Regex('Episode (?P<episode>[0-9]+), Season (?P<season>[0-9]): (?P<series>.+)')
+
+RE_TITLE_AT_BEGIN = Regex('^(?P<series>.+?): (Episode|Season)')
+RE_TITLE_AT_END = Regex('(Episode|Season) \d+: (?P<series>.+?)$')
+RE_SEASON = Regex('Season (?P<season>\d+)')
+RE_EPISODE = Regex('Episode (?P<episode>\d+)')
 
 RE_DATE = Regex('[0-9]{4}-[0-9]{2}-[0-9]{2}')
 
@@ -33,10 +37,16 @@ def MetadataObjectForURL(url):
 	air_date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
 	
 	if video_type == "episode":
-		details = RE_TITLE_PARTS.search(data.xpath('//title')[0].text).groupdict()
-		show_title = details['series']
-		episode_index = details['episode']
-		season_index = details['season']
+		full_title = data.xpath('//title')[0].text
+
+		show_title = RE_TITLE_AT_BEGIN.search(full_title)
+		if not show_title:
+			show_title = RE_TITLE_AT_END.search(full_title)
+
+		show_title = show_title.group('series')
+
+		season_index = RE_SEASON.search(full_title).group('season')
+		episode_index = RE_EPISODE.search(full_title).group('episode')
 
 		return EpisodeObject(
 			show = show_title,
