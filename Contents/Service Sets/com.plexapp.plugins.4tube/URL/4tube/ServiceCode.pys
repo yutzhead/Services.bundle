@@ -12,7 +12,7 @@ def MetadataObjectForURL(url):
 	html = HTML.ElementFromURL(url)
 	video = html.xpath('//video')
 
-	if len(video) < 0:
+	if len(video) < 1:
 		return None
 
 	title = html.xpath('//title')[0].text.rsplit(' - ')[0]
@@ -61,7 +61,7 @@ def PlayVideo(url):
 	html = HTML.ElementFromURL(url)
 	video = html.xpath('//video')
 
-	if len(video) < 0:
+	if len(video) < 1:
 		return None
 
 	video_url = video[0].get('src')
