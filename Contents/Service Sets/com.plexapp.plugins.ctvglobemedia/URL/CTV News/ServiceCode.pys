@@ -1,13 +1,13 @@
-RE_CLIP         = Regex('clipId=([0-9]+)')
-RE_CLIPID       = Regex('clip.id = ([0-9]+)')
-RE_PLAYLIST     = Regex('playlistId=([0-9]+?\.[0-9]+)')
-RE_BIN          = Regex('binId=([0-9]+?\.[0-9]+)')
-RE_VIDEO        = Regex("url:'(http://.+?)'")
+RE_CLIP = Regex('clipId=([0-9]+)')
+RE_CLIPID = Regex('clip.id = ([0-9]+)')
+RE_PLAYLIST = Regex('playlistId=([0-9]+?\.[0-9]+)')
+RE_BIN = Regex('binId=([0-9]+?\.[0-9]+)')
+RE_VIDEO = Regex("url:'(http://.+?)'")
+RE_INITIAL_BIN = Regex("initialBinId = '([0-9]+?\.[0-9]+)';")
+RE_CLIP_DATA = Regex('<script type="text/javascript">.+?create clip object(.+?)</script>', Regex.DOTALL)
 
-RE_CLIP_DATA    = Regex('<script type="text/javascript">.+?create clip object(.+?)</script>', Regex.DOTALL)
-
-VIDEO_URL   = "http://esi.ctv.ca/datafeed/flv/urlgenjs.aspx?formatid=20&vid=%s" #clipId
-STORY_URL   = "http://www.ctvnews.ca/%s?ot=example.AjaxPageLayout.ot&pageNum=1&maxItemsPerPage=12" #binId
+VIDEO_URL = "http://esi.ctv.ca/datafeed/flv/urlgenjs.aspx?formatid=20&vid=%s" #clipId
+STORY_URL = "http://www.ctvnews.ca/%s?ot=example.AjaxPageLayout.ot&pageNum=1&maxItemsPerPage=12" #binId
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,6 +15,7 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
     if 'clipId=' in url:
         data = HTML.ElementFromURL(url)
         title = data.xpath('//meta[@itemprop="name"]')[0].get('content')
@@ -29,7 +30,14 @@ def MetadataObjectForURL(url):
         )
     else:
         playlistId = RE_PLAYLIST.search(url).group(1)
-        binId = RE_BIN.search(url).group(1)
+        binId = RE_BIN.search(url)
+
+        if not binId:
+            data = HTTP.Request(url).content
+            binId = RE_INITIAL_BIN.search(data).group(1)
+        else:
+            binId = binId.group(1)
+
         data = HTML.ElementFromURL(STORY_URL % binId)
         try:
             playlist = data.xpath('//article/a[contains(@href, "'+playlistId+'")]/img')[0]
