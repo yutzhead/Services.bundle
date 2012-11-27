@@ -7,8 +7,6 @@ MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtv
 RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
 RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
 
-RE_TITLE_AT_BEGIN = Regex('^(?P<series>.+?): (Episode|Season)')
-RE_TITLE_AT_END = Regex('(Episode|Season) \d+: (?P<series>.+?)$')
 RE_SEASON = Regex('Season (?P<season>\d+)')
 RE_EPISODE = Regex('Episode (?P<episode>\d+)')
 
@@ -35,23 +33,31 @@ def MetadataObjectForURL(url):
 	summary = data.xpath('//description')[0].text
 	thumb = data.xpath('//image')[0].get('url')
 	air_date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
-	
+
 	if video_type == "episode":
 		full_title = data.xpath('//title')[0].text
 
-		show_title = RE_TITLE_AT_BEGIN.search(full_title)
-		if not show_title:
-			show_title = RE_TITLE_AT_END.search(full_title)
+		show = full_title.split(':',1)[0].split('Episode')[0].split('Season')[0].strip(' :,')
+		try:
+			title = full_title.split(':',1)
+			if len(title) == 2:
+				title = title[1]
 
-		show_title = show_title.group('series')
+			title = title.strip(' :,')
+		except:
+			title = full_title
 
-		season_index = RE_SEASON.search(full_title).group('season')
-		episode_index = RE_EPISODE.search(full_title).group('episode')
+		try: season_index = int(RE_SEASON.search(full_title).group('season'))
+		except: season_index = None
+
+		try: episode_index = int(RE_EPISODE.search(full_title).group('episode'))
+		except: episode_index = None
 
 		return EpisodeObject(
-			show = show_title,
-			index = int(episode_index),
-			season = int(season_index),
+			show = show,
+			title = title,
+			index = episode_index,
+			season = season_index,
 			summary = summary,
 			originally_available_at = air_date,
 			thumb = thumb
