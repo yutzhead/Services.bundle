@@ -9,7 +9,12 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
-	html = HTML.ElementFromURL(url)
+
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	video = html.xpath('//video')
 
 	if len(video) < 1:
@@ -58,7 +63,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
-	html = HTML.ElementFromURL(url)
+
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	video = html.xpath('//video')
 
 	if len(video) < 1:
