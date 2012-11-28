@@ -1,9 +1,9 @@
 POPS_URL = 'http://cosmos.bcst.yahoo.com/rest/v2/pops;element=stream;bw=%d;dynamicstream=1;outputformat=mrss;tech=flv,mp4;lmsoverride=1;id=%s'
 VIDEO_URL = 'http://playlist.yahoo.com/makeplaylist.dll?sdm=web&pt=rd&sid=%s'
+JSON_URL = 'http://movies.yahoo.com/_xhr/videos/channel-data/?start=0&count=100&source=movie&template=ipvp_thmbs&m_uuid=%s'
 
 RE_ID_EMBED = Regex('vid=([0-9]+)')
 RE_SID = Regex('<cms.+sid=.([0-9]+)')
-CAROUSEL_REGEX = '(\{"items":\{.*?"ttle":".*?%s.*?".*?,"total")'
 
 HTTP.CacheTime = CACHE_1DAY
 
@@ -129,14 +129,9 @@ def FindVideoURL(url, video):
 	else:
 		url = '%s/' % url
 
-	page = HTTP.Request(url).content
-	json = Regex(CAROUSEL_REGEX % video, Regex.IGNORECASE).search(page)
-
-	if not json:
-		return url
-
-	json = json.group(1).replace(',"total"', '}')
-	json = JSON.ObjectFromString(json)
+	html = HTML.ElementFromURL(url)
+	m_uuid = html.xpath('//input[@name="entity_id"]')[0].get('value')
+	json = JSON.ObjectFromURL(JSON_URL % m_uuid)
 	smallest_distance = None
 
 	for key in json['items'].keys():
@@ -148,10 +143,8 @@ def FindVideoURL(url, video):
 
 		if not smallest_distance or distance < smallest_distance:
 			smallest_distance = distance
-			url = json['items'][key]['plnk']
-			if not url.startswith('http://'):
-				url = 'http://movies.yahoo.com%s' % url
-
+			id = json['items'][key]['id'].split('-')[-1]
+			trailer_url = '%s/x-%s.html' % (url.rstrip('/'), id)
 			video_title = json['items'][key]['ttle_x']
 
-	return '%s|%s' % (url, String.Quote(video_title))
+	return '%s|%s' % (trailer_url, String.Quote(video_title))
