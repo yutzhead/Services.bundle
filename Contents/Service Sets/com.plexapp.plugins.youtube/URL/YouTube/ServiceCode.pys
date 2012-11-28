@@ -193,8 +193,6 @@ def PlayVideo(url = None, default_fmt = None, **kwargs):
   if not url:
     return None
 
-  HTTP.ClearCookies()
-
   # Some videos require the user to authenticate in order for age verification to be successful. Since
   # this is currently not supported, we should detect the case and raise the suitable Framework
   # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
@@ -277,16 +275,4 @@ def PlayVideo(url = None, default_fmt = None, **kwargs):
   final_url = fmts_info[fmt].decode('unicode_escape')
   Log("VIDEO URL (fmt=%d): %s", fmt, final_url)
 
-  c = ObjectContainer()
-  c.add(VideoClipObject(
-    key = URLService.LookupURLForMediaURL(url.decode('unicode_escape')),
-    items = [
-      MediaObject(
-        parts = [
-          PartObject(key = final_url)
-        ]
-      )
-    ]
-  ))
-  c.http_cookies = HTTP.CookiesForURL('http://www.youtube.com')
-  return c
+  return IndirectResponse(VideoClipObject, key=final_url)
