@@ -1,4 +1,5 @@
 RE_PID = Regex("pid\s*=\s*'?([^&']+)")
+RE_PID2 = Regex("video.settings.pid = '(.+?)'")
 RE_VIDEO_ID = Regex('CBSVideo.setVideoId\("([0-9]+)"\);')
 RE_VID_ID = Regex("vidId: '([0-9]+)'")
 RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
@@ -284,20 +285,17 @@ def VideoFromAPI(url, res):
 
 ####################################################################################################
 def VideoFromSMIL(url, res):
-
-  if url.find('pid=') == -1:
-    page = HTML.ElementFromURL(url)
-    url = page.xpath("//meta[@property = 'og:video']")
-
-    if len(url) < 1:
-      return None
-    else:
-      url = url[0].get('content')
-
-  pid = RE_PID.search(url)
+  try:
+    pid = RE_PID.search(url).group(1)
+  except:
+    content = HTTP.Request(url).content
+    try:
+      url  = page.xpath("//meta[@property = 'og:video']")[0].get('content')
+      pid = RE_PID.search(url).group(1)
+    except:
+      pid = RE_PID2.search(content).group(1)
 
   if pid:
-    pid = pid.group(1)
     try:
       smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
       thePlatform_feed = 'feeds2'
