@@ -1,7 +1,7 @@
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
-
 MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+RE_AMPERSANDS = Regex('&(?!amp;)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -107,7 +107,10 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 	if not uri:
 		return None
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	mrss_data = HTTP.Request(MRSS_URL % uri).content
+	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	try:
 		player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
 	except:
