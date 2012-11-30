@@ -94,7 +94,14 @@ def PlayVideo(url, index=None):
         #return IndirectResponse(VideoClipObject, key=video_url)
     else:
         playlistId = RE_PLAYLIST.search(url).group(1)
-        binId = RE_BIN.search(url).group(1)
+        binId = RE_BIN.search(url)
+
+        if not binId:
+            data = HTTP.Request(url).content
+            binId = RE_INITIAL_BIN.search(data).group(1)
+        else:
+            binId = binId.group(1)
+
         content = HTTP.Request(STORY_URL % binId).content
         clips = []
         try:
