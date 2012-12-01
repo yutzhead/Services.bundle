@@ -17,12 +17,13 @@ def MetadataObjectForURL(url):
 	# Check statusCode for errors:
 	# 2 = copyright violation
 	# 4 = geoblock
+	# 5 = currently unavailable
 	status_code = details_page.xpath('//statusCode')
 	if len(status_code) > 0:
-		if status_code[0].text == '2':
-			raise Ex.MediaNotAvailable
 		if status_code[0].text == '4':
 			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
 
 	# Extract the available information from the details page.
 	title = details_page.xpath('//item/media:content/media:title/text()', namespaces=NAMESPACES)[0]
