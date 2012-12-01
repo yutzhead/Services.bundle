@@ -167,8 +167,10 @@ def GetVideoURL(url, format=None, codecs=None):
     try:
       HTTP.Request(video_url, headers=headers, follow_redirects=False).headers
     except Ex.RedirectError, e:
-      try: return e.location
-      except: pass
+      try:
+        return e.location
+      except:
+        pass
 
     # The requested video could not be found. This can happen if we have requested a specific format which is not available, e.g. a known case is when we 
     # request an SD video but HD is only available.
@@ -178,10 +180,7 @@ def GetVideoURL(url, format=None, codecs=None):
   raise Ex.MediaNotAvailable
 
 ####################################################################################################
-@indirect
 def PlayVideo(url, format=None, codecs=None):
-
-  HTTP.ClearCookies()
 
   try:
     video_url = GetVideoURL(url, format, codecs)
@@ -191,16 +190,4 @@ def PlayVideo(url, format=None, codecs=None):
   if video_url is None:
     return None
 
-  c = ObjectContainer()
-  c.add(VideoClipObject(
-    key = URLService.LookupURLForMediaURL(url),
-    items = [
-      MediaObject(
-        parts = [
-          PartObject(key = video_url)
-        ]
-      )
-    ]
-  ))
-  c.http_cookies = HTTP.CookiesForURL('http://vimeo.com/')
-  return c
+  return Redirect(video_url)
