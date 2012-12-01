@@ -236,8 +236,15 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 ####################################################################################################
 def GetURI(url):
+
+	content = HTTP.Request(url).content
+	html = HTML.ElementFromString(content)
+
+	mgid = html.xpath('//div[@data-mgid]')
+	if not len(mgid) < 1:
+		return mgid[0].get('data-mgid')
+
 	try:
-		content = HTTP.Request(url).content
 		id = RE_MGID.search(content).group(1)
 		return id
 	except:
