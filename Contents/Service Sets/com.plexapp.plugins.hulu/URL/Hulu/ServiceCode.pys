@@ -1,5 +1,5 @@
 API_URL = 'http://www.hulu.com/api/oembed.json?url=%s'
-HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s&include=video_assets'
+HULU_ASSETS = 'http://r.hulu.com/videos?eid=%s'
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
 
 ####################################################################################################
