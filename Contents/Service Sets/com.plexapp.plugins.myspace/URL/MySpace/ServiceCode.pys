@@ -27,7 +27,8 @@ def MetadataObjectForURL(url):
 
 	# Extract the available information from the details page.
 	title = details_page.xpath('//item/media:content/media:title/text()', namespaces=NAMESPACES)[0]
-	summary = details_page.xpath('//item/media:content/media:description/text()', namespaces=NAMESPACES)[0]
+	try: summary = details_page.xpath('//item/media:content/media:description/text()', namespaces=NAMESPACES)[0]
+	except: summary = None
 	thumb = details_page.xpath('//item/media:still', namespaces=NAMESPACES)[0].get('url')
 
 	return VideoClipObject(
