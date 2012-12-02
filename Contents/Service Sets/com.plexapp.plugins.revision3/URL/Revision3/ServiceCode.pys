@@ -9,14 +9,18 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
   data = HTML.ElementFromURL(url, cacheTime=7200)
 
+  videos = data.xpath('//div[@id="action-panels-download-MP4"]')
+  if len(videos) < 1:
+    return None
+
   show_title = data.xpath('//meta[@name="description"]')[0].get('content').split(': ')[0]
-  episode_title = data.xpath('.//div[@id="show-notes"]/h2')[0].text
+  episode_title = data.xpath('//div[@id="show-notes"]/h2')[0].text
   try: date = Datetime.ParseDate(data.xpath('//meta[@name="publish-date"]')[0].get('content')).date()
   except: date = None
   summary = data.xpath('//meta[@property="og:description"]', namespaces=REVISION3_NS)[0].get('content')
 
   try:
-    duration = data.xpath('.//div[@id="show-notes"]//div[@class="subtext"]')[0].text
+    duration = data.xpath('//div[@id="show-notes"]//div[@class="subtext"]')[0].text
     duration = duration.split('running time ')[1]
     durationParts = duration.split(':')
     duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
