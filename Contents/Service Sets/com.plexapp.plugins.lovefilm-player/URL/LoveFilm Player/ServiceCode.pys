@@ -14,11 +14,11 @@ def NormalizeURL(url):
     # associated with this plugin needs to be accessing a https connection in order to authenticate correctly,
     # if required. It should not affect the MetadataObjectForURL method as that can access the appropriate
     # meta data required.
-    url = re.sub('https?://', 'https://', url)
-    return url
+    return url.replace('http://', 'https://')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
     if url.find('www.lovefilm.de') > -1:
         return MetadataObjectForDEURL(url)
 
@@ -28,7 +28,12 @@ def MetadataObjectForURL(url):
 def MetadataObjectForUKURL(url):
 
     # Attempt to extract the details of the title from the page.
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url, follow_redirects=False)
+    except Ex.RedirectError, e:
+        if e.location.endswith('lovefilm.com/'):
+            raise Ex.MediaNotAvailable
+
     details = ParseItem(page)
 
     originalTitle = details['title']
@@ -110,7 +115,12 @@ def MetadataObjectForUKURL(url):
 def MetadataObjectForDEURL(url):
 
     # Attempt to extract the details of the title from the page.
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url, follow_redirects=False)
+    except Ex.RedirectError, e:
+        if e.location.endswith('lovefilm.de/'):
+            raise Ex.MediaNotAvailable
+
     details = ParseItem(page)
 
     originalTitle = details['title']
