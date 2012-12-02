@@ -31,7 +31,15 @@ def MetadataObjectForURL(url):
 	data = XML.ElementFromURL(MRSS_URL % uri)
 
 	summary = data.xpath('//description')[0].text
-	thumb = data.xpath('//image')[0].get('url')
+
+	try:
+		thumb = data.xpath('//media:thumbnail', namespaces=NAMESPACES)[0].get('url').split('?')[0]
+	except:
+		try:
+			thumb = data.xpath('//image')[0].get('url').split('?')[0]
+		except:
+			thumb = None
+
 	air_date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
 
 	if video_type == "episode":
