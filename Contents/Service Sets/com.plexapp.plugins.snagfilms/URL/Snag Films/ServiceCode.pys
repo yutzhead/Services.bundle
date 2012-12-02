@@ -1,13 +1,18 @@
 VIDEO_DETAILS_URL = "http://www.snagfilms.com/api/assets.jsp?id=%s"
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	# Request the actual page
-	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	# Extract the information available from the page.
 	title = page.xpath("//meta[@name='title']")[0].get('content')
+
+	if title == 'Film 404':
+		raise Ex.MediaNotAvailable
+
 	description = page.xpath("//meta[@name='description']")[0].get('content')
 	thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
 	tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
@@ -41,11 +46,16 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate):
 
-	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+
+	title = page.xpath("//meta[@name='title']")[0].get('content')
+
+	if title == 'Film 404':
+		raise Ex.MediaNotAvailable
 
 	# Find the video id and use that to get the associated details.
 	video_id = page.xpath("//input[@id='film-id']")[0].get('value')
-	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % video_id)
+	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % video_id, headers=HTTP_HEADERS)
 
 	# Find the url
 	url = details['result']['host']
