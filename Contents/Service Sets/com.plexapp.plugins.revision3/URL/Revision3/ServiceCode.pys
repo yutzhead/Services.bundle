@@ -80,6 +80,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, fmt):
   data = HTML.ElementFromURL(url, cacheTime=7200)
 
+  # Check if we're on a 'segment' page and if so, try to find the 'full episode' page
+  full_ep_url = data.xpath('//form/input[@value="Watch the full episode!"]/parent::form/@action')
+  if not len(full_ep_url) < 1:
+    url = 'http://revision3.com%s' % full_ep_url[0]
+    data = HTML.ElementFromURL(url, cacheTime=7200)
+
   videos = data.xpath('//div[@id="action-panels-download-MP4"]')[0]
   available_videos = videos.xpath('.//a[@class="sizename"]')
 
