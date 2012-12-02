@@ -176,7 +176,7 @@ def MetadataObjectForDEURL(url):
 def ParseItem(page):
     details = {}
 
-    details['title'] = page.xpath("//div[@id='panel-details']/h2/text()")[0]
+    details['title'] = page.xpath("//meta[@property='og:title']/@content")[0]
     
     # [Optional] The artwork
     details['art'] = None
