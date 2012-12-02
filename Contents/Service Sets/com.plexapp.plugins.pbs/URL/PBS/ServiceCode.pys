@@ -64,31 +64,54 @@ def PlayVideo(url):
         except:
             video_url = None
 
-    if not video_url:
-        raise Ex.MediaNotAvailable
-    else:
+    if video_url:
         return IndirectResponse(VideoClipObject, key=video_url)
-
-    ### Keeping this code just in case MP4s aren't available for all videos ###
-    '''
-    video_url = video['mediafiles'][-1]['video_data_url']
-    Log(HTTP.Request(video_url + '&format=SMIL').content)
-    smil = XML.ElementFromURL(video_url + '&format=SMIL')
-    base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
-    clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
-
-    if base.startswith('http'):
-        final_url = base + clip
-        if '.m3u8' in clip:
-            Log('HTTPLiveStreamURL: %s' % final_url)
-            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
-        else:
-            return IndirectResponse(VideoClipObject, key=final_url)
+        #raise Ex.MediaNotAvailable
     else:
-        clip = 'MP4:' + clip.split('.mp4')[0]
-        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
-    '''
-
+        # We likely have an rtmp stream here then, only parsing for one format (only one I can currently find)
+        video_url = video['mediafiles'][-1]['video_data_url']
+        smil = XML.ElementFromURL(video_url + '&format=SMIL')
+        Log.Debug(smil)
+        base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
+        clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
+        app = base.split("/",3)[3]
+        url = base.split(app)[0]
+        playpath = "mp4:"+clip
+        #fullURL=base+clip
+        Log.Debug(url)
+        Log.Debug(app)
+        Log.Debug(playpath)
+#         if base.startswith('http'):
+#             final_url = base + clip
+#             if '.m3u8' in clip:
+#                 Log('HTTPLiveStreamURL: %s' % final_url)
+#                 return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
+#             else:
+#                 return IndirectResponse(VideoClipObject, key=final_url)
+#         else:
+#             clip = 'MP4:' + clip.split('.mp4')[0]
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, app=app, clip=playpath))
+  	
+        ### Keeping this code just in case MP4s aren't available for all videos ###
+        '''
+        video_url = video['mediafiles'][-1]['video_data_url']
+        Log(HTTP.Request(video_url + '&format=SMIL').content)
+        smil = XML.ElementFromURL(video_url + '&format=SMIL')
+        base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
+        clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
+    
+        if base.startswith('http'):
+            final_url = base + clip
+            if '.m3u8' in clip:
+                Log('HTTPLiveStreamURL: %s' % final_url)
+                return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
+            else:
+                return IndirectResponse(VideoClipObject, key=final_url)
+        else:
+            clip = 'MP4:' + clip.split('.mp4')[0]
+            return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
+        '''
+        
 def TestURLs():
     test_urls = []
 
