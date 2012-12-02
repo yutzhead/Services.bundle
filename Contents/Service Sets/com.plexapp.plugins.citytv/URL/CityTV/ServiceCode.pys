@@ -74,9 +74,12 @@ def MediaObjectsForURL(url):
 
 def PlayVideo(url):
     data = DoAmfRequest(url)
-    video_url = data['IOSRenditions'][0]['defaultURL']
 
-    return Redirect(video_url)
+    if 'IOSRenditions' in data and len(data['IOSRenditions']) > 0:
+        video_url = data['IOSRenditions'][0]['defaultURL']
+        return Redirect(video_url)
+
+    raise Ex.MediaNotAvailable
 
 ####################################################################################################
 
