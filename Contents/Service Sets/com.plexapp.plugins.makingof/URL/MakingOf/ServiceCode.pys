@@ -1,5 +1,6 @@
-NAMESPACES = {"og":"http://opengraphprotocol.org/schema/"}
-XML_URL = "http://www.kaltura.com//api_v3/index.php?service=multirequest&action=null&kalsig=%s"
+NAMESPACES = {'og': 'http://opengraphprotocol.org/schema/'}
+XML_URL = 'http://www.kaltura.com//api_v3/index.php?service=multirequest&action=null&kalsig=%s'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,25 +10,31 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	data = GetHTML(url)
 	video_xml = GetXML(url)
 
 	title = data.xpath('//meta[@property="og:title"]', namespaces=NAMESPACES)[0].get('content')
-	try: summary = data.xpath('//meta[@name="description"]')[0].get('content')
-	except: summary = None
-	thumbUrl = data.xpath('//meta[@property="og:image"]', namespaces=NAMESPACES)[0].get('content')
+	thumb_url = data.xpath('//meta[@property="og:image"]', namespaces=NAMESPACES)[0].get('content')
 	duration = int(video_xml.xpath('//msDuration')[0].text)
-	date = float(video_xml.xpath('//createdAt')[0].text)
 
-	vc = VideoClipObject(
+	try:
+		summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	except:
+		summary = None
+
+	try:
+		date = float(video_xml.xpath('//createdAt')[0].text)
+		originally_available_at = Datetime.FromTimestamp(date).date()
+	except:
+		originally_available_at = None
+
+	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumbUrl,
+		thumb = thumb_url,
 		duration = duration,
-		originally_available_at = Datetime.FromTimestamp(date).date()
+		originally_available_at = originally_available_at
 	)
-
-	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -46,17 +53,31 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	video_data = GetXML(url)
 	video_url = video_data.xpath('//dataUrl')[0].text 
 
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def GetHTML(url, retry=0):
+
+	if retry > 2:
+		raise Ex.MediaNotAvailable
+
+	try:
+		data = HTML.ElementFromURL(url, sleep=2.0, headers=HTTP_HEADERS)
+	except:
+		data = GetHTML(url, retry=retry+1)
+
+	return data
 
 ####################################################################################################
 def GetXML(url):
-  
-	data = HTML.ElementFromURL(url)
+
+	data = GetHTML(url)
 	video_id = data.xpath('//param[@name="movie"]')[0].get('value').split('/entry_id/')[1].split('/')[0]
 
 	post_values = {
@@ -82,7 +103,7 @@ def GetXML(url):
 		"4:filter:entryIdEqual": video_id
 	}
 
-	video_xml = XML.ElementFromURL(XML_URL % (GetSignature(post_values)), post_values)
+	video_xml = XML.ElementFromURL(XML_URL % (GetSignature(post_values)), post_values, headers=HTTP_HEADERS)
 
 	return(video_xml)
 
