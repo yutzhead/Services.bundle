@@ -157,8 +157,11 @@ def TestURLs():
 	data = JSON.ObjectFromURL("http://feed.theplatform.com/f/OyMl-B/8IyhuVgUXDd_/?form=json&fields=guid,:subtitle,:fullEpisode&byCustomValue={fullEpisode}{true}")
 
 	for entry in data['entries']:
-		video_id = entry['guid']
 		show = String.Quote(entry['pl1$subtitle'])
+		if show == "":
+			continue
+
+		video_id = entry['guid']
 		url = "http://www.usanetwork.com/videos/%s/vid:%s" % (show, video_id)
 		test_urls.append(url)
 
