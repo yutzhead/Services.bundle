@@ -60,12 +60,13 @@ def PlayVideo(url):
 	# Check statusCode for errors:
 	# 2 = copyright violation
 	# 4 = geoblock
+	# 5 = currently unavailable
 	status_code = details_page.xpath('//statusCode')
 	if len(status_code) > 0:
-		if status_code[0].text == '2':
-			raise Ex.MediaNotAvailable
 		if status_code[0].text == '4':
 			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
 
 	video_url = details_page.xpath('//item/media:content', namespaces=NAMESPACES)[0].get('url')
 	return IndirectResponse(VideoClipObject, key=video_url)
