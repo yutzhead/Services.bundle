@@ -116,43 +116,51 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
   return [
     MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
+      protocol = 'rtmp',
       video_resolution = '720',
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '720'))],
+      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '720'))],
     ),
     MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
+      protocol = 'rtmp',
       video_resolution = '468',
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '468'))],
+      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '468'))],
     ),
     MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
+      protocol = 'rtmp',
       video_resolution = 'sd',
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, height = '360'))],
+      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '360'))],
     )
   ]
 
 ####################################################################################################
+
 @indirect
-def PlayVideo(url, height):
+def DetermineAvailableVideo(url, height):
   try:
+
     page_contents = HTTP.Request(url).content
     details_json = RE_DETAILS.findall(page_contents)[0]
     details = JSON.ObjectFromString(details_json)
 
     pid = RE_PID.findall(url)[0]
     pid_details = details[pid]
+    media_selector_url = pid_details['my_mediaselector_xml_url']
+    return IndirectResponse(VideoClipObject, key = Callback(PlayVideo, url = url, media_selector_url = media_selector_url, height = height, post_url = media_selector_url))
 
-    stream_details = XML.ElementFromURL(pid_details['my_mediaselector_xml_url'])
+  except:
+    # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
+    Log.Exception("Error obtaining RTMP details, falling back to WebKit")
+    return IndirectResponse(VideoClipObject, key = WebVideoURL(url)) 
+
+####################################################################################################
+@indirect
+def PlayVideo(url, media_selector_url, height):
+  try:
+
+    stream_details = XML.ElementFromURL(media_selector_url)
 
     last_stream = None
     heights = ['720', '468', '360']
