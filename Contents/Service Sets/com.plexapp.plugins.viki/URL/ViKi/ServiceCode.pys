@@ -110,6 +110,13 @@ def PlayVideo(url):
 
   video_id = RE_VID.search(url).group('id')
   data = JSON.ObjectFromURL(JSON_URL % video_id)
+
+  if 'errors' in data:
+    if 'geo_restriction' in data['errors']:
+      raise Ex.MediaGeoblocked
+    else:
+      raise Ex.MediaNotAvailable
+
   mp4_url = data['uri']
   return Redirect(mp4_url)
 
