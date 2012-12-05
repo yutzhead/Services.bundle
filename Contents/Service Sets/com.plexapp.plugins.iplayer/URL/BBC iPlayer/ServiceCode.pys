@@ -144,7 +144,7 @@ def DetermineAvailableVideo(url, height):
     page_contents = HTTP.Request(url).content
     details_json = RE_DETAILS.findall(page_contents)[0]
     details = JSON.ObjectFromString(details_json)
-
+    Log(details)
     pid = RE_PID.findall(url)[0]
     pid_details = details[pid]
     media_selector_url = pid_details['my_mediaselector_xml_url']
@@ -168,7 +168,16 @@ def PlayVideo(url, media_selector_url, height):
     for height_index in range(index, len(heights)):
       streams = stream_details.xpath('//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index], namespaces = NAMESPACES)
       if len(streams) > 0:
-        stream = streams[0]
+
+        stream = None
+        for potential_stream in streams:
+          # Give preference to ondemand streams
+          if potential_stream.get('application') == 'ondemand':
+            stream = potential_stream
+            break
+
+        if stream == None:
+          stream = streams[0]
         Log("Stream: " + heights[height_index])
         break
     
