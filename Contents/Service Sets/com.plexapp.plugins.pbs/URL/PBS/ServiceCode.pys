@@ -19,6 +19,7 @@ def MetadataObjectForURL(url):
         raise Ex.MediaNotAvailable
 
     video = video['results'][0]
+    Log.Debug(video)
     thumbs = SortThumbs(video['associated_images'])
     airdate = Datetime.ParseDate(video['airdate']).date()
     summary = video['long_description']
@@ -69,8 +70,23 @@ def PlayVideo(url):
     else:
         # We have an older format, but things have changed slightly from the older parsing methods
         video_url = video['mediafiles'][-1]['video_data_url']
+
+    	# corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
+    	if video_url.startswith('http://urs.pbs.org/redirect/'):
+            Log.Debug("Found redirect, assuming HLS: "+video_url)
+            # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
+            # these redirects properly (they serve them up strangely, they 302 AND they serve page content)
+            try:
+                page_request = HTTP.Request(video_url, follow_redirects = False)
+                page = page_request.content
+            except Ex.RedirectError, e:
+                if e.headers.has_key('Location'):
+                    video_url = e.headers['Location']                
+            Log.Debug("Parsed URL: "+video_url)
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))       		
+
         smil = XML.ElementFromURL(video_url + '&format=SMIL')
-        Log.Debug(smil)
+
         base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
         clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
         if base.startswith('rtmp'):
@@ -80,7 +96,7 @@ def PlayVideo(url):
             return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, app=app, clip=playpath))
         
         if base.startswith('http'):
-            final_url = base + clip
+            final_url = base + clip            
             if '.m3u8' in clip:
             	Log.Debug("Found HLS: "+final_url)
                 return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
