@@ -19,7 +19,6 @@ def MetadataObjectForURL(url):
         raise Ex.MediaNotAvailable
 
     video = video['results'][0]
-    Log.Debug(video)
     thumbs = SortThumbs(video['associated_images'])
     airdate = Datetime.ParseDate(video['airdate']).date()
     summary = video['long_description']
