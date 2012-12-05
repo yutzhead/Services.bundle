@@ -1,4 +1,4 @@
-httpHeaders = { 'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; en-US; rv:1.9.2.17) Gecko/20110420 Firefox/3.6.17' }
+httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
 RE_PID = Regex('iplayer/episode/([^/$]{8})')
 RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
 NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
@@ -114,6 +114,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   return [
     MediaObject(
       protocol = 'rtmp',
@@ -139,8 +140,8 @@ def MediaObjectsForURL(url):
 
 @indirect
 def DetermineAvailableVideo(url, height):
-  try:
 
+  try:
     page_contents = HTTP.Request(url).content
     details_json = RE_DETAILS.findall(page_contents)[0]
     details = JSON.ObjectFromString(details_json)
@@ -157,8 +158,12 @@ def DetermineAvailableVideo(url, height):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, media_selector_url, height):
+def PlayVideo(url, media_selector_url=None, height='720'):
+
   try:
+    # Make PlayVideo function backwards compatible
+    if not media_selector_url:
+      raise
 
     stream_details = XML.ElementFromURL(media_selector_url)
 
