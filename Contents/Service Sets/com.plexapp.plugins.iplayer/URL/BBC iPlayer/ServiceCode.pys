@@ -144,7 +144,7 @@ def DetermineAvailableVideo(url, height):
     page_contents = HTTP.Request(url).content
     details_json = RE_DETAILS.findall(page_contents)[0]
     details = JSON.ObjectFromString(details_json)
-    Log(details)
+    
     pid = RE_PID.findall(url)[0]
     pid_details = details[pid]
     media_selector_url = pid_details['my_mediaselector_xml_url']
