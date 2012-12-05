@@ -180,6 +180,7 @@ def GetVideoURL(url, format=None, codecs=None):
   raise Ex.MediaNotAvailable
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, format=None, codecs=None):
 
   try:
@@ -190,4 +191,4 @@ def PlayVideo(url, format=None, codecs=None):
   if video_url is None:
     return None
 
-  return Redirect(video_url)
+  return IndirectResponse(VideoClipObject, key=video_url)
