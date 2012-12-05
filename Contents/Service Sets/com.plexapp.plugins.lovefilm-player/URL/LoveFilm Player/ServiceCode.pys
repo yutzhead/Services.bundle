@@ -33,6 +33,8 @@ def MetadataObjectForUKURL(url):
     except Ex.RedirectError, e:
         if e.location.endswith('lovefilm.com/'):
             raise Ex.MediaNotAvailable
+        else:
+            page = HTML.ElementFromURL(e.location)
 
     details = ParseItem(page)
 
@@ -120,6 +122,8 @@ def MetadataObjectForDEURL(url):
     except Ex.RedirectError, e:
         if e.location.endswith('lovefilm.de/'):
             raise Ex.MediaNotAvailable
+        else:
+            page = HTML.ElementFromURL(e.location)
 
     details = ParseItem(page)
 
