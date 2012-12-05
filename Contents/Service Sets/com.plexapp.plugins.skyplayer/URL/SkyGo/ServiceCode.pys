@@ -58,17 +58,20 @@ def MetadataObjectForEpisodeURL(item):
         if itemTitleComponents['title'] is not None:
             title = itemTitleComponents['title']
             episode = int(itemTitleComponents['episode_number'])
+        else:
+            title = itemTitle
     else:
         title = itemTitle
 
     # Attempt to determine the name of the actual show along with the selected season
-    show = ""
-    season = 0
     itemSubtitle = item.xpath("//div[@class='pageTitle']/h1/a/text()")[0]
     itemSubtitleComponents = itemSubtitle.rsplit('Season',1)
     if len(itemSubtitleComponents) == 2:
         show = itemSubtitleComponents[0].strip()
         season = int(itemSubtitleComponents[1])
+    else:
+        show = itemSubtitle
+        season = None
 
     # Get the remaining metadata
     metadata = MetadataForPage(item)
