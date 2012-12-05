@@ -192,3 +192,7 @@ def PlayVideo(url, format=None, codecs=None):
     return None
 
   return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+# Queue fix (PlayVideoIndirect was renamed to PlayVideo at one point)
+PlayVideoIndirect = PlayVideo
