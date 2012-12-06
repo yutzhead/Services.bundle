@@ -2,11 +2,14 @@ RE_MOVIE_CHECK = Regex("http://www.blinkbox.com/Movies/[0-9]+/", Regex.IGNORECAS
 RE_TV_BASIC = Regex("^(?P<series_name>[^-]*) - Series (?P<series_number>\d+) Ep. (?P<episode_number>\d+) - (?P<episode_name>.*)$")
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Attempt to extract the details of the title from the page.
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url, follow_redirects=False)
+    except Ex.RedirectError, e:
+        raise Ex.MediaNotAvailable
+
     details = ParseItem(page)
 
     # If this match fails, then we know that the associated title is a Movie. We should therefore return the suitable
@@ -16,7 +19,8 @@ def MetadataObjectForURL(url):
             title = details['title'],
             summary = details['summary'],
             thumb = details['thumb'],
-            directors = details['directors'])
+            directors = details['directors']
+        )
 
     title = details['title']
     show = None
@@ -41,21 +45,24 @@ def MetadataObjectForURL(url):
         directors = details['directors'],
         show = show,
         season = season,
-        index = index)
+        index = index
+    )
 
+####################################################################################################
 def ParseItem(page):
+
     details = {}
 
     temp = page.xpath("//h1[@class='title']/text()")
     temp = [ item.strip() for item in temp ]
     temp = filter(None, temp)
     details['title'] = temp[0]
-    
+
     # [Optional] The thumbnail
     details['thumb'] = None
     try: details['thumb'] = page.xpath("//meta[@property='og:image']")[0].get('content')
     except: pass
-    
+
     # [Optional] The summary
     details['summary'] = None
     try: details['summary'] = page.xpath("//p[@id='b_jb']/text()")[0]
@@ -69,7 +76,7 @@ def ParseItem(page):
         temp = filter(None, temp)
         details['starring'] = filter(None, temp) 
     except: pass
-    
+
     # [Optional] The list of directors
     details['directors'] = None
     try:
@@ -82,10 +89,10 @@ def ParseItem(page):
     return details
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        parts = [PartObject(key=WebVideoURL(url))]
-      )
+        MediaObject(
+            parts = [PartObject(key=WebVideoURL(url))]
+        )
     ]
