@@ -95,7 +95,7 @@ def PlayVideo(url):
             return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, app=app, clip=playpath))
         
         if base.startswith('http'):
-            final_url = base + clip            
+            final_url = base + clip
             if '.m3u8' in clip:
             	Log.Debug("Found HLS: "+final_url)
                 return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
