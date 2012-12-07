@@ -1,5 +1,5 @@
 DETAILS_URL = 'http://metaframe.digitalsmiths.tv/v2/CWtv/assets/%s/partner/53?format=json'
-BITRATES = ['300', '500', '700']
+BITRATES = [300, 500, 700, 900]
 BASE_URL = 'http://www.cwtv.com'
 
 CW_SWF = 'http://pdl.warnerbros.com/cwtv/digital-smiths/production_player/vsplayer.swf'
@@ -81,6 +81,7 @@ def MediaObjectsForURL(url):
 		items.append(
 			MediaObject(
 				bitrate = value,
+				protocol = 'rtmp',
 				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=value))]
 			)
 		)
@@ -91,27 +92,28 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
 
+	available_bitrates = []
+	rtmp_url = None
 	videos = GetDetails(url)['videos']
-	index = BITRATES.index(bitrate)
-	rtmp_url = ''
 
-	while index > -1:
-		for stream in videos:
-			if videos[stream]['bitrate'] == BITRATES[index]:
-				rtmp_url = videos[stream]['uri']
-				break
-			else:
-				pass
-		if rtmp_url == '':
-			index = index - 1
-		else:
+	for video in videos:
+		available_bitrates.append(int(videos[video]['bitrate']))
+
+	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+
+	for video in videos:
+		if closest == int(videos[video]['bitrate']):
+			rtmp_url = videos[video]['uri']
 			break
 
-	rtmp_parts = rtmp_url.partition('mp4:')
-	player = rtmp_parts[0]
-	playpath = rtmp_parts[1] + rtmp_parts[2]
+	if rtmp_url:
+		rtmp_parts = rtmp_url.partition('mp4:')
+		player = rtmp_parts[0]
+		playpath = rtmp_parts[1] + rtmp_parts[2]
 
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, swf_url=CW_SWF))
+		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, swf_url=CW_SWF))
+	else:
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetDetails(url):
@@ -144,9 +146,9 @@ def GetThumbList(url):
 	for image in images:
 		thumb_list.append(images[image])
 
-	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb["height"]), reverse=True)
+	thumb_list = sorted(thumb_list, key=lambda thumb: int(thumb['width']), reverse=True)
 
-	return thumb_list
+	return thumb_list[:2]
 
 ####################################################################################################
 def TestURLs():
