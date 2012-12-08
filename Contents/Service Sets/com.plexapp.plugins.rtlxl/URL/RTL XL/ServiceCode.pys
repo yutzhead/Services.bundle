@@ -47,7 +47,7 @@ def MetadataObjectForURL(url):
 	broadcast = Datetime.FromTimestamp(float(broadcast))
 	originally_available_at = Datetime.ParseDate(str(broadcast)).date()
 
-	try: TimeToMs(duration = data.xpath('./length')[0].text)
+	try: duration = TimeToMs(data.xpath('./length')[0].text)
 	except: duration = None
 
 	thumb_id = data.xpath('./thumbnail_id')[0].text
@@ -119,16 +119,16 @@ def PlayVideo(url, type):
 		return Redirect(video_url[0])
 
 ####################################################################################################
-def TimeToSeconds(timecode):
+def TimeToMs(timecode):
 
-	seconds  = 0
-	duration = timecode.split(':')
+	seconds = 0
+	duration = timecode.split('.')[0].split(':')
 	duration.reverse()
 
 	for i in range(0, len(duration)):
 		seconds += int(duration[i]) * (60**i)
 
-	return seconds
+	return seconds * 1000
 
 ####################################################################################################
 def TestURLs():
