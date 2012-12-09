@@ -4,57 +4,53 @@ VIDEO_DETAILS_URL = 'http://theberrics.com/media/json_file_request/%s'
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
 
-    # Get a description from the main page.
-    description = page.xpath("//div[@class='text-item']/text()")
-    if len(description) < 1:
-        summary = None
-    else:
-        summary = description[0].strip()
+	# Get a description from the main page.
+	description = page.xpath("//div[@class='text-item']/text()")
+	if len(description) < 1:
+		summary = None
+	else:
+		summary = description[0].strip()
 
-    # Extract the configuration of the player, to determine the id of the associated content
-    config_json = page.xpath("//div[@media_file]")[0].get('media_file')
-    config = JSON.ObjectFromString(config_json)
-    id = config['MediaFile']['id']
+	# Extract the configuration of the player, to determine the id of the associated content
+	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')[0]
 
-    # Obtain the details associated with the video.
-    details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
-    title = details['name']
-    thumb = PHOTO_URL % details['file_video_still']
-    date = Datetime.ParseDate(details['created'])
+	# Obtain the details associated with the video.
+	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
+	title = details['name']
+	thumb = PHOTO_URL % details['file_video_still']
+	date = Datetime.ParseDate(details['created'])
 
-    return VideoClipObject(
-        title = title,
-        summary = summary,
-        thumb = thumb,
-        originally_available_at = date
-    )
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		originally_available_at = date
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 'sd',
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
-    ]
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 'sd',
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
-    page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url)
+	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')[0]
 
-    # Extract the configuration of the player, to determine the id of the associated content
-    config_json = page.xpath("//div[@class='video-file']/div")[0].get('media_file')
-    config = JSON.ObjectFromString(config_json)
-    id = config['MediaFile']['id']
+	# Obtain the details associated with the video and return a redirect to the actual video.
+	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
 
-    # Obtain the details associated with the video and return a redirect to the actual video.
-    details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
-    return Redirect(details['brightcove_url'])
+	return IndirectResponse(VideoClipObject, key=details['brightcove_url'])
