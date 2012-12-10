@@ -118,7 +118,7 @@ def PlayVideo(url, type):
 	else:
 		xml_url = FEED_URL % ('progressive', series_id)
 
-	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEAD_TABLET, encoding='iso-8859-1').xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
+	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEAD_TABLET).xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
 	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 	else:
