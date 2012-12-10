@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 		return None
 
 	data_url = XL_DATA_URL % uuid.group('uuid')
-	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP).xpath('//material[@key="%s"]' % uuid.group('uuid'))
+	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP, encoding='iso-8859-1').xpath('//material[@key="%s"]' % uuid.group('uuid'))
 
 	if len(material_node) < 1:
 		raise Ex.MediaNotAvailable
@@ -118,7 +118,7 @@ def PlayVideo(url, type):
 	else:
 		xml_url = FEED_URL % ('progressive', series_id)
 
-	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEAD_TABLET).xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
+	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEAD_TABLET, encoding='iso-8859-1').xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
 	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 	else:
@@ -140,7 +140,7 @@ def TimeToMs(timecode):
 def TestURLs():
 
 	test_urls = []
-	page = XML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0')
+	page = XML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0', encoding='iso-8859-1')
 	results = page.xpath("//material")
 
 	for item in results:
