@@ -181,7 +181,10 @@ def GetVideoURL(url, format=None, codecs=None):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, format=None, codecs=None):
+def PlayVideo(url=None, format=None, codecs=None):
+
+  if not url:
+    return None
 
   try:
     video_url = GetVideoURL(url, format, codecs)
