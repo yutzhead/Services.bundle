@@ -106,7 +106,7 @@ def PlayVideo(url, type):
 	data_url = XL_DATA_URL % uuid.group('uuid')
 
 	try:
-		x = HTTP.Request(data_url, headers=HTTP_HEAD_DESKTOP, follow_redirects=False).headers
+		x = HTTP.Request(data_url, headers=HTTP_HEAD_DESKTOP, timeout=5, follow_redirects=False).headers
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
 			series_id = RE_SERIES_ID.search(e.headers['Location']).group('series_id')
@@ -122,7 +122,11 @@ def PlayVideo(url, type):
 	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 	else:
-		return Redirect(video_url[0])
+		try:
+			test = HTTP.Request(video_url[0], timeout=5).headers
+			return Redirect(video_url[0])
+		except:
+			raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TimeToMs(timecode):
