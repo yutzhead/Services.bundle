@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 		return None
 
 	data_url = XL_DATA_URL % uuid.group('uuid')
-	material_node = HTML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP).xpath('//material[@key="%s"]' % uuid.group('uuid'))
+	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP).xpath('//material[@key="%s"]' % uuid.group('uuid'))
 
 	if len(material_node) < 1:
 		raise Ex.MediaNotAvailable
@@ -40,8 +40,14 @@ def MetadataObjectForURL(url):
 
 	studio = data.xpath('./broadcast_station_display')[0].text
 
-	try: summary = data.xpath('./synopsis')[0].text
-	except: summary = None
+	try:
+		summary = data.xpath('./synopsis')[0].text
+	except:
+		try:
+			episode_key = data.get('episode_key')
+			summary = data.xpath('./../../episode-list/episode[@key="%s"]/synopsis/text()' % episode_key)[0]
+		except:
+			summary = None
 
 	broadcast = data.xpath('./broadcast_date_display')[0].text
 	broadcast = Datetime.FromTimestamp(float(broadcast))
@@ -134,7 +140,7 @@ def TimeToMs(timecode):
 def TestURLs():
 
 	test_urls = []
-	page = HTML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0')
+	page = XML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0')
 	results = page.xpath("//material")
 
 	for item in results:
