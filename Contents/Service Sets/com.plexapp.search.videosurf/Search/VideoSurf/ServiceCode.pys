@@ -23,13 +23,14 @@ def Search(query):
         except: available_at = None
 
         source_url = get_source_url(video['source_url'])
-
+        
         c.add(VideoClipObject(
           title = video['title'],
           duration = int(video['length'])*1000,
           summary = video['description'].strip(),
           thumb = video['thumbnail'],
           source_title = video['source'],
+          source_icon = R('SourceIcon-%s.png' % video['source']),
           originally_available_at = available_at,
           url = source_url
         ))
