@@ -1,15 +1,13 @@
-BASE_URL = "http://www.svtplay.se"
-SWF_TAG = "PLAYER_SWF="
-SWF_PLAYER = BASE_URL + "/public/swf/video/svtplayer-2012.11.swf"
-QUAL_HD = 2400
-QUAL_HIGH = 1400
-QUAL_MED = 850
-QUAL_LOW_H = 340
-QUAL_LOW = 320
-BITRATES = [QUAL_HD, QUAL_HIGH, QUAL_MED, QUAL_LOW_H, QUAL_LOW]
+BASE_URL = 'http://www.svtplay.se'
 
 ####################################################################################################
 def NormalizeURL(url):
+
+	if not '/video/' in url:
+		try:
+			url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+		except:
+			pass
 
 	return url
 
@@ -17,30 +15,38 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		page = HTML.ElementFromURL(url, cacheTime=0)
+		page = HTML.ElementFromURL(url)
 	except:
 		raise Ex.MediaNotAvailable
 
-	show = page.xpath("//div[@class='playVideoBox']/h1/text()")[0]
-	title = page.xpath("//div[@class='playVideoInfo']//h2/text()")[0]
-	description = page.xpath("//div[@class='playVideoInfo']//p/text()")[0].strip()
+	# Test if this page contains video
+	json_url = page.xpath('//a[@id="player"]/@data-json-href')
+	if len(json_url) < 1:
+		return None
+
+	show = page.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[0]
+	title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[1].split(' | ')[0]
+	summary = page.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = page.xpath('//meta[@property="og:image"]/@content')[0].replace('/small/', '/large/')
 
 	try:
-		air_date = page.xpath("//div[@class='playVideoInfo']//time")[0].get("datetime")
-		air_date = air_date.split('+')[0] #cut off timezone info as python can't parse this
-		air_date = Datetime.ParseDate(air_date)
+		air_date = page.xpath('//div[@class="playVideoInfo"]//time/@datetime')[0].split('T')[0]
+		air_date = Datetime.ParseDate(air_date).date()
 	except:
-		Log.Exception("Error converting airdate: " + air_date)
-		air_date = Datetime.Now()
+		air_date = None
 
-	thumb = page.xpath("//div[@class='playVideoBox']//a[@id='player']//img/@src")[0]
+	try:
+		duration = page.xpath('//div[@class="playVideoInfo"]//span/strong[contains(text(), "ngd:")]/following-sibling::text()')[0].strip().split(' ')[0]
+		duration = int(duration) * 60 * 1000 #millisecs
+	except:
+		duration = None
 
 	return EpisodeObject(
 		show = show,
 		title = title,
-		summary = description,
+		summary = summary,
+		duration = duration,
 		thumb = thumb,
-		art = thumb,
 		originally_available_at = air_date
 	)
 
@@ -49,135 +55,36 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_resolution = 1280,
+			parts = [
+				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+			],
+			container = 'mpegts',
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			bitrate = QUAL_HD,
-			parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_HD))]
-		),
-		MediaObject(
-			video_resolution = 1024,
-			audio_channels = 2,
-			bitrate = QUAL_HIGH,
-			parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_HIGH))]
-		),
-		MediaObject(
-			video_resolution = 640,
-			audio_channels = 2,
-			bitrate = QUAL_MED,
-			parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_MED))]
-		),
-		MediaObject(
-			video_resolution = 480,
-			audio_channels = 2,
-			bitrate = QUAL_LOW,
-			parts = [PartObject(key = Callback(PlayVideo, url=url, bitrate=QUAL_LOW))]
+			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url, bitrate):
-
-	player_url = GetPlayerURL(url)
+def PlayVideo(url, bitrate=None):
 
 	try:
-		page = HTML.ElementFromURL(url, cacheTime=0)
+		page = HTML.ElementFromURL(url)
 	except:
 		raise Ex.MediaNotAvailable
 
-	json_url = page.xpath("//a[@id='player']//@data-json-href")[0]
-	videos = JSON.ObjectFromURL('%s%s?output=json' % (BASE_URL, json_url))
-
-	live = False
-
-	if videos['video']['live'] == True:
-		live = True
-
-		if bitrate == QUAL_HD:
-			bitrate = QUAL_HIGH # Live HD streams won't play in Plex for some reason
-
-	d = ExtractContentURLs(videos)
-	rtmp_url = GetContentBitrateURLs(d, bitrate)
-
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, swf_url=player_url, live=live))
-
-####################################################################################################
-def ExtractContentURLs(json):
-
-	d = dict()
-
-	for bitrate in BITRATES:
-		for v in json['video']['videoReferences']:
-			if(int(v['bitrate']) == int(bitrate)): 
-				if(v['url'].find('rtmp') > -1):
-					d[bitrate] = v['url']
-					break
-
-	return d
-
-####################################################################################################
-def GetContentBitrateURLs(d, bitrate):
-
-	try:
-		url = d[bitrate]
-		return url
-	except KeyError:
-		pass
-
-	# Bitrate not found, try fallback
-	if(bitrate > QUAL_HIGH):
-		try:
-			url = d[QUAL_HIGH]
-			return url
-		except KeyError:
-			pass
-
-	if(bitrate > QUAL_MED):
-		try: 
-			url = d[QUAL_MED]
-			return url
-		except KeyError:
-			pass
-
-	if(bitrate >= QUAL_LOW):
-		try:
-			url = d[QUAL_LOW]
-			return url
-		except KeyError:
-			pass
-
-	# The four previous one are the default ones
-	# SVT sometimes changes things up a bit and let 340 be the lowest
-	# So if nothing has been found, try that one as well
-	try:
-		url = d[QUAL_LOW_H]
-		return url
-	except KeyError:
-		pass
-
-	Log.Exception("No stream found") 
-	return ""
-
-####################################################################################################
-def GetPlayerURL(url):
-
-	try:
-		page = HTML.ElementFromURL(url, cacheTime=0)
-	except:
+	json_url = page.xpath('//a[@id="player"]/@data-json-href')
+	if len(json_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	json_url = page.xpath("//a[@id='player']//@data-json-href")[0]
+	json_url = '%s%s?output=json' % (BASE_URL, json_url[0])
+	json_obj = JSON.ObjectFromURL(json_url)
 
-	for sp in page.xpath("//script/@src"):
-		if(sp.find("script-built") > -1):
-			js_page = HTTP.Request(BASE_URL + sp).content
-			ind = js_page.rfind(SWF_TAG)
-			ext = js_page.find(";", ind)
-			url = js_page[ind + len(SWF_TAG): ext]
-			url = url[1:-1]
-			url = BASE_URL + url
+	for video in json_obj['video']['videoReferences']:
+		if video['playerType'] == 'ios':
+			video_url = video['url']
+			break
 
-			return url
-
-	Log("No player found, using fallback: " + SWF_PLAYER)
-	return SWF_PLAYER
+	return Redirect(video_url)
