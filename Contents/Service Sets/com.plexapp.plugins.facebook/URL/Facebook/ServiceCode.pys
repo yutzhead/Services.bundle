@@ -1,72 +1,87 @@
-RE_TITLE    = Regex('\["video_title","(.+?)"\],')
-RE_THUMB    = Regex('\["thumb_url","(.+?)"\],')
-RE_DURATION = Regex('\["video_length","([0-9]+?)"\],')
-RE_VIDEO_URL= Regex('\["video_src","(.+?)"\],')
-RE_HIGH_QUAL= Regex('\["highqual_src","(.+?)"\],')
-RE_LOW_QUAL = Regex('\["lowqual_src","(.+?)"\],')
+RE_JSON = Regex('(\[\["video".+)\.forEach')
+RE_AVAILABLE = Regex('currently unavailable', Regex.IGNORECASE)
 
 ####################################################################################################
 def NormalizeURL(url):
-    #Log("Normalizing url: %s" % url)
-    return url
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    page_content = HTTP.Request(url).content
+	page_content = HTTP.Request(url).content
 
-    if len(HTML.ElementFromString(page_content).xpath('//h2[text()="This content is currently unavailable"]')) > 0:
-        raise Ex.MediaNotAvailable
+	if RE_AVAILABLE.search(page_content):
+		raise Ex.MediaNotAvailable
 
-    title = RE_TITLE.search(page_content).group(1)
-    thumb = RE_THUMB.search(page_content).group(1)
-    duration_text = RE_DURATION.search(page_content).group(1)
+	title = HTML.ElementFromString(page_content).xpath('//h2/text()')[0]
+	duration = None
+	thumb = ''
 
-    return VideoClipObject(
-        title = String.Unquote(title.decode('unicode_escape'), usePlus=True),
-        thumb = String.Unquote(thumb.decode('unicode_escape'), usePlus=True).replace('https','http'),
-        duration = int(String.Unquote(duration_text.decode('unicode_escape'), usePlus=True))
-    )
+	json = RE_JSON.search(page_content).group(1)
+	json_obj = JSON.ObjectFromString(json)
+
+	for i in json_obj:
+		if i[0] == 'thumbnail_src':
+			thumb = String.Unquote(i[1])
+		elif i[0] == 'video_duration':
+			duration = int(i[1]) * 1000
+
+	return VideoClipObject(
+		title = title,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb, fallback='icon-default.png')
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = '720',
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'high'))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 'SD',
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'low'))]
-      )
-    ]
+
+	return [
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '720',
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='720'))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 'sd',
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
+		)
+	]
 
 ####################################################################################################
-def PlayVideo(url, res):
+@indirect
+def PlayVideo(url, res='720'):
 
-    page_content = HTTP.Request(url, cacheTime = 0).content
+	page_content = HTTP.Request(url).content
+	video = None
 
-    if len(HTML.ElementFromString(page_content).xpath('//h2[text()="This content is currently unavailable"]')) > 0:
-        raise Ex.MediaNotAvailable
+	if RE_AVAILABLE.search(page_content):
+		raise Ex.MediaNotAvailable
 
-    video_url = RE_VIDEO_URL.search(page_content).group(1)
-    
-    if res == "high":
-        desired_video = RE_HIGH_QUAL.search(page_content)
-    elif res == "low":
-        desired_video = RE_LOW_QUAL.search(page_content)
-    else:
-        desired_video = None
+	json = RE_JSON.search(page_content).group(1)
+	json_obj = JSON.ObjectFromString(json)
 
-    if desired_video:
-        video_url = desired_video.group(1)
+	for i in json_obj:
+		if i[0] == 'video':
+			video = String.Unquote(i[1])
+			video = JSON.ObjectFromString(video)
+			break
 
-    return Redirect(String.Unquote(video_url.decode('unicode_escape'), usePlus=True).replace('https','http'))
+	if not video:
+		raise Ex.MediaNotAvailable
+
+	if res == '720' and 'hd_src' in video:
+		video_url = video['hd_src']
+	elif 'sd_src' in video:
+		video_url = video['sd_src']
+	else:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url)
