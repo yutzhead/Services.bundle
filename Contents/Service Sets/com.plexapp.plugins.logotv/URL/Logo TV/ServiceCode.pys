@@ -141,7 +141,9 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=5))
 					],
 				bitrate = 1200,
 				container = Container.MP4,
@@ -274,8 +276,11 @@ def PlayVideo(url, bitrate='1700', index=0):
 		uri = RE_CLIP_URI.search(content).group(1)
 
 	data = XML.ElementFromURL(MRSS_URL % uri)
-	clip_uri = data.xpath('//item/guid')[index].text
-	
+	try:
+		clip_uri = data.xpath('//item/guid')[index].text
+	except:
+		return None
+
 	player_data = XML.ElementFromURL(PLAYLIST_URL % (clip_uri, clip_uri.split(':')[-1]))
 	try:
 		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
