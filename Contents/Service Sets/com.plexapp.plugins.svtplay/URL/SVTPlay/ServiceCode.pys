@@ -75,6 +75,7 @@ def PlayVideo(url, bitrate=None):
 	except:
 		raise Ex.MediaNotAvailable
 
+	video_url = None
 	json_url = page.xpath('//a[@id="player"]/@data-json-href')
 	if len(json_url) < 1:
 		raise Ex.MediaNotAvailable
@@ -86,5 +87,8 @@ def PlayVideo(url, bitrate=None):
 		if video['playerType'] == 'ios':
 			video_url = video['url']
 			break
+
+	if not video_url:
+		raise Ex.MediaNotAvailable
 
 	return Redirect(video_url)
