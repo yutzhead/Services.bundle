@@ -1,0 +1,68 @@
+VIDEO_URL = 'http://www.zideo.nl/playzideo/%s'
+XML_URL = 'http://www.zideo.nl/player/config?playzideo=%s'
+VIDEO_ID = Regex('/playzideo/(?P<id>[a-f0-9]{16})')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	video_id = VideoIdFromURL(url)
+	if video_id:
+		return VIDEO_URL % video_id
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	video_id = VideoIdFromURL(url)
+	if not video_id:
+		return None
+
+	html = HTML.ElementFromURL(url)
+	xml = XML.ElementFromURL(XML_URL % video_id)
+
+	title = xml.xpath('//title')[0].text
+	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+	duration = int(xml.xpath('//duration')[0].text) * 1000
+	thumb = xml.xpath('//image')[0].text
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	video_id = VideoIdFromURL(url)
+	if not video_id:
+		return None
+
+	xml = XML.ElementFromURL(XML_URL % video_id)
+	video_url = xml.xpath('//file')[0].text
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def VideoIdFromURL(url):
+
+	video_id = VIDEO_ID.search(url)
+	if video_id:
+		return video_id.group('id')
+	return None
