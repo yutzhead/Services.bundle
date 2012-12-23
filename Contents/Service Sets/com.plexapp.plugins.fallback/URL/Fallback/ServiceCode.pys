@@ -7,11 +7,11 @@ VALID_TYPES = ['text/html', 'application/xhtml+xml']
 MAX_LENGTH = 1024
 
 EMBEDDED_VIDEO = [
-	("//iframe", "src"), 
-	("//embed", "src"), 
-	("//object", "data"), 
-	("//param[@name='flashvars']", "value"),
-	("//@*[starts-with(name(), 'data-')]", None)
+	'//iframe/@src',
+	'//embed/@src',
+	'//object/@data',
+	'//param[@name="flashvars"]/@value',
+	'//@*[starts-with(name(), "data-")]'
 ]
 
 # Use the iPad user agent to try to make websites give us <video> instead of Flash
@@ -87,14 +87,9 @@ def FindExternalSource(req):
 
 	# We're going to search through the HTML for known embedded video types. If we find any, 
 	# then we can check their validity using the currently supported regular expressions.
-	for (select, node) in EMBEDDED_VIDEO:
-		for video in doc.xpath(select):
+	for select in EMBEDDED_VIDEO:
+		for node_url in doc.xpath(select):
 			try:
-				if node is None:
-					node_url = video
-				else:
-					node_url = video.get(node)
-
 				if isinstance(node_url, basestring) and (node_url.startswith('http://') or node_url.startswith('https://')):
 					for sources_check in URLService.AllPatterns:
 						try:
