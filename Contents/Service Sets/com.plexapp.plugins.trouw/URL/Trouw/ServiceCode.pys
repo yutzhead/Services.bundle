@@ -9,16 +9,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
-	script_src = html.xpath('//script[contains(@src, "cnti_key")]/@src')
-
-	if len(script_src) < 1:
-		raise Ex.MediaNotAvailable
-
-	(cnti_key, play_key) = RE_IDS.search(script_src[0]).group(1, 2)
-	title = html.xpath('//title/text()')[0].strip().rsplit(' - Video')[0]
-
-	url = VIDEOSTRIP_URL % (cnti_key, play_key, String.Quote(title))
+	url = CreateVideostripURL(url)
 	video = URLService.MetadataObjectForURL(url)
 	video.source_title = 'Trouw'
 
@@ -27,6 +18,12 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
+	url = CreateVideostripURL(url)
+	return URLService.MediaObjectsForURL(url)
+
+####################################################################################################
+def CreateVideostripURL(url):
+
 	html = HTML.ElementFromURL(url)
 	script_src = html.xpath('//script[contains(@src, "cnti_key")]/@src')
 
@@ -37,4 +34,5 @@ def MediaObjectsForURL(url):
 	title = html.xpath('//title/text()')[0].strip().rsplit(' - Video')[0]
 
 	url = VIDEOSTRIP_URL % (cnti_key, play_key, String.Quote(title))
-	return URLService.MediaObjectsForURL(url)
+
+	return url
