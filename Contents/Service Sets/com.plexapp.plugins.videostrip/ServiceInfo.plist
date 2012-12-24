@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>videostrip://cnti_key:\d+/play_key:\d+/title:.+</string>
+				<string>http://www\.(ad|trouw|volkskrant)\.nl/.+/video/detail/\d+</string>
 			</array>
 		</dict>
 	</dict>
