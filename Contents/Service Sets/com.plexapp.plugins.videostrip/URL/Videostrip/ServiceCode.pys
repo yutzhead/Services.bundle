@@ -1,0 +1,83 @@
+RSS_URL = 'http://rss.videostrip.com/%s/items:1/titlesearch:true/keywords:%s#%s'
+RSS_NS = {'media': 'http://search.yahoo.com/mrss/'}
+JS_URL = 'http://load01.videostrip.com/serve_cad.php?cnti_key=%s&play_key=%s&startmode=autostart&playerwidth=640&playerheight=480'
+
+RE_NOT_ALPHANUM = Regex('\W+\-')
+RE_WHITESPACE = Regex('\s+')
+RE_IPAD_URL = Regex('"ipadUrl": "(?P<url>[^"]+)"')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return unicode(url)
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	url = CreateRssURL(url)
+	item = XML.ElementFromURL(url).xpath('//item')
+
+	if len(item) < 1:
+		return None
+
+	title = item[0].xpath('./media:content/media:title/text()', namespaces=RSS_NS)[0]
+
+	summary = item[0].xpath('./description/text()')[0]
+	summary = HTML.ElementFromString('<div>%s</div>' % summary).xpath('//p[1]/text()')[0]
+
+	pubDate = item[0].xpath('./pubDate/text()')[0]
+	originally_available_at = Datetime.ParseDate(pubDate).date()
+
+	duration = item[0].xpath('./media:content/@duration', namespaces=RSS_NS)[0]
+	duration = int(float(duration) * 1000)
+
+	thumb = item[0].xpath('./media:content/media:thumbnail/@url', namespaces=RSS_NS)[0]
+	thumb = thumb.replace('100x75', '320x180').replace('/png/', '/jpg/')
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		originally_available_at = originally_available_at,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	url = CreateRssURL(url)
+	cnti_key = url.split('#')[1]
+	play_key = url.split('/')[3]
+
+	js = HTTP.Request(JS_URL % (cnti_key, play_key)).content
+	video_url = RE_IPAD_URL.search(js).group('url')
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def CreateRssURL(url):
+
+	args = dict(arg.split(':') for arg in url.split('://')[1].split('/'))
+
+	title = String.Unquote(args['title'])
+	title = String.StripDiacritics(title)
+	title = RE_NOT_ALPHANUM.sub(' ', title).strip().lower()
+	keywords = RE_WHITESPACE.sub(',', title)
+
+	return RSS_URL % (args['play_key'], keywords, args['cnti_key'])
