@@ -42,6 +42,9 @@ def MetadataObjectForURL(url):
 	if 'ad.nl' in host:
 		fallback_thumb = 'AD.png'
 		source_title = 'AD'
+	elif 'parool.nl' in host:
+		fallback_thumb = 'Parool.png'
+		source_title = 'Parool'
 	elif 'trouw.nl' in host:
 		fallback_thumb = 'Trouw.png'
 		source_title = 'Trouw'
@@ -109,6 +112,8 @@ def CreateRssURL(url):
 	host = url.split('/')[2]
 	if 'ad.nl' in host:
 		title = html.xpath('//title/text()')[0].strip().rsplit(' - AD.nl')[0]
+	elif 'parool.nl' in host:
+		title = html.xpath('//title/text()')[0].strip().rsplit(' - ', 2)[0]
 	elif 'trouw.nl' in host:
 		title = html.xpath('//title/text()')[0].strip().rsplit(' - Video')[0]
 	elif 'volkskrant.nl' in host:
