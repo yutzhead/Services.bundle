@@ -93,16 +93,17 @@ def GetDetails(url):
 
     id = None
     id_in_url = RE_ID.search(url)
+
     if id_in_url != None:
         id = id_in_url.group('id')
     else:
         page = HTML.ElementFromURL(url)
-        voting_button = page.xpath("//ul[@id = 'votingBar']/li/a")
+        embed_url = page.xpath('//meta[@name="embed_video_url"]/@content')
 
-        if len(voting_button) < 1:
+        if len(embed_url) < 1:
             return None
 
-        id = voting_button[0].get('contentid')
+        id = embed_url[0].split('/')[-1]
 
     if id != None:
         return XML.ElementFromURL(DETAILS_URL % id)
