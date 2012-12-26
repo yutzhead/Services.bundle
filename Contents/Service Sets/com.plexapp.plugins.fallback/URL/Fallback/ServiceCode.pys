@@ -31,10 +31,13 @@ def FixUrl(parent_url, url):
 
 	parent_url = urlparse.urlparse(parent_url)
 
-	if url and url[0] == '/':
+	if url[0:2] == '//':
+		# Protocol-less url, assumes same protocol as parent_url
+		final_url = '%s:%s' % (parent_url.scheme, url)
+	elif url[0] == '/':
 		# Absolute path
 		final_url = '%s://%s%s' % (parent_url.scheme, parent_url.netloc, url)
-	elif url and url.find('://') == -1:
+	elif url.find('://') == -1:
 		# Relative path
 		final_url = '%s://%s%s/%s' % (parent_url.scheme, parent_url.netloc, parent_url.path.rsplit('/',1)[0], url)
 	else:
