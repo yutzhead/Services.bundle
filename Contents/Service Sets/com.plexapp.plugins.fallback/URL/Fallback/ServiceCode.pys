@@ -161,12 +161,30 @@ def MetadataObjectForURL(url):
 			if len(videos) > 0:
 				Log.Debug(' --> [Metadata] Found an HTML5 video')
 				tag = videos[0]
+				title = tag.get('title')
 
-				try: thumb = FixUrl(url, tag.get('poster'))
-				except: thumb = None
+				if not title:
+					try:
+						title = doc.xpath('//meta[@property="og:title"]')[0].get('content').strip()
+					except:
+						title = doc.xpath('//title')[0].text.strip()
+
+				try:
+					summary = doc.xpath('//meta[@property="og:description"]')[0].get('content').strip()
+				except:
+					try:
+						summary = doc.xpath('//meta[@name="description"]')[0].get('content').strip()
+					except:
+						summary = None
+
+				try:
+					thumb = FixUrl(url, tag.get('poster'))
+				except:
+					thumb = None
 
 				return VideoClipObject(
-					title = tag.get('title') or doc.xpath('//title')[0].text.strip(),
+					title = title,
+					summary = summary,
 					thumb = thumb
 				)
 
@@ -183,8 +201,23 @@ def MetadataObjectForURL(url):
 
 			if video:
 				Log.Debug(' --> [Metadata] Found a video using the regex')
-				return VideoClipObject(
+
+				try:
+					title = doc.xpath('//meta[@property="og:title"]')[0].get('content').strip()
+				except:
 					title = doc.xpath('//title')[0].text.strip()
+
+				try:
+					summary = doc.xpath('//meta[@property="og:description"]')[0].get('content').strip()
+				except:
+					try:
+						summary = doc.xpath('//meta[@name="description"]')[0].get('content').strip()
+					except:
+						summary = None
+
+				return VideoClipObject(
+					title = title,
+					summary = summary
 				)
 
 			# Regex Video YouTube
