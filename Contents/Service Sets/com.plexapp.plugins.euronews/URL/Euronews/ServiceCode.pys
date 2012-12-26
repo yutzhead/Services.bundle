@@ -58,10 +58,9 @@ def TestURLs():
 	test_urls = []
 	page = HTML.ElementFromURL('http://www.euronews.com/')
 
-	for link in page.xpath("//a/span[@class='vid']/.."):
+	for url in page.xpath('//div[@class="iconPlay"]/parent::a/@href'):
 		if len(test_urls) < 3:
-			url = link.get('href')
-			url = "http://www.euronews.com" + url
+			url = 'http://www.euronews.com' + url
 
 			if url not in test_urls:
 				test_urls.append(url)
