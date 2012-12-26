@@ -100,12 +100,11 @@ def TestURLs():
 	test_urls = []
 	data = HTML.ElementFromURL(ABC_URL)
 
-	for video in data.xpath('//h2[contains(text(), "full episodes")]/following-sibling::div[@class="carouselListWrapper"]//a[@class="framedThumbnail"]'):
-		url = video.get('href')
-
-		if len(test_urls) < 3 and url not in test_urls:
+	for url in data.xpath('//h2[contains(text(), "full episodes")]/following-sibling::div[@class="carouselListWrapper"]//a[@class="framedThumbnail"]/@href'):
+		if url not in test_urls:
 			test_urls.append(url)
-		else:
+
+		if len(test_urls) > 2:
 			break
 
 	return test_urls
