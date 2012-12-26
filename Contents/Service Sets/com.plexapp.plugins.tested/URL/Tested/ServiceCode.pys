@@ -9,13 +9,13 @@ def NormalizeURL(url):
 def TestURLs():
 
 	test_urls = []
+	page = HTML.ElementFromURL('http://www.tested.com/videos/')
 
-	page = HTML.ElementFromURL("http://www.tested.com/videos/")
-	videos = page.xpath('//section[@class="content"]/ul/li')
+	for url in page.xpath('//section[@class="content"]/ul/li/a/@href'):
+		url = BASEURL + url
 
-	for video in videos:
-		thisLink = BASEURL + video.xpath('./a[@class="title"]/@href')[0]
-		test_urls.append(thisLink)
+		if url not in test_urls:
+			test_urls.append(url)
 
 		if len(test_urls) > 2:
 			break
