@@ -77,7 +77,7 @@ def MediaObjectsForURL(url):
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True,
-			video_resolution = '360',
+			video_resolution = 'sd',
 			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
@@ -95,7 +95,7 @@ def PlayVideo(url):
 	parts = []
 
 	for id in stream_ids:
-		playlist = XML.ElementFromURL(PLAYLIST_URL % id)
+		playlist = XML.ElementFromURL(PLAYLIST_URL % id, headers={'User-Agent':''}, sleep=1.0)
 		stream_url = playlist.xpath('//ref[contains(@href, "hi.3gp")]')[0].get('href')
 		parts.append(PartObject(key=stream_url))
 
@@ -114,7 +114,7 @@ def PlayVideo(url):
 ####################################################################################################
 def GetDetails(url):
 
-	data = HTML.ElementFromURL(url)
+	data = HTML.ElementFromURL(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:17.0) Gecko/20100101 Firefox/17.0'})
 	title = data.xpath('//title')[0].text
 	video_src = data.xpath('//link[@rel="video_src"]')
 
@@ -125,7 +125,7 @@ def GetDetails(url):
 			raise Ex.MediaNotAvailable
 
 	id = video_src[0].get('href').split('id=')[1]
-	details = XML.ElementFromURL(DETAIL_URL % id)
+	details = XML.ElementFromURL(DETAIL_URL % id, headers={'User-Agent':''})
 
 	if details.xpath('//episodes[@totalItems]')[0].get('totalItems') == '0':
 		return None
