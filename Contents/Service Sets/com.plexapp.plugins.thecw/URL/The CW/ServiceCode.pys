@@ -154,12 +154,12 @@ def GetThumbList(url):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL(BASE_URL +'/cw-video/')
+	data = HTML.ElementFromURL(BASE_URL + '/cw-video/')
 
-	for video in data.xpath('//div[@class="videowrapped "]/a'):
-		test_urls.append(BASE_URL + video.get('href'))
+	for url in data.xpath('//a[contains(@href, "?play")]/@href'):
+		test_urls.append(BASE_URL + url)
 
-		if test_urls > 2:
+		if len(test_urls) > 2:
 			break
 
 	return test_urls
