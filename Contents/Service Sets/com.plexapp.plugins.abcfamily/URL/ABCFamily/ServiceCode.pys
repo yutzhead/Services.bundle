@@ -9,7 +9,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
+	data = HTML.ElementFromURL(url, cacheTime=7200)
 	mo = None
 
 	if '/abc-family-movies/' in url: #content is a movie, therefore return a MovieObject
@@ -59,22 +59,20 @@ def MetadataObjectForURL(url):
     # If it's not a movie and not an episode, it must be a clip
 	if mo == None:
 
-		title = None
 		try:
 			title = data.xpath('//meta[@property="og:title"]')[0].get('content')
 		except:
 			title = data.xpath('//title/text()')[0].split(' - ')[1]
 
-		summary = None
 		try:
 			summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
 		except:
 			summary = data.xpath('//meta[@name="description"]')[0].get('content')
 
-		thumb = None
 		try:
 			thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
-		except: pass
+		except:
+			thumb = None
 
 		mo = VideoClipObject(
 			title = title,
@@ -139,12 +137,18 @@ def TestURLs():
 	test_urls = []
 	data = HTML.ElementFromURL('http://abcfamily.go.com/')
 
-	for video in data.xpath("//div[contains(@class, 'chartbeattoppages_videos')]//li[contains(@class, 'contentArea')]//a"):
-		url = video.get('href')
+	host = 'abcfamily.go.com'
+	if len(data.xpath('//a[contains(@href, "beta.abcfamily.go.com")]')) > 0:
+		host = 'beta.abcfamily.go.com'
 
-		if len(test_urls) < 3 and url not in test_urls:
+	for url in data.xpath("//div[contains(@class, 'chartbeattoppages_videos')]//li[contains(@class, 'contentArea')]//a/@href"):
+		if not url.startswith('http://'):
+			url = 'http://%s%s' % (host, url)
+
+		if url not in test_urls:
 			test_urls.append(url)
-		else:
+
+		if len(test_urls) > 2:
 			break
 
 	return test_urls
