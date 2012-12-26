@@ -12,14 +12,11 @@ def MetadataObjectForURL(url):
     title = page.xpath("//meta[@property='og:title']")[0].get('content')
     description = page.xpath("//meta[@property='og:description']")[0].get('content')
     thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
-    tags = [ tag.strip() for tag in tags ]
 
     return VideoClipObject(
         title = title,
         summary = description,
-        thumb = thumb,
-        tags = tags
+        thumb = thumb
     )
 
 ####################################################################################################
@@ -41,7 +38,7 @@ def PlayVideo(url):
 
     page = HTML.ElementFromURL(url)
 
-    player_script = page.xpath("//div[@id='videoPlayer']/script")[0].get('src')
+    player_script = page.xpath('//script[contains(@src, "player.js")]/@src')[0]
     embed_code = re.match(".*embedCode=(?P<embed_code>[^&]+).*", player_script).groupdict()['embed_code']
 
     # Once we've got this, we can then request the main JS page to do with the actual player. Since it
