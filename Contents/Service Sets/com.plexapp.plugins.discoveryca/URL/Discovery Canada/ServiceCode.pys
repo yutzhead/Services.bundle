@@ -12,6 +12,7 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
 	# read the main iOS data
 	data = XML.ObjectFromURL(FEED_URL)
 	clipId = url.split("#")[1].replace("clip","")
@@ -19,20 +20,20 @@ def MetadataObjectForURL(url):
 	title = video.xpath("./title/text()",namespaces=NAMESPACES)[0]
 	summary = video.xpath("./description",namespaces=NAMESPACES)[0]
 	thumb_url = video.xpath("./ctv:imageList/item/link",namespaces=NAMESPACES)[0]
-		
-	mo = VideoClipObject(
+
+	return VideoClipObject(
 		title=title,
-		summary=summary, 
-		thumb=Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-discovery.png')
+		summary=summary,
+		thumb=Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='SourceIcon.png')
 	)
-	return mo
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	# read the main iOS data
 	data = XML.ObjectFromURL(FEED_URL)
 	clipId = url.split("#")[1].replace("clip","")
-	
+
 	# find the node with our passed clip, then grab all the clips that are listed for that video
 	allClips = data.xpath("//item/ctv:clipList/item/ctv:id[text()=%s]/ancestor::ctv:clipList/item/ctv:id" % (clipId),namespaces=NAMESPACES)
 	clips = []
@@ -51,22 +52,24 @@ def MediaObjectsForURL(url):
 		)
 	]
 
-
 ####################################################################################################
 def PlayVideo(clip):
+
 	playlist_url = HTTP.Request(M3U8_LOOKUP % clip).content.strip()[17:].split("'")[0]
 	Log.Debug("Looking up playlist for clip "+clip)
-	
-	if playlist_url.startswith('http'):	
+
+	if playlist_url.startswith('http'):
 		playlist_url = playlist_url.replace("master.m3u8","index_7_av.m3u8") # instead of reading the master we want index_7_av (720p)
 		Log.Debug("Playlist URL: "+playlist_url)
 		return Redirect(HTTPLiveStreamURL(playlist_url))
 
 ####################################################################################################
 def TestURLs():
+
 	test_urls = []
 	data = XML.ObjectFromURL(FEED_URL)
 	shows = data.xpath('//item', namespaces=NAMESPACES)
+
 	for ep in shows:
 		try:
 			clipId=ep.xpath("./ctv:clipList/item[1]/ctv:id/text()", namespaces=NAMESPACES)[0]
