@@ -11,11 +11,10 @@
 				<string>http://www.theonion.com/video/escort-reveals-affair-with-that-actor-from-that-th,21057/</string>
 				<string>http://www.theonion.com/video/new-apple-friend-bar-gives-customers-someone-to-ta,17693/</string>
 				<string>http://origin.theonion.com/video/father-who-messed-up-visitation-schedule-consumes,26231/</string>
-				<string>http://www.onionsportsnetwork.com/articles/red-sox-sell-out-of-commemorative-collapse-2011-ha,26212/</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?(theonion.com/video|theonion.com/articles|onionsportsnetwork.com/articles)/.+,[0-9]+/</string>
+				<string>http://(.+\.)?theonion.com/(video|articles)/.+,[0-9]+/</string>
 			</array>
 		</dict>
 	</dict>

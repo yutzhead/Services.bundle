@@ -1,36 +1,39 @@
-ID_REGEX 	= Regex('/video/.*\?id=([^;]+)')
+ID_REGEX = Regex('/video/.*\?id=([^;]+)')
 
 DETAILS_URL = 'http://www.srf.ch/webservice/cvis/segment/%s/.json?nohttperr=1;omit_video_segments_validity=1;omit_related_segments=1;nearline_data=1'
-THUMB_URL   = 'http://www.srf.ch/webservice/cvis/videogroup/thumbnail/%s?width=500'
-SF_SWF_URL  = 'http://www.srf.ch/player/flash/srfplayer.swf'
+THUMB_URL = 'http://www.srf.ch/webservice/cvis/videogroup/thumbnail/%s?width=500'
+SF_SWF_URL = 'http://www.srf.ch/player/flash/srfplayer.swf'
 
 ####################################################################################################
-
-
 def MetadataObjectForURL(url):
+
 	id = ID_REGEX.findall(url)[0]
 	details = GetDetails(id)
+
 	return VideoClipObject(
 		title = details['video']['description_title'],
 		summary = details['description_lead'],
 		thumb = THUMB_URL % details['video']['video_group']['uuid'],
-		originally_available_at = Datetime.ParseDate(details['time_published']))
+		originally_available_at = Datetime.ParseDate(details['time_published'])
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
 	]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url):
+
 	id = ID_REGEX.findall(url)[0]
 	details = GetDetails(id)
 
-	streaming_urls = sorted(details['streaming_urls'], key=lambda k: k['frame_width'], reverse = True)
+	streaming_urls = sorted(details['streaming_urls'], key=lambda k: k['frame_width'], reverse=True)
 	if len(streaming_urls) == 0:
 		if 'geoblock' in details['flags']:
 			raise Ex.MediaGeoblocked
@@ -40,11 +43,11 @@ def PlayVideo(url):
 	stream_url = streaming_urls[0]['url']
 	stream_details = stream_url.split('mp4:')
 
-	return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = stream_details[0], clip = 'mp4:' + stream_details[1], swf_url=SF_SWF_URL))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=stream_details[0], clip='mp4:' + stream_details[1], swf_url=SF_SWF_URL))
 
 ####################################################################################################
-
 def GetDetails(id):
+
 	contents = HTTP.Request(DETAILS_URL % id).content
 	start = contents.find('{')
 	end = contents.rfind('}') +1
