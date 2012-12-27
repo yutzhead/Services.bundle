@@ -132,8 +132,11 @@ def GetDetails(url):
 				id = url.split('?play=')[1]
 
 	if id:
-		details = JSON.ObjectFromURL(DETAILS_URL % id)
-		return details
+		try:
+			details = JSON.ObjectFromURL(DETAILS_URL % id)
+			return details
+		except:
+			raise Ex.MediaExpired
 	else:
 		return None
 
