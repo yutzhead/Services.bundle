@@ -47,6 +47,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	html = HTML.ElementFromURL(url)
+	url = url.split('?')[0]
 	id = url.rstrip('/').split(',')[-1]
 	video_url = html.xpath('//li[@data-targeting_dfp_articleid="%s"]/@data-url' % id)[0]
 
