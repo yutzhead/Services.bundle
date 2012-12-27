@@ -6,7 +6,11 @@ SMIL_NS = {'a':'http://www.w3.org/2005/SMIL21/Language'}
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  page = HTTP.Request(url).content
+  try:
+    page = HTTP.Request(url).content
+  except:
+    raise Ex.MediaNotAvailable
+
   playlist_json = RE_PLAYLIST_JSON.search(page)
 
   if not playlist_json:
@@ -48,7 +52,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url=None):
 
-  page = HTTP.Request(url).content
+  try:
+    page = HTTP.Request(url).content
+  except:
+    raise Ex.MediaExpired
+
   playlist_json = RE_PLAYLIST_JSON.search(page)
 
   if not playlist_json:
