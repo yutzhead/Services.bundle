@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?theonion.com/(video|articles)/.+,[0-9]+/</string>
+				<string>http://(www|origin)\.theonion\.com/(video|articles)/.+,[0-9]+/</string>
 			</array>
 		</dict>
 	</dict>
