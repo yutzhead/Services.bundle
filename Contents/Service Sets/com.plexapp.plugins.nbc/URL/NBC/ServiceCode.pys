@@ -86,7 +86,6 @@ def TestURLs():
 	for index in range(2):
 		item = results[index]
 		url = 'http://www.nbc.com%s' % item.get('href')
-		Log(url)
 		test_urls.append(url)
 
 	# Video clips
