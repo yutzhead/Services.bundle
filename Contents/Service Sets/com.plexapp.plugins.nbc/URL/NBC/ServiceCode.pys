@@ -81,18 +81,18 @@ def TestURLs():
 	test_urls = []
 	page = HTML.ElementFromURL('http://www.nbc.com/video/library/')
 
-	# Full length episodes
-	results = page.xpath('//div[@id="header-full-eps"]//li/a')
-	for index in range(2):
-		item = results[index]
-		url = 'http://www.nbc.com%s' % item.get('href')
+	# Full episodes
+	result = page.xpath('//div[@id="header-full-eps"]//li/a/@href')[0:2]
+	for url in result:
+		if not url.startswith('http://'):
+			url = 'http://www.nbc.com%s' % url
 		test_urls.append(url)
 
 	# Video clips
-	results = page.xpath('//div[@id="header-video-clips"]//li/a')
-	for index in range(2):
-		item = results[index]
-		url = item.get('href')
+	result = page.xpath('//div[@id="header-video-clips"]//li/a/@href')[0:2]
+	for url in result:
+		if not url.startswith('http://'):
+			url = 'http://www.nbc.com%s' % url
 		test_urls.append(url)
 
 	return test_urls
