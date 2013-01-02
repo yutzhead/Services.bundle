@@ -1,3 +1,8 @@
+RE_DATA = Regex("Published Date: (.+) Rating: (\d)/\d Views:.+Length: (\d+m\d+)s  Watch (.+) and other p")
+RE_VIDEO_ID = Regex("/videoconfig\?v=([0-9\-]+)")
+XML_URL = 'http://www.4tube.com/player/videoconfig?v=%s'
+
+####################################################################################################
 def NormalizeURL(url):
 
 	url = url.split('?')[0].rstrip('/')
@@ -8,41 +13,31 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
-
 	try:
-		html = HTML.ElementFromURL(url)
+		data = HTTP.Request(url).content
+		video_id = RE_VIDEO_ID.search(data).group(1)
+		html = HTML.ElementFromString(data)
 	except:
 		raise Ex.MediaNotAvailable
 
-	video = html.xpath('//video')
+	description = html.xpath('//meta[@name="description"]/@content')[0]
+	(date, rating, duration, title) = RE_DATA.findall(description)[0]
 
-	if len(video) < 1:
-		return None
+	originally_available_at = Datetime.ParseDate(date).date()
+	rating = float(rating) * 2
+	duration = TimeToMs(duration.replace('m', ':'))
 
-	title = html.xpath('//title')[0].text.rsplit(' - ')[0]
-	summary = html.xpath('//meta[@name="description"]')[0].get('content')
-	thumb = video[0].get('poster')
-
-	try:
-		duration = html.xpath('//div[@id="mediaplayer"]')[0].get('data-length')
-		duration = int(duration) * 1000
-	except:
-		duration = None
-
-	try:
-		date = html.xpath('//*[@class="datetime"]')[0].text
-		originally_available_at = Datetime.ParseDate(date).date()
-	except:
-		originally_available_at = None
+	xml = XML.ElementFromURL(XML_URL % video_id)
+	thumb = xml.xpath('//image/text()')[0]
 
 	return VideoClipObject(
 		title = title,
-		thumb = thumb,
 		duration = duration,
 		originally_available_at = originally_available_at,
+		rating = rating,
+		thumb = thumb,
 		genres = ['XXX','Adult','18+'],
-		content_rating_age = 18
+		content_rating = 'X'
 	)
 
 ####################################################################################################
@@ -50,31 +45,52 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=1080))],
 			container = 'mp4',
-			video_resolution = 'sd',
-			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+			video_codec = VideoCodec.H264,
+			video_resolution = '1080',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url):
-
-	url = url.replace('http://www.4tube.com', 'http://m.4tube.com')
+def PlayVideo(url, res=1080):
 
 	try:
-		html = HTML.ElementFromURL(url)
+		data = HTTP.Request(url).content
+		video_id = RE_VIDEO_ID.search(data).group(1)
+		xml = XML.ElementFromURL(XML_URL % video_id)
 	except:
 		raise Ex.MediaNotAvailable
 
-	video = html.xpath('//video')
+	available_versions = xml.xpath('//stream[@label]/@label')
 
-	if len(video) < 1:
-		return None
+	if len(available_versions) < 1:
+		raise Ex.MediaNotAvailable
 
-	video_url = video[0].get('src')
+	closest = min((abs(res - int(i.split('p')[0])), i.split(' ')[0]) for i in available_versions)[1]
+	video_url = xml.xpath('//stream[starts-with(@label, "%s")]/file/text()' % closest)[0]
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
@@ -88,7 +104,19 @@ def TestURLs():
 		if url not in test_urls:
 			test_urls.append(url)
 
-		if len(test_urls) == 3:
+		if len(test_urls) >= 3:
 			break
 
 	return test_urls
+
+####################################################################################################
+def TimeToMs(timecode):
+
+	seconds = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000
