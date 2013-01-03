@@ -174,7 +174,7 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate='3500', index=0):
 
-	content = HTTP.Request(url).content
+	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	uri = RE_PLAYER.search(content).group('id')
 	uri = uri.strip('.swf')
 	if '/' in uri:
