@@ -1,7 +1,6 @@
-RE_PLAYER = Regex('http://media.mtvnservices.com/(?P<id>.+(episode|video)[^"]+)')
-NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-
+RE_PLAYER = Regex('http://media.mtvnservices.com/+(?P<id>.+(episode|video)[^"]+)')
 MRSS_URL = 'http://shadow.comedycentral.com/feeds/video_player/mrss/?uri=%s'
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 ####################################################################################################
@@ -177,8 +176,6 @@ def PlayVideo(url, bitrate='3500', index=0):
 	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	uri = RE_PLAYER.search(content).group('id')
 	uri = uri.strip('.swf')
-	if '/' in uri:
-		uri = uri.split('/')[1]
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
