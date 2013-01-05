@@ -99,9 +99,9 @@ def PlayVideo(url, res):
 
   video_dict = {}
   for video in videos:
-    res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
+    available_res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
     url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
-    video_dict[res] = url
+    video_dict[available_res] = url
 
   resolutions = video_dict.keys()
   resolutions.sort()
