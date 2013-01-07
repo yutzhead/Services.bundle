@@ -65,6 +65,10 @@ def PlayVideo(url):
 	else:
 		video_url = video_src[0]
 
+	headers = HTTP_IPAD_UA
+	headers['Cookie'] = '%s;%s' % (HTTP_IPAD_UA['Cookie'], HTTP.CookiesForURL(url))
+	req = HTTP.Request(video_url, headers=headers, follow_redirects=False).headers
+
 	oc = ObjectContainer()
 
 	oc.add(VideoClipObject(
