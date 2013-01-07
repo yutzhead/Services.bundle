@@ -16,7 +16,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
+	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA, cacheTime=CACHE_1WEEK)
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
@@ -54,7 +54,7 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	player_url = 'http://www.uitzendinggemist.nl/player/%s' % player_id[0]
-	html = HTML.ElementFromURL(player_url, headers=HTTP_IPAD_UA)
+	html = HTML.ElementFromURL(player_url, headers=HTTP_IPAD_UA, cacheTime=0)
 	video_src = html.xpath('//video/source/@src')
 
 	if len(video_src) < 0:
