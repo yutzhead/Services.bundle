@@ -4,7 +4,7 @@ HTTP_DESKTOP_UA = {
 }
 
 HTTP_IPAD_UA = {
-	'User-Agent': 'Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10',
+	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25',
 	'Cookie': 'site_cookie_consent=yes'
 }
 
