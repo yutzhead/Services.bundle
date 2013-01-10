@@ -21,7 +21,7 @@ def MetadataObjectForURL(url):
 	if 'full episode' in page_title.lower():
 
 		try:
-			air_date = html.xpath('//h1[@class="subTitle"]/text()')[0]
+			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip(' ')
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
