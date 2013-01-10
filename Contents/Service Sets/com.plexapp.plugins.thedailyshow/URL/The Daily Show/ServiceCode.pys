@@ -18,7 +18,7 @@ def MetadataObjectForURL(url):
 	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
 	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
 
-	if 'Full Episode' in page_title:
+	if 'full episode' in page_title.lower():
 
 		try:
 			air_date = html.xpath('//h1[@class="subTitle"]/text()')[0]
@@ -34,7 +34,7 @@ def MetadataObjectForURL(url):
 			originally_available_at = originally_available_at
 		)
 
-	elif 'Video Clip' in page_title:
+	elif 'video clip' in page_title.lower():
 
 		try:
 			air_date = html.xpath('//div[@class="airDate"]//a/text()')[0]
