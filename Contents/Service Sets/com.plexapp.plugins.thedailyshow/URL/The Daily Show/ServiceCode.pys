@@ -1,4 +1,4 @@
-RE_PLAYER = Regex('http://media.mtvnservices.com/+(?P<id>.+(episode|video)[^"]+)')
+RE_PLAYER = Regex('http://media.mtvnservices.com/.*?(?P<id>mgid:.+(episode|video)[^"]+)')
 MRSS_URL = 'http://shadow.comedycentral.com/feeds/video_player/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
