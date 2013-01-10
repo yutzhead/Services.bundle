@@ -8,12 +8,12 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
+				<string>http://www.colbertnation.com/full-episodes/</string>
 				<string>http://www.colbertnation.com/the-colbert-report-videos/393167/july-26-2011/herman-cain-cancels</string>
-				<string>http://www.colbertnation.com/full-episodes/wed-july-27-2011-missy-cummings</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.colbertnation.com/.+</string>
+				<string>http://www.colbertnation.com/(full-episodes|the-colbert-report-videos)/</string>
 			</array>
 		</dict>
 	</dict>
