@@ -30,7 +30,7 @@ def MetadataObjectForURL(url):
 			show = 'The Colbert Report',
 			title = title,
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png'),
 			originally_available_at = originally_available_at
 		)
 
@@ -49,7 +49,7 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png'),
 			originally_available_at = originally_available_at
 		)
 
@@ -82,7 +82,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 2200,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '540',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
@@ -97,7 +97,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 1700,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '432',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
@@ -112,7 +112,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 1200,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '360',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
@@ -139,7 +139,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 2200,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '540',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
@@ -151,7 +151,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 1700,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '432',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
@@ -163,7 +163,7 @@ def MediaObjectsForURL(url):
 				],
 				bitrate = 1200,
 				container = Container.MP4,
-				video_resolution = 'sd',
+				video_resolution = '360',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,

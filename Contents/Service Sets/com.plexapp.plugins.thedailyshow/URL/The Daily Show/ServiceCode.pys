@@ -30,7 +30,7 @@ def MetadataObjectForURL(url):
 			show = 'The Daily Show',
 			title = title,
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png'),
 			originally_available_at = originally_available_at
 		)
 
@@ -45,7 +45,7 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png'),
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png'),
 			originally_available_at = originally_available_at
 		)
 

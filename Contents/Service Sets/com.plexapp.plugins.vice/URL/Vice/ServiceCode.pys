@@ -6,92 +6,102 @@ MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js?%s'
 
 ####################################################################################################
 def NormalizeURL(url):
-    return url
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    data = HTML.ElementFromURL(url)
+	data = HTML.ElementFromURL(url)
 
-    # Videos can come from their 'own' (Ooyala) site, but they also use other (YouTube) sites to
-    # host videos. Return None if that's the case and let Fallback -> Other service handle it.
-    if len( data.xpath('//meta[@property="og:video" and contains(@content, "player.ooyala.com")]') ) < 1:
-        return None
+	# Videos can come from their 'own' (Ooyala) site, but they also use other (YouTube) sites to
+	# host videos. Return None if that's the case and let Fallback -> Other service handle it.
+	if len(data.xpath('//meta[@property="og:video" and contains(@content, "player.ooyala.com")]')) < 1:
+		return None
 
-    # Extract the available information from the page
-    title = data.xpath('//meta[@property="og:title"]')[0].get('content')
-    description = data.xpath('//meta[@name="description"]')[0].get('content')
-    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
+	# Extract the available information from the page
+	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+	description = data.xpath('//meta[@name="description"]')[0].get('content')
+	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
 
-    try:
-        show_name = title.split('|')[1].strip()
-        ep_name = title.split('|')[0].strip()
+	try:
+		show_name = title.split('|')[1].strip()
+		ep_name = title.split('|')[0].strip()
 
-        return EpisodeObject(
-            title = ep_name,
-            show = show_name,
-            summary = description,
-            thumb = thumb
-        )
-    except:
-        return VideoClipObject(
-            title = title,
-            summary = description,
-            thumb = thumb
-        )
+		return EpisodeObject(
+			title = ep_name,
+			show = show_name,
+			summary = description,
+			thumb = thumb
+		)
+	except:
+		return VideoClipObject(
+			title = title,
+			summary = description,
+			thumb = thumb
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-    return [
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        video_resolution = 'sd',
-        optimized_for_streaming = True,
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
-    ]
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = Container.MP4,
+			video_resolution = 'sd',
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			]
+		)
+	]
 
 ####################################################################################################
 def PlayVideo(url):
 
-    data = HTML.ElementFromURL(url)
+	try:
+		data = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
-    # The first thing that we need to obtain is the actual "embed code".
-    video_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
-    embed_code = re.search('embedCode=(.+)&', video_url).group(1)
+	# The first thing that we need to obtain is the actual "embed code".
+	video_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
+	embed_code = re.search('embedCode=(.+)&', video_url).group(1)
 
-    # Once we've got this, we can then request the main JS page to do with the actual player. Since it
-    # only actually contains JS source, we simply obtain the content.
-    player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime=0).content
+	# Once we've got this, we can then request the main JS page to do with the actual player. Since it
+	# only actually contains JS source, we simply obtain the content.
+	player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime=0).content
 
-    # The player page will contain a reference to the mobile JS page (including all required parameters).
-    # We therefore search for the known url.
-    mobile_player_page_args = re.search('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"', player_page).group(1) + 'ipad'
-    mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime=0).content
+	# The player page will contain a reference to the mobile JS page (including all required parameters).
+	# We therefore search for the known url.
+	mobile_player_page_args = re.search('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"', player_page).group(1) + 'ipad'
+	mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime=0).content
 
-    # We now have the mobile JS player page.
-    try:
-        stream_json = re.search('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', mobile_player_page, re.DOTALL).group('json')
-        stream_json = stream_json.decode('unicode_escape')[1:-1]
-        stream_details = JSON.ObjectFromString(stream_json)
+	# We now have the mobile JS player page.
+	try:
+		stream_json = re.search('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', mobile_player_page, re.DOTALL).group('json')
+		stream_json = stream_json.decode('unicode_escape')[1:-1]
+		stream_details = JSON.ObjectFromString(stream_json)
 
-        return Redirect(stream_details['ipad_url'])
-    except:
-        raise Ex.MediaNotAvailable
+		return Redirect(stream_details['ipad_url'])
+	except:
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
 
-    test_urls = []
+	test_urls = []
+	data = HTML.ElementFromURL(BASE_URL % '/video')
 
-    data = HTML.ElementFromURL(BASE_URL % '/video')
+	for vid in data.xpath('//div[@class="most_popular_videos"]//li[@class="story"]'):
+		url = BASE_URL % vid.xpath('.//a')[0].get('href')
 
-    for vid in data.xpath('//div[@class="most_popular_videos"]//li[@class="story"]'):
-        url = BASE_URL % vid.xpath('.//a')[0].get('href')
-        test_urls.append(url)
+		if url not in test_urls:
+			test_urls.append(url)
 
-    return test_urls
+		if len(test_urls) >= 2:
+			break
+
+	return test_urls
