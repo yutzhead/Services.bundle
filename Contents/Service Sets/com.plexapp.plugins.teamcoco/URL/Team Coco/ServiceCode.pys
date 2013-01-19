@@ -1,6 +1,7 @@
 VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
+RE_CLEANUP = Regex('[^-a-z0-9 ]')
 FULL_EP_RES = [720, 544, 360]
 VIDEO_RES = [1080, 720, 480, 360]
 
@@ -126,7 +127,9 @@ def PlayVideo(url, res):
 		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, clip=playpath, app=app, swf_url=swf_url))
 
 	else:
-		title = xml.xpath('//headline')[0].text.strip()
+		title = xml.xpath('//headline')[0].text.strip().lower()
+		title = String.StripDiacritics(title)
+		title = RE_CLEANUP.sub('', title).strip()
 		json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
 
 		if 'entry' in json_obj['feed']:
