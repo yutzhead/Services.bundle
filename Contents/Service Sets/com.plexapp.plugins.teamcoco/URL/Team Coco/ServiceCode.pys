@@ -1,6 +1,8 @@
-VIDEO_INFO = 'http://teamcoco.com/video-xml/%s/video.xml'
-FULL_EPISODE = 'http://teamcoco.com/sites/default/files/teamcoco_video.swf?contentId=%s&context=fw_main_conan&w=640&h=420'
+VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
+YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
+FULL_EP_RES = [720, 544, 360]
+VIDEO_RES = [1080, 720, 480, 360]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -11,60 +13,68 @@ def MetadataObjectForURL(url):
 		Log.Exception("Could not retrieve video_id in MetadataObjectForURL function")
 		return None
 
-	info = XML.ElementFromURL(xml_url)
-	title = info.xpath('//headline')[0].text.strip()
-	summary = String.StripTags( info.xpath('//description')[0].text ).strip()
+	xml = XML.ElementFromURL(xml_url)
+	title = xml.xpath('//headline')[0].text.strip()
+	summary = String.StripTags(xml.xpath('//description')[0].text).strip()
 
-	duration = info.xpath('//length')
+	duration = xml.xpath('//length')
 	if duration:
-		duration = Duration( duration[0].text )
+		duration = Duration(duration[0].text)
 	else:
 		duration = None
 
 	try:
-		thumb = info.xpath('//image[@width="640"]')[0].text
+		thumb = xml.xpath('//image[@width="640"]')[0].text
 	except:
 		try:
-			thumb = info.xpath('//image')[-1].text
+			thumb = xml.xpath('//image')[-1].text
 		except:
-			thumb = None
+			thumb = ''
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
 		duration = duration,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
+	media_objects = []
+
 	if 'full-episode' in url:
-
-		return [
-			MediaObject(
-				parts = [PartObject(key = Callback(PlayVideo, url=url))],
-				protocol = 'webkit'
+		for res in FULL_EP_RES:
+			media_objects.append(
+				MediaObject(
+					parts = [
+						PartObject(key=Callback(PlayVideo, url=url, res=res))
+					],
+					video_resolution = str(res),
+					protocol = 'rtmp'
+				)
 			)
-		]
-
 	else:
-		return [
-			MediaObject(
-				parts = [PartObject(key = Callback(PlayVideo, url=url))],
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				container = Container.MP4,
-				video_resolution = 'sd',
-				#aspect_ratio = '1.78',
-				audio_channels = 2,
-				optimized_for_streaming = True,
-				bitrate = 1000
+		for res in VIDEO_RES:
+			media_objects.append(
+				MediaObject(
+					parts = [
+						PartObject(key=Callback(PlayVideo, url=url, res=res))
+					],
+					container = Container.MP4,
+					video_codec = VideoCodec.H264,
+					video_resolution = str(res),
+					audio_codec = AudioCodec.AAC,
+					audio_channels = 2,
+					optimized_for_streaming = True
+				)
 			)
-		]
+
+	return media_objects
 
 ####################################################################################################
-def PlayVideo(url):
+@indirect
+def PlayVideo(url, res):
 
 	video_id = GetVideoId(url)
 
@@ -72,14 +82,64 @@ def PlayVideo(url):
 		Log.Exception("Could not retrieve video_id in PlayVideo function")
 		return None
 
+	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
+
+	if len(xml.xpath('//files/file')) < 1:
+		raise Ex.MediaNotAvailable
+
 	if 'full-episode' in url:
-		return Redirect(WebVideoURL(FULL_EPISODE % video_id))
+		src = xml.xpath('//akamai/src/text()')[0].split('://')[-1]
+		auth_token_type = xml.xpath('//akamai/authTokenType/text()')[0]
+		window = xml.xpath('//akamai/window/text()')[0]
+		aifp = xml.xpath('//akamai/aifp/text()')[0]
+
+		files = []
+		for file in xml.xpath('//files/file[@label="hq"]/text()'):
+			file = file.strip('/mp4:').strip('.mp4')
+			if file not in files:
+				files.append(file)
+
+		post_data = {
+			'videoId': video_id,
+			'aifp': aifp,
+			'window': window,
+			'profile': 'tbs',
+			'path': ';'.join(files),
+			'authTokenType': auth_token_type
+		}
+
+		auth_xml = HTTP.Request('http://www.tbs.com/processors/cvp/token.jsp', values=post_data).content
+		auth_xml = auth_xml.strip().replace('&', '&amp;')
+		token = XML.ElementFromString(auth_xml).xpath('//token/text()')[0]
+		token = String.Unquote(token)
+
+		bundle_version = XML.ElementFromURL('http://teamcoco.com/sites/default/modules/dev/cvp/xml/appconfig.dev.xml', cacheTime=CACHE_1DAY).xpath('//bundleVersion/text()')[0]
+		player_version = XML.ElementFromURL('http://z.cdn.turner.com/xslo/cvp/core/bundle/bundle_%s.xml' % bundle_version, cacheTime=CACHE_1DAY).xpath('//playerVersion/text()')[0]
+		swf_url = 'http://z.cdn.turner.com/xslo/cvp/core/player/CVP_%s.swf' % player_version
+
+		url = 'rtmpe://%s?%s' % (src, token)
+		app = '%s?%s' % (src.split('/')[-1], token)
+		playpath = xml.xpath('//files/file[@label="hq" and contains(@size, "x%d")]/text()' % res)[0].strip('/')
+
+		Log(' --> RTMPDump test command line: rtmpdump -r "%s" -a "%s" -y "%s" -W "%s" -o output.flv' % (url, app, playpath, swf_url))
+
+		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, clip=playpath, app=app, swf_url=swf_url))
 
 	else:
-		xml = XML.ElementFromURL(VIDEO_INFO % video_id)
+		title = xml.xpath('//headline')[0].text.strip()
+		json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
 
-		if len(xml.xpath('//files/file')) < 1:
-			raise Ex.MediaNotAvailable
+		if 'entry' in json_obj['feed']:
+			yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
+			media = URLService.MediaObjectsForURL(yt_url)
+
+			for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
+				for video in media:
+					if video.video_codec != VideoCodec.H264:
+						continue
+
+					if str(video.video_resolution) == str(VIDEO_RES[i]):
+						return Redirect(video.parts[0].key)
 
 		try:
 			video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
@@ -89,7 +149,7 @@ def PlayVideo(url):
 			except:
 				raise Ex.MediaNotAvailable
 
-		return Redirect(video_url)
+		return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetVideoId(url):
