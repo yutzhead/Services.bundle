@@ -70,7 +70,7 @@ def MetadataObjectForURL(url):
     json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
   except:
     Log('This is a private video.')
-    return None
+    raise Ex.MediaNotAuthorized
 
   # Construct a metadata item.
   try:
