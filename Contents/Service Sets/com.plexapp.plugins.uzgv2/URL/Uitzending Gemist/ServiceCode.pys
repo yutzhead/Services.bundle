@@ -22,10 +22,24 @@ def MetadataObjectForURL(url):
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
 
+	try:
+		date = html.xpath('//table[@class="information"]//td[1]/text()')[0]
+		date = date.split(',')[0][3:]
+
+		# Replace name of the month (only march, may and october are required, other months have the same 3-letter abbr in English)
+		mapping = [('mrt', 'mar'), ('mei', 'may'), ('okt', 'oct')]
+		for k, v in mapping:
+			date = date.replace(k, v)
+
+		originally_available_at = Datetime.ParseDate(date).date()
+	except:
+		originally_available_at = None
+
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png'),
+		originally_available_at = originally_available_at
 	)
 
 ####################################################################################################
