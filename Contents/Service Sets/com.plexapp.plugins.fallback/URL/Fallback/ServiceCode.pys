@@ -125,12 +125,12 @@ def MetadataObjectForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if '#ipad-ua' in url:
+		if url.startswith('ipad:'):
 			headers = HTTP_IPAD_UA
 		else:
 			headers = HTTP_DESKTOP_UA
 
-		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
+		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, follow_redirects=False)
 
 		try:
 			req.headers
@@ -228,8 +228,8 @@ def MetadataObjectForURL(url):
 				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
 
-		if not '#ipad-ua' in url:
-			return URLService.MetadataObjectForURL('%s#ipad-ua' % url)
+		if not url.startswith('ipad:'):
+			return URLService.MetadataObjectForURL('ipad:%s' % url)
 
 	except:
 		return None
@@ -241,12 +241,12 @@ def MediaObjectsForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if '#ipad-ua' in url:
+		if url.startswith('ipad:'):
 			headers = HTTP_IPAD_UA
 		else:
 			headers = HTTP_DESKTOP_UA
 
-		req = HTTP.Request(url.split('#')[0], cacheTime=0, headers=headers, follow_redirects=False)
+		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, follow_redirects=False)
 
 		try:
 			req.headers
@@ -329,8 +329,8 @@ def MediaObjectsForURL(url):
 						)
 					]
 
-		if not '#ipad-ua' in url:
-			return URLService.MediaObjectsForURL('%s#ipad-ua' % url)
+		if not url.startswith('ipad:'):
+			return URLService.MediaObjectsForURL('ipad:%s' % url)
 
 	except:
 		return None
