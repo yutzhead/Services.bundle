@@ -1,7 +1,8 @@
 TED_BASE = 'http://www.ted.com'
+SLUG_URL = 'http://www.ted.com/download/links/slug/%s/type/talks/ext/mp4'
 
 RE_EVENT = Regex(';event=(.+?);')
-RE_SLUG = Regex("download_dialog\.load\('([^']+)")
+RE_SLUG = Regex('"mediaSlug":"([^"]+)')
 RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
 RE_XML = Regex('file=([^&]*)')
 
@@ -190,7 +191,7 @@ def GetAvailableMediaObjectsForURL(url):
 
   if slug:
     try:
-      download_info = HTTP.Request(TED_BASE + slug[0], cacheTime = CACHE_1WEEK).content
+      download_info = HTTP.Request(SLUG_URL % slug[0], cacheTime=CACHE_1WEEK).content
       download_url = RE_DOWNLOAD.findall(download_info)
     except:
       download_url = None
