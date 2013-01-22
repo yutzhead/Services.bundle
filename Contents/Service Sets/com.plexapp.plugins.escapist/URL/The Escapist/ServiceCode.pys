@@ -5,16 +5,16 @@ def MetadataObjectForURL(url):
 
 	page = HTML.ElementFromURL(url)
 
-	title = page.xpath("//head//meta[@name='title']")[0].get('content')
-	description = page.xpath("//head//meta[@name='description']")[0].get('content')
-	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+	title = page.xpath("//meta[@name='title']")[0].get('content')
+	description = page.xpath("//meta[@name='description']")[0].get('content')
+	thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
 
 	# Attempt to extract the date.
-	date = None
 	try:
 		date = page.xpath("//span[@class='utc_timestamp']/text()")[0]
 		date = Datetime.ParseDate(date)
-	except: pass
+	except:
+		date = None
 
 	return VideoClipObject(
 		title = title,

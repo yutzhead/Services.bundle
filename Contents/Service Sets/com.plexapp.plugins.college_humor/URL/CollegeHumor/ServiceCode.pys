@@ -92,7 +92,7 @@ def PlayVideo(url):
 				current_resolution = resolutions[resolution_index]
 
 				for video in media:
-					if video.video_codec != VideoCodec.H264:
+					if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
 						continue
 
 					if str(video.video_resolution) == current_resolution:
