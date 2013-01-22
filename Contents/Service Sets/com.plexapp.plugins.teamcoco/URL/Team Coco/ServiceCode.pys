@@ -138,7 +138,7 @@ def PlayVideo(url, res):
 
 			for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
 				for video in media:
-					if video.video_codec != VideoCodec.H264:
+					if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
 						continue
 
 					if str(video.video_resolution) == str(VIDEO_RES[i]):
