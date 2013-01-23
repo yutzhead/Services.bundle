@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://freedocumentaries.org/(int|teatro).php\?filmID=[0-9]+</string>
+				<string>^http://freedocumentaries.org/(int|teatro).php\?filmID=[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.europafilmtreasures.eu/PY/.+</string>
+				<string>^http://www.europafilmtreasures.eu/PY/.+</string>
 			</array>
 		</dict>
 	</dict>

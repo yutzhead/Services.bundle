@@ -8,9 +8,9 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.ah\.nl/allerhande/(#/)?video/.+</string>
-				<string>http://www\.gelderlander\.nl/video/Tag/.+#1\.\d+</string>
-				<string>http://video\.elsevier\.nl/#!clip/\d+</string>
+				<string>^http://www\.ah\.nl/allerhande/(#/)?video/.+</string>
+				<string>^http://www\.gelderlander\.nl/video/Tag/.+#1\.\d+</string>
+				<string>^http://video\.elsevier\.nl/#!clip/\d+</string>
 			</array>
 		</dict>
 	</dict>

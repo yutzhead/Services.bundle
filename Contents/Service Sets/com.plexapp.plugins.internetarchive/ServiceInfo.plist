@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?archive.org/(details|downloads)/.+</string>
+				<string>^http://(www\.)?archive.org/(details|downloads)/.+</string>
 			</array>
 		</dict>
 		

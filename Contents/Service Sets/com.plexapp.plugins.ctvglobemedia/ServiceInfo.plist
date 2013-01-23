@@ -8,14 +8,14 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
+				<string>^http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
 			</array>
 		</dict>
 		<key>CTV News</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.ctvnews\.ca/video\?(clipId|playlistId)=.+</string>
+				<string>^http://www\.ctvnews\.ca/video\?(clipId|playlistId)=.+</string>
 			</array>
 		</dict>
 	</dict>

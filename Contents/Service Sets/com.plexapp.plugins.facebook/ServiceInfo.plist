@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>https?://www.facebook.com/video/video.php\?v=[0-9]+</string>
+				<string>^https?://www.facebook.com/video/video.php\?v=[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

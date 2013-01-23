@@ -16,7 +16,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.fxguide.com/(fxguidetv|fxguidetves|fxpodcasts|thevfxshow|therc)/.+/</string>
+				<string>^http://www.fxguide.com/(fxguidetv|fxguidetves|fxpodcasts|thevfxshow|therc)/.+/</string>
 			</array>
 		</dict>
 	</dict>

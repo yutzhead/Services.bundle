@@ -8,9 +8,9 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.nbc.com/.+/video</string>
-				<string>http://www.latenightwithjimmyfallon.com/video</string>
-				<string>http://www.jaylenosgarage.com/video</string>
+				<string>^http://www.nbc.com/.+/video</string>
+				<string>^http://www.latenightwithjimmyfallon.com/video</string>
+				<string>^http://www.jaylenosgarage.com/video</string>
 			</array>
 		</dict>
 	</dict>

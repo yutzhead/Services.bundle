@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www.)?pitchfork.com/tv/musicvideos/.+</string>
+				<string>^http://(www.)?pitchfork.com/tv/musicvideos/.+</string>
 			</array>
 		</dict>
 		<key>Pitchfork TV</key>
@@ -25,7 +25,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?pitchfork\.com/tv/(?!musicvideos|youtube).+</string>
+				<string>^http://(www\.)?pitchfork\.com/tv/(?!musicvideos|youtube).+</string>
 			</array>
 		</dict>
 		<key>Pitchfork TV YouTube</key>
@@ -36,7 +36,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?pitchfork\.com/tv/youtube/.+</string>
+				<string>^http://(www\.)?pitchfork\.com/tv/youtube/.+</string>
 			</array>
 		</dict>
 	</dict>

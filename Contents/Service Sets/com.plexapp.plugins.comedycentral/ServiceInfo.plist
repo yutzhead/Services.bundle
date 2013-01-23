@@ -15,7 +15,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://tosh.comedycentral.com/.+</string>
+				<string>^http://tosh.comedycentral.com/.+</string>
 			</array>
 		</dict>
 	</dict>

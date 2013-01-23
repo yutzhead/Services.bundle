@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www.)?eurogamer.net/videos/.+</string>
+				<string>^http://(www.)?eurogamer.net/videos/.+</string>
 			</array>
 		</dict>
 	</dict>

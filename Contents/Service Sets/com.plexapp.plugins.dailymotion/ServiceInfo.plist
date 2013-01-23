@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?dailymotion.com/((embed/)?video/|swf/(video/)?|.+#video(Id)?=).+</string>
+				<string>^http://(www\.)?dailymotion.com/((embed/)?video/|swf/(video/)?|.+#video(Id)?=).+</string>
 			</array>
 		</dict>
 	</dict>

@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.bing.com/videos/(watch/video/[^/]+|browse\?videoId=).+</string>
+				<string>^http://www.bing.com/videos/(watch/video/[^/]+|browse\?videoId=).+</string>
 			</array>
 		</dict>
 	</dict>

@@ -8,8 +8,8 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.rtbf.be/tv/revoir/detail\?catchupId=.+</string>
-				<string>http://www.rtbf.be/video/.+\?id=[0-9]+</string>
+				<string>^http://www.rtbf.be/tv/revoir/detail\?catchupId=.+</string>
+				<string>^http://www.rtbf.be/video/.+\?id=[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

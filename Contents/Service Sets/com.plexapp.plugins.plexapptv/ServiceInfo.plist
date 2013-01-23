@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?plexapp\.tv/streams/queue/.+\.html</string>
+				<string>^http://(www\.)?plexapp\.tv/streams/queue/.+\.html</string>
 			</array>
 		</dict>
 	</dict>

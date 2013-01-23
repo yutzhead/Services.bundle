@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.funnyordie.com/(embed|videos)/[0-9a-f]</string>
+				<string>^http://www.funnyordie.com/(embed|videos)/[0-9a-f]</string>
 			</array>
 		</dict>
 	</dict>

@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.geenstijl\.(nl|tv)/.+</string>
+				<string>^http://www\.geenstijl\.(nl|tv)/.+</string>
 			</array>
 		</dict>
 	</dict>

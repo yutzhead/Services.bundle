@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://.+\.video\.canoe\.tv/.+</string>
+				<string>^http://.+\.video\.canoe\.tv/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.blinkbox.com(/Free)?/((TV|Television)|Movie(s)?)/[0-9]+/</string>
+				<string>^http://www.blinkbox.com(/Free)?/((TV|Television)|Movie(s)?)/[0-9]+/</string>
 			</array>
 		</dict>
 	</dict>

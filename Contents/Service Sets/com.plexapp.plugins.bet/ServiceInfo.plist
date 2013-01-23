@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.bet.com/video/.+</string>
+				<string>^http://www.bet.com/video/.+</string>
 			</array>
 		</dict>
 	</dict>
@@ -18,7 +18,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.bet.com/video/music/.+</string>
+				<string>^http://www.bet.com/video/music/.+</string>
 			</array>
 		</dict>
 	</dict>

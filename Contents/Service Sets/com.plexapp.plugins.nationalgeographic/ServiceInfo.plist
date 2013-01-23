@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://video.nationalgeographic.com/video/player/.+</string>
+				<string>^http://video.nationalgeographic.com/video/player/.+</string>
 			</array>
 		</dict>
 		<key>National Geographic Photography</key>
@@ -25,7 +25,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://photography.nationalgeographic.com/photography/</string>
+				<string>^http://photography.nationalgeographic.com/photography/</string>
 			</array>
 		</dict>
 	</dict>

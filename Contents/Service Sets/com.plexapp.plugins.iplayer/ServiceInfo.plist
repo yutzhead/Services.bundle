@@ -12,7 +12,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.bbc\.co\.uk/iplayer/episode/[^/$]{8}</string>
+				<string>^http://www\.bbc\.co\.uk/iplayer/episode/[^/$]{8}</string>
 			</array>
 		</dict>
 		<key>BBC News</key>
@@ -24,7 +24,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www.bbc.co.uk/news|news.bbc.co.uk)/.+</string>
+				<string>^http://(www.bbc.co.uk/news|news.bbc.co.uk)/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www.)?ifanboy.com/podcasts/.+</string>
+				<string>^http://(www.)?ifanboy.com/podcasts/.+</string>
 			</array>
 		</dict>
 	</dict>

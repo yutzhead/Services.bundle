@@ -6,12 +6,9 @@
 	<dict>
 		<key>CityTV</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://video.citytv.com/video/detail/.+/.+</string>
+				<string>^http://video.citytv.com/video/detail/.+/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://lens\.blogs\.nytimes\.com.*</string>
+				<string>^http://lens\.blogs\.nytimes\.com.*</string>
 			</array>
 			<key>TestURLs</key>
 			<array>

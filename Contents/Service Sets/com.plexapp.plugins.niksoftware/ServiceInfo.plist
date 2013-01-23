@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?niksoftware.com/learnmore/usa/index.php/webinars/archives/.+</string>
+				<string>^http://(www\.)?niksoftware.com/learnmore/usa/index.php/webinars/archives/.+</string>
 			</array>
 		</dict>
 	</dict>

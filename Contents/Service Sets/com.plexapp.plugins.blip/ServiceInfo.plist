@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(.+\.)?blip\.tv/(((file|play)/([A-Za-z0-9%_+]){7,11}(\.html)?)|([^/]+/.+\-([0-9]{7})))</string>
+				<string>^http://(.+\.)?blip\.tv/(((file|play)/([A-Za-z0-9%_+]){7,11}(\.html)?)|([^/]+/.+\-([0-9]{7})))</string>
 			</array>
 		</dict>
 	</dict>

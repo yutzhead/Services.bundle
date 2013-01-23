@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.globaltv\.com/.+/video.html.+</string>
+				<string>^http://www\.globaltv\.com/.+/video.html.+</string>
 			</array>
 		</dict>
 	</dict>

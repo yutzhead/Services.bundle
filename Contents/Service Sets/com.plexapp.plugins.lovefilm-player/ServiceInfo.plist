@@ -16,7 +16,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>https?://www.lovefilm.(com|de)/film/.+</string>
+				<string>^https?://www.lovefilm.(com|de)/film/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.locotv.com.au/.+</string>
+				<string>^http://www.locotv.com.au/.+</string>
 			</array>
 		</dict>
 	</dict>

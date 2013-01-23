@@ -8,12 +8,12 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.centrictv.com/videos/.+</string>
+				<string>^http://www.centrictv.com/videos/.+</string>
 			</array>
 		</dict>
 	</dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
+	<key>PlexFrameworkFlags</key>
+	<array>
 		<string>UseRealRTMP</string>
 	</array>
 </dict>
