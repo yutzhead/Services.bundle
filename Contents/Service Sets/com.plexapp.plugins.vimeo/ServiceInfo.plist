@@ -15,8 +15,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>https?://(www\.)?vimeo\.com/.+</string>
-				<string>https?://player\.vimeo\.com/video/[0-9]+</string>
+				<string>^https?://(www\.)?vimeo\.com/.+</string>
+				<string>^https?://player\.vimeo\.com/video/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

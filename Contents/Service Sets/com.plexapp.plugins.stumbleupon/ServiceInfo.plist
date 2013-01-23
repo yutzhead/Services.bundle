@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.stumbleupon.com/su/[0-9, a-z, A-Z]{6}/.+</string>
+				<string>^http://www.stumbleupon.com/su/[0-9, a-z, A-Z]{6}/.+</string>
 			</array>
 		</dict>
 	</dict>

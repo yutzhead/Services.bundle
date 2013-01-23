@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.colbertnation.com/(full-episodes|the-colbert-report-videos)/</string>
+				<string>^http://www.colbertnation.com/(full-episodes|the-colbert-report-videos)/</string>
 			</array>
 		</dict>
 	</dict>

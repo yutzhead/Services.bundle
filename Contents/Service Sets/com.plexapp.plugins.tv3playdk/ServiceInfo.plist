@@ -17,7 +17,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.tv3play.dk/play/[0-9]+</string>
+				<string>^http://www.tv3play.dk/play/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

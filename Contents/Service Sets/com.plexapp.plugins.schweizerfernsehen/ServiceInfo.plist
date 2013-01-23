@@ -17,7 +17,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.srf.ch/player/tv/.+/video/.+\?id=.+</string>
+				<string>^http://www.srf.ch/player/tv/.+/video/.+\?id=.+</string>
 			</array>
 		</dict>
 	</dict>

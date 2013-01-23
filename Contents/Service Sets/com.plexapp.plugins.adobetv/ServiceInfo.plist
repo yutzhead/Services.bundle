@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://tv.adobe.com/watch/.+</string>
+				<string>^http://tv.adobe.com/watch/.+</string>
 			</array>
 		</dict>
 	</dict>

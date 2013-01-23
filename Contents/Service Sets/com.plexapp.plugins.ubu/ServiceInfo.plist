@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(www\.)?ubu\.com/film/.+</string>
+				<string>^http://(www\.)?ubu\.com/film/.+</string>
 			</array>
 		</dict>
 	</dict>

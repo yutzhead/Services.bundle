@@ -12,8 +12,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://videovideo.dk/episode/.+/.+</string>
-				<string>http://videovideo.dk/e/[0-9]+</string>
+				<string>^http://videovideo.dk/episode/.+/.+</string>
+				<string>^http://videovideo.dk/e/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

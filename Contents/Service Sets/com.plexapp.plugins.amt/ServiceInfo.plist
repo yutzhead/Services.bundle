@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://trailers\.apple\.com/trailers/.+/.+</string>
+				<string>^http://trailers\.apple\.com/trailers/.+/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.sesamestreet.org/.+</string>
+				<string>^http://www.sesamestreet.org/.+</string>
 			</array>
 		</dict>
 	</dict>

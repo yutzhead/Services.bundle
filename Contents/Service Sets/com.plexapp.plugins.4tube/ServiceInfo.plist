@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.4tube.com/videos/[0-9]+</string>
+				<string>^http://www.4tube.com/videos/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

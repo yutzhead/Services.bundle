@@ -14,7 +14,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://go.sky.com/vod/content/.+/videoDetailsPage.do</string>
+				<string>^http://go.sky.com/vod/content/.+/videoDetailsPage.do</string>
 			</array>
 		</dict>
 	</dict>

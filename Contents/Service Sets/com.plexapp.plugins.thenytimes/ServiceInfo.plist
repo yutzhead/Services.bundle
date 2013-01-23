@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(video|www).nytimes.com/video/.+</string>
+				<string>^http://(video|www).nytimes.com/video/.+</string>
 			</array>
 		</dict>
 	</dict>

@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.tvigle.ru/.+\?video=[0-9]+</string>
+				<string>^http://www.tvigle.ru/.+\?video=[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

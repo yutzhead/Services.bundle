@@ -2,24 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
-	<string>UseRealRTMP</string>
-    </array>
-    <key>URL</key>
+	<key>URL</key>
 	<dict>
 		<key>Slice</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-			    <string>http://www\.slice\.ca/video/\?releasePID=.+</string>
+				<string>^http://www\.slice\.ca/video/\?releasePID=.+</string>
 			</array>
 		</dict>
 	</dict>
-    <key>PlexFrameworkFlags</key>
-    <array>
-        <string>UseRealRTMP</string>
-    </array>
-
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>

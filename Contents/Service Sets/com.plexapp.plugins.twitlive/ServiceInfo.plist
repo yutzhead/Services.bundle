@@ -8,8 +8,8 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://twit.tv/show/.+?/[0-9]+</string>
-				<string>http://twit.tv/[a-z]+[0-9]+$</string>
+				<string>^http://twit.tv/show/.+?/[0-9]+</string>
+				<string>^http://twit.tv/[a-z]+[0-9]+$</string>
 			</array>
 		</dict>
 	</dict>

@@ -18,7 +18,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www\.showcase\.ca/(.*)video\.html\?v=.+</string>
+				<string>^http://www\.showcase\.ca/(.*)video\.html\?v=.+</string>
 			</array>
 		</dict>
 	</dict>

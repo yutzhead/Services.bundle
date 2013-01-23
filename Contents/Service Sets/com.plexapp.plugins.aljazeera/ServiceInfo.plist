@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://(english|www).aljazeera.(net|com)/programmes/.+</string>
+				<string>^http://(english|www).aljazeera.(net|com)/programmes/.+</string>
 			</array>
 		</dict>
 	</dict>
