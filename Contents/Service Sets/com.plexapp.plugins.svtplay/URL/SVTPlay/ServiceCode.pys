@@ -24,9 +24,15 @@ def MetadataObjectForURL(url):
 	if len(json_url) < 1:
 		return None
 
-	show = page.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[0]
-	title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[1].split(' | ')[0]
-	summary = page.xpath('//meta[@property="og:description"]/@content')[0]
+	show = None
+	title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].replace('&amp;', '&')
+	title = String.DecodeHTMLEntities(title)
+
+	if ' - ' in title:
+		(show, title) = title.split(' - ', 1)
+
+	summary = page.xpath('//meta[@property="og:description"]/@content')[0].replace('&amp;', '&')
+	summary = String.DecodeHTMLEntities(summary)
 	thumb = page.xpath('//meta[@property="og:image"]/@content')[0].replace('/small/', '/large/')
 
 	try:
@@ -41,14 +47,23 @@ def MetadataObjectForURL(url):
 	except:
 		duration = None
 
-	return EpisodeObject(
-		show = show,
-		title = title,
-		summary = summary,
-		duration = duration,
-		thumb = thumb,
-		originally_available_at = air_date
-	)
+	if show:
+		return EpisodeObject(
+			show = show,
+			title = title,
+			summary = summary,
+			duration = duration,
+			thumb = thumb,
+			originally_available_at = air_date
+		)
+	else:
+		return VideoClipObject(
+			title = title,
+			summary = summary,
+			duration = duration,
+			thumb = thumb,
+			originally_available_at = air_date
+		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
