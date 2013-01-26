@@ -25,9 +25,12 @@ def MetadataObjectForURL(url):
 	if not '/watch/' in url:
 		return None
 
-	json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), headers=HTTP_HEADERS)
-	eid = json_obj['embed_url'].split('?eid=')[1]
+	try:
+		json_obj = JSON.ObjectFromURL(API_URL % String.Quote(url), headers=HTTP_HEADERS)
+	except:
+		raise Ex.MediaNotAvailable
 
+	eid = json_obj['embed_url'].split('?eid=')[1]
 	headers = HTTP_HEADERS
 	headers['Referer'] = 'http://download.hulu.com/huludesktop.swf?ver=0.1.0'
 	details = XML.ElementFromURL(HULU_ASSETS % eid, headers=headers, sleep=1.5)
