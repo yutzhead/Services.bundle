@@ -12,7 +12,7 @@ YOUTUBE_AUDIOCODEC =    ['aac',      'aac',    'aac',  'aac',  'aac']
 httpHeaders = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
 RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
-RE_URL_MAP_ALT = Regex('\\u0026amp;url_encoded_fmt_stream_map=(.+?)\\u0026amp;')
+RE_URL_MAP_ALT = Regex('&amp;url_encoded_fmt_stream_map=(.+?)&amp;')
 RE_PATH_1 = Regex('^/(watch|details)(_popup)?')
 RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
@@ -229,8 +229,6 @@ def PlayVideo(url = None, default_fmt = None, **kwargs):
 
     if not fmt_url_map:
       raise Ex.MediaNotAvailable
-
-    fmt_url_map[0] = String.Unquote(fmt_url_map[0])
 
   fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
 
