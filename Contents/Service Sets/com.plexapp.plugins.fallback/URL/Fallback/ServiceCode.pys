@@ -130,7 +130,7 @@ def MetadataObjectForURL(url):
 		else:
 			headers = HTTP_DESKTOP_UA
 
-		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, follow_redirects=False)
+		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
 
 		try:
 			req.headers
@@ -246,7 +246,7 @@ def MediaObjectsForURL(url):
 		else:
 			headers = HTTP_DESKTOP_UA
 
-		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, follow_redirects=False)
+		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
 
 		try:
 			req.headers
