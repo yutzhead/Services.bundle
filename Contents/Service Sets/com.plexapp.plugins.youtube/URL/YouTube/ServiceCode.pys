@@ -225,7 +225,6 @@ def PlayVideo(url = None, default_fmt = None, **kwargs):
   fmt_url_map = RE_URL_MAP.findall(yt_page)
 
   if not fmt_url_map:
-    # Build up the format map.
     fmt_url_map = RE_URL_MAP_ALT.findall(yt_page)
 
     if not fmt_url_map:
