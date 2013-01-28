@@ -1,4 +1,4 @@
-RE_AJAX_CONTENT = Regex("(VideoHandler.dumpObject|newVideoPlayer)\(\s(?P<json>{.+})")
+RE_AJAX_CONTENT = Regex("(VideoHandler.dumpObject|newVideoPlayer)\(\s(?P<json>{.+?})\s\)")
 
 ####################################################################################################
 def NormalizeURL(url):
