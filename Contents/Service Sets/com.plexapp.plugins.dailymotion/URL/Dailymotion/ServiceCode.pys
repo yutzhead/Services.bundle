@@ -85,7 +85,10 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, fmt):
+def PlayVideo(url=None, fmt=None, **kwargs):
+
+	if not url or not fmt:
+		return None
 
 	try:
 		data = HTTP.Request(url).content
