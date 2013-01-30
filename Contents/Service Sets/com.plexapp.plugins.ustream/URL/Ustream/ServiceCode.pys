@@ -75,7 +75,7 @@ def MediaObjectsForURL(url):
 	if '/recorded/' in url:
 		return [
 			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=url))],
+				parts = [PartObject(key=Callback(PlayRecorded, url=url))],
 				container = Container.MP4,
 				video_codec = VideoCodec.H264,
 				video_resolution = 'sd',
@@ -87,7 +87,7 @@ def MediaObjectsForURL(url):
 	else:
 		return [
 			MediaObject(
-				parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+				parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayLive, url=url)))],
 				container = 'mpegts',
 				video_codec = VideoCodec.H264,
 				video_resolution = '480',
@@ -99,7 +99,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url):
+def PlayRecorded(url):
 
 	if '/recorded/' in url:
 		video_id = RE_RECORDED_ID.search(url)
@@ -111,15 +111,20 @@ def PlayVideo(url):
 
 		if 'liveHttpUrl' in json['results']:
 			return IndirectResponse(VideoClipObject, key=json['results']['liveHttpUrl'])
-		else:
-			raise Ex.MediaNotAvailable
 
-	else:
-		html = HTML.ElementFromURL(url)
-		content_id = html.xpath('//a[@data-content-id]')
+	raise Ex.MediaNotAvailable
 
-		if len(content_id) < 1:
-			raise Ex.MediaNotAvailable
+####################################################################################################
+def PlayLive(url):
 
-		video_id = content_id[0].get('data-content-id')
-		return IndirectResponse(VideoClipObject, key=USTREAM_IPHONE_URL % video_id)
+	html = HTML.ElementFromURL(url)
+	content_id = html.xpath('//a[@data-content-id]')
+
+	if len(content_id) < 1:
+		raise Ex.MediaNotAvailable
+
+	video_id = content_id[0].get('data-content-id')
+	return Redirect(USTREAM_IPHONE_URL % video_id)
+
+####################################################################################################
+PlayVideo = PlayLive
