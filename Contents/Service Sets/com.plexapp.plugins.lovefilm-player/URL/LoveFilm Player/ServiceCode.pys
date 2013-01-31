@@ -38,6 +38,9 @@ def MetadataObjectForUKURL(url):
 
     details = ParseItem(page)
 
+    if not details:
+        raise Ex.MediaNotAvailable
+
     originalTitle = details['title']
     if re.match(TV, originalTitle) == None:
         return MovieObject(
@@ -127,6 +130,9 @@ def MetadataObjectForDEURL(url):
 
     details = ParseItem(page)
 
+    if not details:
+        raise Ex.MediaNotAvailable
+
     originalTitle = details['title']
     if re.match(DE_TV, originalTitle) == None:
         return MovieObject(
@@ -190,8 +196,14 @@ def MetadataObjectForDEURL(url):
 def ParseItem(page):
     details = {}
 
-    details['title'] = page.xpath("//meta[@property='og:title']/@content")[0]
-    
+    try:
+        details['title'] = page.xpath("//meta[@property='og:title']/@content")[0]
+
+        if details['title'] == 'Title temporarily unavailable':
+            return None
+    except:
+        return None
+
     # [Optional] The artwork
     details['art'] = None
     try: details['art'] = page.xpath("//meta[@property='og:image']")[0].get('content').replace('https://','http://')
