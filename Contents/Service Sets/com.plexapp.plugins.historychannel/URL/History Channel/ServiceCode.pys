@@ -71,8 +71,10 @@ def PlayVideo(url=None):
 
   for video in playlist_json:
     if slug == video['display']['slug']:
-      sig = HTTP.Request(SIGNATURE_REQUEST % video['videoURLs']['html5ReleaseURL'], cacheTime=0).content
-      release_xml = XML.ElementFromURL(video['videoURLs']['html5ReleaseURL'] + "?sig=" + sig)
+      # provider is sometimes adding in extra params onto this url that we don't want so let's drop them before proceeding
+      tempUrl = video['videoURLs']['html5ReleaseURL'].split('?')[0]
+      sig = HTTP.Request(SIGNATURE_REQUEST % tempUrl, cacheTime=0).content
+      release_xml = XML.ElementFromURL(tempUrl + "?sig=" + sig)
       video = release_xml.xpath('//a:video', namespaces=SMIL_NS)
 
       if len(video) < 1:
