@@ -1,4 +1,5 @@
 JSON_URL = 'http://nos.nl/playlist/%s/mp4-web03/%s.json'
+RE_ID = Regex('\/(?P<id>\d+)\-')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -40,7 +41,6 @@ def GetJson(url):
 		type = 'uitzending'
 	else:
 		type = 'video'
-		
-	id = url.rsplit('/')[4].split('-')[0]
 
+	id = RE_ID.search(url).group('id')
 	return JSON.ObjectFromURL(JSON_URL % (type, id))
