@@ -285,7 +285,11 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	BITRATES = ['150', '400', '450', '750', '1200', '1700', '2200', '3500']
 
-	data = HTML.ElementFromURL(url)
+	try:
+		data = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
