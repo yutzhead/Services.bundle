@@ -12,7 +12,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	try:
+		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaNotAvailable
+
 	page_title = html.xpath('//title')[0].text
 
 	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
@@ -130,54 +134,6 @@ def MediaObjectsForURL(url):
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=4))
-				],
-				bitrate = 450,
-				container = Container.MP4,
-				video_resolution = '252',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=4))
-				],
-				bitrate = 400,
-				container = Container.MP4,
-				video_resolution = '216',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=4))
-				],
-				bitrate = 150,
-				container = Container.MP4,
-				video_resolution = '216',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
 			)
 		]
 	else:
@@ -241,49 +197,13 @@ def MediaObjectsForURL(url):
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=0))
-				],
-				bitrate = 450,
-				container = Container.MP4,
-				video_resolution = '252',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0)),
-				],
-				bitrate = 400,
-				container = Container.MP4,
-				video_resolution = '216',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="150", index=0))
-				],
-				bitrate = 150,
-				container = Container.MP4,
-				video_resolution = '216',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
 			)
 		]
 
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0):
 
-	BITRATES = ['150', '400', '450', '750', '1200', '1700', '2200', '3500']
+	BITRATES = ['750', '1200', '1700', '2200', '3500']
 
 	try:
 		data = HTML.ElementFromURL(url)
