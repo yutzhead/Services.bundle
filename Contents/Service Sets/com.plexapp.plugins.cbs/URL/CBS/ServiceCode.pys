@@ -293,7 +293,10 @@ def VideoFromSMIL(url, res):
       url  = page.xpath("//meta[@property = 'og:video']")[0].get('content')
       pid = RE_PID.search(url).group(1)
     except:
-      pid = RE_PID2.search(content).group(1)
+      try:
+        pid = RE_PID2.search(content).group(1)
+      except:
+        raise Ex.MediaNotAvailable
 
   if pid:
     try:
