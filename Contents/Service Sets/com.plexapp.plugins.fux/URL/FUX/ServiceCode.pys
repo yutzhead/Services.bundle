@@ -1,0 +1,122 @@
+RE_DATA = Regex("(.+?) - Rating.+Length: (\d+m\d+)s - Watch (.+) and other s")
+RE_XML = Regex("((?<=')[^']+\?v=([0-9]*-){1,})")
+BASE_URL = 'http://www.fux.com'
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	try:
+		data = HTTP.Request(url).content
+		xml_url = '%s%s' % (BASE_URL, RE_XML.search(data).group(1))
+		Log("======")
+		Log(xml_url)
+		html = HTML.ElementFromString(data)
+	except:
+		raise Ex.MediaNotAvailable
+
+	description = html.xpath('//meta[@http-equiv="description"]/@content')[0].replace('\n', '')
+	(date, duration, title) = RE_DATA.findall(description)[0]
+
+	originally_available_at = Datetime.ParseDate(date).date()
+	duration = TimeToMs(duration.replace('m', ':'))
+
+	xml = XML.ElementFromURL(xml_url)
+	thumb = xml.xpath('//image/text()')[0]
+
+	return VideoClipObject(
+		title = title,
+		duration = duration,
+		originally_available_at = originally_available_at,
+		thumb = thumb,
+		genres = ['XXX','Adult','18+'],
+		content_rating = 'X'
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=1080))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '1080',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, res=1080):
+
+	try:
+		data = HTTP.Request(url).content
+		xml_url = '%s%s' % (BASE_URL, RE_XML.search(data).group(1))
+		xml = XML.ElementFromURL(xml_url)
+	except:
+		raise Ex.MediaNotAvailable
+
+	available_versions = xml.xpath('//stream[@label]/@label')
+
+	if len(available_versions) < 1:
+		raise Ex.MediaNotAvailable
+
+	closest = min((abs(res - int(i.split('p')[0])), i.split(' ')[0]) for i in available_versions)[1]
+	video_url = xml.xpath('//stream[starts-with(@label, "%s")]/file/text()' % closest)[0]
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	urls = HTML.ElementFromURL(BASE_URL).xpath('//a[contains(@href, "/video/")]/@href')
+
+	for url in urls:
+		if not url.startswith('http://'):
+			url = '%s%s' % (BASE_URL, url)
+		
+		if url not in test_urls:
+			test_urls.append(url)
+
+		if len(test_urls) >= 3:
+			break
+
+	return test_urls
+
+####################################################################################################
+def TimeToMs(timecode):
+
+	seconds = 0
+	duration = timecode.split(':')
+	duration.reverse()
+
+	for i in range(0, len(duration)):
+		seconds += int(duration[i]) * (60**i)
+
+	return seconds * 1000
