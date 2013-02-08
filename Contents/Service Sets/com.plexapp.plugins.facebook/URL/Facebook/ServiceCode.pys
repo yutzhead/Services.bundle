@@ -26,11 +26,16 @@ def MetadataObjectForURL(url):
 			json_obj = JSON.ObjectFromString(String.Unquote(i[1]))
 			break
 
-	for i in json_obj:
-		if i[0] == 'thumbnail_src':
-			thumb = String.Unquote(i[1])
-		elif i[0] == 'video_duration':
-			duration = int(i[1]) * 1000
+	if not json_obj:
+		raise Ex.MediaNotAvailable
+
+	thumb = ''
+	if 'thumbnail_src' in json_obj:
+		thumb = json_obj['thumbnail_src']
+
+	duration = None
+	if 'video_duration' in json_obj:
+		duration = int(json_obj['video_duration']) * 1000
 
 	return VideoClipObject(
 		title = title,
