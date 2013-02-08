@@ -1,4 +1,4 @@
-RE_JSON = Regex('(\[\["video".+)\.forEach')
+RE_JSON = Regex('(\[\["params".+)\.forEach')
 RE_AVAILABLE = Regex('currently unavailable', Regex.IGNORECASE)
 
 ####################################################################################################
@@ -20,6 +20,11 @@ def MetadataObjectForURL(url):
 
 	json = RE_JSON.search(page_content).group(1)
 	json_obj = JSON.ObjectFromString(json)
+
+	for i in json_obj:
+		if i[0] == 'params':
+			json_obj = JSON.ObjectFromString(String.Unquote(i[1]))
+			break
 
 	for i in json_obj:
 		if i[0] == 'thumbnail_src':
@@ -69,19 +74,18 @@ def PlayVideo(url, res='720'):
 	json_obj = JSON.ObjectFromString(json)
 
 	for i in json_obj:
-		if i[0] == 'video':
-			video = String.Unquote(i[1])
-			video = JSON.ObjectFromString(video)
+		if i[0] == 'params':
+			json_obj = JSON.ObjectFromString(String.Unquote(i[1]))
 			break
 
-	if not video:
+	if not json_obj:
 		raise Ex.MediaNotAvailable
 
-	if res == '720' and 'hd_src' in video:
-		video_url = video['hd_src']
-	elif 'sd_src' in video:
-		video_url = video['sd_src']
+	if res == '720' and 'hd_src' in json_obj:
+		video_url = json_obj['hd_src']
+	elif 'sd_src' in json_obj:
+		video_url = json_obj['sd_src']
 	else:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	return IndirectResponse(VideoClipObject, key=video_url.replace('https://', 'http://'))
