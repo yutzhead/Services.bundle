@@ -83,6 +83,9 @@ def PlayVideo(url=None):
         if len(ref) < 0:
           raise Ex.MediaNotAvailable
 
+        if ref[0].get('title') == 'Geographic Restriction':
+          raise Ex.MediaGeoblocked
+
         if ref[0].get('title') == 'Expired':
           raise Ex.MediaExpired
 
