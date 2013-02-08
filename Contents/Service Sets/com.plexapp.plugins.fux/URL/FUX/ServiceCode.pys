@@ -13,8 +13,6 @@ def MetadataObjectForURL(url):
 	try:
 		data = HTTP.Request(url).content
 		xml_url = '%s%s' % (BASE_URL, RE_XML.search(data).group(1))
-		Log("======")
-		Log(xml_url)
 		html = HTML.ElementFromString(data)
 	except:
 		raise Ex.MediaNotAvailable
