@@ -1,4 +1,4 @@
-RE_PLAYER_VARS = Regex("<script>addCustomPlayer\('(?P<part1>.+?)', '(?P<part2>.+?)', '(?P<part3>.+?)', .+?\).</script>")
+RE_PLAYER_VARS = Regex("addCustomPlayer\('(?P<part1>[^']*)', '(?P<part2>[^']*)', '(?P<part3>[^']*)'")
 RE_RTMP_ARGS = Regex("(?P<player>rtmp.+?/ePlayer[0-9])(?P<playpath>/.+)")
 
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
