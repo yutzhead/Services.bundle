@@ -69,9 +69,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, formatCode):
 
 	# Request the url and determine the uuid associated with the title
-	page_content = HTTP.Request(url).content
-	uuid = RE_UUID.search(page_content)
+	try:
+		page_content = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
 
+	uuid = RE_UUID.search(page_content)
 	if not uuid:
 		raise Ex.MediaNotAvailable
 
