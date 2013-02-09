@@ -63,7 +63,7 @@ def MetadataObjectFromAPI(url):
       content_rating = content_rating,
       season = season,
       index = index,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='SourceIcon.png')
     )
     return eo
 
@@ -76,7 +76,7 @@ def MetadataObjectFromAPI(url):
       duration = duration,
       content_rating = content_rating,
       summary = summary,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+      thumb = Resource.ContentsOfURLWithFallback(url=thumbs, fallback='SourceIcon.png')
     )
     return co
 
@@ -138,7 +138,7 @@ def MetadataObjectFromPAGE(url):
       summary = summary,
       originally_available_at = originally_available_at,
       duration = duration, 
-      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
     )
     return eo
 
@@ -151,7 +151,7 @@ def MetadataObjectFromPAGE(url):
     co = VideoClipObject(
       title = title,
       summary = summary,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+      thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
     )
     return co
 
@@ -195,14 +195,14 @@ def MetadataObjectFromSMIL(url):
         index = episode,
         season = season,
         show = series,
-        thumb = R('icon-default.png')
+        thumb = R('SourceIcon.png')
       )
     else:
       return VideoClipObject(
         title = title,
         summary = summary,
         duration = duration,
-        thumb = R('icon-default.png')
+        thumb = R('SourceIcon.png')
       )
 
     title = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
