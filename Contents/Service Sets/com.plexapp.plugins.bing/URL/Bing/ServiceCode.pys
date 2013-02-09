@@ -4,18 +4,18 @@ RE_UUID = Regex("uuid: '([^']+)'")
 ####################################################################################################
 def NormalizeURL(url):
 
-	if '?videoId=' in url:
-		return url.split('&')[0]
-	else:
-		return url.split('?')[0]
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	# Request the url and determine the uuid associated with the title
-	page_content = HTTP.Request(url).content
-	uuid = RE_UUID.search(page_content)
+	try:
+		page_content = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
 
+	uuid = RE_UUID.search(page_content)
 	if not uuid:
 		return None
 
@@ -29,17 +29,12 @@ def MetadataObjectForURL(url):
 	duration = int(video['durationSecs']) * 1000
 	date = Datetime.ParseDate(video['startDate'])
 
-	tags = []
-	for tag in video['tags']:
-		tags.append(tag['value'])
-
 	return VideoClipObject(
 		title = title,
 		summary = description,
 		thumb = thumb,
 		duration = duration,
-		originally_available_at = date,
-		tags = tags
+		originally_available_at = date
 	)
 
 ####################################################################################################
