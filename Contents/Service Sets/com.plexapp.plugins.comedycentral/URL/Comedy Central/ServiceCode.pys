@@ -13,9 +13,13 @@ def MetadataObjectForURL(url):
 
 	title = item.xpath('./title')[0].text
 	summary = item.xpath('./description')[0].text
-	date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
 	thumb = item.xpath('.//media:thumbnail', namespaces=NAMESPACES)[0].get('url')
 	duration = int(float(item.xpath('.//media:content', namespaces=NAMESPACES)[0].get('duration')) * 1000)
+
+	try:
+		date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
+	except:
+		date = None
 
 	return VideoClipObject(
 		title = title,
