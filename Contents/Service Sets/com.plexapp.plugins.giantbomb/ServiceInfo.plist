@@ -8,11 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.giantbomb.com/quick-look-age-of-empires-online/17-4721/</string>
+				<string>http://www.giantbomb.com/videos/names-are-dropped-creatures-revealed-in-aliens-col/2300-4190/</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(www\.)?giantbomb.com/.+</string>
+				<string>^http://(www\.)?giantbomb.com/videos/[^/]+/\d+\-\d+</string>
 			</array>
 		</dict>
 	</dict>
