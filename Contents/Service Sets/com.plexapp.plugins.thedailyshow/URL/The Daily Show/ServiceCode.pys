@@ -179,9 +179,12 @@ def PlayVideo(url, bitrate='3500', index=0):
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
 
-	player_data = XML.ElementFromURL(player_url)
-	available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
+	try:
+		player_data = XML.ElementFromURL(player_url)
+	except:
+		raise Ex.MediaNotAvailable
 
+	available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
 	if len(available_bitrates) < 1:
 		raise Ex.MediaNotAvailable
 
