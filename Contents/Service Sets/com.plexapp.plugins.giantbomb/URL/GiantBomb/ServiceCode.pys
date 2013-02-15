@@ -69,7 +69,11 @@ def GetClip(url):
 
 	video_id = url.split('-')[-1].strip('/')
 	clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
-	data = JSON.ObjectFromURL(clip_detail_url)
+
+	try:
+		data = JSON.ObjectFromURL(clip_detail_url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if 'status_code' not in data or data['status_code'] != 1:
 		raise Ex.MediaNotAvailable
