@@ -1,8 +1,6 @@
 import re
-import urllib2
 
-VIDEO_PLAYER_URL_HD = 'http://videos.ordienetworks.com/videos/%s/ipad.mp4'
-VIDEO_PLAYER_URL_SD = 'http://videos.ordienetworks.com/videos/%s/iphone_wifi.mp4'
+IPAD_URL = 'http://v.fod4.com/i/v/%s/v,%s,.mp4.csmil/master.m3u8?__b__=600__a__=off'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -39,52 +37,51 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
-			video_resolution = '720',
-			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))]
-		),
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
-			video_resolution = 'sd',
-			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
-		)
-	]
-
-####################################################################################################
-def PlayVideo(url, res):
-
-	# Extract the identifier of the video
 	video_id = re.search('/videos/(?P<video_id>[^/]+)', url).group('video_id')
 
-	# If the user has requested the HD stream, we need to also check to see if it's available. 
-	# It appears that sometimes it is not referenced by the actual page, but is yet it is still 
-	# possible to find it.
-	content_url = VIDEO_PLAYER_URL_SD % video_id
-
-	if res == 'hd':
-		hd_url = VIDEO_PLAYER_URL_HD % video_id
-		if IsAvailable(hd_url) == True:
-			content_url = hd_url
-
-	return Redirect(content_url)
+	return [
+	MediaObject(
+		video_codec = VideoCodec.H264,
+		audio_codec = AudioCodec.AAC,
+		video_resolution = '720',
+		parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id, res='RESOLUTION=1280x720')))],
+		audio_channels = 2
+	),
+	MediaObject(
+		video_codec = VideoCodec.H264,
+		audio_codec = AudioCodec.AAC,
+		video_resolution = 'sd',
+		parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id, res='RESOLUTION=480x270')))],
+		audio_channels = 2
+	)
+]
 
 ####################################################################################################
-class HeadRequest(urllib2.Request):
-	def get_method(self):
-		return "HEAD"
+def PlayVideo(id, res):
 
-####################################################################################################
-def IsAvailable(url):
+	# Not all clips are available in higher bitrates, but most appear to have up to 1200 at least.
+	# Use 110 as a last resort.
+
 	try:
-		response = urllib2.urlopen(HeadRequest(url))
-		return True
+		master_playlist = HTTP.Request(IPAD_URL % (id, '110,200,400,600,1200,1800,2500')).content.split('\n')
 	except:
-		return False
+		try: 
+			master_playlist = HTTP.Request(IPAD_URL % (id, '110,200,400,600,1200')).content.split('\n')
+		except:
+			try:
+				master_playlist = HTTP.Request(IPAD_URL % (id, '110')).content.split('\n')
+			except:
+				return None
+
+	playlist_url = None
+
+	for i, line in enumerate(master_playlist):
+		if res in line:
+			playlist_url = master_playlist[i+1]
+		if 'avc1' in line:
+			fallback_playlist_url = master_playlist[i+1]
+
+	if not playlist_url:
+		playlist_url = fallback_playlist_url
+
+	return Redirect(playlist_url)
