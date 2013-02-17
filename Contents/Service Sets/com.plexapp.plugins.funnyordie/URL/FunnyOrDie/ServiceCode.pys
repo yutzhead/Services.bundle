@@ -71,7 +71,7 @@ def PlayVideo(id, res):
 			try:
 				master_playlist = HTTP.Request(IPAD_URL % (id, '110')).content.split('\n')
 			except:
-				return None
+				raise Ex.MediaNotAvailable
 
 	playlist_url = None
 
