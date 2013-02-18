@@ -177,7 +177,12 @@ def PlayVideo(url, bitrate='3500', index=0):
 	uri = RE_PLAYER.search(content).group('id')
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
-	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
+	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+
+	if index < len(media_url):
+		player_url = media_url[index].get('url')
+	else:
+		return None
 
 	try:
 		player_data = XML.ElementFromURL(player_url)

@@ -80,6 +80,10 @@ def MetadataObjectForURL(url):
 
   originally_available_at = Datetime.ParseDate(json['upload_date'])
 
+  tags = []
+  if json['tags']:
+    tags = json['tags'].split(', ')
+
   return VideoClipObject(
     title = json['title'],
     summary = summary,
@@ -87,7 +91,7 @@ def MetadataObjectForURL(url):
     thumb = json['thumbnail_large'],
     originally_available_at = originally_available_at.date(),
     year = originally_available_at.year,
-    tags = json['tags'].split(', '),
+    tags = tags,
     directors = [json['user_name']]
   )
 
