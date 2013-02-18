@@ -1,6 +1,5 @@
-import re
-
 IPAD_URL = 'http://v.fod4.com/i/v/%s/v,%s,.mp4.csmil/master.m3u8?__b__=600__a__=off'
+RE_VIDEO_ID = Regex('/videos/(?P<video_id>[^/]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -37,39 +36,39 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	video_id = re.search('/videos/(?P<video_id>[^/]+)', url).group('video_id')
-
 	return [
-	MediaObject(
-		video_codec = VideoCodec.H264,
-		audio_codec = AudioCodec.AAC,
-		video_resolution = '720',
-		parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id, res='RESOLUTION=1280x720')))],
-		audio_channels = 2
-	),
-	MediaObject(
-		video_codec = VideoCodec.H264,
-		audio_codec = AudioCodec.AAC,
-		video_resolution = 'sd',
-		parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, id=video_id, res='RESOLUTION=480x270')))],
-		audio_channels = 2
-	)
-]
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '720',
+			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res='RESOLUTION=1280x720')))],
+			audio_channels = 2
+		),
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 'sd',
+			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res='RESOLUTION=480x270')))],
+			audio_channels = 2
+		)
+	]
 
 ####################################################################################################
-def PlayVideo(id, res):
+def PlayVideo(url, res='RESOLUTION=1280x720'):
+
+	video_id = RE_VIDEO_ID.search(url).group('video_id')
 
 	# Not all clips are available in higher bitrates, but most appear to have up to 1200 at least.
 	# Use 110 as a last resort.
 
 	try:
-		master_playlist = HTTP.Request(IPAD_URL % (id, '110,200,400,600,1200,1800,2500')).content.split('\n')
+		master_playlist = HTTP.Request(IPAD_URL % (video_id, '110,200,400,600,1200,1800,2500')).content.split('\n')
 	except:
 		try: 
-			master_playlist = HTTP.Request(IPAD_URL % (id, '110,200,400,600,1200')).content.split('\n')
+			master_playlist = HTTP.Request(IPAD_URL % (video_id, '110,200,400,600,1200')).content.split('\n')
 		except:
 			try:
-				master_playlist = HTTP.Request(IPAD_URL % (id, '110')).content.split('\n')
+				master_playlist = HTTP.Request(IPAD_URL % (video_id, '110')).content.split('\n')
 			except:
 				raise Ex.MediaNotAvailable
 
