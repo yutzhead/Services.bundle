@@ -89,6 +89,9 @@ def PlayVideo(url=None):
         if ref[0].get('title') == 'Expired':
           raise Ex.MediaExpired
 
+        if ref[0].get('title') == 'Invalid Token':
+          raise Ex.MediaNotAuthorized
+
       video_url = video[0].get('src')
       return Redirect(video_url)
 
