@@ -67,7 +67,7 @@ def MediaObjectsForURL(url):
 	if not video_id:
 		return None
 
-	video_url = 'http://htmlpreview.github.com/?http://github.com/plexinc-plugins/NBC.bundle/blob/master/Contents/Resources/nbc.html#%s' % video_id.group('id')
+	video_url = 'http://resources-cdn.plexapp.com/html/support/com.plexapp.plugins.nbc.html#%s' % video_id.group('id')
 
 	return [
 		MediaObject(
