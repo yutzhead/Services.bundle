@@ -59,10 +59,11 @@ def MediaObjectsForURL(url):
 		return [
 			MediaObject(
 				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4, client_platform=Client.Platform))
 				],
 				bitrate = 3500,
 				container = Container.MP4,
@@ -74,10 +75,11 @@ def MediaObjectsForURL(url):
 			),
 			MediaObject(
 				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4, client_platform=Client.Platform))
 				],
 				bitrate = 2200,
 				container = Container.MP4,
@@ -89,10 +91,11 @@ def MediaObjectsForURL(url):
 			),
 			MediaObject(
 				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4, client_platform=Client.Platform))
 				],
 				bitrate = 1700,
 				container = Container.MP4,
@@ -104,10 +107,11 @@ def MediaObjectsForURL(url):
 			),
 			MediaObject(
 				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3))
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3, client_platform=Client.Platform)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4, client_platform=Client.Platform))
 				],
 				bitrate = 1200,
 				container = Container.MP4,
@@ -171,7 +175,7 @@ def MediaObjectsForURL(url):
 		]
 
 ####################################################################################################
-def PlayVideo(url, bitrate='3500', index=0):
+def PlayVideo(url, bitrate='3500', index=0, client_platform=None):
 
 	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	uri = RE_PLAYER.search(content).group('id')
@@ -182,7 +186,11 @@ def PlayVideo(url, bitrate='3500', index=0):
 	if index < len(media_url):
 		player_url = media_url[index].get('url')
 	else:
-		return None
+		if client_platform in ('MacOSX', 'Windows'):
+			# Return small filler movie for desktop clients
+			return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
+		else:
+			return None
 
 	try:
 		player_data = XML.ElementFromURL(player_url)
