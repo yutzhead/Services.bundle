@@ -73,6 +73,10 @@ def PlayVideo(url, res='720'):
 	query = RE_CLEANUP.sub('', query).strip()
 
 	json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(query))
+
+	if not 'entry' in json_obj['feed']:
+		raise Ex.MediaNotAvailable
+
 	yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
 
 	media = URLService.MediaObjectsForURL(yt_url)
