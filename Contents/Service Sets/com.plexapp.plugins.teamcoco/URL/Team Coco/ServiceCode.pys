@@ -75,7 +75,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res):
+def PlayVideo(url, res=720):
 
 	video_id = GetVideoId(url)
 
