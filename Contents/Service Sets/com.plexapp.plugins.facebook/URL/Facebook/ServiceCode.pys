@@ -86,9 +86,9 @@ def PlayVideo(url, res='720'):
 	if not json_obj:
 		raise Ex.MediaNotAvailable
 
-	if res == '720' and 'hd_src' in json_obj:
+	if res == '720' and 'hd_src' in json_obj and json_obj['hd_src'] is not None:
 		video_url = json_obj['hd_src']
-	elif 'sd_src' in json_obj:
+	elif 'sd_src' in json_obj and json_obj['sd_src'] is not None:
 		video_url = json_obj['sd_src']
 	else:
 		raise Ex.MediaNotAvailable
