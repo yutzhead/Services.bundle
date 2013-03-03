@@ -54,7 +54,10 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, res='RESOLUTION=1280x720'):
+def PlayVideo(url=None, res='RESOLUTION=1280x720', **kwargs):
+
+	if not url:
+		raise Ex.MediaNotAvailable
 
 	video_id = RE_VIDEO_ID.search(url).group('video_id')
 
