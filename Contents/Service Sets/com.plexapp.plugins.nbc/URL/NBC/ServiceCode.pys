@@ -29,7 +29,14 @@ def MetadataObjectForURL(url):
 
 	show = xml.xpath('//a:show', namespaces=XML_NS)[0].text
 	title = xml.xpath('//a:headline', namespaces=XML_NS)[0].text
-	summary = xml.xpath('//a:description', namespaces=XML_NS)[0].text
+
+	try:
+		summary = xml.xpath('//a:description', namespaces=XML_NS)[0].text
+	except:
+		try:
+			summary = xml.xpath('//a:longDescription', namespaces=XML_NS)[0].text
+		except:
+			summary = None
 
 	try:
 		thumb = xml.xpath('//a:mezznimagepath', namespaces=XML_NS)[0].text
