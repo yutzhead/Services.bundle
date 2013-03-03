@@ -10,15 +10,13 @@ def NormalizeURL(url):
 	url = String.Unquote(url)
 	rel_url = None
 
-	if '#/video/' in url:
-		rel_url = url.split('#/video/')[-1]
-	elif '?/video/' in url:
-		rel_url = url.split('?/video/')[-1]
+	if '/video/' in url:
+		rel_url = url.split('/video/')[-1]
 
 	if rel_url:
 		url = '%s?/video/%s' % (CNN_URL, rel_url)
 
-	return url
+	return url.replace('.html', '')
 
 ####################################################################################################
 def TestURLs():
@@ -134,6 +132,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, resolution):
 
 	data_url = XML_URL % url.split('/?/video/')[1]
@@ -180,4 +179,4 @@ def PlayVideo(url, resolution):
 			clip = other-videos[0]
 			video = base + clip
 	
-	return Redirect(video)
+	return IndirectResponse(VideoClipObject, key=video)
