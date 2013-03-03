@@ -35,7 +35,10 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	summary = data.xpath('//description')[0].text
+	try:
+		summary = data.xpath('//description')[0].text
+	except:
+		summary = None
 
 	try:
 		thumb = data.xpath('//media:thumbnail', namespaces=NAMESPACES)[0].get('url').split('?')[0]
