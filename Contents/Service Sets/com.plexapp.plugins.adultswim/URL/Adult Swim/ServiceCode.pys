@@ -96,8 +96,15 @@ def PlayVideo(url):
 
 	for id in stream_ids:
 		playlist = XML.ElementFromURL(PLAYLIST_URL % id)
-		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')[0]
+		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')
+
+		if len(stream_url) < 1:
+			continue
+
 		parts.append(PartObject(key=stream_url))
+
+	if len(parts) < 1:
+		raise Ex.MediaNotAvailable
 
 	return ObjectContainer(
 		objects = [
