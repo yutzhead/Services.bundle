@@ -7,10 +7,14 @@ def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
 
+	title = html.xpath('//h1//text()')[0].strip()
+	summary = html.xpath('//div[@class="trailer-description"]/text()')[0]
+	thumb = 'http://%s' % html.xpath('//meta[@property="og:image"]/@content')[0].split('http://')[-1]
+
 	return VideoClipObject(
-		title = html.xpath('//div[@id="movie-nav-title"]/h1')[0].text.strip(),
-		summary = ''.join(html.xpath('//div[@id="movie-main-synopsis"]//text()')).replace('Read More','').replace('Plot:','').strip(),
-		thumb = html.xpath('//img[@class="movie-poster"]')[0].get('src')
+		title = title,
+		summary = summary,
+		thumb = thumb
 	)
 
 ####################################################################################################
@@ -47,15 +51,16 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, fmt):
 
 	html = HTML.ElementFromURL(url)
 
 	if fmt == 'HD 1080p':
-		url = html.xpath('//span[@class="butoneshd hd1080"]/a')[0].get('href')
+		url = html.xpath('//span[@class="butoneshd hd1080"]/a/@href')[0]
 	elif fmt == 'HD 720p':
-		url = html.xpath('//span[@class="butoneshd hd720"]/a')[0].get('href')
-	elif fmt == 'HD 480p':
-		url = html.xpath('//span[@class="butoneshd hd480"]/a')[0].get('href')
+		url = html.xpath('//span[@class="butoneshd hd720"]/a/@href')[0]
+	else:
+		url = html.xpath('//span[@class="butoneshd hd480"]/a/@href')[0]
 
-	return Redirect(url)
+	return IndirectResponse(VideoClipObject, key=url)
