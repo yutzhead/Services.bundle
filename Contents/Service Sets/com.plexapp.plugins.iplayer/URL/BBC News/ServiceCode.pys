@@ -16,12 +16,13 @@ def MetadataObjectForURL(url):
 
 	# Extract the available information
 	title = playlist_page.xpath("//p:playlist/p:title/text()", namespaces = NAMESPACES)[0]
-	description = playlist_page.xpath("//p:playlist/p:summary/text()", namespaces = NAMESPACES)[0]
+	try: summary = playlist_page.xpath("//p:playlist/p:summary/text()", namespaces = NAMESPACES)[0]
+	except: summary = None
 	thumb = playlist_page.xpath("//p:playlist/p:link[@rel='holding']", namespaces = NAMESPACES)[0].get('href')
 
 	return VideoClipObject(
 		title = title,
-		summary = description,
+		summary = summary,
 		thumb = thumb
 	)
 
