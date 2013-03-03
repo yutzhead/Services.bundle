@@ -33,10 +33,10 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = 'sd',
 			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
 			audio_channels = 2,
 			parts = [PartObject(key=Callback(PlayVideo, url=url))]
 		)
@@ -47,11 +47,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	html = HTML.ElementFromURL(url)
-	url = url.split('?')[0]
-	id = url.rstrip('/').split(',')[-1]
-	video_url = html.xpath('//li[@data-targeting_dfp_articleid="%s"]/@data-url' % id)[0]
+	video_url = html.xpath('//video[contains(@src, ".mp4")]/@src|//video/source[contains(@src, ".mp4")]/@src')
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if len(video_url) < 1:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url[0])
 
 ####################################################################################################
 def TimeToMs(timecode):
