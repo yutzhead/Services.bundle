@@ -43,56 +43,39 @@ def MetadataObjectForURL(url):
 
 		return VideoClipObject(
 			title = clip_title,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-default.png')
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb_url)
 		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
+	video_id = url.split('/')[-2].replace('VDKA', '')
+	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/1561/uiConfId/8628152/tags/uplynk/a/a.f4m?playbackContext=ct%%3Da%%26brand%%3D001%%26device%%3D001' % video_id
+
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1600))],
-			protocol = 'rtmp',
-			bitrate = 1600,
-			#aspect_ratio = '1.78'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=1000))],
-			protocol = 'rtmp',
-			bitrate = 1000,
-			#aspect_ratio = '1.78'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=700))],
-			protocol = 'rtmp',
-			bitrate = 700,
-			#aspect_ratio = '1.78'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=500))],
-			protocol = 'rtmp',
-			bitrate = 500,
-			#aspect_ratio = '1.78'
+			protocol = 'hls',
+			container = 'mpegts',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
+				)
+			]
 		)
 	]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url, bitrate=1600):
+def PlayVideo(f4m_url, **kwargs):
 
-	video_id = url.split('/')[-2]
-	data = XML.ElementFromURL(FEED_URL % video_id)
-	available_bitrates = data.xpath('//videos/video[not(@src="")]/@bitrate')
+	xml = XML.ElementFromURL(f4m_url)
+	video_url = xml.xpath('//a:media/@url', namespaces={'a': 'http://ns.adobe.com/f4m/1.0'})
 
-	if len(available_bitrates) < 1:
+	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(int(bitrate) - int(i.split('.')[0])), i) for i in available_bitrates)[1]
-
-	streamer = 'rtmp://cp88586.edgefcs.net/abcondemand'
-	clip = data.xpath('//videos/video[@bitrate="' + closest + '"]')[0].get('src')
-
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=streamer, clip=clip))
+	return Redirect(video_url[0])
 
 ####################################################################################################
 def TestURLs():
