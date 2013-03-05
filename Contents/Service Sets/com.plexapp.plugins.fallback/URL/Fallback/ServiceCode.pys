@@ -149,7 +149,7 @@ def MetadataObjectForURL(url):
 
 			# Embedded Video
 			source_url = FindExternalSource(req)
-			if source_url is not None:
+			if source_url is not None and source_url.split('://',1)[1] != url.split('://',1)[1]:
 				Log.Debug(' --> [Metadata] Found an embedded video: %s' % source_url)
 				return URLService.MetadataObjectForURL(source_url)
 
