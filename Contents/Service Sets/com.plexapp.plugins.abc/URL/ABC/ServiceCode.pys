@@ -1,5 +1,7 @@
 ABC_URL = "http://abc.go.com"
-FEED_URL = "http://cdn.abc.go.com/vp2/ws/s/contents/2000/utils/mov/13/9024/%s/432"
+HTTP_HEADERS = {
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'
+}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,7 +11,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	try: # Try to return an episode object first
 		show_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[1]
@@ -67,7 +69,10 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(f4m_url, **kwargs):
+def PlayVideo(f4m_url=None, **kwargs):
+
+	if not f4m_url:
+		raise Ex.MediaNotAvailable
 
 	xml = XML.ElementFromURL(f4m_url)
 	video_url = xml.xpath('//a:media/@url', namespaces={'a': 'http://ns.adobe.com/f4m/1.0'})
@@ -81,7 +86,7 @@ def PlayVideo(f4m_url, **kwargs):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL(ABC_URL)
+	data = HTML.ElementFromURL(ABC_URL, headers=HTTP_HEADERS)
 
 	for url in data.xpath('//h2[contains(text(), "full episodes")]/following-sibling::div[@class="carouselListWrapper"]//a[@class="framedThumbnail"]/@href'):
 		if url not in test_urls:
