@@ -74,13 +74,12 @@ def PlayVideo(f4m_url=None, **kwargs):
 	if not f4m_url:
 		raise Ex.MediaNotAvailable
 
-	xml = XML.ElementFromURL(f4m_url)
-	video_url = xml.xpath('//a:media/@url', namespaces={'a': 'http://ns.adobe.com/f4m/1.0'})
-
-	if len(video_url) < 1:
+	try:
+		xml = XML.ElementFromURL(f4m_url)
+		video_url = xml.xpath('//a:media/@url', namespaces={'a': 'http://ns.adobe.com/f4m/1.0'})[0]
+		return Redirect(video_url)
+	except:
 		raise Ex.MediaNotAvailable
-
-	return Redirect(video_url[0])
 
 ####################################################################################################
 def TestURLs():
