@@ -45,34 +45,19 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if Client.Platform in ('MacOSX', 'Windows'):
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url))
-				],
-				container = Container.MP4,
-				video_codec = VideoCodec.H264,
-				video_resolution = 'sd',
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayHLSVideo, url=url))
-				],
-				protocol = 'hls',
-				container = 'mpegts',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = '360',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
@@ -86,47 +71,37 @@ def PlayVideo(url):
 
 	player_url = 'http://www.uitzendinggemist.nl/player/%s' % player_id[0]
 	html = HTML.ElementFromURL(player_url, headers=HTTP_IPAD_UA, cacheTime=0)
-	video_src = html.xpath('//video/source/@src')
+	video_src = html.xpath('//video/source[contains(@src, "std")]/@src')
 
 	if len(video_src) < 0:
 		raise Ex.MediaNotAvailable
 
 	if not video_src[0].startswith('http://'):
-		video_url = 'http://www.uitzendinggemist.nl%s' % video_src[0]
+		url = 'http://www.uitzendinggemist.nl/%s' % video_src[0].lstrip('/')
 	else:
-		video_url = video_src[0]
+		url = video_src[0]
+
+	video_url = FollowRedirects(url)
+	if not video_url:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def FollowRedirects(url, redirects=0):
+
+	if redirects > 4:
+		return None
 
 	headers = HTTP_IPAD_UA
 	headers['Cookie'] = '%s;%s' % (HTTP_IPAD_UA['Cookie'], HTTP.CookiesForURL(url))
-	req = HTTP.Request(video_url, headers=headers, sleep=2.0).headers
 
-	oc = ObjectContainer()
-
-	oc.add(VideoClipObject(
-		items = [
-			MediaObject(
-				parts = [PartObject(key=video_url)]
-			)
-		]
-	))
-
-	oc.http_headers = HTTP_IPAD_UA
-	return oc
-
-####################################################################################################
-@indirect
-def PlayHLSVideo(url):
-
-	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
-	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
-
-	if len(player_id) < 0:
-		raise Ex.MediaNotAvailable
+	req = HTTP.Request(url, cacheTime=0, headers=headers, sleep=0.5, follow_redirects=False)
 
 	try:
-		json_obj = JSON.ObjectFromURL('http://iphone-api.uitzendinggemist.nl/v1/episodes/%s.json' % player_id[0])
-		video_url = json_obj['video']['m3u8']
-		#return Redirect(video_url)
-		return IndirectResponse(VideoClipObject, key=video_url)
-	except:
-		raise Ex.MediaNotAvailable
+		req.headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			url = FollowRedirects(e.headers['Location'], redirects=redirects+1)
+
+	return url.split('?')[0]
