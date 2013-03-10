@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.channel4.com/programmes/.+/4od((/?#|/player/)([0-9]{7}))?</string>
+				<string>^http://www.channel4.com/programmes/.+/4od((/?#|/player/)(\d{7}))?</string>
 			</array>
 		</dict>
 	</dict>

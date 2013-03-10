@@ -1,5 +1,5 @@
-httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
-RE_ID_PATTERN = Regex('([0-9]{7})')
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+RE_ID_PATTERN = Regex('[#/](?P<id>\d{7})')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -7,7 +7,7 @@ def NormalizeURL(url):
   find_id = RE_ID_PATTERN.search(url)
 
   if find_id:
-    id = find_id.group(1)
+    id = find_id.group('id')
   else:
     assetid = HTML.ElementFromURL(url).xpath('//li[@data-assetid]')
 
@@ -23,11 +23,10 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
   (url, id) = url.rsplit('/player/', 1)
-
   xpath = '//li[@data-assetid="%s"]' % id
 
   try:
-    ep = HTML.ElementFromURL(url, headers=httpHeaders).xpath(xpath)[0]
+    ep = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath(xpath)[0]
   except:
     raise Ex.MediaNotAvailable
 
@@ -41,9 +40,9 @@ def MetadataObjectForURL(url):
   if thumb.startswith('/'):
     thumb = 'http://www.channel4.com' + thumb
 
-  show_title = ep.get('data-episodetitle') # Attribute name in lowercase only
-  episode_title = ep.get('data-episodeinfo') # Attribute name in lowercase only
-  summary = String.StripTags(ep.get('data-episodesynopsis')) # Attribute name in lowercase only
+  show_title = ep.get('data-episodetitle')
+  episode_title = ep.get('data-episodeinfo')
+  summary = String.StripTags(ep.get('data-episodesynopsis'))
 
   try:
     season = int(ep.get('data-series-number'))
@@ -55,7 +54,7 @@ def MetadataObjectForURL(url):
   except:
     episode = None
 
-  video = EpisodeObject(
+  return EpisodeObject(
     show = show_title,
     title = episode_title,
     season = season,
@@ -65,13 +64,15 @@ def MetadataObjectForURL(url):
     thumb = thumb
   )
 
-  return video
-
 ####################################################################################################
 def MediaObjectsForURL(url):
 
   return [
     MediaObject(
-      parts = [PartObject(key=WebVideoURL(url))]
+      parts = [
+        PartObject(
+          key = WebVideoURL('https://4id.channel4.com/login?subContext=NetworkNavSignin&redirectUrl=%s' % url)
+        )
+      ]
     )
   ]
