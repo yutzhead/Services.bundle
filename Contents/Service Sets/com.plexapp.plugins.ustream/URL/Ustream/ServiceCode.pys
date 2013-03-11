@@ -49,6 +49,9 @@ def MetadataObjectForURL(url):
 		video_id = content_id[0].get('data-content-id')
 		json = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id, USTREAM_KEY))
 
+	if not json['results']:
+		raise Ex.MediaNotAvailable
+
 	video = json['results']
 	title = video['title']
 
@@ -110,7 +113,7 @@ def PlayRecorded(url):
 
 		json = JSON.ObjectFromURL(USTREAM_REC_JSON % (video_id.group(1), USTREAM_KEY))
 
-		if 'liveHttpUrl' in json['results']:
+		if json['results'] and 'liveHttpUrl' in json['results']:
 			return IndirectResponse(VideoClipObject, key=json['results']['liveHttpUrl'])
 
 	raise Ex.MediaNotAvailable
