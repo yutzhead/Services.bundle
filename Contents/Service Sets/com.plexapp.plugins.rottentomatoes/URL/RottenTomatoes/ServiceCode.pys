@@ -1,6 +1,13 @@
 HTTP_HEADERS = {
-	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 5_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B176 Safari/7534.48.3',
+	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25',
 	'Cookie': 'mir=true'
+}
+
+JSON_URL = 'http://www.videodetective.net/html5/jsonconfiguration.aspx?customerid=300120&publishedid=320257&playerid=%s&videokbrate=%d&bandwidth=%d'
+BITRATES = {
+	'2500':	{ 'resolution': '720' },
+	'1500':	{ 'resolution': '480' },
+	'750':	{ 'resolution': '270' }
 }
 
 ####################################################################################################
@@ -12,47 +19,65 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
-	video = html.xpath('//video')
+	video = html.xpath('//meta[@property="og:video"]')
 
 	if len(video) < 0:
-		return None
+		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]')[0].get('content').rsplit(' Trailer')[0]
-	summary = html.xpath('//meta[@property="og:description"]')[0].get('content').split('%s: ' % title)[1]
-	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0].rsplit(' Trailer')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0].split('%s: ' % title)[1]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+
+	try:
+		duration = html.xpath('//meta[@property="flixstertomatoes:length"]/@content')[0]
+		duration = int(duration) * 1000
+	except:
+		duration = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb
+		thumb = thumb,
+		duration = duration
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
+	media_objects = []
+
+	for bitrate in sorted(BITRATES.keys(), key=int, reverse=True):
+		media_objects.append(MediaObject(
+			bitrate = int(bitrate),
 			container = Container.MP4,
-			video_resolution = 'sd',
-			optimized_for_streaming = True,
+			video_codec = VideoCodec.H264,
+			video_resolution = BITRATES[bitrate]['resolution'],
+			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			bitrate = 750,
-			parts = [PartObject(key=Callback(PlayVideo, url=url))]
-		)
-	]
+			optimized_for_streaming = True,
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url, bitrate=int(bitrate))
+				)
+			]
+		))
+
+	return media_objects
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate=None):
+def PlayVideo(url, bitrate=2500):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=0)
-	video = html.xpath('//video')
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	video = html.xpath('//meta[@property="og:video"]/@content')
 
 	if len(video) < 0:
-		return None
+		raise Ex.MediaNotAvailable
 
-	video_url = video[0].get('src')
+	player_id = video[0].split('playerid=')[-1].split('&')[0]
+	json_obj = JSON.ObjectFromURL(JSON_URL % (player_id, bitrate, bitrate))
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if not 'file' in json_obj:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=json_obj['file'])
