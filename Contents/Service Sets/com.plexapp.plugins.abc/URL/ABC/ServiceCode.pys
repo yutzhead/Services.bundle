@@ -13,40 +13,25 @@ def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
-	try: # Try to return an episode object first
-		show_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[1]
-		episode_title = data.xpath('//h2[@id="video_title"]')[0].text
-		summary = data.xpath('//p[@id="video_desc"]')[0].text
-		episode_index = data.xpath('//li[@id="video_num"]')[0].text.strip('Episode ')
-		duration = data.xpath('//li[@id="video_dur"]')[0].text
-		durationParts = duration.split(':')
-		duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
-		rating = data.xpath('//li[@id="video_rating"]')[0].text.split(' ')[0]
-		thumb_url = data.xpath('//link[@rel="image_src"]')[0].get('href')
+	show_title = data.xpath('//meta[@name="title"]/@content')[0].split('  ')[0]
+	episode_title = data.xpath('//h2[@id="video_title"]/text()')[0]
+	summary = data.xpath('//p[@id="video_desc"]/text()')[0]
+	episode_index = data.xpath('//li[@id="video_num"]/text()')[0].strip('Episode ')
+	duration = data.xpath('//li[@id="video_dur"]/text()')[0]
+	duration_parts = duration.split(':')
+	duration = ((int(duration_parts[0])*60) + int(duration_parts[1]))*1000
+	rating = data.xpath('//li[@id="video_rating"]/text()')[0].split(' ')[0]
+	thumb_url = data.xpath('//link[@rel="image_src"]/@href')[0]
 
-		# Construct a metadata item
-		return EpisodeObject(
-			title = episode_title,
-			show = show_title,
-			duration = duration, 
-			index = int(episode_index),
-			content_rating = rating,
-			summary = summary,
-			thumb = thumb_url
-		)
-
-	except: # If it's not an episode return a clip object
-		clip_title = data.xpath('//meta[@name="title"]')[0].get('content').split(' - ')[0]
-
-		try:
-			thumb_url = data.xpath('//div[@id="show_callout"]/img')[0].get('src')
-		except:
-			thumb_url = ''
-
-		return VideoClipObject(
-			title = clip_title,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb_url)
-		)
+	return EpisodeObject(
+		title = episode_title,
+		show = show_title,
+		duration = duration,
+		index = int(episode_index),
+		content_rating = rating,
+		summary = summary,
+		thumb = thumb_url
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -59,7 +44,10 @@ def MediaObjectsForURL(url):
 			protocol = 'hls',
 			container = 'mpegts',
 			video_codec = VideoCodec.H264,
+			video_resolution = '480',
 			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True,
 			parts = [
 				PartObject(
 					key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
