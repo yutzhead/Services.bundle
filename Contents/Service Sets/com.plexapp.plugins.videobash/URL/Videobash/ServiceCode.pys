@@ -1,9 +1,10 @@
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
 VIDEO_PATTERN = Regex("flashvars.+?'http://'.+?'([^']+)")
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	title = page.xpath("//meta[@property='og:title']")[0].get('content')
 	summary = ''.join(page.xpath("//p[@class='description']/text()")).strip()
@@ -42,7 +43,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	content = HTTP.Request(url).content
+	content = HTTP.Request(url, headers=HTTP_HEADERS).content
 	video_url = VIDEO_PATTERN.search(content)
 
 	if video_url:
