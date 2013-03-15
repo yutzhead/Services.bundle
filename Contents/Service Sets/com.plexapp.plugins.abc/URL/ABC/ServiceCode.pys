@@ -57,6 +57,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(f4m_url=None, **kwargs):
 
 	if not f4m_url:
@@ -65,7 +66,7 @@ def PlayVideo(f4m_url=None, **kwargs):
 	try:
 		xml = XML.ElementFromURL(f4m_url)
 		video_url = xml.xpath('//a:media/@url', namespaces={'a': 'http://ns.adobe.com/f4m/1.0'})[0]
-		return Redirect(video_url)
+		return IndirectResponse(VideoClipObject, key=video_url)
 	except:
 		raise Ex.MediaNotAvailable
 
