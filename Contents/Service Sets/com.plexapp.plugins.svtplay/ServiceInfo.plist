@@ -17,7 +17,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.svtplay.se/(?!sok).+</string>
+				<string>^http://www.svtplay.se/(?!kanaler|sok).+</string>
 			</array>
 		</dict>
 	</dict>
