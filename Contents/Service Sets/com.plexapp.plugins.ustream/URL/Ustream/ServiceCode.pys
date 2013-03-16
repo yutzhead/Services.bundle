@@ -50,7 +50,10 @@ def MetadataObjectForURL(url):
 		json = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id, USTREAM_KEY))
 
 	if not json['results']:
-		raise Ex.MediaNotAvailable
+		if json['msg'] and 'password protected' in json['msg']:
+			raise Ex.MediaNotAuthorized
+		else:
+			raise Ex.MediaNotAvailable
 
 	video = json['results']
 	title = video['title']
@@ -70,7 +73,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
 ####################################################################################################
@@ -115,6 +118,8 @@ def PlayRecorded(url):
 
 		if json['results'] and 'liveHttpUrl' in json['results']:
 			return IndirectResponse(VideoClipObject, key=json['results']['liveHttpUrl'])
+		elif json['msg'] and 'password protected' in json['msg']:
+			raise Ex.MediaNotAuthorized
 
 	raise Ex.MediaNotAvailable
 
