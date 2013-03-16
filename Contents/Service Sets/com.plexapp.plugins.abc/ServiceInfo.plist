@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://abc.go.com/watch/.+</string>
+				<string>^(?!.*/clip/)http://abc.go.com/watch/.+</string>
 			</array>
 		</dict>
 	</dict>
