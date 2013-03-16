@@ -1,0 +1,74 @@
+API_KEY = 'rTvtu68O91ctXH9GHJVFlyxUtWjcsnuo'
+CLIP_PLAYER_ID = 'DOcJ-FxaFrRg4gtDEwOjFpaDowODE7jj'
+OTV_PLAYER_ID = 'DOcJ-FxaFrRg4gtDEwOnVhOjA4MTuX7f'
+BASE_URL = 'http://www.theverge.com'
+MP4_URL = 'http://ak.c.ooyala.com/%s/%s'
+
+RE_VIDEO_JSON = Regex('.+Util\.VideoContext\.addVideos\((.+?)\);.+')
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	html = HTML.ElementFromURL(url)
+
+	summary = ''
+	try:
+		summary = ''.join(html.xpath('//div[contains(@class, "article-body")]/p[position()=1]//text()'))
+	except:
+		pass
+
+	if not summary:
+		try:
+			summary = ''.join(html.xpath('//div[contains(@class, "description")]/p[position()=2]//text()'))
+		except:
+			pass
+
+	if not summary:
+		summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+
+	try:
+		date = Datetime.ParseDate(h.xpath('//span[@class="publish-date"]/time')[0].text)
+	except:
+		date = None
+
+	return VideoClipObject(
+		title = html.xpath('//meta[@property="og:title"]')[0].get('content'),
+		summary = summary,
+		originally_available_at = date,
+		thumb = Resource.ContentsOfURLWithFallback(url=html.xpath('//meta[@property="og:image"]')[0].get('content'), fallback='SourceImage.png')
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			container = 'mp4',
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url):
+
+	try:
+		html = HTTP.Request(url).content.replace('\n','')
+		if 'on-the-verge' in url and not '90-seconds' in url:
+			pid = OTV_PLAYER_ID
+		else:
+			pid = CLIP_PLAYER_ID
+		vid = JSON.ObjectFromString(RE_VIDEO_JSON.match(html).group(1))[0]['provider_video_id']
+		mp4_url = MP4_URL % (vid, pid)
+	except:
+		raise Ex.MediaNotAvailable
+
+	return Redirect(mp4_url)
