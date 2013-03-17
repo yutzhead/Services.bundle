@@ -4,6 +4,8 @@ RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
+MEDIA_URL = "http://api.radio-canada.ca/validationMedia/v1/Validation.html?appCode=thePlatform&deviceType=iphone4&connectionType=wifi&idMedia=%s&output=json"
+
 ####################################################################################################
 def NormalizeURL(url):
     return url
@@ -73,25 +75,47 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
+    f4m_url = GetF4M(url)
     return [
         MediaObject(
-            video_resolution = "480",
+            protocol = 'hls',
+            container = 'mpegts',
+            video_codec = VideoCodec.H264,
+            #video_resolution = '480',
+            audio_codec = AudioCodec.AAC,
             audio_channels = 2,
-            parts = [PartObject(key=Callback(PlayVideo, url=url, res="720"))]
+            optimized_for_streaming = True,
+            parts = [
+                PartObject(
+                    key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
+                )
+            ]
         )
     ]
-
 ####################################################################################################
 @indirect
-def PlayVideo(url, res):
-    smil = GetSMIL(url)
-    source = GetSRC(smil).get('src')
+def PlayVideo(f4m_url):
+    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=f4m_url))
 
-    player = source.split('<break>')[0]
-    clip = source.split('<break>')[1]
+####################################################################################################
+def GetF4M(url):
+    data = HTTP.Request(url).content
 
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
+    try:
+        pID = RE_EPISODE_ID.search(data).group(1)
+    except:
+        try:
+            pID = RE_MEDIA_ID.search(data).group(1)
+        except:
+            raise Ex.MediaNotAvailable
+
+    json = JSON.ObjectFromURL(MEDIA_URL % pID)
+    f4m = json['url']
+
+    return f4m
+
 
 ####################################################################################################
 def GetSMIL(url):
