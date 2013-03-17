@@ -72,7 +72,7 @@ def MetadataObjectForURL(url):
 		duration = duration,
 		summary = summary,
 		tags = [show],
-		thumb = Resource.ContentsOfURLWithFallback([thumb.text for thumb in thumb_list], fallback="icon-default.png")
+		thumb = Resource.ContentsOfURLWithFallback([thumb.text for thumb in thumb_list])
 	)
 
 ####################################################################################################
