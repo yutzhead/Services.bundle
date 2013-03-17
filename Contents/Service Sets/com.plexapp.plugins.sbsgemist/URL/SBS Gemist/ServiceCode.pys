@@ -45,7 +45,7 @@ def MetadataObjectForURL(url):
 			thumb = html.xpath('//div[@class="i iGuide iGuideSlider"]/a/img')[0].get('src')
 			thumb = base + thumb
 		except:
-			thumb = R('icon-default.png')
+			thumb = None
 
 	try:
 		title = html.xpath('//meta[@property="og:title"]')[0].get('content')

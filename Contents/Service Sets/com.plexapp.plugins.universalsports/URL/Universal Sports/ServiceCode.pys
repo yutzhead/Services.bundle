@@ -1,4 +1,3 @@
-
 AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
 
 PLAYER_ID = Regex('"playerID":"(\w+)"', Regex.DOTALL)

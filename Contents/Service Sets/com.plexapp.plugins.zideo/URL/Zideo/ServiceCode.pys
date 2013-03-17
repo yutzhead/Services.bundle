@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
 		title = title,
 		summary = summary,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='SourceIcon.png')
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
 ####################################################################################################

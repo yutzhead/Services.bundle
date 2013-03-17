@@ -1,6 +1,5 @@
 BASE_URL = 'http://www.studio100tv.be'
 VIDEO_FILE = '%s/videofile/%%s' % BASE_URL
-ICON = 'icon-default.png'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -20,7 +19,7 @@ def MetadataObjectForURL(url):
 
 	return VideoClipObject(
 		title = title,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback=ICON)
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
 ####################################################################################################

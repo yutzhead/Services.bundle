@@ -24,8 +24,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		duration = duration,
-		thumb = R('icon-default.png')
+		duration = duration
 	)
 
 ####################################################################################################

@@ -60,7 +60,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list], fallback='icon-default.png')
+			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list])
 		)
 	else:
 		return VideoClipObject(
@@ -69,7 +69,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list], fallback='icon-default.png')
+			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list])
 		)
 
 ####################################################################################################

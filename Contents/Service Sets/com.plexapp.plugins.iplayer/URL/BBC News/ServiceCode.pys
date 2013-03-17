@@ -1,4 +1,4 @@
-NAMESPACES = { 'p': 'http://bbc.co.uk/2008/emp/playlist' }
+NAMESPACES = {'p': 'http://bbc.co.uk/2008/emp/playlist'}
 
 ####################################################################################################
 def MetadataObjectForURL(url):

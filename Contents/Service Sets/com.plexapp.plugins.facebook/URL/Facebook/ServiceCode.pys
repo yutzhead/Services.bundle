@@ -40,7 +40,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(thumb, fallback='icon-default.png')
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################

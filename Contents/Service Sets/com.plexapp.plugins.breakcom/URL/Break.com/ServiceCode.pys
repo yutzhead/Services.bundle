@@ -41,7 +41,7 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = 720,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = '720'))],
+        parts = [PartObject(key=Callback(PlayVideo, url=url, res='720'))],
         audio_channels = 2
       ),
       MediaObject(
@@ -49,7 +49,7 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = 480,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = '480'))],
+        parts = [PartObject(key=Callback(PlayVideo, url=url, res='480'))],
         audio_channels = 2
       ),
       MediaObject(
@@ -57,7 +57,7 @@ def MediaObjectsForURL(url):
         video_codec = VideoCodec.H264,
         audio_codec = AudioCodec.AAC,
         video_resolution = 348,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))],
+        parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))],
         audio_channels = 2
       )
     ]

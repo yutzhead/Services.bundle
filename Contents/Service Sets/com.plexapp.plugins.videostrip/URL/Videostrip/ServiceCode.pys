@@ -40,19 +40,14 @@ def MetadataObjectForURL(url):
 
 	host = url.split('/')[2]
 	if 'ad.nl' in host:
-		fallback_thumb = 'AD.png'
 		source_title = 'AD'
 	elif 'parool.nl' in host:
-		fallback_thumb = 'Parool.png'
 		source_title = 'Parool'
 	elif 'trouw.nl' in host:
-		fallback_thumb = 'Trouw.png'
 		source_title = 'Trouw'
 	elif 'volkskrant.nl' in host:
-		fallback_thumb = 'Volkskrant.png'
 		source_title = 'Volkskrant'
 	else:
-		fallback_thumb = 'SourceIcon.png'
 		source_title = 'Videostrip'
 
 	return VideoClipObject(
@@ -60,7 +55,7 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		originally_available_at = originally_available_at,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback=fallback_thumb),
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 		source_title = source_title
 	)
 

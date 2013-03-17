@@ -30,7 +30,7 @@ def MetadataObjectForURL(url):
         summary=summary,
         originally_available_at=airdate,
         duration=duration,
-        thumb=Resource.ContentsOfURLWithFallback(url=thumbs, fallback='icon-default.png')
+        thumb=Resource.ContentsOfURLWithFallback(url=thumbs)
     )
 
 def MediaObjectsForURL(url):

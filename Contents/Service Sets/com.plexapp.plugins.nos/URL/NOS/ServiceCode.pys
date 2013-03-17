@@ -10,7 +10,7 @@ def MetadataObjectForURL(url):
 		title = json_obj['title'],
 		summary = json_obj['description'],
 		duration = int(json_obj['duration'])*1000,
-		thumb = Resource.ContentsOfURLWithFallback(json_obj['image'], fallback='icon-default.png')
+		thumb = Resource.ContentsOfURLWithFallback(json_obj['image'])
 	)
 
 ####################################################################################################

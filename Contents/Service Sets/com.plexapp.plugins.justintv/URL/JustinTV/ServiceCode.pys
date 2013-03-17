@@ -36,7 +36,7 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 1,
 			optimized_for_streaming = True,
-			parts = [PartObject(key = Callback(PlayVideo, url = url))]
+			parts = [PartObject(key = Callback(PlayVideo, url=url))]
 		)
 	]
 

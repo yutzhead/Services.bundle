@@ -37,7 +37,7 @@ def MediaObjectsForURL(url):
 			container = Container.MP4,
 			video_resolution = '540',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
 		),
 		MediaObject(
 			video_codec = VideoCodec.H264,
@@ -45,7 +45,7 @@ def MediaObjectsForURL(url):
 			container = Container.MP4,
 			video_resolution = '360',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
 		)
 	]
 

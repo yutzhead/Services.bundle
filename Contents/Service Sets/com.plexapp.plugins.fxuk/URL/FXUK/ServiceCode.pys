@@ -19,7 +19,6 @@ def MetadataObjectForURL(url):
     return VideoClipObject(
         title = video.get('title'),
         summary = video.get('abstract'),
-        thumb = R('icon-default.png'),
         tags = tags
     )
 

@@ -74,7 +74,7 @@ def MetadataObjectForURL(url):
 def Thumb(url=None):
 
   if not url:
-    return Redirect(R('icon-default.png'))
+    return None
 
   if url[-4:] == ".jpg":
     thumb_url = url

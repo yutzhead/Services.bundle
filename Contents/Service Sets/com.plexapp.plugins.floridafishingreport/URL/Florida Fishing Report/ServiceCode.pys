@@ -21,7 +21,7 @@ def MetadataObjectForURL(url):
 
 	return EpisodeObject(
 		title = title,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb_url, fallback='icon-default.png')
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb_url)
 	)
 
 ####################################################################################################

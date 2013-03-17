@@ -1,14 +1,12 @@
-import re
-
 BASE_URL = 'http://video.foxnews.com'
 JSON_FEED = '%s/v/feed/video/%%s.js' % BASE_URL
+RE_ASSED_ID = Regex('/v/(?P<asset_id>[0-9]+)')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
     # The url should contain details of the actual media asset number.
-    details = re.match(".*/v/(?P<asset_id>[0-9]+).*", url).groupdict()
-    asset_id = details['asset_id']
+    asset_id = RE_ASSED_ID.search(url).group('asset_id')
 
     # Once we've determined the asset id, we can request the associated son.
     json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
@@ -33,21 +31,21 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
+        MediaObject(
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            container = Container.MP4,
+            parts = [PartObject(key=Callback(PlayVideo, url=url))]
+        )
     ]
 
 ####################################################################################################
 def PlayVideo(url):
 
     # The url should contain details of the actual media asset number.
-    details = re.match(".*/v/(?P<asset_id>[0-9]+).*", url).groupdict()
-    asset_id = details['asset_id']
+    asset_id = RE_ASSED_ID.search(url).group('asset_id')
 
     # Once we've determined the asset id, we can request the associated son.
     json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)

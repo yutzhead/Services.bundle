@@ -62,7 +62,7 @@ def MetadataObjectForURL(url):
             originally_available_at = date,
             directors = directors,
             writers = writers,
-            thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+            thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	    )
     except:
         pass
@@ -71,7 +71,7 @@ def MetadataObjectForURL(url):
         title = title,
         summary = summary,
         duration = duration,
-        thumb = Resource.ContentsOfURLWithFallback(url=thumb, fallback='icon-default.png')
+        thumb = Resource.ContentsOfURLWithFallback(url=thumb)
     )
 
 ####################################################################################################

@@ -1,4 +1,4 @@
-httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
 RE_PID = Regex('iplayer/episode/([^/$]{8})')
 RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
 NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
@@ -13,7 +13,7 @@ def MetadataObjectForURL(url):
 
   pid = RE_PID.findall(url)[0]
   thumb = 'http://node2.bbcimg.co.uk/iplayer/images/episode/%s_640_360.jpg' % pid
-  programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=httpHeaders)['programme']
+  programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=HTTP_HEADERS)['programme']
 
   if programme['long_synopsis']:
     summary = programme['long_synopsis']

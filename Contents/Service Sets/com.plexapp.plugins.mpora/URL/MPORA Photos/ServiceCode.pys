@@ -1,5 +1,3 @@
-
-####################################################################################################
 def MetadataObjectForURL(url):
 
     page = HTML.ElementFromURL(url)
@@ -15,15 +13,16 @@ def MetadataObjectForURL(url):
     return PhotoObject(
         title = title,
         summary = description,
-        thumb = thumb)     
+        thumb = thumb
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
     return [
-      MediaObject(
-        parts = [PartObject(key = Callback(GetPhoto, url = url))]
-      )
+        MediaObject(
+            parts = [PartObject(key = Callback(GetPhoto, url = url))]
+        )
     ]
 
 ####################################################################################################

@@ -29,15 +29,13 @@ def MetadataObjectForURL(url):
 			duration = duration,
 			show = show_title,
 			season = season, 
-			index = episode,
-			thumb = R('icon-default.png')
+			index = episode
 		)
 	except:
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			duration = duration,
-			thumb = R('icon-default.png')
+			duration = duration
 		)
 	
 #########################################################################################
