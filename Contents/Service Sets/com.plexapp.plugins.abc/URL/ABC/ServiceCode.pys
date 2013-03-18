@@ -36,7 +36,19 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	video_id = url.split('/')[-2].replace('VDKA', '')
-	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/1561/uiConfId/8628152/tags/uplynk/a/a.f4m?playbackContext=ct%%3Da%%26brand%%3D001%%26device%%3D001' % video_id
+	storage_id = 1561
+
+	if url.split('/')[4] in (
+		'2020',
+		'good-morning-america',
+		'nightline',
+		'this-week',
+		'what-would-you-do',
+		'world-news-with-diane-sawyer',
+		'world-news-with-david-muir'
+	): storage_id = 1841
+
+	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/%d/uiConfId/8628152/tags/uplynk/a/a.f4m?playbackContext=ct%%3Da%%26brand%%3D001%%26device%%3D001' % (video_id, storage_id)
 
 	return [
 		MediaObject(
