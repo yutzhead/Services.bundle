@@ -104,7 +104,13 @@ def GetXML(url):
 		xml = XML.ElementFromURL(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR)
 		return xml
 	except:
-		pass
+		try:
+			# Sometimes 'trailer' is not present, try 'trailer1'
+			xml_url = xml_url.replace('/trailer.xml', '/trailer1.xml')
+			xml = XML.ElementFromURL(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+			return xml
+		except:
+			pass
 
 	(studio, title, video) = RE_URL_INFO.findall(url)[0]
 	if title.startswith('the'):
