@@ -1,4 +1,4 @@
-httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'}
 
 RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 RE_FILE_ID = Regex('blip\.tv/file/([0-9]{6,7})')
@@ -26,7 +26,7 @@ def MetadataObjectForURL(url):
 	if 'description' in data and data['description']:
 		summary = String.StripTags(RE_CONTROL_CHARS.sub('', data['description']))
 
-	video = VideoClipObject(
+	return VideoClipObject(
 		title = data['title'],
 		summary = summary,
 		originally_available_at = Datetime.ParseDate(data['datestamp']).date(),
@@ -36,13 +36,15 @@ def MetadataObjectForURL(url):
 		tags = tags
 	)
 
-	return video
-
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
 
 	data = GetJson(url)
+
+	if not 'additionalMedia' in data:
+		raise Ex.MediaNotAvailable
+
 	media_objects = []
 
 	for video in data['additionalMedia']:
@@ -126,7 +128,7 @@ def GetJson(url):
 	url = GetJsonURL(url)
 
 	try:
-		json = HTTP.Request(url, cacheTime=CACHE_1DAY, headers=httpHeaders).content
+		json = HTTP.Request(url, cacheTime=CACHE_1DAY, headers=HTTP_HEADERS).content
 		json = RE_JSON.search(json).group(1)
 		json = JSON.ObjectFromString(json)
 
