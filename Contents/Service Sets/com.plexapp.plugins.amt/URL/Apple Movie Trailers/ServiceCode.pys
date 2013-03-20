@@ -127,6 +127,12 @@ def PlayVideo(url, fmt=None):
 	if fmt is None or url.split('.')[-1] in ('mov', 'm4v', 'mp4'):
 		return None
 
+	# Try to 'fix' old /web type URLs
+	if url.endswith('/web') and '#' in url:
+		(url, video) = url.split('#', 1)
+		video = String.Unquote(video.split('/')[0]).replace(' ', '').lower()
+		url = '%s#%s' % (url, video)
+
 	xml = GetXML(url)
 
 	if not xml:
