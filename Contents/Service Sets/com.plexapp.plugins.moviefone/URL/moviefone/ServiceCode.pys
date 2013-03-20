@@ -1,14 +1,16 @@
 def NormalizeURL(url):
 
-	return url
+	return '%s/main' % url.rsplit('/', 1)[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	url = url.replace('/main', '/synopsis')
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath('//h1//text()')[0].strip()
-	summary = html.xpath('//div[@class="trailer-description"]/text()')[0]
+	summary = html.xpath('//div[@class="movie-synopsis"]/text()')
+	summary = '\n'.join(summary)
 	thumb = 'http://%s' % html.xpath('//meta[@property="og:image"]/@content')[0].split('http://')[-1]
 
 	return VideoClipObject(
@@ -54,6 +56,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt):
 
+	url = url.replace('/main', '/trailers')
 	html = HTML.ElementFromURL(url)
 
 	if fmt == 'HD 1080p':
