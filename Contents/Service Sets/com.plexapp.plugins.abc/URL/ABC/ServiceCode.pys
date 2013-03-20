@@ -1,6 +1,4 @@
-HTTP_HEADERS = {
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'
-}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -10,10 +8,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	if not '/VDKA' in url:
+		raise Ex.MediaNotAvailable
 
+	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	episode_title = data.xpath('//h2[@id="video_title"]/text()')
+
+	if len(episode_title) < 1:
+		raise Ex.MediaExpired
+
+	episode_title = episode_title[0]
 	show_title = data.xpath('//meta[@name="title"]/@content')[0].split('  ')[0]
-	episode_title = data.xpath('//h2[@id="video_title"]/text()')[0]
 	summary = data.xpath('//p[@id="video_desc"]/text()')[0]
 	episode_index = data.xpath('//li[@id="video_num"]/text()')[0].strip('Episode ')
 	duration = data.xpath('//li[@id="video_dur"]/text()')[0]
@@ -34,6 +39,9 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+	if not '/VDKA' in url:
+		raise Ex.MediaNotAvailable
 
 	video_id = url.split('/')[-2].replace('VDKA', '')
 	storage_id = 1561
