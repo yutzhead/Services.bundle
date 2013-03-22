@@ -120,11 +120,9 @@ def PlayVideo(url):
 		user_id = url.split('/')[-1]
 
 		try:
-			token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)
-			token = token[0]['token']
-			hash = hmac.new(YEK, token, sha1).hexdigest()
-			full_token = String.Quote('%s:%s' % (hash, token))
-			video_url = M3U8_URL % (user_id, full_token)
+			token = GetToken(user_id)
+			video_url = M3U8_URL % (user_id, token)
+			Log(' --> Final video_url: %s' % video_url)
 
 			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
 		except:
@@ -132,6 +130,21 @@ def PlayVideo(url):
 
 	else:
 		raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetToken(user_id, attempt=0):
+
+	if attempt > 2:
+		raise Ex.LiveMediaNotStarted
+
+	try:
+		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0, sleep=3.0)
+		token = token[0]['token']
+		hash = hmac.new(YEK, token, sha1).hexdigest()
+		full_token = String.Quote('%s:%s' % (hash, token))
+		return full_token
+	except:
+		return GetToken(user_id=user_id, attempt=attempt+1)
 
 ####################################################################################################
 def TestURLs():
