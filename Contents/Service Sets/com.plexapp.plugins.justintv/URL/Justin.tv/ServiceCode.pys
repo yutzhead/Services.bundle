@@ -75,7 +75,7 @@ def MediaObjectsForURL(url):
 				container = 'flv',
 				video_codec = VideoCodec.H264,
 				audio_codec = AudioCodec.AAC,
-				audio_channels = 1,
+				audio_channels = 2,
 				optimized_for_streaming = True
 			)
 		]
@@ -102,6 +102,11 @@ def PlayVideo(url):
 	if '/b/' in url:
 		video_id = url.split('/')[-1]
 		video = JSON.ObjectFromURL(CLIP_DATA % video_id)
+
+		if len(video) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			video = video[0]
 
 		return IndirectResponse(VideoClipObject, key=video['video_file_url'])
 
