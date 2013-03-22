@@ -50,8 +50,8 @@ def MetadataObjectForURL(url):
 
 		thumbs = []
 		for size in ['screen_cap_url_huge', 'screen_cap_url_large', 'screen_cap_url_medium']:
-			if size in video:
-				thumbs.append(video[size])
+			if size in video['channel']:
+				thumbs.append(video['channel'][size])
 
 		return VideoClipObject(
 			title = video['title'],
@@ -118,17 +118,17 @@ def PlayVideo(url):
 
 	elif len(url.split('/')) == 4:
 		user_id = url.split('/')[-1]
-		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)[0]
 
-		if 'type' in token and token['type'] == 'error':
-			raise Ex.LiveMediaNotStarted
-		else:
-			token = token['token']
+		try:
+			token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)
+			token = token[0]['token']
 			hash = hmac.new(YEK, token, sha1).hexdigest()
 			full_token = String.Quote('%s:%s' % (hash, token))
 			video_url = M3U8_URL % (user_id, full_token)
 
 			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
+		except:
+			raise Ex.LiveMediaNotStarted
 
 	else:
 		raise Ex.MediaNotAvailable
