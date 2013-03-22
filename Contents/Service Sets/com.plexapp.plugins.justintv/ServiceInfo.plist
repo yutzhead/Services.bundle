@@ -4,11 +4,12 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>JustinTV</key>
+		<key>Justin.tv</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.(justin|twitch).tv/[^/]+/b/[0-9]+</string>
+				<string>^http://www.(justin|twitch).tv/[^/]+/b/\d+</string>
+				<string>^http://www.(justin|twitch).tv/[^/](#/w/\d+/\d+)?</string>
 			</array>
 		</dict>
 	</dict>

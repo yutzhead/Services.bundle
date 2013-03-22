@@ -1,0 +1,146 @@
+from hashlib import sha1
+import hmac
+
+CLIP_DATA = 'http://api.justin.tv/api/clip/show/%s.json'
+STREAM_DATA = 'http://api.justin.tv/api/stream/list.json?channel=%s'
+TOKEN_URL = 'http://usher.justin.tv/stream/iphone_token/%s.json?type=iphone'
+M3U8_URL = 'http://usher.twitch.tv/stream/multi_playlist/%s.m3u8?token=%s&hd=true'
+YEK = 'evhmL62Ss9jY57dW'[::-1]
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('#')[0].rstrip('/')
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	if '/b/' in url:
+		video_id = url.split('/')[-1]
+		video = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
+
+		if len(video) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			video = video[0]
+
+		try: originally_available_at = Datetime.ParseDate(video['created_on'])
+		except: originally_available_at = None
+
+		thumbs = []
+		for size in ['image_url_huge', 'image_url_large', 'image_url_medium']:
+			if size in video:
+				thumbs.append(video[size])
+
+		return VideoClipObject(
+			title = video['title'],
+			originally_available_at = originally_available_at,
+			duration = int(video['length']) * 1000,
+			thumb = Resource.ContentsOfURLWithFallback(thumbs)
+		)
+
+	elif len(url.split('/')) == 4:
+		user_id = url.split('/')[-1]
+		video = JSON.ObjectFromURL(STREAM_DATA % user_id, cacheTime=0)
+
+		if len(video) < 1:
+			raise Ex.LiveMediaNotStarted
+		else:
+			video = video[0]
+
+		thumbs = []
+		for size in ['screen_cap_url_huge', 'screen_cap_url_large', 'screen_cap_url_medium']:
+			if size in video:
+				thumbs.append(video[size])
+
+		return VideoClipObject(
+			title = video['title'],
+			thumb = Resource.ContentsOfURLWithFallback(thumbs)
+		)
+
+	else:
+		raise Ex.MediaNotAvailable
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	if '/b/' in url:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(
+						key = Callback(PlayVideo, url=url)
+					)
+				],
+				container = 'flv',
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 1,
+				optimized_for_streaming = True
+			)
+		]
+
+	elif len(url.split('/')) == 4:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(
+						key = HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+				],
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
+
+	else:
+		raise Ex.MediaNotAvailable
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	if '/b/' in url:
+		video_id = url.split('/')[-1]
+		video = JSON.ObjectFromURL(CLIP_DATA % video_id)
+
+		return IndirectResponse(VideoClipObject, key=video['video_file_url'])
+
+	elif len(url.split('/')) == 4:
+		user_id = url.split('/')[-1]
+		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)[0]
+
+		if 'type' in token and token['type'] == 'error':
+			raise Ex.LiveMediaNotStarted
+		else:
+			token = token['token']
+			hash = hmac.new(YEK, token, sha1).hexdigest()
+			full_token = String.Quote('%s:%s' % (hash, token))
+			video_url = M3U8_URL % (user_id, full_token)
+
+			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
+
+	else:
+		raise Ex.MediaNotAvailable
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	users = ['hazerjr3', 'nl_kripp']
+
+	for user in users:
+		user_test_urls = []
+		page = HTML.ElementFromURL('http://www.justin.tv/%s/videos' % user)
+
+		for item in page.xpath('//div[@id="videos"]//a[@class="thumb"]'):
+			video_url = 'http://www.justin.tv' + item.get('href')
+
+			if video_url.find('/b/') > -1:
+				user_test_urls.append(video_url)
+
+			if len(user_test_urls) >= 2:
+				break
+
+		test_urls = test_urls + user_test_urls
+
+	return test_urls
