@@ -1,5 +1,6 @@
 MTV_BASE = "http://www.mtv.com"
 MTV_VIDEOS = "http://www.mtv.com/music/videos/"
+RE_VEVO_CHECK = Regex('vevoVideoId = "(?P<vevo_id>[^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -9,11 +10,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	page = HTTP.Request(url).content
+
+	vevo_check = RE_VEVO_CHECK.search(page)
+	if vevo_check:
+		return URLService.MetadataObjectForURL('http://www.vevo.com/watch/%s' % vevo_check.group('vevo_id'))
+
+	data = HTML.ElementFromString(page)
 	artist = data.xpath('//meta[@name="mtvn_artist"]')
 
 	# This service only handles music videos
-	if len(artist) == 0:
+	if len(artist) < 1:
 		return None
 
 	artist = artist[0].get('content')
@@ -29,13 +36,11 @@ def MetadataObjectForURL(url):
 		except:
 			thumb = ''
 
-	vc = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		originally_available_at = date,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
-
-	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
