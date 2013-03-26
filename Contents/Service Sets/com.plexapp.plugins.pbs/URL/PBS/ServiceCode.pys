@@ -71,7 +71,7 @@ def PlayVideo(url):
     	if video_url.startswith('http://urs.pbs.org/redirect/'):
             Log.Debug("Found redirect, assuming HLS: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
-            # these redirects properly (they serve them up strangely, they 302 AND they serve page content)
+            # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
             try:
                 page_request = HTTP.Request(video_url, follow_redirects = False)
                 page = page_request.content
@@ -90,7 +90,7 @@ def PlayVideo(url):
     	if video_url.startswith('http://urs.pbs.org/redirect/'):
             Log.Debug("Found redirect, assuming HLS: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
-            # these redirects properly (they serve them up strangely, they 302 AND they serve page content)
+            # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
             try:
                 page_request = HTTP.Request(video_url, follow_redirects = False)
                 page = page_request.content
