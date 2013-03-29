@@ -1,49 +1,39 @@
-REVISION3_NS = {'og':'http://opengraphprotocol.org/schema/'}
-FMT_INDEX = {'720p':0, '480p':1, 'SD':2}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	data = HTML.ElementFromURL(url, cacheTime=7200)
 
-	videos = data.xpath('//div[@id="action-panels-download-MP4"]')
+	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
+
 	if len(videos) < 1:
-		return None
+		raise Ex.MediaNotAvailable
 
-	show_title = data.xpath('//meta[@name="description"]')[0].get('content').split(': ')[0]
-	episode_title = data.xpath('//div[@id="show-notes"]/h2')[0].text
-	try: date = Datetime.ParseDate(data.xpath('//meta[@name="publish-date"]')[0].get('content')).date()
+	show = data.xpath('//meta[@name="description"]/@content')[0].split(': ')[0]
+	title = data.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = data.xpath('//meta[@property="og:description"]/@content')[0]
+
+	try: date = Datetime.ParseDate(data.xpath('//meta[@property="publish-date"]/@content')[0]).date()
 	except: date = None
-	summary = data.xpath('//meta[@property="og:description"]', namespaces=REVISION3_NS)[0].get('content')
 
-	try:
-		duration = data.xpath('//div[@id="show-notes"]//div[@class="subtext"]')[0].text
-		duration = duration.split('running time ')[1]
-		durationParts = duration.split(':')
-		duration = ((int(durationParts[0])*60) + int(durationParts[1]))*1000
-	except:
-		duration = None
+	try: duration = int(data.xpath('//meta[@property="video:duration"]/@content')[0])*1000
+	except: duration = None
 
-	try:
-		thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
-		thumbUrl = thumbUrl.rsplit('--',1)[0] + '--large.thumb.jpg'
-	except:
-		try:
-			thumbUrl = data.xpath('//link[@rel="image_src"]')[0].get('href')
-			thumbUrl = thumbUrl.rsplit('--',1)[0] + '--large.thumb.jpg'
-		except:
-			thumb = None
+	try: thumb = data.xpath('//meta[@property="og:image"]/@content')[0].replace('--medium.thumb.jpg', '--large.thumb.jpg')
+	except: thumb = ''
 
 	return EpisodeObject(
-		title = episode_title,
-		show = show_title,
-		duration = duration,
-		originally_available_at = date,
+		show = show,
+		title = title,
 		summary = summary,
-		thumb = thumbUrl
+		originally_available_at = date,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -52,27 +42,27 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720p'))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
 			video_resolution = '720',
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='480p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='large'))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
 			video_resolution = '480',
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='SD'))],
-			video_resolution = 'sd',
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='small'))],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
@@ -82,25 +72,19 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, fmt):
-	data = HTML.ElementFromURL(url, cacheTime=7200)
 
-	# Check if we're on a 'segment' page and if so, try to find the 'full episode' page
-	full_ep_url = data.xpath('//form/input[@value="Watch the full episode!"]/parent::form/@action')
-	if not len(full_ep_url) < 1:
-		url = 'http://revision3.com%s' % full_ep_url[0]
-		data = HTML.ElementFromURL(url, cacheTime=7200)
+	if fmt == '480p': fmt = 'large'
+	elif fmt == 'SD': fmt = 'small'
 
-	videos = data.xpath('//div[@id="action-panels-download-MP4"]')[0]
-	available_videos = videos.xpath('.//a[@class="sizename"]')
+	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
 
-	# There appears to be a small number of SD/480p videos which are not available. Therefore, for these few
-	# we will simply grab the lowest quality available, so for SD, it will be 480p and for 480p it will be SD
-	try:
-		video = available_videos[FMT_INDEX[fmt]]
-	except:
-		if fmt == 'SD' or fmt == '480p':
-			video = available_videos[-1]
+	if len(videos) < 1:
+		raise Ex.MediaNotAvailable
 
-	video_url = video.get('href')
+	video_url = data.xpath('//a[contains(@href, ".mp4") and contains(@href, "%s")]/@href' % fmt)
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if len(video_url) < 1:
+		video_url = data.xpath('//a[contains(@href, ".mp4")]/@href' % fmt)
+
+	return IndirectResponse(VideoClipObject, key=video_url[0])
