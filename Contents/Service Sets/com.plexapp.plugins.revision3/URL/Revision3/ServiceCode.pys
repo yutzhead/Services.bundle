@@ -85,6 +85,6 @@ def PlayVideo(url, fmt):
 	video_url = data.xpath('//a[contains(@href, ".mp4") and contains(@href, "%s")]/@href' % fmt)
 
 	if len(video_url) < 1:
-		video_url = data.xpath('//a[contains(@href, ".mp4")]/@href' % fmt)
+		video_url = data.xpath('//a[contains(@href, ".mp4")]/@href')
 
 	return IndirectResponse(VideoClipObject, key=video_url[0])
