@@ -6,9 +6,6 @@
 	<dict>
 		<key>Vice</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(www\.)?vice\.com/.+</string>
