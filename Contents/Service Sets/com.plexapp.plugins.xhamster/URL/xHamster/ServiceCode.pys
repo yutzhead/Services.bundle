@@ -15,7 +15,9 @@ def MetadataObjectForURL(url):
 		summary = None
 
 	if len(html.xpath('//a[contains(@href, ".mp4")]/img/@src')) > 0:
-		thumb = html.xpath('//a[contains(@href, ".mp4")]/img/@src')[0].replace('pl580/', '').replace('_', '_b_')
+		thumb = html.xpath('//a[contains(@href, ".mp4")]/img/@src')[0].replace('/pl580/', '/').replace('_', '_b_')
+	else:
+		thumb = None
 
 	return VideoClipObject(
 		title = title,
