@@ -2,7 +2,7 @@ BASE_URL = "http://www.vice.com%s"
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js?%s'
 
-RE_EMBED_CODE = Regex('embedCode=(.+)&')
+RE_EMBED_CODE = Regex('embedCode=([^&]+)')
 RE_PLAYER_ARGS = Regex('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"')
 RE_STREAM = Regex('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', Regex.DOTALL)
 
@@ -15,11 +15,16 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url)
+	video = data.xpath('//meta[@property="og:video"]/@content')
 
-	# Videos can come from their 'own' (Ooyala) site, but they also use other (YouTube) sites to
-	# host videos. Return None if that's the case and let Fallback -> Other service handle it.
-	if len(data.xpath('//meta[@property="og:video" and contains(@content, "player.ooyala.com")]')) < 1:
+	if len(video) < 1:
+		raise Ex.MediaNotAvailable
+
+	if 'youtube.com' in video[0]:
 		return None
+
+	if not 'player.ooyala.com' in video[0]:
+		raise Ex.MediaNotAvailable
 
 	# Extract the available information from the page
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
@@ -48,14 +53,11 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = Container.MP4,
 			video_resolution = 'sd',
 			optimized_for_streaming = True,
 			audio_channels = 2,
 			parts = [
-				PartObject(key=Callback(PlayVideo, url=url))
+				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
 			]
 		)
 	]
@@ -63,18 +65,19 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-	try:
-		data = HTML.ElementFromURL(url)
-	except:
+	data = HTML.ElementFromURL(url)
+	video = data.xpath('//meta[@property="og:video"]/@content')
+
+	if len(video) < 1:
 		raise Ex.MediaNotAvailable
 
-	# The first thing that we need to obtain is the actual "embed code".
-	video_url = data.xpath('//meta[@property="og:video"]/@content')
+	if 'youtube.com' in video[0]:
+		return None
 
-	if len(video_url) < 1:
+	if not 'player.ooyala.com' in video[0]:
 		raise Ex.MediaNotAvailable
 
-	embed_code = RE_EMBED_CODE.search(video_url[0]).group(1)
+	embed_code = RE_EMBED_CODE.search(video[0]).group(1)
 
 	# Once we've got this, we can then request the main JS page to do with the actual player. Since it
 	# only actually contains JS source, we simply obtain the content.
