@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	title = video['title']
-	summary = video['description']
+	summary = String.StripTags(video['description'])
 	thumb_url = video['thumbnail_large_url']
 	duration = int(video['duration'])*1000
 	rating = float(video['rating'])
