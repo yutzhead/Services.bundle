@@ -32,8 +32,7 @@ def MetadataObjectForURL(url):
 	except:
 		originally_available_at = None
 
-	# Construct a metadata item
-	vc = VideoClipObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		thumb = thumb_url,
@@ -41,8 +40,6 @@ def MetadataObjectForURL(url):
 		originally_available_at = originally_available_at,
 		rating = rating
 	)
-
-	return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -88,7 +85,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url=None, fmt=None, **kwargs):
 
 	if not url or not fmt:
-		return None
+		raise Ex.MediaNotAvailable
 
 	try:
 		data = HTTP.Request(url).content
