@@ -11,7 +11,8 @@ EMBEDDED_VIDEO = [
 	'//embed/@src',
 	'//object/@data',
 	'//param[@name="flashvars"]/@value',
-	'//@*[starts-with(name(), "data-")]'
+	'//@*[starts-with(name(), "data-")]',
+	'//script/@src'
 ]
 
 # Use the iPad user agent to try to make websites give us <video> instead of Flash
