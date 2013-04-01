@@ -8,14 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*/press/)http://www.comedycentral.com/.+</string>
-			</array>
-		</dict>
-		<key>Tosh</key>
-		<dict>
-			<key>URLPatterns</key>
-			<array>
-				<string>^http://tosh.comedycentral.com/.+</string>
+				<string>^(?!.*/press/)http://(www|tosh)\.comedycentral\.com/.+</string>
 			</array>
 		</dict>
 	</dict>
