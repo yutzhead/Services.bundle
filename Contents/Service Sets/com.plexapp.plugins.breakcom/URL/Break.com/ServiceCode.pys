@@ -17,7 +17,10 @@ def MetadataObjectForURL(url):
     title = details_page.xpath("//ContentTitle/text()")[0]
     description = details_page.xpath("//ContentDescription/text()")[0]
     duration = int(details_page.xpath("//VideoLengthInSeconds/text()")[0])
-    thumb = details_page.xpath("//Thumbnail/text()")[0]
+
+    try: thumb = details_page.xpath("//Thumbnail/text()")[0]
+    except: thumb = None
+
     tags = details_page.xpath("//TagCollection/Tag/text()")
     content_rating = details_page.xpath("//MaturityRating/text()")[0]
     date = details_page.xpath("//PublishedDate/text()")[0]
