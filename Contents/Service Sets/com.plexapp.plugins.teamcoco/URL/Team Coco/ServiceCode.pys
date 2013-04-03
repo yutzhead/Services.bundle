@@ -142,7 +142,8 @@ def PlayVideo(url, res=720):
 						continue
 
 					if str(video.video_resolution) == str(VIDEO_RES[i]):
-						return Redirect(video.parts[0].key)
+						#return Redirect(video.parts[0].key)
+						return IndirectResponse(VideoClipObject, key=video.parts[0].key)
 
 		try:
 			video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
