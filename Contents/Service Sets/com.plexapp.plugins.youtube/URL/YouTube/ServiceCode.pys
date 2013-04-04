@@ -2,14 +2,14 @@ import urlparse
 
 DEVELOPER_KEY = 'AI39si7PodNU93CVDU6kxh3-m2R9hkwqoVrfijDMr0L85J94ZrJFlimNxzFA9cSky9jCSHz9epJdps8yqHu1wb743d_SfSCRWA'
 YOUTUBE_VIDEO_DETAILS = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
-YOUTUBE_VIDEO_FORMATS = ['Standard', 'Medium', 'High', '720p', '1080p']
-YOUTUBE_FMT =           [ 34,         18,       35,     22,     37]
-YOUTUBE_CONTAINERS =    ['flv',      'mp4',    'flv',  'mp4',  'mp4']
-YOUTUBE_VIDEORES =      ['sd',       'sd',     '480',  '720',  '1080']
-YOUTUBE_VIDEOCODEC =    ['h264',     'h264',   'h264', 'h264', 'h264']
-YOUTUBE_AUDIOCODEC =    ['aac',      'aac',    'aac',  'aac',  'aac']
+YOUTUBE_VIDEO_FORMATS =	['360p',	'720p',	'1080p']
+YOUTUBE_FMT =			[18,		22,		37]
+YOUTUBE_CONTAINERS =	['mp4',		'mp4',	'mp4']
+YOUTUBE_VIDEORES =		['360',		'720',	'1080']
+YOUTUBE_VIDEOCODEC =	['h264',	'h264',	'h264']
+YOUTUBE_AUDIOCODEC =	['aac',		'aac',	'aac']
 
-httpHeaders = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
+HTTP_HEADERS = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
 RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
 RE_URL_MAP_ALT = Regex('&amp;url_encoded_fmt_stream_map=(.+?)&amp;')
@@ -107,15 +107,16 @@ def MetadataObjectForURL(url):
       raise Ex.MediaNotAvailable
 
   try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders, cacheTime=CACHE_1HOUR)['data']
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)['data']
   except:
     raise Ex.MediaNotAuthorized
 
-  thumbs = details['thumbnail']
-  if 'hqDefault' in thumbs:
-    thumb = thumbs['hqDefault']
+  if 'hqDefault' in details['thumbnail']:
+    thumb = details['thumbnail']['hqDefault']
+  elif 'sqDefault' in details['thumbnail']:
+    thumb = details['thumbnail']['sqDefault']
   else:
-    thumb = thumbs.get('sqDefault', None)
+    thumb = ''
 
   try:
     rating = details['rating'] * 2
@@ -131,18 +132,16 @@ def MetadataObjectForURL(url):
   if not isinstance(duration, int):
     raise Ex.MediaNotAvailable
 
-  video = VideoClipObject(
+  return VideoClipObject(
     title = details['title'],
     summary = details['description'],
-    thumb = thumb,
+    thumb = Resource.ContentsOfURLWithFallback(thumb),
     rating = rating,
     tags = tags,
     originally_available_at = Datetime.ParseDate(details['uploaded']).date(),
     duration = duration,
     genres = [details['category']]
   )
-
-  return video
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -157,6 +156,7 @@ def MediaObjectsForURL(url):
 
   for fmt in fmts:
     index = YOUTUBE_VIDEO_FORMATS.index(fmt)
+
     ret.append(MediaObject(
       parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url, default_fmt=fmt))],
       container = YOUTUBE_CONTAINERS[index],
@@ -198,12 +198,12 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   # this is currently not supported, we should detect the case and raise the suitable Framework
   # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
   try:
-    yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1, follow_redirects=False).content
+    yt_page = HTTP.Request(url, headers=HTTP_HEADERS, cacheTime=1, follow_redirects=False).content
   except Ex.RedirectError, e:
     if 'verify_age?' in e.location:
-      yt_page = HTTP.Request('%s&has_verified=1' % url, headers=httpHeaders, cacheTime=1).content
+      yt_page = HTTP.Request('%s&has_verified=1' % url, headers=HTTP_HEADERS, cacheTime=1).content
     else:
-      yt_page = HTTP.Request(url, headers=httpHeaders, cacheTime=1).content
+      yt_page = HTTP.Request(url, headers=HTTP_HEADERS, cacheTime=1).content
   # If 404...
   except:
     raise Ex.MediaNotAvailable
@@ -212,7 +212,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   video_id = url[url.find('?v=')+3:].split('&')[0]
 
   try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=httpHeaders)['data']
+    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS)['data']
   except:
     raise Ex.MediaNotAuthorized
 
@@ -265,7 +265,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
   Log("Available formats: %s", str(fmts))
 
-  if len(fmts) == 0:
+  if len(fmts) < 1:
     raise Ex.MediaNotAvailable
 
   # Figure out the index we're looking for.
