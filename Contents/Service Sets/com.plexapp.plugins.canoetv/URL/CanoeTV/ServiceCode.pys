@@ -7,8 +7,12 @@ RE_JSON = Regex('var experienceJSON = (.+)};')
 def MetadataObjectForURL(url):
 
 	page = HTML.ElementFromURL(url)
-	date = page.xpath("//h5[@id='date']/text()")[0]
-	date = Datetime.ParseDate(date)
+
+	try:
+		date = page.xpath("//h5[@id='date']/text()")[0]
+		date = Datetime.ParseDate(date)
+	except:
+		date = None
 
 	# Extract the available details from the url and return the appropriate clip.
 	details = JSONFromURL(url)
