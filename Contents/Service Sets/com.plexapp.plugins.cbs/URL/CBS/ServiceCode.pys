@@ -82,13 +82,17 @@ def MetadataObjectFromAPI(url):
 
 ####################################################################################################
 def MetadataObjectFromPAGE(url):
-  page = HTTP.Request(url, cacheTime=7200).content
-  data = HTML.ElementFromString(page)
+  title = []
+  try:
+    page = HTTP.Request(url).content
+    data = HTML.ElementFromString(page)
 
-  title = data.xpath('//meta[@property="og:title"]')  
-
+    title = data.xpath('//meta[@property="og:title"]')  
+  except:
+    pass
+  
   if len(title) < 1:
-    return MetadataObjectFromSMIL(url)
+      return MetadataObjectFromSMIL(url)
   else:
     title = title[0].get('content')
     
@@ -163,11 +167,20 @@ def MetadataObjectFromSMIL(url):
     return None
 
   try:
-    smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
-    thePlatform_feed = 'feeds2'
+    content = HTTP.Request(CBS_SMIL_2 % pid).content
+    if "Media is not available" in content:
+      raise e
+    else:
+      #smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
+      smil = XML.ElementFromString(content)
+      thePlatform_feed = 'feeds2'
   except:
-    smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
-    thePlatform_feed = 'feeds3'
+    content = HTTP.Request(CBS_SMIL_3 % pid).content
+    if "Media is not available" in content:
+      raise e
+    else:
+      smil = XML.ElementFromString(content)
+      thePlatform_feed = 'feeds3'
 
   if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
     raise Ex.MediaGeoblocked
@@ -210,137 +223,142 @@ def MetadataObjectFromSMIL(url):
   return
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      video_resolution = '720',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 720))],
-    ),
-    MediaObject(
-      video_resolution = '480',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 480))],
-    ),
-    MediaObject(
-      video_resolution = 'sd',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = 360))],
-    )
-  ]
-
-####################################################################################################
-@indirect
-def PlayVideo(url, res=None, **kwargs):
-  if ClipData(url):
-    return VideoFromAPI(url, res)
-  else:
-    return VideoFromSMIL(url, res)
-
-####################################################################################################
-def VideoFromAPI(url, res):
   details = ClipData(url)
-
-  video_dict = {}
-  video_url = None
-  for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
-    format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
-    player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
-    if format == "quicktime" and player == "Download":
-      res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
-      url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
-      video_dict[res] = url
-    else:
-      pass
-  
-  resolutions = video_dict.keys()
-  resolutions.sort()
-  resolutions.reverse()
-  
-  # Find the best match.
-  for resolution in resolutions:
-    if resolution <= res:
-      video_url = video_dict[resolution]
-      break
-
-  # Return the first match.
-  if not video_url:
+  media_objects = []
+  if details:
+    video_dict = {}
+    for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
+      video_format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
+      player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
+      if video_format == "quicktime" and player == "Download":
+        res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
+        if res < 360:
+          continue
+        else:
+          pass
+        video_url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
+        video_dict[res] = video_url
+      else:
+        pass
+      
+    resolutions = video_dict.keys()
+    resolutions.sort()
+    resolutions.reverse()
+    
+    for res in resolutions:
+      media_objects.append(
+          MediaObject(
+            video_resolution = res,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=video_dict[res])],
+          ),
+        )
+  else:
     try:
-      video_url = video_dict[video_dict.keys()[0]]
-    except:
-      raise Ex.MediaNotAvailable
-
-  return IndirectResponse(VideoClipObject, key=video_url)
-
-####################################################################################################
-def VideoFromSMIL(url, res):
-  try:
-    pid = RE_PID.search(url).group(1)
-  except:
-    content = HTTP.Request(url).content
-    try:
-      url  = page.xpath("//meta[@property = 'og:video']")[0].get('content')
       pid = RE_PID.search(url).group(1)
     except:
+      content = HTTP.Request(url).content
       try:
-        pid = RE_PID2.search(content).group(1)
+        url  = page.xpath("//meta[@property = 'og:video']")[0].get('content')
+        pid = RE_PID.search(url).group(1)
       except:
-        raise Ex.MediaNotAvailable
-
-  if pid:
-    try:
-      smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
-      thePlatform_feed = 'feeds2'
-    except:
-      smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
-      thePlatform_feed = 'feeds3'
-    
-    if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
-      raise Ex.MediaGeoblocked
-
-    video_url = None
-    for profile in PROFILES:
-      try:
-        video_url = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0].get('src')
         try:
-          headers = HTTP.Request(video_url).headers
-        except Ex.HTTPError, e:
-          video_url = None
-          raise e
-        break
-      except:
-        pass
-    if video_url:
-      return IndirectResponse(VideoClipObject, key = video_url)
-    else:
-      if thePlatform_feed == 'feeds2':
-        rtmp_url = smil.xpath('//a:ref[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)[-1].get('src')
-        rtmp_params = rtmp_url.split('<break>')
-        rtmp_url = rtmp_params[0]
-        clip = rtmp_params[1]
-      elif thePlatform_feed == 'feeds3':
-        # Check for geoblock
-        if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
-            raise Ex.MediaGeoblocked
+          pid = RE_PID2.search(content).group(1)
+        except:
+          raise Ex.MediaNotAvailable
 
-        rtmp_url = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
-        clip = smil.xpath('//b:ref[starts-with(@src, "video/")]', namespaces=SMIL_NAMESPACE)[0].get('src')
-      
-      if clip[-4:] == '.mp4':
-        clip = 'MP4:' + clip[:-4]
+    if pid:
+      try:
+        smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
+        thePlatform_feed = 'feeds2'
+      except:
+        smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
+        thePlatform_feed = 'feeds3'
+    
+      if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
+        raise Ex.MediaGeoblocked
+
+      video_url = None
+      for profile in PROFILES:
+        try:
+          video = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0]
+          video_url = video.get('src')
+          try:
+            headers = HTTP.Request(video_url).headers
+            bitrate = int(video.get('system-bitrate'))
+            resolution = int(video.get('height'))
+            media_objects.append(
+              MediaObject(
+                video_resolution = resolution,
+                bitrate = bitrate,
+                video_codec = VideoCodec.H264,
+                audio_codec = AudioCodec.AAC,
+                audio_channels = 2,
+                optimized_for_streaming = True,
+                parts = [PartObject(key=video_url)],
+              ),
+            )
+          except Ex.HTTPError, e:
+            video_url = None
+            raise e
+          break
+        except:
+          pass
+      if video_url:
+        #return IndirectResponse(VideoClipObject, key = video_url)
+        pass
       else:
-        clip = clip.replace('.flv', '')
-      
-    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
+        if thePlatform_feed == 'feeds2':
+          videos = smil.xpath('//a:video[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)
+          for video in videos:
+            rtmp_url = video.get('src')
+            bitrate = int(video.get('system-bitrate'))
+            resolution = int(video.get('height'))
+            rtmp_params = rtmp_url.split('<break>')
+            rtmp_url = rtmp_params[0]
+            clip = rtmp_params[1]
+            if clip[-4:] == '.mp4':
+              clip = 'MP4:' + clip[:-4]
+            else:
+              clip = clip.replace('.flv', '')
+            media_objects.append(
+                MediaObject(
+                  parts = [PartObject(key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))],
+                  bitrate = bitrate,
+                  video_resolution = resolution
+                )
+              )
+        
+        elif thePlatform_feed == 'feeds3':
+          # Check for geoblock
+          if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
+              raise Ex.MediaGeoblocked
+          source_group = smil.xpath('//b:switch', namespaces=SMIL_NAMESPACE)[0]
+          rtmp_url = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
+          for ref in source_group.xpath('./b:video', namespaces=SMIL_NAMESPACE):
+            clip = ref.get('src')        
+            if clip[-4:] == '.mp4':
+              clip = 'MP4:' + clip[:-4]
+            else:
+              clip = clip.replace('.flv', '')
+            resolution = int(ref.get('height'))
+            if resolution < 360:
+              continue
+            bitrate = int(ref.get('system-bitrate'))/1000
+            media_objects.append(
+              MediaObject(
+                parts = [PartObject(key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))],
+                bitrate = bitrate,
+                video_resolution = resolution
+              )
+            )
+            
+  return media_objects
 
 ####################################################################################################
 def ClipData(url):
