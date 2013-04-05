@@ -17,23 +17,23 @@ def MetadataObjectForURL(url):
 	if not pid:
 		raise Ex.MediaNotAvailable
 
-	html = HTML.ElementFromString(page)
 	xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
 
 	if len(xml.xpath('//a:ref[@title="Geographic Restriction"]', namespaces=SMIL_NS)) > 0:
 		raise Ex.MediaGeoblocked
 
-	is_full_episode = True if xml.xpath('//a:switch[1]//a:param[@name="EpisodeFlag"]/@value', namespaces=SMIL_NS)[0] == 'true' else False
-
 	title = xml.xpath('//a:switch[1]/a:ref/@title', namespaces=SMIL_NS)[0]
 	summary = xml.xpath('//a:switch[1]/a:ref/@abstract', namespaces=SMIL_NS)[0]
 	duration = xml.xpath('//a:switch[1]/a:ref/@dur', namespaces=SMIL_NS)[0].strip('ms')
+
+	html = HTML.ElementFromString(page)
+
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].replace('_140x80.jpg', '_640x360.jpg')
 
 	air_date = html.xpath('//div[@class="airdate"]/text()')[0].replace('Air Date: ', '')
 	originally_available_at = Datetime.ParseDate(air_date).date()
 
-	if is_full_episode:
+	if xml.xpath('//a:switch[1]//a:param[@name="EpisodeFlag"]/@value', namespaces=SMIL_NS)[0] == 'true':
 		show = xml.xpath('//a:switch[1]//a:param[@name="SeriesTitle"]/@value', namespaces=SMIL_NS)[0]
 		title = title.split(' - ', 1)[-1]
 
