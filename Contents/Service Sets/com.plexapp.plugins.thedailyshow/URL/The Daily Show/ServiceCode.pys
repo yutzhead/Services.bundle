@@ -186,7 +186,7 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 	if index < len(media_url):
 		player_url = media_url[index].get('url')
 	else:
-		# Return small filler movie for desktop clients
+		# Return small 'filler' movie
 		return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
 	try:
