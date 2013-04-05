@@ -48,7 +48,7 @@ def PlayVideo(url):
 	html = HTML.ElementFromURL(url)
 	video_url = html.xpath('//a[contains(@href, ".mp4")]/@href')
 
-	if len(video_url) < 0:
+	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=video_url[0])
