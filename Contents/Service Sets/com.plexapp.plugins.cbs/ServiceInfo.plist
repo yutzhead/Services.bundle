@@ -8,8 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(?!bwp\.)(.+\.)?cbs(news|sports)?\.com/(.*?/)?video/.+</string>
-				<string>^http://can.cbs.com/thunder/player/iframe/index.php\?.+?pid=.+</string>
+				<string>^http://www\.cbs\.com/shows/[^/]+/video/[^/]+/[^/]+</string>
 			</array>
 		</dict>
 	</dict>

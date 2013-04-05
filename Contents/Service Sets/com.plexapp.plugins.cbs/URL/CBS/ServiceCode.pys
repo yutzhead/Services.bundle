@@ -1,427 +1,106 @@
-RE_PID = Regex("pid\s*=\s*'?([^&']+)")
-RE_PID2 = Regex("video.settings.pid = '(.+?)'")
-RE_VIDEO_ID = Regex('CBSVideo.setVideoId\("([0-9]+)"\);')
-RE_VID_ID = Regex("vidId: '([0-9]+)'")
-RE_VIDEO_PLATFORM = Regex('videoImagePlatform="([^"]+)')
-RE_DURATION = Regex('(P?<minutes>[0-9]+):(P?<seconds>[0-9]{2})')
-
-API_URL = "http://api.cnet.com/restApi/v1.0/videoSearch?videoIds=%s&showBroadcast=true&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,broadcast,lowcache&videoMediaType=preferred&players=Download,RTMP&partTag=cntv"
-
-CNET_NAMESPACE  = {'l':'http://api.cnet.com/rest/v1.0/ns'}
-SMIL_NAMESPACE = {'a': 'http://www.w3.org/2001/SMIL20/Language', 'b': 'http://www.w3.org/2005/SMIL21/Language'}
-
-CBS_URL = 'http://www.cbs.com'
-CBS_SMIL_2 = 'http://release.theplatform.com/content.select?format=SMIL&Tracking=true&balance=true&MBR=true&pid=%s'
-CBS_SMIL_3 = 'http://link.theplatform.com/s/dJ5BDC/%s?format=SMIL&Tracking=true&mbr=true'
-
-CBS_SWF = "http://www.cbs.com/thunder/player/1_0/chromeless/1_5_1/CAN.swf"
-
-PROFILES = ["WIFI-MED", "WIFI-LOW", "3G-MED"]
+RE_PID = Regex("video\.settings\.pid = '(?P<pid>[^']+)';")
+VIDEO_XML = 'http://link.theplatform.com/s/dJ5BDC/%s?format=SMIL&Tracking=true&mbr=true'
+SMIL_NS = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
+CBS_SWF = 'http://www.cbs.com/thunder/player/1_0/chromeless/1_5_1/CAN.swf'
 
 ####################################################################################################
 def NormalizeURL(url):
-  return url
+
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  if ClipData(url):
-    return MetadataObjectFromAPI(url)
-  else:
-    return MetadataObjectFromPAGE(url)
+
+	page = HTTP.Request(url).content
+	pid = RE_PID.search(page)
+
+	if not pid:
+		raise Ex.MediaNotAvailable
+
+	html = HTML.ElementFromString(page)
+	xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
+	is_full_episode = True if xml.xpath('//a:switch[1]//a:param[@name="EpisodeFlag"]/@value', namespaces=SMIL_NS)[0] == 'true' else False
+
+	title = xml.xpath('//a:switch[1]/a:ref/@title', namespaces=SMIL_NS)[0]
+	summary = xml.xpath('//a:switch[1]/a:ref/@abstract', namespaces=SMIL_NS)[0]
+	duration = xml.xpath('//a:switch[1]/a:ref/@dur', namespaces=SMIL_NS)[0].strip('ms')
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].replace('_140x80.jpg', '_640x360.jpg')
+
+	air_date = html.xpath('//div[@class="airdate"]/text()')[0].replace('Air Date: ', '')
+	originally_available_at = Datetime.ParseDate(air_date).date()
+
+	if is_full_episode:
+		show = xml.xpath('//a:switch[1]//a:param[@name="SeriesTitle"]/@value', namespaces=SMIL_NS)[0]
+		title = title.split(' - ', 1)[-1]
+
+		season = xml.xpath('//a:switch[1]//a:param[@name="SeasonNumber"]/@value', namespaces=SMIL_NS)[0]
+		episode = xml.xpath('//a:switch[1]//a:param[@name="EpisodeNumber"]/@value', namespaces=SMIL_NS)[0]
+
+		return EpisodeObject(
+			show = show,
+			season = int(season),
+			index = int(episode),
+			title = title,
+			summary = summary,
+			duration = int(duration),
+			thumb = Resource.ContentsOfURLWithFallback(thumb),
+			originally_available_at = originally_available_at
+		)
+	else:
+		return VideoClipObject(
+			title = title,
+			summary = summary,
+			duration = int(duration),
+			thumb = Resource.ContentsOfURLWithFallback(thumb),
+			originally_available_at = originally_available_at
+		)
 
 ####################################################################################################
-def MetadataObjectFromAPI(url):
-  details = ClipData(url)
-
-  if details != None:
-    pass
-
-  title = details.xpath('//l:Title', namespaces=CNET_NAMESPACE)[0].text
-  originally_available_at = Datetime.ParseDate(details.xpath('//l:ProductionDate', namespaces=CNET_NAMESPACE)[0].text).date()
-  summary = details.xpath('//l:Description', namespaces=CNET_NAMESPACE)[0].text
-  duration = int(details.xpath('//l:LengthSecs', namespaces=CNET_NAMESPACE)[0].text)*1000
-
-  try: content_rating = details.xpath('//l:ContentRatingOverall', namespaces=CNET_NAMESPACE)[0].text
-  except: content_rating = None
-
-  images = details.xpath('//l:Images/l:Image', namespaces=CNET_NAMESPACE)
-  thumbs = SortImages(images)
-
-  if details.xpath('//l:Feature', namespaces=CNET_NAMESPACE)[0].text == "full_episodes":
-    show = details.xpath('//l:FranchiseName', namespaces=CNET_NAMESPACE)[0].text
-    try: season = int(details.xpath('//l:SeasonNumber', namespaces=CNET_NAMESPACE)[0].text)
-    except: season = None
-    try: index = int(details.xpath('//l:EpisodeNumber', namespaces=CNET_NAMESPACE)[0].text)
-    except: index = None
-
-    eo = EpisodeObject(
-      title = title,
-      show = show,
-      summary = summary,
-      originally_available_at = originally_available_at,
-      duration = duration,
-      content_rating = content_rating,
-      season = season,
-      index = index,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumbs)
-    )
-    return eo
-
-  else:
-
-    # Construct a metadata item
-    co = VideoClipObject(
-      title = title,
-      originally_available_at = originally_available_at,
-      duration = duration,
-      content_rating = content_rating,
-      summary = summary,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumbs)
-    )
-    return co
-
-####################################################################################################
-def MetadataObjectFromPAGE(url):
-  title = []
-  try:
-    page = HTTP.Request(url).content
-    data = HTML.ElementFromString(page)
-
-    title = data.xpath('//meta[@property="og:title"]')  
-  except:
-    pass
-  
-  if len(title) < 1:
-      return MetadataObjectFromSMIL(url)
-  else:
-    title = title[0].get('content')
-    
-  if len( data.xpath('//div[@id="video-metadata-display-container"]//*[contains(text(), "Full Episode")]') ) > 0:
-    video_type = "Full Episode"
-  else:
-    video_type = "Clip"
-  
-  if ' - ' in title:
-    try:
-      (show_title, episode_title, junk) = title.split(' - ', 2)
-
-      if show_title.endswith(' Video'):
-        show_title = show_title.rsplit(' ',1)[0]
-    except: # This is not a webpage with an episode
-      return None
-
-  else:
-    show_title = None
-    episode_title = title
-
-  summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
-
-  try:
-    thumb = RE_VIDEO_PLATFORM.search(page).group(1)
-  except:
-    thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
-
-  if video_type == "Full Episode":
-    try:
-      air_date = data.xpath('//div[@id="video-metadata-display-container"]//b[contains(text(), "Air Date")]/parent::p/text()')[0].strip()
-      originally_available_at = Datetime.ParseDate(air_date).date()
-    except:
-      originally_available_at = None
-
-    try:
-      timecode = data.xpath('//div[@id="video-metadata-display-container"]//b[contains(text(), "Full Episode")]/parent::p/text()')[0].strip()
-      duration = RE_DURATION.search(timecode)
-      duration = ( (int(duration.group(minutes))*60) + int(duration.group(seconds)) ) * 1000
-    except:
-      duration = None
-
-    # Construct a metadata item
-    eo = EpisodeObject(
-      title = episode_title,
-      show = show_title,
-      summary = summary,
-      originally_available_at = originally_available_at,
-      duration = duration, 
-      thumb = Resource.ContentsOfURLWithFallback(url=thumb)
-    )
-    return eo
-
-  elif video_type == "Clip":
-    if show_title:
-      ' - '.join([show_title, episode_title])
-    else:
-      title = episode_title
-
-    co = VideoClipObject(
-      title = title,
-      summary = summary,
-      thumb = Resource.ContentsOfURLWithFallback(url=thumb)
-    )
-    return co
-
-####################################################################################################
-def MetadataObjectFromSMIL(url):
-  try:
-    pid = RE_PID.search(url).group(1)
-  except:
-    return None
-
-  try:
-    content = HTTP.Request(CBS_SMIL_2 % pid).content
-    if "Media is not available" in content:
-      raise e
-    else:
-      #smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
-      smil = XML.ElementFromString(content)
-      thePlatform_feed = 'feeds2'
-  except:
-    content = HTTP.Request(CBS_SMIL_3 % pid).content
-    if "Media is not available" in content:
-      raise e
-    else:
-      smil = XML.ElementFromString(content)
-      thePlatform_feed = 'feeds3'
-
-  if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
-    raise Ex.MediaGeoblocked
-
-  if thePlatform_feed == 'feeds3':
-    # Check for geoblock
-    if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
-      raise Ex.MediaGeoblocked
-
-    details = smil.xpath('//b:ref[starts-with(@src, "video/")]', namespaces=SMIL_NAMESPACE)[0]
-    title = details.get('title')
-    summary = details.get('abstract')
-    duration = int(details.get('dur').strip('ms'))
-    keywords = details.get('keywords')
-
-    if 'Full episode' in keywords:
-      episode = int(smil.xpath('//b:param[@name="EpisodeNumber"]', namespaces=SMIL_NAMESPACE)[0].get('value'))
-      season = int(smil.xpath('//b:param[@name="SeasonNumber"]', namespaces=SMIL_NAMESPACE)[0].get('value'))
-      series = smil.xpath('//b:param[@name="SeriesTitle"]', namespaces=SMIL_NAMESPACE)[0].get('value')
-
-      return EpisodeObject(
-        title = title,
-        summary = summary,
-        duration = duration,
-        index = episode,
-        season = season,
-        show = series
-      )
-    else:
-      return VideoClipObject(
-        title = title,
-        summary = summary,
-        duration = duration
-      )
-
-    title = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
-  else:
-    return None
-
-  return
-
-####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
-  details = ClipData(url)
-  media_objects = []
-  if details:
-    video_dict = {}
-    for video in details.xpath('//l:VideoMedias/l:VideoMedia', namespaces=CNET_NAMESPACE):
-      video_format = video.xpath("l:Format", namespaces=CNET_NAMESPACE)[0].text
-      player = video.xpath("l:Player", namespaces=CNET_NAMESPACE)[0].text
-      if video_format == "quicktime" and player == "Download":
-        res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
-        if res < 360:
-          continue
-        else:
-          pass
-        video_url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
-        video_dict[res] = video_url
-      else:
-        pass
-      
-    resolutions = video_dict.keys()
-    resolutions.sort()
-    resolutions.reverse()
-    
-    for res in resolutions:
-      media_objects.append(
-          MediaObject(
-            video_resolution = res,
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [PartObject(key=video_dict[res])],
-          ),
-        )
-  else:
-    try:
-      pid = RE_PID.search(url).group(1)
-    except:
-      content = HTTP.Request(url).content
-      try:
-        url  = page.xpath("//meta[@property = 'og:video']")[0].get('content')
-        pid = RE_PID.search(url).group(1)
-      except:
-        try:
-          pid = RE_PID2.search(content).group(1)
-        except:
-          raise Ex.MediaNotAvailable
 
-    if pid:
-      try:
-        smil = XML.ElementFromURL(CBS_SMIL_2 % pid, cacheTime=0)
-        thePlatform_feed = 'feeds2'
-      except:
-        smil = XML.ElementFromURL(CBS_SMIL_3 % pid, cacheTime=0)
-        thePlatform_feed = 'feeds3'
-    
-      if len(smil.xpath('//a:ref[contains(@abstract, "geo")]', namespaces = SMIL_NAMESPACE)) > 0:
-        raise Ex.MediaGeoblocked
+	media_objects = []
+	resolution = ['720', '360', '360', '360']
+	bitrate = [2000, 1250, 800, 450]
 
-      video_url = None
-      for profile in PROFILES:
-        try:
-          video = smil.xpath("//a:video[contains(@profile, '"+profile+"')]", namespaces = SMIL_NAMESPACE)[0]
-          video_url = video.get('src')
-          try:
-            headers = HTTP.Request(video_url).headers
-            bitrate = int(video.get('system-bitrate'))
-            resolution = int(video.get('height'))
-            media_objects.append(
-              MediaObject(
-                video_resolution = resolution,
-                bitrate = bitrate,
-                video_codec = VideoCodec.H264,
-                audio_codec = AudioCodec.AAC,
-                audio_channels = 2,
-                optimized_for_streaming = True,
-                parts = [PartObject(key=video_url)],
-              ),
-            )
-          except Ex.HTTPError, e:
-            video_url = None
-            raise e
-          break
-        except:
-          pass
-      if video_url:
-        #return IndirectResponse(VideoClipObject, key = video_url)
-        pass
-      else:
-        if thePlatform_feed == 'feeds2':
-          videos = smil.xpath('//a:video[starts-with(@src, "rtmp")]', namespaces=SMIL_NAMESPACE)
-          for video in videos:
-            rtmp_url = video.get('src')
-            bitrate = int(video.get('system-bitrate'))
-            resolution = int(video.get('height'))
-            rtmp_params = rtmp_url.split('<break>')
-            rtmp_url = rtmp_params[0]
-            clip = rtmp_params[1]
-            if clip[-4:] == '.mp4':
-              clip = 'MP4:' + clip[:-4]
-            else:
-              clip = clip.replace('.flv', '')
-            media_objects.append(
-                MediaObject(
-                  parts = [PartObject(key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))],
-                  bitrate = bitrate,
-                  video_resolution = resolution
-                )
-              )
-        
-        elif thePlatform_feed == 'feeds3':
-          # Check for geoblock
-          if len(smil.xpath('//*[contains(@title, "Geographic Restriction")]')) > 0:
-              raise Ex.MediaGeoblocked
-          source_group = smil.xpath('//b:switch', namespaces=SMIL_NAMESPACE)[0]
-          rtmp_url = smil.xpath('//b:meta[starts-with(@base, "rtmp")]', namespaces=SMIL_NAMESPACE)[0].get('base')
-          for ref in source_group.xpath('./b:video', namespaces=SMIL_NAMESPACE):
-            clip = ref.get('src')        
-            if clip[-4:] == '.mp4':
-              clip = 'MP4:' + clip[:-4]
-            else:
-              clip = clip.replace('.flv', '')
-            resolution = int(ref.get('height'))
-            if resolution < 360:
-              continue
-            bitrate = int(ref.get('system-bitrate'))/1000
-            media_objects.append(
-              MediaObject(
-                parts = [PartObject(key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))],
-                bitrate = bitrate,
-                video_resolution = resolution
-              )
-            )
-            
-  return media_objects
+	for i, res in enumerate(resolution):
+		media_objects.append(
+			MediaObject(
+				video_resolution = res,
+				bitrate = bitrate[i],
+				audio_channels = 2,
+				parts = [
+					PartObject(
+						key = Callback(PlayVideo, url=url, bitrate=bitrate[i])
+					)
+				]
+			)
+		)
+
+	return media_objects
 
 ####################################################################################################
-def ClipData(url):
-  if 'pid=' in url:
-    return False
+@indirect
+def PlayVideo(url, bitrate=2000):
 
-  try:
-    page = HTTP.Request(url).content
-  except:
-    raise Ex.MediaNotAvailable
+	page = HTTP.Request(url).content
+	pid = RE_PID.search(page)
 
-  video_id = None
+	if not pid:
+		raise Ex.MediaNotAvailable
 
-  id = RE_VIDEO_ID.search(page)
+	xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'), cacheTime=0)
+	rtmp_url = xml.xpath('//a:meta[starts-with(@base, "rtmp")]/@base', namespaces=SMIL_NS)[0]
 
-  if id:
-    video_id = id.group(1)
-  else:
-    id = HTML.ElementFromString(page).xpath('//*[@videoid]')
+	available_bitrates = xml.xpath('//a:switch[1]/a:video/@system-bitrate', namespaces=SMIL_NS)
+	closest = min((abs(int(bitrate) - int(i)/1000), i) for i in available_bitrates)[1]
 
-    if len(id) > 0:
-      video_id = id[0].get('videoid')
-    else:
-      id = RE_VID_ID.search(page)
+	clip = xml.xpath('//a:switch[1]/a:video[@system-bitrate="%s"]/@src' % closest, namespaces=SMIL_NS)[0]
 
-      if id:
-        video_id = id.group(1)
+	if clip[-4:] == '.mp4':
+		clip = 'mp4:%s' % clip[:-4]
+	else:
+		clip = clip.replace('.flv', '')
 
-  if video_id:
-    video_data = XML.ElementFromURL(API_URL % video_id)
-  else:
-    video_data = None
+	Log(' --> RTMPDump test command line: rtmpdump -r "%s" -y "%s" -W "%s" -o output.flv' % (rtmp_url, clip, CBS_SWF))
 
-  return video_data
-
-####################################################################################################
-def SortImages(images=[]):
-
-  thumbs = []
-  for image in images:
-    height = image.get('height')
-    url = image.xpath('./l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
-    thumbs.append({'height':height, 'url':url})
-
-  sorted_thumbs = sorted(thumbs, key=lambda thumb : int(thumb['height']), reverse=True)
-  thumb_list = []
-  for thumb in sorted_thumbs:
-    thumb_list.append(thumb['url'])
-    if len(thumb_list) > 2:
-      break
-
-  return thumb_list
-
-####################################################################################################
-def TestURLs():
-  test_urls = []
-  data = HTML.ElementFromURL(CBS_URL + '/video/')
-
-  for item in data.xpath('//div[@id="show_block"]//a'):
-    video_url = item.get('href')
-    test_urls.append(video_url)
-
-    if len(test_urls) > 3:
-      break
-
-  return test_urls
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=CBS_SWF))
