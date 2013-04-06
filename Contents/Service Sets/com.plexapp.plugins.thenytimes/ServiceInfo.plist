@@ -6,13 +6,13 @@
 	<dict>
 		<key>New York Times</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.nytimes.com/video/playlist/science/1194811622277/index.html</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(video|www).nytimes.com/video/.+</string>
+				<string>^http://www.nytimes.com/video/\d{4}/\d{2}/\d{2}(/[^/]+)+/\d+</string>
+			</array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.nytimes.com/video/2013/04/01/science/100000002149137/dragonflies-dainty-but-deadly.html</string>
 			</array>
 		</dict>
 	</dict>

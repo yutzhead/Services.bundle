@@ -1,17 +1,31 @@
-RE_DETAILS = Regex('var experienceJSON = (.+)};')
-VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=1656678357001&@videoPlayer=%s'
+RE_VIDEO_ID = Regex('\/(?P<video_id>\d{15})\/')
+RE_VIDEO_ID_HASH = Regex('#(?P<video_id>\d+)')
+
+BC_VIDEO_BY_REFERENCE_URL = 'http://api.brightcove.com/services/library?command=find_video_by_reference_id&reference_id=%s&token=cE97ArV7TzqBzkmeRVVhJ8O6GWME2iG_bRvjBTlNb4o.&custom_fields=videourl'
+
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+
+####################################################################################################
+def NormalizeURL(url):
+
+	if RE_VIDEO_ID_HASH.search(url):
+		json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % RE_VIDEO_ID_HASH.search(url).group('video_id'), cacheTime=CACHE_1WEEK)
+		url = json_obj['customFields']['videourl']
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	details = GetExperience(url)
+	video_id = RE_VIDEO_ID.search(url).group('video_id')
+	json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % video_id, cacheTime=CACHE_1WEEK)
 
 	return VideoClipObject(
-		title = details['displayName'],
-		summary = details['longDescription'],
-		originally_available_at = Datetime.FromTimestamp(float(details['publishedDate']) / 1000),
-		thumb = details['thumbnailURL']
+		title = json_obj['name'],
+		summary = json_obj['longDescription'],
+		originally_available_at = Datetime.FromTimestamp(float(json_obj['publishedDate']) / 1000),
+		duration = json_obj['length'],
+		thumb = Resource.ContentsOfURLWithFallback(json_obj['videoStillURL'])
 	)
 
 ####################################################################################################
@@ -23,48 +37,28 @@ def MediaObjectsForURL(url):
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			video_resolution = "576",
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res="576"))]
+			video_resolution = '576',
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=576))]
 		),
 		MediaObject(
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			video_resolution = "450",
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res="450"))]
-		),
-		MediaObject(
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			video_resolution = "360",
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
+			video_resolution = '360',
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res=360))]
 		)
 	]
 
 ####################################################################################################
-def PlayVideo(url, res):
+@indirect
+def PlayVideo(url, res=576):
 
-	details = GetExperience(url)
+	video_id = RE_VIDEO_ID.search(url).group('video_id')
+	json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % video_id, cacheTime=CACHE_1WEEK)
 
-	for rendition in details['renditions']:
-		if rendition['videoCodec'] == "H264" and rendition['frameHeight'] == res:
-			return Redirect(rendition['defaultURL'])
+	for rendition in json_obj['renditions']:
+		if rendition['videoCodec'] == "H264" and rendition['frameHeight'] == int(res):
+			return IndirectResponse(VideoClipObject, key=rendition['url'])
 
-	return Redirect(details['FLVFullLengthURL'])
-
-####################################################################################################
-def GetExperience(url):
-
-	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
-	video_id = page.xpath('//li[contains(@class, "nowplaying")]//a/@href')
-	if len(video_id) < 1:
-		raise Ex.MediaNotAvailable
-
-	video_id = video_id[0].replace('#', 'ref%3A')
-	details_page_contents = HTTP.Request(VIDEO_DETAILS_URL % video_id, headers=HTTP_HEADERS).content
-	experience = RE_DETAILS.search(details_page_contents).group(1) + '}'
-
-	return JSON.ObjectFromString(experience)['data']['programmedContent']['videoPlayer']['mediaDTO']
+	return IndirectResponse(VideoClipObject, key=json_obj['FLVFullLength']['url'])
