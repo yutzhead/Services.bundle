@@ -194,6 +194,10 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   if not url:
     return None
 
+  # Set default_fmt to '360p' if the value is not set or one of the old string values is used.
+  if not default_fmt or default_fmt in ('Standard', 'Medium', 'High'):
+    default_fmt = '360p'
+
   # Some videos require the user to authenticate in order for age verification to be successful. Since
   # this is currently not supported, we should detect the case and raise the suitable Framework
   # exception. If we're being redirected to a different/unknown URL, we will attempt to just continue.
