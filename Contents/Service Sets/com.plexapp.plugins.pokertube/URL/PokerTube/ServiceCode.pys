@@ -14,6 +14,10 @@ def MetadataObjectForURL(url):
 	video_id = RE_VIDEO_ID.search(video).group('video_id')
 
 	xml = XML.ElementFromURL(XML_URL % video_id, cacheTime=CACHE_1DAY)
+
+	if len(xml.xpath('//*[starts-with(name(), "video-")]')) < 1:
+		raise Ex.MediaNotAvailable
+
 	duration = xml.xpath('//*[starts-with(name(), "video-")]/@duration')[0]
 	duration = int(float(duration) * 1000)
 
