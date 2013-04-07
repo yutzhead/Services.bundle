@@ -1,20 +1,30 @@
-import re
+RE_SEASON       = Regex('season\-([0-9]+)')
+RE_EPISODE      = Regex('-ep-([0-9]+)-')
+RE_EPISODE_ID   = Regex('#full-episode-([0-9]+)')
+RE_NETWORK      = Regex('watch\.(.+\.c[a-z]{1,2})/.+')
+RE_CLIPID       = Regex("clip:?'?([0-9]{6})'?")
+RE_SOURCE       = Regex('http://watch.(.+\.(ca|com))/.*')
+RE_AD_URL       = Regex('"(rtmp.+?)",')
+RE_CLIP_DETAILS = Regex("({EpisodePermalink:.+, IsCanadaOnly:'.'})")
+
+
 EPISODE_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
-CLIP_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?clipid=%s'
+CLIP_LOOKUP	= 'http://cls.ctvdigital.net/cliplookup.aspx?id=%s'
+AD_LOOKUP       = 'http://ad.doubleclick.net/pfadx/ctv.ctvwatch.ca;clip=%s;sz=1x1;ord=0;tile=%s;format=flv'
 
 SITES = ['ctv.ca', 'tsn.ca', 'discoverychannel.ca', 'thecomedynetwork.ca', 'bravo.ca', 'spacecast.com', 'fashiontelevision.com']
 
-SOURCE = {
-  "ctv.ca"              : "CTV",
-  "ctv.ca/news"         : "CTV News",
-  "tsn.ca"              : "TSN",
-  "discoverychannel.ca" : "Discorery Channel",
-  "thecomedynetwork.ca" : "Comedy Network",
-  "bravo.ca"            : "Bravo.ca",
-  "bravofact.com"       : "BravoFact!",
-  "spacecast.com"       : "Space",
-  "muchmusic.com"       : "Much Music",
-  "fashiontelevision.com":"Fashion Television"
+SOURCES = {
+  "ctv.ca"                :   {"Source" : "CTV",                "swf_url" : "http://watch.ctv.ca/Flash/player.swf?themeURL=http://watch.ctv.ca/themes/CTV/player/theme.aspx"},
+  "tsn.ca"                :   {"Source" : "TSN",                "swf_url" : "http://watch.tsn.ca/Flash/player.swf?themeURL=http://watch.ctv.ca/themes/TSN/player/theme.aspx"},
+  "discoverychannel.ca"   :   {"Source" : "Discorery Channel",  "swf_url" : "http://watch.discoverychannel.ca/Flash/player.swf?themeURL=http://watch.discoverychannel.ca/themes/Discoverynew/player/theme.aspx"},
+  "thecomedynetwork.ca"   :   {"Source" : "Comedy Network",     "swf_url" : "http://watch.thecomedynetwork.ca/Flash/player.swf?themeURL=http://watch.thecomedynetwork.ca/themes/Comedy/player/theme.aspx"},
+  "bravo.ca"              :   {"Source" : "Bravo.ca",           "swf_url" : ""},
+  "bravofact.com"         :   {"Source" : "BravoFact!",         "swf_url" : ""},
+  "spacecast.com"         :   {"Source" : "Space",              "swf_url" : "http://watch.spacecast.com/Flash/player.swf?themeURL=http://watch.spacecast.com/themes/Space/player/theme.aspx"},
+  "space.ca"              :   {"Source" : "Space",              "swf_url" : "http://watch.spacecast.com/Flash/player.swf?themeURL=http://watch.spacecast.com/themes/Space/player/theme.aspx"},
+  "muchmusic.com"         :   {"Source" : "Much Music",         "swf_url" : ""},
+  "fashiontelevision.com" :   {"Source" :"Fashion Television",  "swf_url" : "http://watch.fashiontelevision.com/Flash/player.swf?themeURL=http://watch.fashiontelevision.com/themes/FashionTelevision/player/theme.aspx"},
 }
 
 ####################################################################################################
@@ -25,62 +35,80 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  data = HTML.ElementFromURL(url)
-
   try:
-    title = data.xpath('//meta[@name="title"]')[0].get('content').split(' : ')
-    show_title = title[0]
-    episode_title = title[1]
-    summary = data.xpath('//meta[@name="description"]')[0].get('content')
+    data = HTML.ElementFromURL(url)
+    try:
+      title = data.xpath('//meta[@name="title"]')[0].get('content').split(' : ')
+      show_title = title[0]
+      episode_title = title[1]
+      summary = data.xpath('//meta[@name="description"]')[0].get('content')
 
-    # Ensure that the thumb URL is well formed.
-    thumbUrl = data.xpath('//meta[@name="Thumbnail"]')[0].get('content')
-    thumbUrl = thumbUrl.replace(' ', '%20')
+      # Ensure that the thumb URL is well formed.
+      thumbUrl = data.xpath('//meta[@name="Thumbnail"]')[0].get('content')
+      thumbUrl = thumbUrl.replace(' ', '%20').replace('/80/60/', '/560/420/')
 
-    try: season = int(re.search('season\-([0-9]+)', url).group(1))
-    except: season = None
-    try: episode = int(re.search('-ep-([0-9]+)-', url).group(1).lstrip(season))
-    except: episode = None
+      try: season = int(RE_SEASON.search(url).group(1))
+      except: season = None
+      try: episode = int(RE_EPISODE.search(url).group(1).lstrip(season))
+      except: episode = None
 
-    # Construct a metadata item
-    mo = EpisodeObject(
-      title = episode_title,
-      show = show_title,
-      season = season,
-      index = episode,
-      summary = summary,
-      thumb = thumbUrl
-    )
+      # Construct a metadata item
+      mo = EpisodeObject(
+        title = episode_title,
+        show = show_title,
+        season = season,
+        index = episode,
+        summary = summary,
+        thumb = thumbUrl
+      )
 
+    except:
+      network = RE_NETWORK.search(url).group(1)
+      clip_re = RE_CLIPID.search(url)
+
+      if clip_re:
+        clip_id = clip_re.group(1)
+      else:
+        clip_xpath = data.xpath('//meta[@name="EntityId"]')
+  
+        if clip_xpath:
+          clip_id = clip_xpath[0].get('content')
+
+      if not clip_id.isdigit():
+        return None
+
+      clip_details = JSON.ObjectFromString(RE_CLIP_DETAILS.search(HTTP.Request(CLIP_LOOKUP % (network, clip_id)).content).group(1))
+
+      title = clip_details['Title']
+      summary = clip_details['Description']
+      thumb = clip_details['Thumbnail'].replace('/80/60/', '/560/420/')
+
+      mo = VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = thumb
+      )
   except:
-    network = re.search('watch\.(.+\.c[a-z]{1,2})/.+', url).group(1)
-    clip_re = re.search('clip([0-9]{6})', url)
-
-    if clip_re:
-      clip_id = clip_re.group(1)
+    if '#full-episode' in url:
+      episode_id = RE_EPISODE_ID.search(url).group(1)
+      network = RE_NETWORK.search(url).group(1)
+      episode_data = HTTP.Request(EPISODE_LOOKUP % (network, episode_id)).content
+      Log(episode_data)
+      show_json = JSON.ObjectFromString(RE_CLIP_DETAILS.search(episode_data).group(1))
+      title = show_json['Title']
+      summary = show_json['Description']
+      thumb = show_json['Thumbnail']
+      mo = VideoClipObject(
+          title = title,
+          summary = summary,
+          thumb = thumb
+        )
     else:
-      clip_xpath = data.xpath('//meta[@name="EntityId"]')
+      return None
+    
 
-      if clip_xpath:
-        clip_id = clip_xpath[0].get('content')
-
-        if not clip_id.isdigit():
-          return None
-
-    clip_details = JSON.ObjectFromString(re.search("({EpisodePermalink:.+, IsCanadaOnly:'.'})", HTTP.Request(CLIP_LOOKUP % (network, clip_id)).content).group(1))
-
-    title = clip_details['Title']
-    summary = clip_details['Description']
-    thumb = clip_details['Thumbnail']
-
-    mo = VideoClipObject(
-      title = title,
-      summary = summary,
-      thumb = thumb
-    )
-
-  source_site = re.search("http://watch.(.+\.(ca|com))/.*", url).group(1)
-  source = SOURCE[source_site]
+  source_site = RE_SOURCE.search(url).group(1)
+  source = SOURCES[source_site]['Source']
 
   mo.source_title = source
   return mo
@@ -88,36 +116,77 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [
-    MediaObject(
-      parts = [PartObject(key=WebVideoURL(Callback(PlayVideo, url=url)))]
-    )
-  ]
+  if "#full-episode" in url:
+    return [
+      MediaObject(
+        parts = [
+          PartObject(key=Callback(PlayVideo, url=url, index=0)),
+          PartObject(key=Callback(PlayVideo, url=url, index=1)),
+          PartObject(key=Callback(PlayVideo, url=url, index=2)),
+          PartObject(key=Callback(PlayVideo, url=url, index=3)),
+          PartObject(key=Callback(PlayVideo, url=url, index=4)),
+          PartObject(key=Callback(PlayVideo, url=url, index=5)),
+          PartObject(key=Callback(PlayVideo, url=url, index=6))
+        ],
+      )
+    ]
+  else:
+    return [
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url))],
+      )
+    ]
 
 ####################################################################################################
-def PlayVideo(url):
-
-  video_url = None
-
-  try:
-    episode_id = HTML.ElementFromURL(url).xpath('//meta[@name="EntityId"]')[0].get('content')
-    network = re.search('watch\.(.+?)/', url).group(1)
-
-    show = HTTP.Request(EPISODE_LOOKUP %(network, episode_id)).content
-    expression = re.compile("EpisodePermalink:'(.+?)'", re.MULTILINE)
-    permalink = expression.search(show).group(1)
-    level = 0
-    format = re.search("Format:'(.+?)'", show).group(1)
-
-    if format == 'WMV':
-      video_url = url + '#Silverlight'
+@indirect
+def PlayVideo(url, index=None):
+  
+  if index != None:
+    if '#full-episode' in url:
+      episode_id = RE_EPISODE_ID.search(url).group(1)
     else:
-      video_url = url + '#Flash'
-  except:
-    video_url = url + '#Flash'
-
-  return Redirect(WebVideoURL(video_url))
-
+      episode_id = HTML.ElementFromURL(url).xpath('//meta[@name="EntityId"]')[0].get('content')
+    
+    network = RE_NETWORK.search(url).group(1)
+    
+    show = HTTP.Request(EPISODE_LOOKUP %(network, episode_id)).content
+    clip_ids = RE_CLIPID.findall(show)
+    if index < (len(clip_ids) - 1):
+      '''grab the proper rtmp segment based on the given index'''
+      clipid = clip_ids[index]
+      clip_json = HTTP.Request(CLIP_LOOKUP % clipid, headers={'referer':'http://watch.ctv.ca/'}).content.strip('Video.Load(')[:-4]
+      clip_json = JSON.ObjectFromString(clip_json)
+      clip_url = clip_json['url']
+      rtmp_parts = clip_url.split('/ondemand/')
+      playpath = 'MP4:' + rtmp_parts[1].split('?')[0]
+      auth = rtmp_parts[1].split('?')[1]
+      rtmp_url = rtmp_parts[0] + '/ondemand?ovpfv=2.1.4&' + auth
+      swf_url = SOURCES[network]['swf_url']
+      #if Client.Platform in ['MacOSX','Windows','Linux']:
+      #  return "%s playpath=%s swfVfy=%s" % (rtmp_url, playpath, swf_url)
+      #else:
+      return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=playpath, swfVfy=swf_url))
+    else:
+      ''' if there are no more episode segments, return an ad'''
+      ad_index = 5-index
+      clipid = clip_ids[-1]
+      ad_data = HTTP.Request(AD_LOOKUP % (clipid, ad_index)).content
+      rtmp_url = RE_AD_URL.search(ad_data).group(1).split('/ondemand/')
+      return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url[0]+'/ondemand/', clip='MP4:'+rtmp_url[1]))
+      
+  else:
+    '''grab just the single clip'''
+    clipid = RE_CLIPID.search(url).group(1)
+    clip_json = HTTP.Request(CLIP_LOOKUP % clipid, headers={'referer':'http://watch.ctv.ca/'}).content.strip('Video.Load(')[:-4]
+    clip_json = JSON.ObjectFromString(clip_json)
+    clip_url = clip_json['url']
+    rtmp_parts = clip_url.split('/ondemand/')
+    playpath = 'MP4:' + rtmp_parts[1].split('?')[0]
+    auth = rtmp_parts[1].split('?')[1]
+    rtmp_url = rtmp_parts[0] + '/ondemand?ovpfv=2.1.4&' + auth
+    swf_url = SOURCES[network]['swf_url']
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=playpath, swfVfy=swf_url))
+  
 ####################################################################################################
 def TestURLs():
 

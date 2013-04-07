@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|muchmusic.com|fashiontelevision.com)/.+</string>
+				<string>^http://watch\.(ctv.ca|ctv.ca/news|tsn.ca|discoverychannel.ca|thecomedynetwork.ca|bravo.ca|bravofact.com|spacecast.com|space.ca|muchmusic.com|fashiontelevision.com)/.+</string>
 			</array>
 		</dict>
 		<key>CTV News</key>
@@ -19,5 +19,9 @@
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>
