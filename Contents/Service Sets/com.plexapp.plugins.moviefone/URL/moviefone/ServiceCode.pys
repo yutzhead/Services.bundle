@@ -57,13 +57,19 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, fmt):
 
 	url = url.replace('/main', '/trailers')
+	video_url = None
 	html = HTML.ElementFromURL(url)
 
-	if fmt == 'HD 1080p':
-		url = html.xpath('//span[@class="butoneshd hd1080"]/a/@href')[0]
-	elif fmt == 'HD 720p':
-		url = html.xpath('//span[@class="butoneshd hd720"]/a/@href')[0]
-	else:
-		url = html.xpath('//span[@class="butoneshd hd480"]/a/@href')[0]
+	if fmt == 'HD 1080p' and len(html.xpath('//span[@class="butoneshd hd1080"]/a/@href')) > 0:
+		video_url = html.xpath('//span[@class="butoneshd hd1080"]/a/@href')[0]
 
-	return IndirectResponse(VideoClipObject, key=url)
+	if not video_url and fmt in ('HD 720p', 'HD 1080p') and len(html.xpath('//span[@class="butoneshd hd720"]/a/@href')) > 0:
+		video_url = html.xpath('//span[@class="butoneshd hd720"]/a/@href')[0]
+
+	if not video_url and fmt in ('HD 480p', 'HD 720p', 'HD 1080p') and len(html.xpath('//span[@class="butoneshd hd480"]/a/@href')) > 0:
+		video_url = html.xpath('//span[@class="butoneshd hd480"]/a/@href')[0]
+
+	if not video_url:
+		video_url = html.xpath('//span[contains(@class, "butoneshd")]/a/@href')[0]
+
+	return IndirectResponse(VideoClipObject, key=video_url)
