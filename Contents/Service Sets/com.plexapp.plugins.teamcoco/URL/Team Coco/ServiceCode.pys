@@ -2,7 +2,7 @@ VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
 RE_CLEANUP = Regex('[^-a-z0-9 ]')
-FULL_EP_RES = [720, 544, 360]
+FULL_EP_RES = [720, 360]
 VIDEO_RES = [1080, 720, 480, 360]
 
 ####################################################################################################
@@ -12,17 +12,14 @@ def MetadataObjectForURL(url):
 		xml_url = VIDEO_INFO % GetVideoId(url)
 	except:
 		Log.Exception("Could not retrieve video_id in MetadataObjectForURL function")
-		return None
+		raise Ex.MediaNotAvailable
 
 	xml = XML.ElementFromURL(xml_url)
-	title = xml.xpath('//headline')[0].text.strip()
-	summary = String.StripTags(xml.xpath('//description')[0].text).strip()
+	title = xml.xpath('//headline/text()')[0].strip()
+	summary = String.StripTags(xml.xpath('//description/text()')[0]).strip()
 
-	duration = xml.xpath('//length')
-	if duration:
-		duration = Duration(duration[0].text)
-	else:
-		duration = None
+	duration = xml.xpath('//video/@duration')
+	duration = Datetime.MillisecondsFromString(duration[0]) if len(duration) > 0 else None
 
 	try:
 		thumb = xml.xpath('//image[@width="640"]')[0].text
@@ -89,6 +86,9 @@ def PlayVideo(url, res=720):
 		raise Ex.MediaNotAvailable
 
 	if 'full-episode' in url:
+		if res not in FULL_EP_RES:
+			res = FULL_EP_RES[-1]
+
 		src = xml.xpath('//akamai/src/text()')[0].split('://')[-1]
 		auth_token_type = xml.xpath('//akamai/authTokenType/text()')[0]
 		window = xml.xpath('//akamai/window/text()')[0]
@@ -127,6 +127,9 @@ def PlayVideo(url, res=720):
 		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, clip=playpath, app=app, swf_url=swf_url))
 
 	else:
+		if res not in VIDEO_RES:
+			res = VIDEO_RES[-1]
+
 		title = xml.xpath('//headline')[0].text.strip().lower()
 		title = String.StripDiacritics(title)
 		title = RE_CLEANUP.sub('', title).strip()
@@ -174,21 +177,6 @@ def GetVideoId(url):
 				return video_id
 			except:
 				return None
-
-####################################################################################################
-def Duration(timecode):
-
-	if not isinstance(timecode, basestring):
-		return None
-
-	seconds = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
 
 ####################################################################################################
 def TestURLs():
