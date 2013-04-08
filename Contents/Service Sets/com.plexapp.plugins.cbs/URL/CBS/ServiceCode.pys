@@ -84,7 +84,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate=2000):
+def PlayVideo(url, bitrate=2000, **kwargs):
 
 	page = HTTP.Request(url).content
 	pid = RE_PID.search(page)
