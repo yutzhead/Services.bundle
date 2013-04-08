@@ -51,4 +51,6 @@ def PlayVideo(url):
 	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video_url[0])
+	video_url = String.Unquote(video_url[0].split('mp4File=')[1]) if 'mp4File=' in video_url[0] else video_url[0]
+
+	return IndirectResponse(VideoClipObject, key=video_url)
