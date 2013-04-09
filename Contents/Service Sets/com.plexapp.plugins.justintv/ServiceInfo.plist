@@ -9,7 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://www.(justin|twitch).tv/[^/]+/b/\d+</string>
-				<string>^http://www.(justin|twitch).tv/[^/](#/w/\d+/\d+)?</string>
+				<string>^http://www.(justin|twitch).tv/[^/#]+</string>
 			</array>
 		</dict>
 	</dict>
