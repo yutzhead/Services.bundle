@@ -78,13 +78,17 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True,
 			video_resolution = 'sd',
-			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url, index=0)),
+				PartObject(key=Callback(PlayVideo, url=url, index=1)),
+				PartObject(key=Callback(PlayVideo, url=url, index=2)),
+				PartObject(key=Callback(PlayVideo, url=url, index=3))
+			]
 		)
 	]
 
 ####################################################################################################
-@indirect
-def PlayVideo(url):
+def PlayVideo(url, index):
 
 	details = GetDetails(url)
 
@@ -92,31 +96,29 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	stream_ids = details.xpath('//item[@name="segIds"]/value')[0].text.split('#')
-	parts = []
 
-	for id in stream_ids:
-		playlist = XML.ElementFromURL(PLAYLIST_URL % id)
-		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')
+	if index not in range(len(stream_ids)):
+		show = details.xpath('//episode')[0].get('collectionTitle').replace(':', '')
+		bump_page = HTML.ElementFromURL('http://www.bumpworthy.com/bumps/all?categories[]=bumps&sort=dateadded&sortdir=Desc&keywords=%s&searchin[]=name&searchin[]=music&searchin[]=desc&searchin[]=tags' % String.Quote(show, usePlus=True))
 
-		if len(stream_url) < 1:
-			continue
+		if len(bump_page.xpath('//div[@id="bw-results"]//a[contains(@href, "bumpworthy.com/bumps/")]')) > 0:
+			while index > 0:
+				try:
+					video = bump_page.xpath('//div[@id="bw-results"]//a[contains(@href, "bumpworthy.com/bumps/")]')[index].get('href')
+					break
+				except:
+					index = index - 1
+		else:
+			bump_page = HTML.ElementFromURL('http://www.bumpworthy.com/bumps/all?f=0')
+			video = bump_page.xpath('//div[@id="bw-results"]//a[contains(@href, "bumpworthy.com/bumps/")]/@href')[index]
+			video_url = '%s.d.mp4' % video.replace('/www.', '/static.')
 
-		parts.append(PartObject(key=stream_url))
+			return Redirect(video_url)
+	else:
+		playlist = XML.ElementFromURL(PLAYLIST_URL % stream_ids[index])
+		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')[0]
 
-	if len(parts) < 1:
-		raise Ex.MediaNotAvailable
-
-	return ObjectContainer(
-		objects = [
-			VideoClipObject(
-				items = [
-					MediaObject(
-						parts = parts
-					)
-				]
-			)
-		]
-	)
+		return Redirect(stream_url)
 
 ####################################################################################################
 def GetDetails(url):
