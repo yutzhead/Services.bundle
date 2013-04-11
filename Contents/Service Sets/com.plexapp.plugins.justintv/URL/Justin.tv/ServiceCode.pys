@@ -10,7 +10,7 @@ YEK = 'evhmL62Ss9jY57dW'[::-1]
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('#')[0].rstrip('/')
+	return url.split('?')[0].split('#')[0].rstrip('/')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -54,7 +54,7 @@ def MetadataObjectForURL(url):
 				thumbs.append(video['channel'][size])
 
 		return VideoClipObject(
-			title = video['title'],
+			title = video['channel']['title'],
 			thumb = Resource.ContentsOfURLWithFallback(thumbs)
 		)
 
