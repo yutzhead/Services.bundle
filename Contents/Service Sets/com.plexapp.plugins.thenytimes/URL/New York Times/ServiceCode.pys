@@ -1,4 +1,4 @@
-RE_VIDEO_ID = Regex('\/(?P<video_id>\d{15})\/')
+RE_VIDEO_ID = Regex('\/(?P<video_id>\d{12,})\/')
 RE_VIDEO_ID_HASH = Regex('#(?P<video_id>\d+)')
 
 BC_VIDEO_BY_REFERENCE_URL = 'http://api.brightcove.com/services/library?command=find_video_by_reference_id&reference_id=%s&token=cE97ArV7TzqBzkmeRVVhJ8O6GWME2iG_bRvjBTlNb4o.&custom_fields=videourl'
