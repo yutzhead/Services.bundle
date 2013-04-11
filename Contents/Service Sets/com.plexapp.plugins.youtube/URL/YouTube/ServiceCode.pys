@@ -251,7 +251,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
     for p in params:
       if '=' in p:
-        (name, value) = p.split('=')
+        (name, value) = p.split('=', 1)
         map[name] = value
 
     if 'itag' in map:
