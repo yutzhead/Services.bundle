@@ -1,9 +1,10 @@
-RE_FLASHVARS = Regex('flashvars=&quot;config=(?P<url>[^&]*)&quot;')
+RE_FLASHVARS = Regex('flashvars=&quot;config=(?P<url>[^&]+)&quot;')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+#	page = HTML.ElementFromURL(url)
+	page = HTML.ElementFromURL('http://surf-proxy.de/index.php?q=%s' % String.Quote(url, usePlus=True), cacheTime=CACHE_1MONTH)
 
 	title = page.xpath("//meta[@name='title']")[0].get('content')
 	description = page.xpath("//meta[@name='description']")[0].get('content')
@@ -28,8 +29,8 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
-			container = 'mp4',
+			parts = [PartObject(key=Callback(PlayVideo, url=url, post_url=url))],
+			container = Container.MP4,
 			video_resolution = 'sd',
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
@@ -39,19 +40,19 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
-	page_content = HTTP.Request(url, values={"birth_day":"10","birth_month":"02","birth_year":"1980"}).content
+	page_content = HTTP.Request(url).content
 
 	# Find the 'flashvars' associated with the player. This contains the required config path.
 	config_url = RE_FLASHVARS.search(page_content).group('url')
 	config_url = String.Unquote(config_url, usePlus=True)
 
-	# We can use the config path to actually get a JSON page which contains the actual MP4 path to the
-	# associated video.
-	json_page = HTTP.Request("http://surf-proxy.de/index.php?q=" + String.Quote(config_url, usePlus=True)).content
+	# We can use the config path to actually get a JSON page which contains the actual MP4 path to the associated video.
+	json_page = HTTP.Request('http://surf-proxy.de/index.php?q=%s' % String.Quote(config_url, usePlus=True)).content
 	json_page = json_page.replace("'", '"')
 	json = JSON.ObjectFromString(json_page)
 
 	video_url = json['playlist'][1]['url']
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
