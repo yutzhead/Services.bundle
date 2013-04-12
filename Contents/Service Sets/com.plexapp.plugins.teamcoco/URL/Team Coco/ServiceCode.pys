@@ -19,7 +19,7 @@ def MetadataObjectForURL(url):
 	summary = String.StripTags(xml.xpath('//description/text()')[0]).strip()
 
 	duration = xml.xpath('//video/@duration')
-	duration = Datetime.MillisecondsFromString(duration[0]) if len(duration) > 0 else None
+	duration = Datetime.MillisecondsFromString(duration[0]) if len(duration) > 0 and duration[0] != "" else None
 
 	try:
 		thumb = xml.xpath('//image[@width="640"]')[0].text
