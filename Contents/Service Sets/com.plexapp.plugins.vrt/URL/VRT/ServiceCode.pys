@@ -1,4 +1,3 @@
-PERMALINK_URL = 'http://%s/permalink/%s'
 CM_URL = 'http://%s/cm/%s'
 CM_JSON_URL = '%s?mode=json'
 CM_ID = Regex('1\.\d+')
@@ -9,9 +8,9 @@ def NormalizeURL(url):
 	id = CM_ID.findall(url)
 
 	if len(id) < 1:
-		return None
+		return url.split('?')[0]
 
-	return PERMALINK_URL % (GetHost(url), id[0])
+	return 'http://%s/permalink/%s' % (GetHost(url), id[0])
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -19,7 +18,12 @@ def MetadataObjectForURL(url):
 	id = CM_ID.findall(url)
 
 	if len(id) < 1:
-		return None
+		permalink = HTML.ElementFromURL(url).xpath('//a[@title="Permalink"]/@data-popup-text')
+
+		if len(permalink) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			id = CM_ID.findall(permalink[0])
 
 	cm_url_html = CM_URL % (GetHost(url), id[0])
 	cm_url_json = CM_JSON_URL % cm_url_html
@@ -31,7 +35,7 @@ def MetadataObjectForURL(url):
 	thumb = json['imageData']['imageURL']
 
 	if not thumb.startswith('http://'):
-		thumb = 'http://%s%s' % (GetHost(url), thumb)
+		thumb = 'http://%s/%s' % (GetHost(url), thumb.rstrip('/'))
 
 	try:
 		summary = html.xpath('//span[@class="byline"]/p/text()')[0]
@@ -46,15 +50,6 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-#	return [
-#		MediaObject(
-#			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
-#			video_resolution = '480',
-#			audio_channels = 2,
-#			optimized_for_streaming = True
-#		)
-#	]
 
 	return [
 		MediaObject(
@@ -75,14 +70,16 @@ def PlayVideo(url):
 	id = CM_ID.findall(url)
 
 	if len(id) < 1:
-		return None
+		permalink = HTML.ElementFromURL(url).xpath('//a[@title="Permalink"]/@data-popup-text')
+
+		if len(permalink) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			id = CM_ID.findall(permalink[0])
 
 	cm_url_html = CM_URL % (GetHost(url), id[0])
 	cm_url_json = CM_JSON_URL % cm_url_html
 	json = JSON.ObjectFromURL(cm_url_json)
-
-#	video_url = '%s/playlist.m3u8' % json['iphoneURL']['url']
-#	return Redirect(video_url)
 
 	video_url = json['videoURL']
 	return IndirectResponse(VideoClipObject, key=video_url)
@@ -90,4 +87,4 @@ def PlayVideo(url):
 ####################################################################################################
 def GetHost(url):
 
-	return url.split('//',1)[1].split('/',1)[0].strip('www.')
+	return url.split('/')[2].replace('www.', '')

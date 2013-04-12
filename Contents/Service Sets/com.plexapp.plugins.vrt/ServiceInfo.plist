@@ -8,16 +8,15 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(www\.)?cobra\.be/(permalink|cm/cobra/cobra-mediaplayer/.+)/1\.\d+</string>
-				<string>^http://(www\.)?deredactie\.be/(permalink|cm/vrtnieuws/mediatheek(/.+)?)/1\.\d+</string>
-				<string>^http://(www\.)?sporza\.be/(permalink|cm/sporza/videozone/.+)/1\.\d+</string>
+				<string>^http://(www\.)?cobra\.be/(permalink|cm/cobra/.+)/1\.\d+</string>
+				<string>^http://(www\.)?(deredactie|sporza)\.be/(permalink/1\.\d+|cm/(vrtnieuws|sporza)/videozone/.+)</string>
 			</array>
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.cobra.be/permalink/1.1466752</string>
 				<string>http://www.deredactie.be/permalink/1.1068302</string>
-				<string>http://www.deredactie.be/cm/vrtnieuws/mediatheek/nieuws/buitenland/1.1068676</string>
-				<string>http://www.sporza.be/permalink/1.1463223</string>
+				<string>http://www.deredactie.be/cm/vrtnieuws/videozone/ookdatnog/MV_130411_VisserHaai</string>
+				<string>http://www.sporza.be/cm/sporza/videozone/programmas/extratime/ET_Episode_20130408</string>
 			</array>
 		</dict>
 	</dict>
