@@ -35,7 +35,7 @@ def MetadataObjectForURL(url):
 	thumb = json['imageData']['imageURL']
 
 	if not thumb.startswith('http://'):
-		thumb = 'http://%s/%s' % (GetHost(url), thumb.rstrip('/'))
+		thumb = 'http://%s/%s' % (GetHost(url), thumb.lstrip('/'))
 
 	try:
 		summary = html.xpath('//span[@class="byline"]/p/text()')[0]
