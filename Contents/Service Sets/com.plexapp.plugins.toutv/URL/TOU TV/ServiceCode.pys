@@ -114,7 +114,6 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, stream_type):
     if stream_type == 'HLS':
         playlist = GetPlaylist(url, 'iPad')
-        #return Redirect(playlist)
         IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=playlist))
     else:
         playlist = GetPlaylist(url, 'flash').split('?',1)
@@ -178,45 +177,3 @@ def GetSRC(smil):
 
     return None
 
-####################################################################################################
-'''
-@indirect
-def PlayVideo(f4m_url):
-    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=f4m_url))
-
-def GetF4M(url):
-    data = HTTP.Request(url).content
-
-    try:
-        pID = RE_EPISODE_ID.search(data).group(1)
-    except:
-        try:
-            pID = RE_MEDIA_ID.search(data).group(1)
-        except:
-            raise Ex.MediaNotAvailable
-
-    json = JSON.ObjectFromURL(MEDIA_URL % pID)
-    f4m = json['url']
-
-    return f4m
-
-@deferred
-def MediaObjectsForURL(url):
-    f4m_url = GetF4M(url)
-    return [
-        MediaObject(
-            protocol = 'hls',
-            container = 'mpegts',
-            video_codec = VideoCodec.H264,
-            #video_resolution = '480',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [
-                PartObject(
-                    key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
-                )
-            ]
-        )
-    ]
-'''
