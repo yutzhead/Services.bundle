@@ -1,5 +1,6 @@
 JSON_URL = 'http://www.bing.com/videos/services/videodata/?responseEncoding=json&ids=%s&detailed=true&v=2'
 RE_UUID = Regex("uuid: '([^']+)'")
+RE_JSON_QUOTES = Regex("'([^']*)'")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -20,7 +21,13 @@ def MetadataObjectForURL(url):
 		return None
 
 	# Obtain the JSON representation of the title's details
-	json = JSON.ObjectFromURL(JSON_URL % uuid.group(1))
+	json = HTTP.Request(JSON_URL % uuid.group(1)).content.decode('string-escape').decode('utf-8')
+
+	if not json[0:1] == '{':
+		raise Ex.MediaNotAvailable
+
+	json = RE_JSON_QUOTES.sub('"\\1"', json)
+	json = JSON.ObjectFromString(json)
 	video = json['videos'][0]
 
 	title = video['title']
@@ -79,12 +86,14 @@ def PlayVideo(url, formatCode):
 		raise Ex.MediaNotAvailable
 
 	# Obtain the JSON representation of the title's details
-	json = HTTP.Request(JSON_URL % uuid.group(1)).content
+	json = HTTP.Request(JSON_URL % uuid.group(1)).content.decode('string-escape').decode('utf-8')
 
 	if not json[0:1] == '{':
 		raise Ex.MediaNotAvailable
 
+	json = RE_JSON_QUOTES.sub('"\\1"', json)
 	json = JSON.ObjectFromString(json)
+
 	video_files = json['videos'][0]['files']
 
 	resolutions = ['103', '102', '101']
