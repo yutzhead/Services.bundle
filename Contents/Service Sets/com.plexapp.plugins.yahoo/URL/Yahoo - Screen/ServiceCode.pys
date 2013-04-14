@@ -70,3 +70,17 @@ def GetJSON(url):
     raise Ex.MediaGeoblocked
   else:
     raise Ex.MediaNotAvailable
+  
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL('http://screen.yahoo.com')
+  videos = data.xpath('//div[@id="mediaslate"]//a[@class="yltasis"]')
+  for video in videos:
+    url = video.get('href').split('**http%3A//')[1]
+    url = 'http://' + url
+    test_urls.append(url)
+    if len(test_urls) > 2:
+      break
+    else:
+      continue
