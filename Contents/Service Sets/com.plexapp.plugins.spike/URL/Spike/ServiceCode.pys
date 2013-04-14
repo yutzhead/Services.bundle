@@ -216,7 +216,16 @@ def PlayVideo(url, bitrate='1700', index=0):
 	guids = mrss_data.xpath('//guid')
 
 	if index >= len(guids):
-		return None
+		ad_index = len(guids) - index
+		ad_segment_uri = mrss_data.xpath('//guid')[ad_index].text
+		referer = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.2.3.7.swf?uri=%s&type=network&ref=www.spike.com&geo=US&group=entertainment&network=None&device=Other'
+		headers = {'Referer':referer % ad_segment_uri}
+		post_data = '<adRequest profile="82125:MTVN_live" version="1" networkId="82125"><customDistributor /><capabilities><supportsSlotTemplate /><explicitVideoTracking /><expectMultipleCreativeRenditions /><supportsAdUnitInMultipleSlots /><supportsSlotCallback /><supportsFallbackAds /><requiresRendererManifest /><requiresVideoCallbackUrl /></capabilities><visitor customId="4ed3800b-c091-6712-9216-114c7ca250a1" caller="AS3-3.1.0-r4736-1005190341"><httpHeaders><httpHeader name="x-flash-version" value="11,6,602,180" /><httpHeader name="referer" value="http://www.spike.com/video-clips" /></httpHeaders><bandwidthInfo bandwidth="2237" /></visitor><keyValues><keyValue value="VN999" key="A1" /><keyValue value="%s" key="playlist" /><keyValue value="D" key="demo" /><keyValue value="T" key="demo" /><keyValue value="2966" key="demo" /><keyValue value="2907" key="demo" /><keyValue value="2905" key="demo" /><keyValue value="850" key="demo" /><keyValue value="844" key="demo" /><keyValue value="827" key="demo" /><keyValue value="790" key="demo" /><keyValue value="777" key="demo" /><keyValue value="775" key="demo" /><keyValue value="774" key="demo" /></keyValues><siteSection customId="Spike_Videos_Clips" siteSectionNetworkId="82125"><videoPlayer><videoAsset videoAssetNetworkId="82125" duration="180" customId="%s" autoPlay="true" mediaLocation="http://media.mtvnservices.com/%s"><adSlots defaultSlotProfile="82125:MTVN_live" /></videoAsset><adSlots /></videoPlayer><adSlots /></siteSection></adRequest>'
+		post_data = post_data % (ad_segment_uri, ad_segment_uri, ad_segment_uri)
+		ad_data = HTTP.Request('http://140cc.v.fwmrm.net/ad/p/1?', headers = headers, data = post_data).content
+		ad_xml = XML.ElementFromString(ad_data)
+		ad_url = ad_xml.xpath('//asset[@mimeType="video/mp4"]')[0].get('url')
+		return Redirect(ad_url)
 
 	segment_uri = mrss_data.xpath('//guid')[index].text
 	player_data = XML.ElementFromURL(FEED_URL % segment_uri)
