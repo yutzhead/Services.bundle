@@ -116,9 +116,12 @@ def PlayVideo(url, index):
 			return Redirect(video_url)
 	else:
 		playlist = XML.ElementFromURL(PLAYLIST_URL % stream_ids[index])
-		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')[0]
+		stream_url = playlist.xpath('//ref[contains(@href, "hi.mp4") or contains(@href, "hi.3gp")]/@href')
 
-		return Redirect(stream_url)
+		if len(stream_url) < 1:
+			raise Ex.MediaExpired
+
+		return Redirect(stream_url[0])
 
 ####################################################################################################
 def GetDetails(url):
