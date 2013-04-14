@@ -4,8 +4,11 @@ RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
-MEDIA_URL = "http://api.radio-canada.ca/validationMedia/v1/Validation.html?appCode=thePlatform&deviceType=iphone4&connectionType=wifi&idMedia=%s&output=json"
+MEDIA_URL = "http://api.radio-canada.ca/validationMedia/v1/Validation.html?appCode=thePlatform&deviceType=%s&connectionType=wifi&idMedia=%s&output=json"
 
+CLIENT_COMPAT_EHLS = ['iOS', 'Android', 'Roku', 'Safari']
+
+SWF_URL = 'http://static.tou.tv/lib/ThePlatform/4.2.9c/swf/flvPlayer.swf'
 ####################################################################################################
 def NormalizeURL(url):
     return url
@@ -63,7 +66,7 @@ def MetadataObjectForURL(url):
             directors = directors,
             writers = writers,
             thumb = Resource.ContentsOfURLWithFallback(url=thumb)
-	    )
+            )
     except:
         pass
 
@@ -75,32 +78,54 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
-@deferred
 def MediaObjectsForURL(url):
-    f4m_url = GetF4M(url)
-    return [
-        MediaObject(
-            protocol = 'hls',
-            container = 'mpegts',
-            video_codec = VideoCodec.H264,
-            #video_resolution = '480',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [
-                PartObject(
-                    key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
+    Log(' --> Client platform: %s' % Client.Platform)
+    Log(' --> Client product: %s' % Client.Product)
+
+    if Client.Platform in CLIENT_COMPAT_EHLS:
+        Log(' --> Client can play encrypted HLS!')
+
+        return [
+            MediaObject(
+                parts = [
+                    PartObject(
+                        key = HTTPLiveStreamURL(Callback(PlayVideo, url=url, stream_type='HLS'))
+                        )
+                    ],
+                optimized_for_streaming = True
                 )
             ]
-        )
-    ]
-####################################################################################################
-@indirect
-def PlayVideo(f4m_url):
-    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=f4m_url))
+    else:
+        Log(' --> Client can\'t play encrypted HLS. Switching to Silverlight.')
+        return [
+            MediaObject(
+                parts = [
+                    PartObject(
+                        key = Callback(PlayVideo, url=url, stream_type='RTMP')
+                        )
+                    ],
+                protocol = 'rtmp'
+                )
+            ]
+
 
 ####################################################################################################
-def GetF4M(url):
+@indirect
+def PlayVideo(url, stream_type):
+    if stream_type == 'HLS':
+        playlist = GetPlaylist(url, 'iPad')
+        #return Redirect(playlist)
+        IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=playlist))
+    else:
+        playlist = GetPlaylist(url, 'flash').split('?',1)
+        auth = playlist[1]
+        rtmp_parts = playlist[0].split('/ondemand/',1)
+        rtmp_url = rtmp_parts[0] + '/ondemand?ovpfv=2.1.4&' + auth
+        clip = rtmp_parts[1].rsplit('.mp4',1)[0]
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=clip, swf_url=SWF_URL))
+
+####################################################################################################
+def GetPID(url):
     data = HTTP.Request(url).content
 
     try:
@@ -110,34 +135,28 @@ def GetF4M(url):
             pID = RE_MEDIA_ID.search(data).group(1)
         except:
             raise Ex.MediaNotAvailable
-
-    json = JSON.ObjectFromURL(MEDIA_URL % pID)
-    f4m = json['url']
-
-    return f4m
-
+    return pID
 
 ####################################################################################################
 def GetSMIL(url):
-    data = HTTP.Request(url).content
-
-    try:
-        pID = RE_EPISODE_ID.search(data).group(1)
-    except:
-        try:
-            pID = RE_MEDIA_ID.search(data).group(1)
-        except:
-            raise Ex.MediaNotAvailable
-
+    pID = GetPID(url)
     content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
     smil = XML.ElementFromString(content)
 
     return smil
 
 ####################################################################################################
+def GetPlaylist(url, device):
+    pID = GetPID(url)
+    json = JSON.ObjectFromURL(MEDIA_URL % (device, pID))
+    playlist = json['url']
+
+    return playlist
+
+####################################################################################################
+
 def GetSRC(smil):
     src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-
     if len(src_list) == 1:
         if 'Unavailable.flv' in src_list[0].get('src'):
             if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
@@ -158,3 +177,46 @@ def GetSRC(smil):
                 return ref
 
     return None
+
+####################################################################################################
+'''
+@indirect
+def PlayVideo(f4m_url):
+    return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=f4m_url))
+
+def GetF4M(url):
+    data = HTTP.Request(url).content
+
+    try:
+        pID = RE_EPISODE_ID.search(data).group(1)
+    except:
+        try:
+            pID = RE_MEDIA_ID.search(data).group(1)
+        except:
+            raise Ex.MediaNotAvailable
+
+    json = JSON.ObjectFromURL(MEDIA_URL % pID)
+    f4m = json['url']
+
+    return f4m
+
+@deferred
+def MediaObjectsForURL(url):
+    f4m_url = GetF4M(url)
+    return [
+        MediaObject(
+            protocol = 'hls',
+            container = 'mpegts',
+            video_codec = VideoCodec.H264,
+            #video_resolution = '480',
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [
+                PartObject(
+                    key = Callback(PlayVideo, f4m_url=f4m_url, post_url=f4m_url, ext='m3u8')
+                )
+            ]
+        )
+    ]
+'''
