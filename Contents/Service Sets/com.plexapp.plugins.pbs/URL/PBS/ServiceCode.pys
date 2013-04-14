@@ -101,7 +101,7 @@ def PlayVideo(url):
                 if e.headers.has_key('Location'):
                     video_url = e.headers['Location']
             Log.Debug("Parsed URL: "+video_url)
-            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))                      
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
 
         smil = XML.ElementFromURL(video_url + '&format=SMIL')
 
@@ -112,7 +112,7 @@ def PlayVideo(url):
             url = base.split(app)[0]
             playpath = "mp4:"+clip
             return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, app=app, clip=playpath))
-        
+
         if base.startswith('http'):
             final_url = base + clip
             if '.m3u8' in clip:
@@ -126,7 +126,7 @@ def PlayVideo(url):
         Log.Debug(base)
         Log.Debug(clip)
         raise Ex.MediaNotAvailable
-        
+
         ### Keeping this code just in case MP4s aren't available for all videos -- this was the previous parsing and still worth keeping details of just in case we find more like this ###
         '''
         video_url = video['mediafiles'][-1]['video_data_url']
@@ -134,7 +134,7 @@ def PlayVideo(url):
         smil = XML.ElementFromURL(video_url + '&format=SMIL')
         base = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
         clip = smil.xpath('//a:ref', namespaces=NAMESPACES)[0].get('src')
-    
+
         if base.startswith('http'):
             final_url = base + clip
             if '.m3u8' in clip:
@@ -146,7 +146,7 @@ def PlayVideo(url):
             clip = 'MP4:' + clip.split('.mp4')[0]
             return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=base, clip=clip))
         '''
-        
+
 def TestURLs():
     test_urls = []
 
