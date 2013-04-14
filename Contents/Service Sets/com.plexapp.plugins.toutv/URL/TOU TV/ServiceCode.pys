@@ -96,7 +96,7 @@ def MediaObjectsForURL(url):
                 )
             ]
     else:
-        Log(' --> Client can\'t play encrypted HLS. Switching to Silverlight.')
+        Log(' --> Client can\'t play encrypted HLS. Switching to RTMP.')
         return [
             MediaObject(
                 parts = [
