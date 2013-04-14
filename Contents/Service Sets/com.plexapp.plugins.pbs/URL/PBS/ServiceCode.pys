@@ -65,10 +65,10 @@ def PlayVideo(url):
             video_url = None
 
     if video_url:
-    	# corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
-    	# we now have to check here for this as well as there are some cases where whoever is
-    	# entering the data has started putting these in video_download_url (they never used to be there)
-    	if video_url.startswith('http://urs.pbs.org/redirect/'):
+        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
+        # we now have to check here for this as well as there are some cases where whoever is
+        # entering the data has started putting these in video_download_url (they never used to be there)
+        if video_url.startswith('http://urs.pbs.org/redirect/'):
             Log.Debug("Found redirect, assuming HLS: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
             # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
@@ -77,7 +77,10 @@ def PlayVideo(url):
                 page = page_request.content
             except Ex.RedirectError, e:
                 if e.headers.has_key('Location'):
-                    video_url = e.headers['Location']                
+                    video_url = e.headers['Location']
+            except Ex.HTTPError, e:
+                if e.code == 410:
+                    raise Ex.MediaExpired
             Log.Debug("Parsed URL: "+video_url)
             return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
 
@@ -86,8 +89,8 @@ def PlayVideo(url):
         # We have an older format, but things have changed slightly from the older parsing methods
         video_url = video['mediafiles'][-1]['video_data_url']
 
-    	# corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
-    	if video_url.startswith('http://urs.pbs.org/redirect/'):
+        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
+        if video_url.startswith('http://urs.pbs.org/redirect/'):
             Log.Debug("Found redirect, assuming HLS: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
             # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
@@ -96,9 +99,9 @@ def PlayVideo(url):
                 page = page_request.content
             except Ex.RedirectError, e:
                 if e.headers.has_key('Location'):
-                    video_url = e.headers['Location']                
+                    video_url = e.headers['Location']
             Log.Debug("Parsed URL: "+video_url)
-            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))       		
+            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))                      
 
         smil = XML.ElementFromURL(video_url + '&format=SMIL')
 
@@ -113,17 +116,17 @@ def PlayVideo(url):
         if base.startswith('http'):
             final_url = base + clip
             if '.m3u8' in clip:
-            	Log.Debug("Found HLS: "+final_url)
+                Log.Debug("Found HLS: "+final_url)
                 return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=final_url))
             else:
-            	Log.Debug("Found MP4: "+final_url)
+                Log.Debug("Found MP4: "+final_url)
                 return IndirectResponse(VideoClipObject, key=final_url)
 
         Log.Debug("Failed to handle video stream.")
         Log.Debug(base)
         Log.Debug(clip)
         raise Ex.MediaNotAvailable
-  	
+        
         ### Keeping this code just in case MP4s aren't available for all videos -- this was the previous parsing and still worth keeping details of just in case we find more like this ###
         '''
         video_url = video['mediafiles'][-1]['video_data_url']
