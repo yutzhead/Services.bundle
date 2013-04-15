@@ -1,0 +1,86 @@
+RE_UID = Regex('"content_id":"(.+?)",')
+JSON_URL = 'http://video.query.yahoo.com/v1/public/yql?q=SELECT%20*%20FROM%20yahoo.media.video.streams%20WHERE%20id%3D%22'
+JSON_URL_TAIL = '%22%20AND%20format%3D%22mp4%22%20AND%20protocol%3D%22http%22%20AND%20plrs%3D%22KzaK_PIQqQ8qLDXmj0F1Wh%22%20AND%20acctid%3D%22389%22%20AND%20plidl%3D%22bls2%22%20AND%20offnetwork%3D%22false%22%20AND%20site%3D%22ivy%22%20AND%20lang%3D%22en-US%22%20AND%20region%3D%22US%22%20AND%20override%3D%22none%22%3B&env=prod&format=json'
+
+RESOLUTIONS = [360, 478, 720, 1080]
+####################################################################################################
+def NormalizeURL(url):
+  return url.split('?')[0]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  details = GetJSON(url)['meta']
+  title = details['title']
+  summary = String.StripTags(details['description'])
+  duration = int(details['duration'])*1000
+  thumb = details['thumbnail']
+  try:
+    show = details['show']
+    title = show + ': ' + title
+  except:
+    pass
+
+  return VideoClipObject(
+    title = title,
+    summary = summary,
+    duration = duration,
+    thumb = thumb
+  )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+  media_objects = []
+  
+  for res in RESOLUTIONS:
+    media_objects.append(
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+        container = 'mp4',
+        video_resolution = res,
+        video_codec = VideoCodec.H264,
+        audio_codec = AudioCodec.AAC
+      )
+    )
+
+  media_objects.reverse()
+  return media_objects
+
+####################################################################################################
+def PlayVideo(url, res):
+  streams = GetJSON(url)['streams']
+  streams.reverse()
+  index = RESOLUTIONS.index(res)
+  while index > -1:
+    for stream in streams:
+      if stream['height'] == RESOLUTIONS[index]:
+        mp4_url = stream['host'] + stream['path']
+        return Redirect(mp4_url)
+      else:
+        pass
+    index = index -1
+  raise Ex.MediaNotAvailable
+
+def GetJSON(url):
+  content = HTTP.Request(url).content
+  uid = RE_UID.search(content).group(1)
+  json = JSON.ObjectFromURL(JSON_URL + uid + JSON_URL_TAIL)
+  if json['query']['results']['mediaObj'][0]['status']['msg'] == 'ready':
+    return json['query']['results']['mediaObj'][0]
+  elif json['query']['results']['mediaObj'][0]['status']['msg'] == 'geo restricted':
+    raise Ex.MediaGeoblocked
+  else:
+    raise Ex.MediaNotAvailable
+  
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL('http://screen.yahoo.com')
+  videos = data.xpath('//div[@id="mediaslate"]//a[@class="yltasis"]')
+  for video in videos:
+    url = video.get('href').split('**http%3A//')[1]
+    url = 'http://' + url
+    test_urls.append(url)
+    if len(test_urls) > 2:
+      break
+    else:
+      continue
