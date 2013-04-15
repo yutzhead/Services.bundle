@@ -178,9 +178,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
 	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
-	uri = RE_PLAYER.search(content).group('id')
+	mgid = RE_PLAYER.search(content)
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	if not mgid:
+		raise Ex.MediaNotAvailable
+
+	mrss_data = XML.ElementFromURL(MRSS_URL % mgid.group('id'))
 	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
 	if index < len(media_url):
