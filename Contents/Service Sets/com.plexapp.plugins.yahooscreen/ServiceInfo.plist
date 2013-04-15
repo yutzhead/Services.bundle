@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Yahoo - Screen</key>
+		<key>Yahoo Screen</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://screen.yahoo.com/.+</string>
+				<string>^http://screen.yahoo.com/.+\.html</string>
 			</array>
 		</dict>
 	</dict>
