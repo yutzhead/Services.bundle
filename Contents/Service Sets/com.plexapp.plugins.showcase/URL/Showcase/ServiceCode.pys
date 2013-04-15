@@ -1,6 +1,7 @@
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "x":"http://www.w3.org/1999/xhtml"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 SWF_URL = 'http://www.showcase.ca/video/swf/flvPlayer.swf'
+RE_PID = Regex('pid: "(.+?)",')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -68,8 +69,8 @@ def PlayVideo(url):
 
 ####################################################################################################
 def GetSMIL(url):
-	page = HTML.ElementFromURL(url)
-	pID = page.xpath('//link[@rel="video_src"]/@href', namespaces=NAMESPACES)[0].split("pid=")[1].split('&')[0]
+	page = HTTP.Request(url).content
+	pID = RE_PID.search(page).group(1)
 	smil = XML.ElementFromURL(SMIL_URL % pID)
 	return smil
 
