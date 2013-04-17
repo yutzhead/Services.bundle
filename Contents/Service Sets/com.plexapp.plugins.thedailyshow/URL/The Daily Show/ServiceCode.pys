@@ -1,4 +1,4 @@
-RE_PLAYER = Regex('media.mtvnservices.com/.*?(?P<id>mgid:.+thedailyshow.com:\d+)')
+RE_PLAYER = Regex('media.mtvnservices.com/.*?(?P<id>mgid:.+(thedailyshow|comedycentral)\.com:\d+)')
 MRSS_URL = 'http://www.thedailyshow.com/feeds/video_player/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
