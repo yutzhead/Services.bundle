@@ -1,0 +1,47 @@
+'''
+http://video.disney.com/watch/awakening-part-1-4c764a4e2cc4d75c5e80a06a
+http://video.disney.com/_grill/json/watch/awakening-part-1-4c764a4e2cc4d75c5e80a06a
+http://cdn.videos.dolimg.com/
+'''
+
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+JSON_URL = 'http://video.disney.com/_grill/json/watch/'
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+    
+####################################################################################################
+def MetadataObjectForURL(url):
+    data = GetJSON(url)
+    title = data['title']
+    summary = data['description']
+    duration = int(data['duration_sec'])*1000
+    thumb = data['thumb']
+    if "Full Episode" in data['vType']:
+        show_title = data['ptitle']
+        return EpisodeObject(
+            title = title,
+            summary = summary,
+            duration = duration,
+            thumb = Resource.ContentsOfURLWithFallback(thumb),
+            show = show_title
+            )
+    else:
+        return VideoClipObject(
+            title = title,
+            summary = summary,
+            duration = duration,
+            thumb = Resource.ContentsOfURLWithFallback(thumb)
+            )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+	return
+
+####################################################################################################
+def GetJSON(url):
+    path = url.split('/watch/',1)[1]
+    json_url = JSON_URL + path
+    json = JSON.ObjectFromURL(json_url)
+    return json['stack']['data'][0]
