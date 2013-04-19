@@ -10,13 +10,13 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	data = GetRSS(url)
-    title = data.xpath('//title')[0].text
-    summary = data.xpath('//description')[0].text
-    thumb = data.xpath('//image/url')[0].text
-    date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+	title = data.xpath('//title')[0].text
+	summary = data.xpath('//description')[0].text
+	thumb = data.xpath('//image/url')[0].text
+	date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
 
 	if '/episodes/' in url:
-        show_title = data.xpath('//media:category[@label="Show Name"]/text()')[0]
+		show_title = data.xpath('//media:category[@label="Show Name"]/text()', namespaces=NAMESPACES)[0]
 
 		return EpisodeObject(
 			show = show_title,
@@ -46,7 +46,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3)),
-    				PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4))
 				],
 				bitrate = 3500,
@@ -63,7 +63,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3)),
-    				PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=5))
 				],
 				bitrate = 2200,
@@ -80,7 +80,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3)),
-    				PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=5))
 				],
 				bitrate = 1700,
@@ -97,7 +97,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
-    				PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4)),
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4)),
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=5))
 				],
 				bitrate = 1200,
@@ -188,11 +188,11 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 	mp4_url = MP4_URL % stream_url
 
 	return Redirect(mp4_url)
-    
+
 ####################################################################################################
-def GetRSS(url)
-    html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
-    video_player_box = html.xpath('//div[@id="video_player_box"]')
+def GetRSS(url):
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	video_player_box = html.xpath('//div[@id="video_player_box"]')
 
 	if len(video_player_box) < 1:
 		raise Ex.MediaExpired
@@ -200,4 +200,4 @@ def GetRSS(url)
 	uri = video_player_box[0].get('data-mgid')
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
-    return mrss_data
+	return mrss_data
