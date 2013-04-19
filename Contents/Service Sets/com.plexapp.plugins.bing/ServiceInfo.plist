@@ -12,7 +12,8 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.bing.com/videos/watch/video/[^/]+/.+</string>
+				<string>^http://www\.bing\.com/videos/watch/video/[^/]+/.+</string>
+				<string>^http://video\.[^.]+\.msn\.com/watch/video/[^/]+/.+</string>
 			</array>
 		</dict>
 	</dict>

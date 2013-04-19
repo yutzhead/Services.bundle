@@ -5,7 +5,10 @@ RE_JSON_QUOTES = Regex("'([^']*)'")
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	url = url.split('?')[0]
+
+	if not 'bing.com' in url:
+		url = 'http://www.bing.com/videos/watch/video/%s' % url.split('/watch/video/')[-1]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -21,12 +24,13 @@ def MetadataObjectForURL(url):
 		return None
 
 	# Obtain the JSON representation of the title's details
-	json = HTTP.Request(JSON_URL % uuid.group(1)).content.decode('string-escape').decode('utf-8')
+	json = HTTP.Request(JSON_URL % uuid.group(1)).content
 
 	if not json[0:1] == '{':
 		raise Ex.MediaNotAvailable
 
 	json = RE_JSON_QUOTES.sub('"\\1"', json)
+	json = json.decode('string-escape').decode('utf-8')
 	json = JSON.ObjectFromString(json)
 	video = json['videos'][0]
 
@@ -86,12 +90,13 @@ def PlayVideo(url, formatCode):
 		raise Ex.MediaNotAvailable
 
 	# Obtain the JSON representation of the title's details
-	json = HTTP.Request(JSON_URL % uuid.group(1)).content.decode('string-escape').decode('utf-8')
+	json = HTTP.Request(JSON_URL % uuid.group(1)).content
 
 	if not json[0:1] == '{':
 		raise Ex.MediaNotAvailable
 
 	json = RE_JSON_QUOTES.sub('"\\1"', json)
+	json = json.decode('string-escape').decode('utf-8')
 	json = JSON.ObjectFromString(json)
 
 	video_files = json['videos'][0]['files']
