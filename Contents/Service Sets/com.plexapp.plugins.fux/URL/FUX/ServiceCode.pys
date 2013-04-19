@@ -1,14 +1,18 @@
 RE_DATA = Regex("(.+?) - Rating.+Length: (\d+m\d+)s - Watch (.+) and other s")
 RE_XML = Regex("((?<=')[^']+\?v=([0-9]*-){1,})")
-BASE_URL = 'http://www.fux.com'
+#BASE_URL = 'http://www.fux.com'
+BASE_URL = 'http://old.fux.com'
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+	# Temporary/quick fix
+	url = url.replace('http://www.', 'http://old.')
 
 	try:
 		data = HTTP.Request(url).content
@@ -71,6 +75,9 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, res=1080):
+
+	# Temporary/quick fix
+	url = url.replace('http://www.', 'http://old.')
 
 	try:
 		data = HTTP.Request(url).content
