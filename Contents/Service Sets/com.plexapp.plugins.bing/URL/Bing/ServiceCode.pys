@@ -36,7 +36,7 @@ def MetadataObjectForURL(url):
 
 	title = video['title']
 	description = video['description']
-	thumb = video['thumb']
+	thumb = video['thumb'].replace('&w=112&h=63', '&w=640&h=360')
 	duration = int(video['durationSecs']) * 1000
 	date = Datetime.ParseDate(video['startDate'])
 
