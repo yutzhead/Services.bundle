@@ -4,12 +4,12 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>TVL</key>
+		<key>TVLand</key>
 		<dict>
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.tvland.com/episodes/64687/forever-young-food-fight</string>
-                <string>http://www.tvland.com/video-clips/76063/forever-young-everyone-s-talking-about-forever-young</string>
+				<string>http://www.tvland.com/video-clips/76063/forever-young-everyone-s-talking-about-forever-young</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
