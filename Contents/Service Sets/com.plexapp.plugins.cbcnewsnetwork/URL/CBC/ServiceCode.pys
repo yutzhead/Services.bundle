@@ -4,8 +4,7 @@ JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2Cdefa
 BASE_URL = 'http://www.cbc.ca'
 
 def NormalizeURL(url):
-    url = url.split('?')[0]
-    return url.strip('/')
+    return url
 
 def MetadataObjectForURL(url):
     video = GetDetails(url)
