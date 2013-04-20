@@ -1,0 +1,57 @@
+RE_AMPERSAND = Regex('&(?!amp;)')
+RE_VIDEO_ID = Regex('/([0-9]{5,6})\.html')
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
+def GetItemInfo(url,itemInfo):
+
+	videoId = RE_VIDEO_ID.search(url).group(1)
+
+	# NB: must do it this way as the first line of their xml is a carriage return (which makes it invalid)
+	xml = HTTP.Request('http://www.foodnetwork.com/food/channel/xml/0,,%s-VIDEO,00.xml' % videoId).content.strip()
+	xml = RE_AMPERSAND.sub('&amp;', xml)
+
+	c = XML.ElementFromString(xml)
+
+	if itemInfo == "Metadata":
+		title = c.xpath("//clipName")[0].text
+		show = c.xpath("//showName")[0].text
+		duration = Datetime.MillisecondsFromString(c.xpath("//length")[0].text)
+		summary = c.xpath("//abstract")[0].text
+		thumb = c.xpath("//thumbnailUrl")[0].text.replace('_92x69.jpg', '_480x360.jpg')
+
+		return EpisodeObject(
+			title = title,
+			summary = summary,
+			duration = duration,
+			show = show,
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+		)
+	elif itemInfo == "MediaObject":
+		url = c.xpath("//videoUrl")[0].text.replace('http://wms','rtmp://flash').replace('.wmv','').replace('scrippsnetworks.com/','scrippsnetworks.com/ondemand/&').split('&')
+
+		return [
+			MediaObject(
+				video_resolution = "480",
+				audio_channels = 2,
+				parts = [PartObject(key=RTMPVideoURL(url=url[0], clip=url[1]))]
+			)
+		]
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	return GetItemInfo(url,'Metadata')
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return GetItemInfo(url,'MediaObject')
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	return test_urls
