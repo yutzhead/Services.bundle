@@ -6,11 +6,12 @@ http://cdn.videos.dolimg.com/
 
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
 JSON_URL = 'http://video.disney.com/_grill/json/watch/'
+STREAM_BASE = 'http://cdn.videos.dolimg.com/channel_longform/'
 
 ####################################################################################################
 def NormalizeURL(url):
 	return url
-    
+
 ####################################################################################################
 def MetadataObjectForURL(url):
     data = GetJSON(url)
@@ -37,11 +38,55 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-	return
+	resolutions = ["720", "480"]
+	bitrates = {
+		"720":["2904","2104","1404"],
+		"480":["904","536"]
+		}
+	
+	media_objects = []
+
+	for res in resolutions:
+		for bitrate in bitrates[res]:
+			media_objects.append(
+				MediaObject(
+					parts = [PartObject(
+						key=Callback(PlayVideo, url=url, bitrate=bitrate),
+						streams=[AudioStreamObject(language_code=Locale.Language.English)]
+						)
+					],
+					bitrate = bitrate,
+				container = Container.MP4,
+				video_resolution = res,
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+				)
+			)
+	
+	return media_objects
+
+####################################################################################################
+def PlayVideo(url, bitrate):
+	bitrates = ["536","904","1404","2104","2904"]
+	index = bitrates.index(bitrate)
+	json = GetJSON(url)
+	videos = sorted(json['flavors'], key=lambda k: k['bitrate'], reverse=True)
+	while index > -1:
+		for video in videos:
+			if video['format'] == 'mp4' and video['bitrate'] == int(bitrates[index]):
+					video_url = video['url']
+					if not video_url.startswith('http://'):
+						video_url = STREAM_BASE + video_url.split('/channel_longform/',1)[1]
+					return Redirect(video_url)
+		index = index - 1
+		
+	raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetJSON(url):
     path = url.split('/watch/',1)[1]
     json_url = JSON_URL + path
     json = JSON.ObjectFromURL(json_url)
-    return json['stack']['data'][0]
+    return json['stack'][0]['data'][0]

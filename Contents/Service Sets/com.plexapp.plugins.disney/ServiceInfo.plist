@@ -10,6 +10,10 @@
 			<array>
 				<string>^http://video.disney.com/watch/.+</string>
 			</array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://video.disney.com/watch/awakening-part-1-4c764a4e2cc4d75c5e80a06a</string>
+			</array>
 		</dict>
 	</dict>
 </dict>
