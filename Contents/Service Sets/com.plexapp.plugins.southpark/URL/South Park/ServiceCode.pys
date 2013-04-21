@@ -63,10 +63,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="600", index=0)),
 				],
 				bitrate = 600,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '480',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -75,10 +75,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="500", index=0)),
 				],
 				bitrate = 500,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '480',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -87,10 +87,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="300", index=0)),
 				],
 				bitrate = 300,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '480',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			)
@@ -105,10 +105,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2))
 				],
 				bitrate = 1200,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '720',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -119,10 +119,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2))
 				],
 				bitrate = 750,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '432',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -133,10 +133,10 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="450", index=2))
 				],
 				bitrate = 450,
-				container = Container.MP4,
+				#container = Container.MP4,
 				video_resolution = '288',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			)
