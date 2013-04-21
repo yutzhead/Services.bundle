@@ -89,9 +89,10 @@ def MediaObjectsForURL(url):
             MediaObject(
                 parts = [
                     PartObject(
-                        key = HTTPLiveStreamURL(Callback(PlayVideo, url=url, stream_type='HLS'))
+                        key = Callback(PlayVideo, url=url, stream_type='HLS')
                         )
                     ],
+		protocol = 'hls',
                 optimized_for_streaming = True
                 )
             ]
@@ -113,8 +114,9 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, stream_type):
     if stream_type == 'HLS':
-        playlist = GetPlaylist(url, 'iPad')
-        IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=playlist))
+        playlist = GetPlaylist(url, 'iPhone')
+	Log(playlist)
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=playlist))
     else:
         playlist = GetPlaylist(url, 'flash').split('?',1)
         auth = playlist[1]
@@ -147,8 +149,11 @@ def GetSMIL(url):
 ####################################################################################################
 def GetPlaylist(url, device):
     pID = GetPID(url)
+    Log(pID)
     json = JSON.ObjectFromURL(MEDIA_URL % (device, pID))
+    Log(json)
     playlist = json['url']
+    Log(playlist)
 
     return playlist
 
