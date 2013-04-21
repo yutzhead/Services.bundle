@@ -92,7 +92,7 @@ def MediaObjectsForURL(url):
                         key = Callback(PlayVideo, url=url, stream_type='HLS')
                         )
                     ],
-		protocol = 'hls',
+                protocol = 'hls',
                 optimized_for_streaming = True
                 )
             ]
@@ -108,7 +108,6 @@ def MediaObjectsForURL(url):
                 protocol = 'rtmp'
                 )
             ]
-
 
 ####################################################################################################
 @indirect
@@ -154,7 +153,6 @@ def GetPlaylist(url, device):
     return playlist
 
 ####################################################################################################
-
 def GetSRC(smil):
     src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
     if len(src_list) == 1:
