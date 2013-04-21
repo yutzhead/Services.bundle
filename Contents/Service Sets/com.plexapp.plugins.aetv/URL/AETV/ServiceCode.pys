@@ -89,9 +89,12 @@ def PlayVideo(url, res):
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
   smil_url += '&sig='+sig
+  Log(HTTP.Request(smil_url).content)
   smil = XML.ElementFromURL(smil_url)
   index = RESOLUTIONS.index(res)
   video_url = None
+  if smil.xpath('//a:ref', namespaces=SMIL_NS)[0].get('title') == "Geographic Restriction":
+    raise Ex.MediaGeoblocked
   while index < len(RESOLUTIONS):
     for video in smil.xpath("//a:video", namespaces=SMIL_NS):
       if video.get('height') == RESOLUTIONS[index]:
