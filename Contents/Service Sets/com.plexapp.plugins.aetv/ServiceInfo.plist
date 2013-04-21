@@ -10,11 +10,11 @@
 			<array>
 				<string>^http://www.aetv.com(/.+?)/video/.+</string>
 			</array>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.aetv.com/storage-wars/video/breathalyze-this-25942595868</string>
-			</array>
 		</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 	</dict>
 </dict>
 </plist>

@@ -2,7 +2,8 @@ import binascii, hmac
 import sha as sha1
 
 RE_PLAYLIST = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
-RE_VIDEO_ID = Regex('-([0-9]+)')
+RE_VIDEO_ID = Regex('-([0-9]+)(?!-)')
+RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
 
@@ -11,7 +12,19 @@ MediaObject.video_codec = VideoCodec.H264
 MediaObject.audio_codec = AudioCodec.AAC
 AudioStreamObject.language_code = Locale.Language.English
 
-RESOLUTIONS = ["540","432","360"]
+RESOLUTIONS = ["540","432","404","360"]
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL('http://www.aetv.com/videos/display.jsp')
+  for video in data.xpath('//div[@class="video-frame"]'):
+    url = video.xpath('//a')[0].get(href)
+    if url.startswith('http'):
+      test_urls.append(url)
+    if len(test_urls) > 2:
+      break
+  return test_urls
+
 ####################################################################################################
 def MetadataObjectForURL(url):
   video = GetJSON(url)
@@ -48,16 +61,28 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
   media_objects = []
-  for res in RESOLUTIONS:
-    media_objects.append(
-      MediaObject(
-        parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
-        video_resolution = res
+  if 'pfilter=CLIPS#' in url:
+    for res in RESOLUTIONS:
+      media_objects.append(
+        MediaObject(
+          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+          video_resolution = res,
+          protocol = 'rtmp'
+        )
       )
-    )
+  else:
+    for res in RESOLUTIONS:
+      media_objects.append(
+        MediaObject(
+          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+          video_resolution = res,
+          container = Container.MP4
+        )
+      )
   return media_objects
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
   video = GetJSON(url)
   smil_url = video['videoURLs']['releaseURL']
@@ -66,13 +91,22 @@ def PlayVideo(url, res):
   smil_url += '&sig='+sig
   smil = XML.ElementFromURL(smil_url)
   index = RESOLUTIONS.index(res)
+  video_url = None
   while index < len(RESOLUTIONS):
     for video in smil.xpath("//a:video", namespaces=SMIL_NS):
       if video.get('height') == RESOLUTIONS[index]:
         video_url = video.get('src')
-        return Redirect(video_url)
+        break
     index += 1
-  raise Ex.MediaNotAvailable
+  if not video_url:
+    raise Ex.MediaNotAvailable
+  if video_url.startswith('http://'):
+    return IndirectResponse(VideoClipObject, key=video_url)
+  elif video_url.startswith('MP4:') or video_url.startswith('mp4:'):
+    smil_string = HTTP.Request(smil_url).content
+    rtmp_base = RE_BASE.search(smil_string).group(1)
+    rtmp_clip = video_url
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_base, clip=rtmp_clip))
 
 ####################################################################################################
 
@@ -104,7 +138,6 @@ def sign_url(url):
 
 ####################################################################################################
 def get_expiration(auth_length = 600):
-  #current_time = time.mktime(time.gmtime())+auth_length
   current_time = Datetime.TimestampFromDatetime(Datetime.Now())+auth_length
   expiration = ('%0.2X' % current_time).lower()
   return expiration
