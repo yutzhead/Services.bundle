@@ -1,10 +1,11 @@
 NAMESPACES = {"a" : "http://www.w3.org/2005/SMIL21/Language"}
-JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&byContent=byReleases%3DbyId%253D"
+JSON_URL = "http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&fields=id%2Ctitle%2Cdescription%2CpubDate%2CdefaultThumbnailUrl%2Ckeywords%2Capproved%2C%3AadSite%2C%3AbackgroundImage%2C%3Ashow%2C%3ArelatedURL1%2C%3ArelatedURL2%2C%3ArelatedURL3%2C%3Asport%2C%3AseasonNumber%2C%3Atype%2C%3Asegment%2C%3Aevent%2C%3AadCategory%2C%3AliveOnDemand%2C%3AaudioVideo%2C%3AepisodeNumber%2C%3ArelatedClips%2C%3Agenre%2C%3AcommentsEnabled%2C%3AmetaDataURL%2C%3AisPLS%2C%3AradioLargeImage%2C%3AcontentArea%2C%3AsubEvent%2C%3AfeatureImage%2Cmedia%3Acontent%2Cmedia%3Akeywords&byApproved=true&byContent=byReleases%3DbyId%253D"
 JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2CdefaultThumbnailUrl%2Ckeywords%2Capproved%2C%3AadSite%2C%3AbackgroundImage%2C%3Ashow%2C%3ArelatedURL1%2C%3ArelatedURL2%2C%3ArelatedURL3%2C%3Asport%2C%3AseasonNumber%2C%3Atype%2C%3Asegment%2C%3Aevent%2C%3AadCategory%2C%3AliveOnDemand%2C%3AaudioVideo%2C%3AepisodeNumber%2C%3ArelatedClips%2C%3Agenre%2C%3AcommentsEnabled%2C%3AmetaDataURL%2C%3AisPLS%2C%3AradioLargeImage%2C%3AcontentArea%2C%3AsubEvent%2C%3AfeatureImage%2Cmedia%3Acontent%2Cmedia%3Akeywords"
-BASE_URL = 'http://www.cbc.ca'
+BASE_URL = 'http://www.cbc.ca/sports'
 
 def NormalizeURL(url):
-    return url
+    url = url.split('?')[0]
+    return url.strip('/')
 
 def MetadataObjectForURL(url):
     video = GetDetails(url)
@@ -47,7 +48,10 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
         MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url))]
+            parts = [
+		PartObject(key=Callback(PlayVideo, url=url),
+		streams=[AudioStreamObject(language_code=Locale.Language.English)]
+	    )]
         )
     ]
 
@@ -66,22 +70,22 @@ def PlayVideo(url):
         playpath = 'MP4:' + playpath
     elif playpath[-4:] == '.flv':
         playpath = playpath.strip('.flv')
-    if '/Live+Streaming/' in url:
-        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
+    if '/Live+Streaming/' in url or '/live/' in url:
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
     else:
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
-    id = url.split('/')[-1]
-    details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)
-    return details['entries'][0]
+    id = url.split('id=')[1]
+    details = JSON.ObjectFromURL(JSON_URL + id)
+    try: details = details['entries'][0]
+    except: raise Ex.MediaExpired
+    return details
 
 def TestURLs():
     test_urls = []
-    data = HTML.ElementFromURL(BASE_URL + '/player/')
-    for clip in data.xpath('//div[@class="clips"]//div[contains(@class, "clip col")]'):
-	clip_url = BASE_URL + clip.xpath('.//a')[0].get('href')
+    data = JSON.ObjectFromURL('http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&fields=categories,content,defaultThumbnailUrl,description,pubDate,title,:adSite,:adCategory,:event,:genre,:league,:liveOndemand,:seasonNumber,:segment,:show,:sport,:sportGroup,:type,:unapprovedDate,:playerName,:playerID,:awayTeam,:homeTeam,:yearOfGame,:dateOfGame,:gameID,:time&releaseFields=approved,id,url&count=true&byCustomValue={unapprovedDate}{2013-04-20T20:15:00Z~}&byCategoryIds=1249236098&sort=pubDate|desc&byApproved=true&range=1-3')
+    for clip in data['entries']['media$content']['plfile$releases']['id']:
+	clip_url = BASE_URL + '/testurl/#id=' + clip.split('/')[-1]
         test_urls.append(clip_url)
-        if len(test_urls) > 2:
-            break
     return test_urls
