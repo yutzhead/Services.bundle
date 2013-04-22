@@ -24,7 +24,8 @@ def MetadataObjectForURL(url):
         episode = int(video['pl1$episodeNumber'])
         season = int(video['pl1$seasonNumber'])
         show = video['pl1$show']
-        mo = EpisodeObject(
+
+        return EpisodeObject(
             title=title,
             summary=summary,
             show=show,
@@ -35,7 +36,7 @@ def MetadataObjectForURL(url):
             thumb=Resource.ContentsOfURLWithFallback(url=thumbs)
         )
     except:
-        mo = VideoClipObject(
+        return VideoClipObject(
             title=title,
             summary=summary,
             originally_available_at=date,
@@ -43,15 +44,15 @@ def MetadataObjectForURL(url):
             thumb=Resource.ContentsOfURLWithFallback(url=thumbs)
         )
 
-    return mo
-
 def MediaObjectsForURL(url):
     return [
         MediaObject(
             parts = [
-		PartObject(key=Callback(PlayVideo, url=url),
-		streams=[AudioStreamObject(language_code=Locale.Language.English)]
-	    )]
+                PartObject(
+                    key=Callback(PlayVideo, url=url),
+                    streams=[AudioStreamObject(language_code=Locale.Language.English)]
+                )
+            ]
         )
     ]
 
@@ -66,12 +67,14 @@ def PlayVideo(url):
 
     player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
     playpath = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+
     if playpath[-4:] == '.mp4':
         playpath = 'MP4:' + playpath
     elif playpath[-4:] == '.flv':
         playpath = playpath.strip('.flv')
+
     if '/Live+Streaming/' in url or '/live/' in url:
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
+        return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath, live=True))
     else:
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
@@ -85,7 +88,8 @@ def GetDetails(url):
 def TestURLs():
     test_urls = []
     data = JSON.ObjectFromURL('http://feed.theplatform.com/f/h9dtGB/r3VD0FujBumK?form=json&fields=categories,content,defaultThumbnailUrl,description,pubDate,title,:adSite,:adCategory,:event,:genre,:league,:liveOndemand,:seasonNumber,:segment,:show,:sport,:sportGroup,:type,:unapprovedDate,:playerName,:playerID,:awayTeam,:homeTeam,:yearOfGame,:dateOfGame,:gameID,:time&releaseFields=approved,id,url&count=true&byCustomValue={unapprovedDate}{2013-04-20T20:15:00Z~}&byCategoryIds=1249236098&sort=pubDate|desc&byApproved=true&range=1-3')
+
     for clip in data['entries']['media$content']['plfile$releases']['id']:
-	clip_url = BASE_URL + '/testurl/#id=' + clip.split('/')[-1]
+        clip_url = BASE_URL + '/testurl/#id=' + clip.split('/')[-1]
         test_urls.append(clip_url)
     return test_urls
