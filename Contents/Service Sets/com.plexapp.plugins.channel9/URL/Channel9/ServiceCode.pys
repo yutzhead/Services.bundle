@@ -8,8 +8,15 @@ def MetadataObjectForURL(url):
     # Extract the information from the page...
     title = page.xpath("//meta[@name='title']")[0].get('content')
     description = page.xpath("//meta[@name='description']")[0].get('content')
-    thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
     rating = float(page.xpath("//p[@class='avg-rating']/span/text()")[0]) * 2
+
+    try:
+        thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
+    except:
+        try:
+            thumb = page.xpath("//meta[@property='og:image']/@content")[0]
+        except:
+            thumb = ''
 
     try:
         duration_text = page.xpath("//div[@class='entry-caption']/text()")[0]
