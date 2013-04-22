@@ -73,8 +73,10 @@ def PlayVideo(url):
 
 def GetDetails(url):
     id = url.split('/')[-1]
-    details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)
-    return details['entries'][0]
+    details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)['entries']
+    if len(details) < 1:
+        raise Ex.MediaNotAvailable
+    return detail[0]
 
 def TestURLs():
     test_urls = []
