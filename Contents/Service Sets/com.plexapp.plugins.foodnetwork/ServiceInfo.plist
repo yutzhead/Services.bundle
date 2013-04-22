@@ -8,11 +8,11 @@
 	</array>
 	<key>URL</key>
 	<dict>
-		<key>FoodNetwork</key>
+		<key>Food Network</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.foodnetwork\.com/videos/.+/[0-9]{5,6}.html.*</string>
+				<string>^http://www\.foodnetwork\.com/videos/.+/\d{5,6}.html</string>
 			</array>
 		</dict>
 	</dict>
