@@ -3,6 +3,12 @@ MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 RE_AMPERSANDS = Regex('&(?!amp;)')
 
+MediaObject.container = Container.MP4
+MediaObject.video_codec = VideoCodec.H264
+MediaObject.audio_codec = AudioCodec.AAC
+MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
+AudioStreamObject.language_code = Locale.Language.English
 ####################################################################################################
 def NormalizeURL(url):
 	return url
@@ -33,69 +39,33 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-	return [
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))],
-			bitrate = 3500,
-			container = Container.MP4,
-			video_resolution = '720',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))],
-			bitrate = 2200,
-			container = Container.MP4,
-			video_resolution = '540',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))],
-			bitrate = 1700,
-			container = Container.MP4,
-			video_resolution = '432',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))],
-			bitrate = 1200,
-			container = Container.MP4,
-			video_resolution = '360',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))],
-			bitrate = 750,
-			container = Container.MP4,
-			video_resolution = '288',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate="400", index=0))],
-			bitrate = 400,
-			container = Container.MP4,
-			video_resolution = '216',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)
-	]
+	bitrates = ['3500','2200','1700','1200']
+	resolutions = ['720','540','432','360']
+	
+	media_objects = []
+	x = 0
+	while x < 4:
+		if 'bonus-round' in url:
+			media_objects.append(
+				MediaObject(
+					parts = [
+						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=0)),
+						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=1))
+						],
+					bitrate = bitrates[x],
+					video_resolution = resolutions[x]
+				)
+			)
+		else:
+			media_objects.append(
+				MediaObject(
+					parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=0))],
+					bitrate = bitrates[x],
+					video_resolution = resolutions[x]
+				)
+			)
+		x += 1
+	return media_objects
 
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0, fmt=None):
