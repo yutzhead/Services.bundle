@@ -9,6 +9,7 @@ MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
 MediaObject.optimized_for_streaming = True
 AudioStreamObject.language_code = Locale.Language.English
+
 ####################################################################################################
 def NormalizeURL(url):
 	return url
@@ -39,38 +40,38 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	bitrates = ['3500','2200','1700','1200']
 	resolutions = ['720','540','432','360']
-	
 	media_objects = []
-	x = 0
-	while x < 4:
+
+	for i, bitrate in enumerate(bitrates):
 		if 'bonus-round' in url:
 			media_objects.append(
 				MediaObject(
 					parts = [
-						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=0)),
-						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=1))
+						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=0)),
+						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=1))
 						],
-					bitrate = bitrates[x],
-					video_resolution = resolutions[x]
+					bitrate = bitrate,
+					video_resolution = resolutions[i]
 				)
 			)
 		else:
 			media_objects.append(
 				MediaObject(
-					parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrates[x], index=0))],
-					bitrate = bitrates[x],
-					video_resolution = resolutions[x]
+					parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=0))],
+					bitrate = bitrate,
+					video_resolution = resolutions[i]
 				)
 			)
-		x += 1
+
 	return media_objects
 
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 
-	BITRATES = ['400', '750', '1200', '1700', '2200', '3500']
+	BITRATES = ['1200', '1700', '2200', '3500']
 
 	uri = GetURI(url)
 
