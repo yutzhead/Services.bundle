@@ -1,0 +1,69 @@
+RE_VIDEO_ID_URL = Regex('iid:([0-9]+)')
+
+RE_DETAILS = Regex(',kw:"(?P<title>.+?)".+,pic:"(?P<thumb>http.+.jpg)".+,time:"(?P<duration>.+?)".+,pt:(?P<date>[0-9]+)')
+
+XML_URL = 'http://v2.tudou.com/v?it='
+
+AudioStreamObject.language_code=Locale.Language.Chinese
+MediaObject.container = 'f4v'
+MediaObject.video_codec = 'h264'
+MediaObject.audio_codec = 'aac'
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+    
+####################################################################################################
+def MetadataObjectForURL(url):
+    content = HTTP.Request(url).content
+    details = RE_DETAILS.search(content).groupdict
+    title = details['title']
+    thumb = details['thumb']
+    duration = Datetime.MillisecondsFromString(details['duration'])
+    date = Datetime.FromTimestamp(int(details['date'])/1000).date()
+
+	return VideoClipObject(
+		title = title,
+        duration = duration,
+        originally_available_at = date,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url)
+				)
+			]
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url):
+
+	page = HTTP.Request(url).content
+	video_id = RE_VIDEO_ID.search(page)
+
+	if not video_id:
+		raise Ex.MediaNotAvailable
+	else:
+		video_id = video_id.group(1)
+
+	xml_data = XML.ElementFromURL(XML_URL + video_id)
+    video_url = xml_data.xpath('//f')[-1].te
+
+	return Redirect(video_url)
+    
+####################################################################################################
+def TestURLs():
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.tudou.com')
+    for video in data.xpath('//div[@class="pack pack_plist_card"]//a'):
+        test_urls.append(video.get('href')
+        if len(test_urls) > 2:
+            break
+    return test_urls
