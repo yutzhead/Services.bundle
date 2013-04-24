@@ -9,6 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://c\.brightcove\.com/services/viewer/htmlFederated\?playerKey=[^&amp;]+&amp;dynamicStreaming=true&amp;%40videoPlayer=\d+$</string>
+				<string>^https?://(c|secure)\.brightcove\.com/services/viewer/federated_f9.+(videoId|videoPlayer)=\d+</string>
 			</array>
 		</dict>
 	</dict>
