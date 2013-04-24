@@ -232,6 +232,15 @@ def MetadataObjectForURL(url):
 				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
 
+			# BC HTML5 Video
+			bc = doc.xpath('//object[contains(@class, "Brightcove")]/param[@name="playerKey"]/parent::object')
+
+			if len(bc) > 0:
+				Log.Debug(' --> [Metadata] Found a BC video')
+				player_key = bc[0].xpath('./param[@name="playerKey"]/@value')[0]
+				video_player = bc[0].xpath('./param[@name="@videoPlayer"]/@value')[0]
+				return URLService.MetadataObjectForURL('http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key, video_player))
+
 		if not url.startswith('ipad:'):
 			return URLService.MetadataObjectForURL('ipad:%s' % url)
 
