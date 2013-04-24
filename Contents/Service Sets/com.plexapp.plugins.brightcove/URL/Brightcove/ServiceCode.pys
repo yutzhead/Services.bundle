@@ -59,11 +59,6 @@ def MediaObjectsForURL(url):
 	return media_objects
 
 ####################################################################################################
-def PlayVideo(url):
-
-	return None
-
-####################################################################################################
 def GetJSON(url):
 
 	data = HTTP.Request(url, headers=HTTP_HEADERS).content
