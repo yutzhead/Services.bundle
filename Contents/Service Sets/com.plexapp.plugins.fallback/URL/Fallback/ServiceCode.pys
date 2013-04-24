@@ -22,6 +22,7 @@ HTTP_DESKTOP_UA = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) 
 RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(//|%2F%2F)|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|m4v|flv)[^&]*)')
+RE_UNWANTED = Regex('promo|commercial', Regex.IGNORECASE)
 RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
@@ -56,7 +57,7 @@ def ValidURL(url):
 
 	url = urlparse.urlparse(url)
 
-	if url.scheme not in ['http', 'https']:
+	if url.scheme not in ('http', 'https'):
 		return False
 
 	if RE_IPV4_PRIVATE.search(url.hostname):
@@ -107,7 +108,7 @@ def FindExternalSource(req):
 ####################################################################################################
 def CodecsForVideoTypeValue(value):
 
-	if value == None:
+	if not value:
 		return None
 
 	match = RE_CODECS.search(value)
@@ -305,10 +306,20 @@ def MediaObjectsForURL(url):
 				return result
 
 			# Regex Video
-			video = RE_PATTERN.search(req.content)
+			video = RE_PATTERN.findall(req.content)
+			result = []
 
-			if video:
-				src = video.group('vid')
+			if len(video) > 0:
+				for match in video:
+					score = 0
+
+					if RE_UNWANTED.search(match[1]):
+						score = score - 1
+
+					result.append([score, match[1]])
+
+				result.sort(key=lambda result: result[0], reverse=True)
+				src = result[0][1]
 
 				sub = RE_SUB_PATTERN.findall(src)
 
