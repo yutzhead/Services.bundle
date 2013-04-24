@@ -1,0 +1,79 @@
+HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
+RE_JSON = Regex('var experienceJSON = ({.+});')
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	json_obj = GetJSON(url)
+	media = json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']
+
+	title = media['displayName']
+	summary = media['shortDescription']
+	duration = media['length']
+	date = Datetime.FromTimestamp(float(media['publishedDate'])/1000)
+	thumb = media['videoStillURL'].split('?')[0]
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration,
+		originally_available_at = date,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	media_objects = []
+	json_obj = GetJSON(url)
+
+	for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']:
+		resolution = rendition['frameHeight']
+		url = rendition['defaultURL']
+
+		if resolution < 360 or not url.endswith('.mp4'):
+			continue
+
+		bitrate = int(float(rendition['encodingRate'])/1000)
+		width = rendition['frameWidth']
+
+		media_objects.append(
+			MediaObject(
+				parts = [PartObject(key=url)],
+				container = Container.MP4,
+				video_codec = VideoCodec.H264,
+				video_resolution = str(resolution),
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				bitrate = bitrate,
+				optimized_for_streaming = True
+			)
+		)
+
+	media_objects.sort(key=lambda obj: obj.bitrate, reverse=True)
+	return media_objects
+
+####################################################################################################
+def PlayVideo(url):
+
+	return None
+
+####################################################################################################
+def GetJSON(url):
+
+	data = HTTP.Request(url, headers=HTTP_HEADERS).content
+	json = RE_JSON.search(data)
+
+	if json:
+		json_obj = JSON.ObjectFromString(json.group(1))
+		if json_obj['success'] == True:
+			return json_obj
+		else:
+			raise Ex.MediaNotAvailable
+	else:
+		raise Ex.MediaNotAvailable
