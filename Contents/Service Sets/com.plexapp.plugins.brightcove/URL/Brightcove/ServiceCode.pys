@@ -1,11 +1,11 @@
 HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
 RE_JSON = Regex('var experienceJSON = ({.+});')
-RE_VIDEO_ID = Regex('(videoId|videoPlayer)=(?P<id>\d+)')
+RE_VIDEO_ID = Regex('(videoId|videoPlayer|bctid)=(?P<id>\d+)', Regex.IGNORECASE)
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	if not 'playerKey=' in url:
+	if not 'playerKey=' in url or 'federated_f9' in url:
 		url = FixURL(url)
 
 	return url
