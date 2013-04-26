@@ -9,13 +9,14 @@ def MetadataObjectForURL(url):
 	title = page.xpath("//meta[@property='og:title']")[0].get('content')
 	summary = ''.join(page.xpath("//p[@class='description']/text()")).strip()
 	thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
+	thumb_hq = thumb.replace('/320x240/320x240_', '/original/original')
 	date = page.xpath("//span[@class='time-upload']/text()")[0].strip("on").strip()
 	date = Datetime.ParseDate(date)
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
+		thumb = Resource.ContentsOfURLWithFallback([thumb_hq, thumb]),
 		originally_available_at = date
 	)
 
