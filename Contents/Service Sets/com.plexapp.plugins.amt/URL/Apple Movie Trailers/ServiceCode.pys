@@ -101,14 +101,14 @@ def GetXML(url):
 	xml_url = '%s.xml' % url.replace('#', 'itsxml/')
 
 	try:
-		xml = XML.ElementFromURL(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR)
-		return xml
+		xml_data = HTTP.Request(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR).content.encode('latin-1').decode('utf-8')
+		return XML.ElementFromString(xml_data)
 	except:
 		try:
 			# Sometimes 'trailer' is not present, try 'trailer1'
 			xml_url = xml_url.replace('/trailer.xml', '/trailer1.xml')
-			xml = XML.ElementFromURL(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR)
-			return xml
+			xml_data = HTTP.Request(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR).content.encode('latin-1').decode('utf-8')
+			return XML.ElementFromString(xml_data)
 		except:
 			pass
 
