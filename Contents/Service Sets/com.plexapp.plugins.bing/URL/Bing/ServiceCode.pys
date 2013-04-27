@@ -27,7 +27,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		duration = duration,
 		originally_available_at = date
 	)
