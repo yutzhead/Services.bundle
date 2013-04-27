@@ -4,12 +4,16 @@ JSON_FIELDS = "&byApproved=true&fields=id%2Ctitle%2Cdescription%2CpubDate%2Cdefa
 BASE_URL = 'http://www.cbc.ca'
 
 def NormalizeURL(url):
+    if url[-1] == '/':
+	pass
+    else:
+	url = url + '/'
     return url
 
 def MetadataObjectForURL(url):
     video = GetDetails(url)
     title = video['title']
-    summary = video['description']
+    summary = String.StripTags(video['description'])
     date = Datetime.FromTimestamp(float(video['pubDate'])/1000).date()
     duration = int(float(video['media$content'][0]['plfile$duration'])*1000)
 
@@ -72,11 +76,11 @@ def PlayVideo(url):
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
-    id = url.split('/')[-1]
+    id = url.split('/')[-2]
     details = JSON.ObjectFromURL(JSON_URL + id +JSON_FIELDS)['entries']
     if len(details) < 1:
         raise Ex.MediaNotAvailable
-    return detail[0]
+    return details[0]
 
 def TestURLs():
     test_urls = []
