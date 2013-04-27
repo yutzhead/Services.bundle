@@ -64,7 +64,7 @@ def PlayVideo(url, res):
         video_url = video_url.replace('sd.mp4','hd.mp4')
 
     (streamer, file) = video_url.split('mp4:',1)
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = streamer, clip = 'mp4:'file))
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = streamer, clip = 'mp4:' + file))
 
 ####################################################################################################
 def TestURLs():
