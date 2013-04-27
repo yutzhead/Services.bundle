@@ -97,6 +97,7 @@ def GetJSON(url):
 	if not json[0:1] == '{':
 		raise Ex.MediaNotAvailable
 
+	json = json.replace('\\x22', '\\\\"')
 	json = RE_JSON_QUOTES.sub('"\\1"', json)
 	json = json.decode('string-escape').decode('utf-8')
 	json = RE_JSON_NEWLINES.sub('\\\n', json)
