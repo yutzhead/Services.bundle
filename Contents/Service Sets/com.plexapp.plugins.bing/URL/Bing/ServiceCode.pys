@@ -41,6 +41,13 @@ def MediaObjectsForURL(url):
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			video_resolution = 720,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, formatCode='104'))]
+		),
+		MediaObject(
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = 576,
 			parts = [PartObject(key=Callback(PlayVideo, url=url, formatCode='103'))]
 		),
 		MediaObject(
@@ -68,7 +75,7 @@ def PlayVideo(url, formatCode):
 		raise Ex.MediaNotAvailable
 
 	video_files = json_obj['files']
-	resolutions = ['103', '102', '101']
+	resolutions = ['104', '103', '102', '101']
 	index = resolutions.index(formatCode)
 
 	for available_resolution in range(index, len(resolutions)):
