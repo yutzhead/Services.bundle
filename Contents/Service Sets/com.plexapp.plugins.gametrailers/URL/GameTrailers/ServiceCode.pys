@@ -100,6 +100,9 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 			except:
 				index = index - 1
 
+	if not '/mtvnorigin/' in rtmp_url:
+		raise Ex.MediaNotAvailable
+
 	stream_url = rtmp_url.split('/mtvnorigin/')[1]
 	mp4_url = MP4_URL % stream_url
 
