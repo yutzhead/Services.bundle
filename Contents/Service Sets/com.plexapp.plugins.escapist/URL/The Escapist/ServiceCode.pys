@@ -1,6 +1,11 @@
 RE_FLASHVARS = Regex('flashvars=&quot;config=(?P<url>[^&]+)&quot;')
 
 ####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('?')[0]
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
 #	page = HTML.ElementFromURL(url)
