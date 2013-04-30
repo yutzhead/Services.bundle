@@ -1,0 +1,69 @@
+JSON_URL = 'http://rutube.ru/api/play/trackinfo/%s/?format=json&referer=%s'
+
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTML.ElementFromURL(url)
+	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
+	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
+	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+	duration = data.xpath('//meta[@property="video:duration"]')[0].get('content')
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = thumb,
+		duration = int(duration)*1000
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True,
+			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	data = HTML.ElementFromURL(url)
+	embed_id = data.xpath('//meta[@property="og:video"]')[0].get('content').split('/')[-1]
+	
+	json_data = JSON.ObjectFromURL(JSON_URL % (embed_id, String.Quote(url)))
+	m3u8_url = json_data['video_balancer']['m3u8']
+	
+	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=m3u8_url))
+
+####################################################################################################
+def GetDetails(url):
+
+	data = HTML.ElementFromURL(url)
+	swf_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
+	vid_id = RE_VID_ID.search(swf_url).group(1)
+	return JSON.ObjectFromURL(DETAIL_URL % vid_id)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	data = HTML.ElementFromURL('http://rutube.ru')
+
+	for vid in data.xpath('//article[@data-category="editorsfeed"]'):
+		url = vid.xpath('.//meta[@itemprop="url"]')[0].get('content')
+		test_urls.append(url)
+
+		if len(test_urls) > 2:
+			break
+
+	return test_urls
