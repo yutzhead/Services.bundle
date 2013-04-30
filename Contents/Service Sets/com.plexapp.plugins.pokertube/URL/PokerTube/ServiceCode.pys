@@ -13,7 +13,10 @@ def MetadataObjectForURL(url):
 	video = html.xpath('//meta[@property="og:video"]/@content')[0]
 	video_id = RE_VIDEO_ID.search(video).group('video_id')
 
-	xml = XML.ElementFromURL(XML_URL % video_id, cacheTime=CACHE_1DAY)
+	try:
+		xml = XML.ElementFromURL(XML_URL % video_id, cacheTime=CACHE_1DAY)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if len(xml.xpath('//*[starts-with(name(), "video-")]')) < 1:
 		raise Ex.MediaNotAvailable
@@ -70,7 +73,11 @@ def PlayVideo(url, res):
 	video = html.xpath('//meta[@property="og:video"]/@content')[0]
 	video_id = RE_VIDEO_ID.search(video).group('video_id')
 
-	xml = XML.ElementFromURL(XML_URL % video_id, cacheTime=CACHE_1DAY)
+	try:
+		xml = XML.ElementFromURL(XML_URL % video_id, cacheTime=CACHE_1DAY)
+	except:
+		raise Ex.MediaNotAvailable
+
 	available = xml.xpath('//*[starts-with(name(), "video-")]/@height')
 
 	if len(available) < 1:
