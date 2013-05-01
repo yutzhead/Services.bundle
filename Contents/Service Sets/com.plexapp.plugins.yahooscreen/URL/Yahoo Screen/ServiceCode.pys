@@ -1,11 +1,11 @@
 RE_UID = Regex('"content_id":"(.+?)",')
 JSON_URL = 'http://video.query.yahoo.com/v1/public/yql?q=%s&env=prod&format=json'
-QUERY = 'SELECT * FROM yahoo.media.video.streams WHERE id="%s" AND format="mp4" AND protocol="http" AND plrs="KzaK_PIQqQ8qLDXmj0F1Wh" AND acctid="389" AND plidl="bls2" AND offnetwork="false" AND site="ivy" AND lang="en-US" AND region="US" AND override="none";'
+QUERY = 'SELECT * FROM yahoo.media.video.streams WHERE id="%s" AND format="mp4" AND protocol="http" AND plrs="KzaK_PIQqQ8qLDXmj0F1Wh" AND lang="en-US" AND region="US";'
 RESOLUTIONS = [360, 478, 720, 1080]
 
 ####################################################################################################
 def NormalizeURL(url):
-  return url.split('?')[0]
+  return url.split(';')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
