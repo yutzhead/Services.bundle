@@ -10,6 +10,10 @@ RE_JSON = Regex('blip_ws_results\(\[(.*)\]\);', Regex.DOTALL)
 ####################################################################################################
 def NormalizeURL(url):
 
+	if '/rss/flash/' in url:
+		post_id = url.split('/rss/flash/')[-1].split('&')[0]
+		url = 'http://blip.tv/posts/%s' % post_id
+
 	return String.StripDiacritics(url)
 
 ####################################################################################################
