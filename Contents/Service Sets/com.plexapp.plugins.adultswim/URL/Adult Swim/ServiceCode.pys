@@ -88,7 +88,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def PlayVideo(url, index):
+def PlayVideo(url, index=0):
 
 	details = GetDetails(url)
 
