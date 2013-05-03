@@ -18,12 +18,17 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	page_title = html.xpath('//title')[0].text
+	Log(page_title)
 
 	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
+	Log(title)
 	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+	Log(summary)
 	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	Log(thumb)
 
-	if '/full-episodes/' in url:
+	if '/full-episodes/' in url or '/episodes/' in url:
+		Log("url is for an episode")
 		show_title = html.xpath('//title')[0].text.split(' | ')[0]
 		try:
 			air_date = html.xpath('//meta[@itemprop="datePublished"]')[0].get('content')
@@ -53,7 +58,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if '/full-episodes/' in url:
+	if '/full-episodes/' in url or '/episodes/' in url:
 		return [
 			MediaObject(
 				parts = [
@@ -64,10 +69,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4))
 				],
 				bitrate = 3500,
-				#container = Container.MP4,
 				video_resolution = '720',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -80,10 +82,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4))
 				],
 				bitrate = 2200,
-				#container = Container.MP4,
 				video_resolution = '540',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -96,10 +95,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4))
 				],
 				bitrate = 1700,
-				#container = Container.MP4,
 				video_resolution = '432',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -112,10 +108,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4))
 				],
 				bitrate = 1200,
-				#container = Container.MP4,
 				video_resolution = '360',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -128,10 +121,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=4))
 				],
 				bitrate = 750,
-				#container = Container.MP4,
 				video_resolution = '288',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			)
@@ -143,10 +133,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
 				],
 				bitrate = 3500,
-				#container = Container.MP4,
 				video_resolution = '720',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -155,10 +142,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
 				],
 				bitrate = 2200,
-				#container = Container.MP4,
 				video_resolution = '540',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -167,10 +151,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
 				],
 				bitrate = 1700,
-				#container = Container.MP4,
 				video_resolution = '432',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -179,10 +160,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
 				],
 				bitrate = 1200,
-				#container = Container.MP4,
 				video_resolution = '360',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			),
@@ -191,10 +169,7 @@ def MediaObjectsForURL(url):
 					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
 				],
 				bitrate = 750,
-				#container = Container.MP4,
 				video_resolution = '288',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
 			)
@@ -205,7 +180,7 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	BITRATES = ['750', '1200', '1700', '2200', '3500']
 
-	try:
+	try: 
 		data = HTML.ElementFromURL(url)
 	except:
 		raise Ex.MediaNotAvailable
@@ -214,7 +189,7 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	guids = mrss_data.xpath('//guid')
-
+	
 	if index >= len(guids):
 		ad_index = len(guids) - index
 		ad_segment_uri = mrss_data.xpath('//guid')[ad_index].text
