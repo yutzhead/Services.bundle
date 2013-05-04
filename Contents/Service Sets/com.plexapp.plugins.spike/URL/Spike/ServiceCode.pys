@@ -18,17 +18,11 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	page_title = html.xpath('//title')[0].text
-	Log(page_title)
-
 	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
-	Log(title)
 	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
-	Log(summary)
 	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
-	Log(thumb)
 
 	if '/full-episodes/' in url or '/episodes/' in url:
-		Log("url is for an episode")
 		show_title = html.xpath('//title')[0].text.split(' | ')[0]
 		try:
 			air_date = html.xpath('//meta[@itemprop="datePublished"]')[0].get('content')
