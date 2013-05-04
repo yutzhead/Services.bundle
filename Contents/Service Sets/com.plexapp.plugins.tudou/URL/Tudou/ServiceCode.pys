@@ -1,0 +1,84 @@
+RE_VIDEO_ID = Regex('iid: ?([0-9]+)')
+
+RE_DETAILS = Regex(',kw: ?"(?P<title>.+?)".+?,pic: ?"(?P<thumb>http.+?)".+,time: ?"(?P<duration>.+?)"', Regex.DOTALL) #
+RE_DATE = Regex(',pt: ?(?P<date>[0-9]+)')
+XML_URL = 'http://v2.tudou.com/v?it='
+
+AudioStreamObject.language_code=Locale.Language.Chinese
+MediaObject.container = 'f4v'
+MediaObject.video_codec = 'h264'
+MediaObject.audio_codec = 'aac'
+
+UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31'
+HTTP.Headers['User-Agent'] = UA
+####################################################################################################
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+	content = HTTP.Request(url).content
+	content = unicode(content, 'gbk', errors='ignore')
+	details = RE_DETAILS.search(content).groupdict()
+	title = details['title']
+	thumb = details['thumb']
+	duration = Datetime.MillisecondsFromString(details['duration'])
+	try:
+		timestamp = RE_DATE.search(content).group(1)
+		date = Datetime.FromTimestamp(int(timestamp)/1000).date()
+	except:
+		date = None
+
+	return VideoClipObject(
+		title = title,
+		duration = duration,
+		originally_available_at = date,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url)
+				)
+			]
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+	page = HTTP.Request(url).content
+	video_id = RE_VIDEO_ID.search(page)
+
+	if not video_id:
+		raise Ex.MediaNotAvailable
+	else:
+		video_id = video_id.group(1)
+	
+	xml_data = XML.ElementFromURL(XML_URL + video_id)
+	try:
+		video_url = xml_data.xpath('//f')[-1].text
+	except:
+		error = xml_data.xpath('//e')[0].get('error')
+		if error == 'ip is forbidden':
+			raise Ex.MediaGeoblocked
+		else:
+			Log(error)
+			raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, user_agent = UA, key=video_url)
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	data = HTML.ElementFromURL('http://www.tudou.com')
+	for video in data.xpath('//div[@class="pack pack_plist_card"]//a'):
+		test_urls.append(video.get('href'))
+		if len(test_urls) > 2:
+			break
+	return test_urls
