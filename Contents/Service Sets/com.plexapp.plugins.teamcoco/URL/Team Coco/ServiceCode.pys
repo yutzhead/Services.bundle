@@ -1,3 +1,5 @@
+import random
+
 VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
@@ -78,7 +80,7 @@ def PlayVideo(url, res=720):
 
 	if not video_id:
 		Log.Exception("Could not retrieve video_id in PlayVideo function")
-		return None
+		raise Ex.MediaExpired
 
 	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
 
@@ -89,18 +91,50 @@ def PlayVideo(url, res=720):
 		if res not in FULL_EP_RES:
 			res = FULL_EP_RES[-1]
 
+		####################
+		# TEST!
+		session_token = ''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz') for x in range(25))
+		Log(' --> session_token: %s' % session_token)
+
+		aspen_json = {
+			"protocol": "1.0",
+			"context": "main",
+			"clientThrottled": False,
+			"applicationName": "CVP",
+			"debug": "false",
+			"clientThrottle": 0,
+			"propertyName": "teamcoco",
+			"profile": "0",
+			"site": "teamcoco",
+			"applicationVersion": "2.3.6.1",
+			"sessionToken": session_token,
+			"platformName": "flash",
+			"pageUrl": url
+		}
+
+		post_data = {
+			'aspenJson': String.Quote(JSON.StringFromObject(aspen_json))
+		}
+
+		json_obj = JSON.ObjectFromURL('http://aspen.turner.com/api/hello', values=post_data)
+		session_id = json_obj['sessionId']
+		Log(' --> session_id: %s' % session_id)
+		####################
+
 		src = xml.xpath('//akamai/src/text()')[0].split('://')[-1]
 		auth_token_type = xml.xpath('//akamai/authTokenType/text()')[0]
 		window = xml.xpath('//akamai/window/text()')[0]
 		aifp = xml.xpath('//akamai/aifp/text()')[0]
 
 		files = []
-		for file in xml.xpath('//files/file[@label="hq"]/text()'):
-			file = file.strip('/mp4:').strip('.mp4')
+		for file in xml.xpath('//files/file[contains(text(), "R1.mp4") or contains(text(), "R2.mp4")]/text()'):
+			file = file.replace('/mp4:', '').replace('.mp4', '')
 			if file not in files:
 				files.append(file)
+		files.reverse()
 
 		post_data = {
+			'sessionId': session_id,
 			'videoId': video_id,
 			'aifp': aifp,
 			'window': window,
