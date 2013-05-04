@@ -4,6 +4,8 @@ BASE_URL = 'http://www.cwtv.com'
 
 CW_SWF = 'http://pdl.warnerbros.com/cwtv/digital-smiths/production_player/vsplayer.swf'
 
+THUMB_PROXY = 'http://www.uswebproxy.com/?q=%s'
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -48,7 +50,8 @@ def MetadataObjectForURL(url):
 	except:
 		duration = None
 
-	thumb_list = GetThumbList(url)
+	thumb = GetThumb(url)
+	thumb_alt = THUMB_PROXY % String.Quote(thumb)
 
 	if video['contentType'] == "Full Episodes":    
 		return EpisodeObject(
@@ -60,7 +63,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list])
+			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
 		)
 	else:
 		return VideoClipObject(
@@ -69,7 +72,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback(url=[thumb['uri'] for thumb in thumb_list])
+			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
 		)
 
 ####################################################################################################
@@ -141,17 +144,17 @@ def GetDetails(url):
 		return None
 
 ####################################################################################################
-def GetThumbList(url):
+def GetThumb(url):
 
 	images = GetDetails(url)['images']
-	thumb_list = []
+	width = 0
 
-	for image in images:
-		thumb_list.append(images[image])
+	for key in images.keys():
+		if images[key]['width'] > width:
+			thumb = images[key]['uri']
+			width = images[key]['width']
 
-	thumb_list = sorted(thumb_list, key=lambda thumb: int(thumb['width']), reverse=True)
-
-	return thumb_list[:2]
+	return thumb
 
 ####################################################################################################
 def TestURLs():
