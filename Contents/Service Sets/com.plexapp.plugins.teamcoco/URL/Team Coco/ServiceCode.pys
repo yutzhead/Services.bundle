@@ -4,7 +4,7 @@ VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
 RE_CLEANUP = Regex('[^-a-z0-9 ]')
-FULL_EP_RES = [720, 360]
+FULL_EP_RES = [480]
 VIDEO_RES = [1080, 720, 480, 360]
 
 ####################################################################################################
@@ -48,10 +48,11 @@ def MediaObjectsForURL(url):
 			media_objects.append(
 				MediaObject(
 					parts = [
-						PartObject(key=Callback(PlayVideo, url=url, res=res))
+						PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res=res)))
 					],
 					video_resolution = str(res),
-					protocol = 'rtmp'
+					audio_channels = 2,
+					optimized_for_streaming = True
 				)
 			)
 	else:
@@ -88,77 +89,10 @@ def PlayVideo(url, res=720):
 		raise Ex.MediaNotAvailable
 
 	if 'full-episode' in url:
-		if res not in FULL_EP_RES:
-			res = FULL_EP_RES[-1]
+		src = xml.xpath('//files/file[@bitrate="ipad"]/text()')[0]
+		url = 'http://ht.cdn.turner.com/tbs/big/teamcoco/%s' % src.lstrip('/')
 
-		####################
-		# TEST!
-		session_token = ''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz') for x in range(25))
-		Log(' --> session_token: %s' % session_token)
-
-		aspen_json = {
-			"protocol": "1.0",
-			"context": "main",
-			"clientThrottled": False,
-			"applicationName": "CVP",
-			"debug": "false",
-			"clientThrottle": 0,
-			"propertyName": "teamcoco",
-			"profile": "0",
-			"site": "teamcoco",
-			"applicationVersion": "2.3.6.1",
-			"sessionToken": session_token,
-			"platformName": "flash",
-			"pageUrl": url
-		}
-
-		post_data = {
-			'aspenJson': String.Quote(JSON.StringFromObject(aspen_json))
-		}
-
-		json_obj = JSON.ObjectFromURL('http://aspen.turner.com/api/hello', values=post_data)
-		session_id = json_obj['sessionId']
-		Log(' --> session_id: %s' % session_id)
-		####################
-
-		src = xml.xpath('//akamai/src/text()')[0].split('://')[-1]
-		auth_token_type = xml.xpath('//akamai/authTokenType/text()')[0]
-		window = xml.xpath('//akamai/window/text()')[0]
-		aifp = xml.xpath('//akamai/aifp/text()')[0]
-
-		files = []
-		for file in xml.xpath('//files/file[contains(text(), "R1.mp4") or contains(text(), "R2.mp4")]/text()'):
-			file = file.replace('/mp4:', '').replace('.mp4', '')
-			if file not in files:
-				files.append(file)
-		files.reverse()
-
-		post_data = {
-			'sessionId': session_id,
-			'videoId': video_id,
-			'aifp': aifp,
-			'window': window,
-			'profile': 'tbs',
-			'path': ';'.join(files),
-			'authTokenType': auth_token_type
-		}
-
-		auth_xml = HTTP.Request('http://www.tbs.com/processors/cvp/token.jsp', values=post_data).content
-		auth_xml = auth_xml.strip().replace('&', '&amp;')
-		token = XML.ElementFromString(auth_xml).xpath('//token/text()')[0]
-		token = String.Unquote(token)
-
-		bundle_version = XML.ElementFromURL('http://teamcoco.com/sites/default/modules/dev/cvp/xml/appconfig.dev.xml', cacheTime=CACHE_1DAY).xpath('//bundleVersion/text()')[0]
-		player_version = XML.ElementFromURL('http://z.cdn.turner.com/xslo/cvp/core/bundle/bundle_%s.xml' % bundle_version, cacheTime=CACHE_1DAY).xpath('//playerVersion/text()')[0]
-		swf_url = 'http://z.cdn.turner.com/xslo/cvp/core/player/CVP_%s.swf' % player_version
-
-		url = 'rtmpe://%s?%s' % (src, token)
-		app = '%s?%s' % (src.split('/')[-1], token)
-		playpath = xml.xpath('//files/file[@label="hq" and contains(@size, "x%d")]/text()' % res)[0].strip('/')
-
-		Log(' --> RTMPDump test command line: rtmpdump -r "%s" -a "%s" -y "%s" -W "%s" -o output.flv' % (url, app, playpath, swf_url))
-
-		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=url, clip=playpath, app=app, swf_url=swf_url))
+		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
 
 	else:
 		if res not in VIDEO_RES:
