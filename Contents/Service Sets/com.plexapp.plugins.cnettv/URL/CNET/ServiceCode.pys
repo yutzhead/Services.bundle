@@ -113,7 +113,11 @@ def PlayVideo(url, res):
       return Redirect(video_dict[resolution])
 
   # Return the first match.
-  return Redirect(video_dict[0])
+  keys = video_dict.keys()
+  if len(keys) < 1:
+    raise Ex.MediaNotAvailable
+
+  return Redirect(video_dict[keys[0]])
 
 ####################################################################################################
 def GetVideoIdFromUrl(url):
