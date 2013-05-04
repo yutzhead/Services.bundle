@@ -1,7 +1,8 @@
-JSON_URL = 'http://rutube.ru/api/play/trackinfo/%s/?format=json&referer=%s'
+JSON_URL = 'http://rutube.ru/api/play/trackinfo/%s/?format=json'
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
@@ -25,11 +26,9 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
+			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
 			audio_channels = 2,
-			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url))]
+			optimized_for_streaming = True
 		)
 	]
 
@@ -39,25 +38,17 @@ def PlayVideo(url):
 
 	data = HTML.ElementFromURL(url)
 	embed_id = data.xpath('//meta[@property="og:video"]')[0].get('content').split('/')[-1]
-	
-	json_data = JSON.ObjectFromURL(JSON_URL % (embed_id, String.Quote(url)))
+
+	json_data = JSON.ObjectFromURL(JSON_URL % embed_id)
 	m3u8_url = json_data['video_balancer']['m3u8']
-	
+
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=m3u8_url))
-
-####################################################################################################
-def GetDetails(url):
-
-	data = HTML.ElementFromURL(url)
-	swf_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
-	vid_id = RE_VID_ID.search(swf_url).group(1)
-	return JSON.ObjectFromURL(DETAIL_URL % vid_id)
 
 ####################################################################################################
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL('http://rutube.ru')
+	data = HTML.ElementFromURL('http://rutube.ru/')
 
 	for vid in data.xpath('//article[@data-category="editorsfeed"]'):
 		url = vid.xpath('.//meta[@itemprop="url"]')[0].get('content')
