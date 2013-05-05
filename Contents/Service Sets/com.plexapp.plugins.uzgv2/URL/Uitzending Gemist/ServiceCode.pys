@@ -133,7 +133,7 @@ def PlayVideo(url):
 	if not video_url:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video_url.split('?')[0])
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def FollowRedirects(url, redirects=0):
