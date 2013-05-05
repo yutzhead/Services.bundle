@@ -1,0 +1,79 @@
+RE_FILE_URL = Regex("'file': '(http.+?)',?")
+BASE_URL = 'http://www.einthusan.com/'
+
+####################################################################################################
+
+def NormalizeURL(url):
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+	content = HTML.ElementFromURL(url)
+
+	title = content.xpath('//a[@class="movie-title"]')[0].text
+
+	try:
+		thumb = content.xpath('//a[@class="movie-cover-wrapper"]/img')[0].get('src')
+		if not thumb.startswith('http'):
+			thumb = BASE_URL + thumb.split('/',1)[1]
+	except:
+		thumb = content.xpath('//div[@class="video-object-thumb"]/a')[0].get('src')
+		if not thumb.startswith('http'):
+			thumb = BASE_URL + thumb.split('/',1)[1]
+
+	summary = content.xpath('//div[@class="movie-description"]//p[@class="desc_body"]')[0].text
+	
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = 'mp4',
+			#video_resolution = 'hd',
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'HD'))]
+		),
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			container = 'mp4',
+			video_resolution = 'sd',
+			optimized_for_streaming = True,
+			audio_channels = 2,
+			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'SD'))]
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, res):
+
+	content = HTTP.Request(url).content
+	video_files = RE_FILE_URL.findall(content)
+	if res == 'HD' and len(video_files) > 1:
+		video_url = video_files[1]
+	else:
+		video_url = video_files[0]
+    
+	return Redirect(video_url)
+
+####################################################################################################
+def TestURLs():
+	test_urls = []
+	data = HTML.ElementFromURL(BASE_URL + 'movies/')
+	for video in data.xpath('//div[@class="video-listing"]'):
+		link = video.xpath('.//a')[0].get('href')
+		if not link.startswith('http'):
+			link = BASE_URL + link.split('/',1)[1]
+		test_urls.append(link)
+		if len(test_urls) > 2:
+			break
+	return test_urls
