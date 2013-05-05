@@ -84,7 +84,7 @@ def MediaObjectsForURL(url):
 		client_platform = ''
 		client_version = ''
 
-	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
+	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA, cacheTime=CACHE_1WEEK)
 	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
 
 	if len(player_id) < 0:
@@ -143,7 +143,7 @@ def PlayVideo(url):
 	if url.endswith('.m3u8'):
 		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
 
-	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
+	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA, cacheTime=CACHE_1WEEK)
 	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
 
 	if len(player_id) < 0:
