@@ -1,3 +1,5 @@
+IDEVICE_API = 'http://iphone-api.uitzendinggemist.nl/v1/episodes/%s.json'
+
 HTTP_DESKTOP_UA = {
 	'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.14 (KHTML, like Gecko) Version/6.0.1 Safari/536.26.14',
 	'Cookie': 'site_cookie_consent=yes'
@@ -16,10 +18,14 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	if '#' in url:
+		url = url.split('#')[0]
+
 	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA, cacheTime=CACHE_1WEEK)
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	if summary.startswith('Geen omschrijving'): summary = None
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
 
 	try:
@@ -43,25 +49,67 @@ def MetadataObjectForURL(url):
 	)
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [
-				PartObject(key=Callback(PlayVideo, url=url))
-			],
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			video_resolution = '360',
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)
-	]
+	if '#' in url:
+		(url, client_platform, client_version) = url.replace(';', '#').split('#')
+	else:
+		client_platform = ''
+		client_version = ''
+
+	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
+	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
+
+	if len(player_id) < 0:
+		raise Ex.MediaNotAvailable
+
+	hls_url = None
+
+	try:
+		json_obj = JSON.ObjectFromURL(IDEVICE_API % player_id[0])
+
+		if 'video' in json_obj and json_obj['video'] is not None and 'm3u8' in json_obj['video']:
+			hls_url = json_obj['video']['m3u8']
+	except:
+		# Roku plays the HLS just fine, but flips on the M4V files from UZG. If we don't have an HLS, stop here.
+		if client_platform == 'Roku':
+			raise Ex.MediaNotAvailable
+
+	# Plex 0.9.5/Laika doesn't handle adaptive HLS very well (it just picks and plays the first stream from
+	# the playlist, which is the lowest quality version).
+	if (client_platform in ('MacOSX', 'Windows') and client_version.startswith('0.9.5')) or not hls_url:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url))
+				],
+				container = Container.MP4,
+				video_codec = VideoCodec.H264,
+				video_resolution = '360',
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
+	else:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=hls_url)))
+				],
+				video_resolution = '480',
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url):
+
+	if url.endswith('.m3u8'):
+		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
 
 	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA)
 	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
@@ -85,7 +133,7 @@ def PlayVideo(url):
 	if not video_url:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	return IndirectResponse(VideoClipObject, key=video_url.split('?')[0])
 
 ####################################################################################################
 def FollowRedirects(url, redirects=0):
