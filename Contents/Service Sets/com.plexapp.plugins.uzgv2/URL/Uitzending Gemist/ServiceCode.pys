@@ -18,12 +18,35 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	if '#' in url:
-		url = url.split('#')[0]
+	if '#' in url and ';' in url:
+		(url, client_platform, client_version) = url.replace(';', '#').split('#')
+	elif '#' in url:
+		(url, client_platform) = url.split('#')
+		client_version = ''
+	else:
+		client_platform = ''
+		client_version = ''
 
 	html = HTML.ElementFromURL(url, headers=HTTP_DESKTOP_UA, cacheTime=CACHE_1WEEK)
+	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
+
+	if len(player_id) < 0:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+
+	# Roku plays HLS just fine, but flips on the M4V files from UZG.
+	# If we don't have an HLS, raise a 'MediaNotAvailable' exception.
+	if client_platform == 'Roku':
+		try:
+			json_obj = JSON.ObjectFromURL(IDEVICE_API % player_id[0], cacheTime=CACHE_1HOUR)
+
+			if 'video' not in json_obj or json_obj['video'] is None or 'm3u8' not in json_obj['video']:
+				raise
+		except:
+			Log(' --> m3u8 stream not available for: %s' % title)
+			raise Ex.MediaNotAvailable
+
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 	if summary.startswith('Geen omschrijving'): summary = None
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
@@ -52,8 +75,11 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
 
-	if '#' in url:
+	if '#' in url and ';' in url:
 		(url, client_platform, client_version) = url.replace(';', '#').split('#')
+	elif '#' in url:
+		(url, client_platform) = url.split('#')
+		client_version = ''
 	else:
 		client_platform = ''
 		client_version = ''
@@ -64,21 +90,24 @@ def MediaObjectsForURL(url):
 	if len(player_id) < 0:
 		raise Ex.MediaNotAvailable
 
-	hls_url = None
-
 	try:
-		json_obj = JSON.ObjectFromURL(IDEVICE_API % player_id[0])
+		json_obj = JSON.ObjectFromURL(IDEVICE_API % player_id[0], cacheTime=CACHE_1HOUR)
 
 		if 'video' in json_obj and json_obj['video'] is not None and 'm3u8' in json_obj['video']:
 			hls_url = json_obj['video']['m3u8']
+		else:
+			hls_url = None
 	except:
-		# Roku plays the HLS just fine, but flips on the M4V files from UZG. If we don't have an HLS, stop here.
-		if client_platform == 'Roku':
-			raise Ex.MediaNotAvailable
+		hls_url = None
+
+	# Roku plays HLS just fine, but flips on the M4V files from UZG.
+	# If we don't have an HLS, raise a 'MediaNotAvailable' exception.
+	if client_platform == 'Roku' and hls_url is None:
+		hls_url = ''
 
 	# Plex 0.9.5/Laika doesn't handle adaptive HLS very well (it just picks and plays the first stream from
 	# the playlist, which is the lowest quality version).
-	if (client_platform in ('MacOSX', 'Windows') and client_version.startswith('0.9.5')) or not hls_url:
+	if (client_platform in ('MacOSX', 'Windows') and client_version.startswith('0.9.5')) or hls_url is None:
 		return [
 			MediaObject(
 				parts = [
@@ -107,6 +136,9 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url):
+
+	if not url:
+		raise Ex.MediaNotAvailable
 
 	if url.endswith('.m3u8'):
 		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
