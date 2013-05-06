@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://([a-z]{2}\.)?screen\.yahoo\.com/.+\-\d{9,}\.html</string>
+				<string>^http://((br|ca|de|es(\-us)?|fr|in|it|mx|uk)\.)?screen\.yahoo\.com/.+\-\d{9,}\.html</string>
 				<string>^http://movies\.yahoo\.com/(movie|video)/.+</string>
 			</array>
 			<key>TestURLs</key>

@@ -23,7 +23,7 @@ def NormalizeURL(url):
 		else:
 			url = FindVideoURL(url, video='Theatrical Trailer')
 
-	return url
+	return unicode(url)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
