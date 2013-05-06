@@ -1,0 +1,79 @@
+# All the videos on the lstudio site are located in http://videos.lstudio.com 
+# And all video information is available in xml files in the xml/video-page/ folder
+
+base_url = 'http://www.lstudio.com'
+RE_XML_URL = Regex("/xml/video(.+?)',")
+
+####################################################################################################
+# This pulls the metadata that is used for Plexit, suggested videos (to friends), the pre-play screen on iOS, Roku, Android and Plex/Web, 
+# as well as if you get the "info" or "details" within the OSX/Windows/Linux desktop client.
+
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+
+	# Extract the details available directly from the page.
+	# The basics for this website are available in the header of each video page, 
+	title = page.xpath('//title//text()')[0]
+	description = page.xpath('//meta[@name="description"]//@content')[0]
+	thumb = page.xpath('//meta[@name="THUMBNAIL_URL"]//@content')[0]
+	
+	
+	# Returning the metadata we extracted as a video clip object.  
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = thumb,
+	)
+
+####################################################################################################
+# Defining the different types of videos available at lstudio.com and the values for their quality
+def MediaObjectsForURL(url):
+
+# There appears to be a high (720p) and low quality (360p) version for each video as well as a f4v and mp4 format
+# Found the name and location of the videos through the page source of the video pages in the html-5player javascript  
+# Pulled the location of a few of the videos in VLC to find the attributes for the different types of videos
+# There is only one part to the videos, so the parts only needs one PartObject
+
+	return [
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '360',
+			audio_channels = 2,
+			container = 'mp4',
+			parts = [PartObject(key=Callback(PlayVideo, url = url, fmt='hi'))]
+		),
+		MediaObject(
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '360',
+			audio_channels = 2,
+			container = 'mp4',
+			parts = [PartObject(key=Callback(PlayVideo, url = url, fmt='lo'))]
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url, fmt=''):
+
+    content = HTTP.Request(url).content
+    xmlurl = RE_XML_URL.search(content).group(0)
+    xmlurl = xmlurl.replace("'", '')
+    xmlurl = base_url + xmlurl
+           
+    xml = XML.ElementFromURL(xmlurl)
+    if xml:
+    # Here we are extracting the video file addresses from the xml video file metadata
+        videoHi = xml.xpath('//video/videoHi//text()')[0]
+        videoLo = xml.xpath('//video/videoLo')[0].text
+								
+        videoHi = videoHi.replace('.f4v', '.mp4')
+        videoLo = videoLo.replace('.f4v', '.mp4')
+
+    if fmt == 'hi':
+        video = videoHi
+    else:
+        video = videoLo
+            
+    return Redirect(video)
