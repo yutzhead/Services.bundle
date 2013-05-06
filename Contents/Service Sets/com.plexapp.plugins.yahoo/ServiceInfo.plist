@@ -4,16 +4,18 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Yahoo Movies</key>
+		<key>Yahoo</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://movies.yahoo.com/movie/battleship-2012/trailers/battleship-theatrical-trailer-27565489.html</string>
-				<string>http://movies.yahoo.com/movie/resident-evil-retribution/</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
+				<string>^http://([a-z]{2}\.)?screen\.yahoo\.com/.+\.html</string>
 				<string>^http://movies\.yahoo\.com/(movie|video)/.+</string>
+			</array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://screen.yahoo.com/curious-cat-licks-vacuum-111005084.html</string>
+				<string>http://movies.yahoo.com/movie/battleship-2012/trailers/battleship-theatrical-trailer-27565489.html</string>
+				<string>http://movies.yahoo.com/movie/resident-evil-retribution/</string>
 			</array>
 		</dict>
 	</dict>
