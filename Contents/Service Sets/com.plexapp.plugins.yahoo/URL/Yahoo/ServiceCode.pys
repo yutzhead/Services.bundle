@@ -6,6 +6,7 @@ BITRATES = [4000, 3000, 2000, 1500, 1000]
 RE_VIDEO_ID = Regex('\-(\d{9,})\.html')
 RE_JSON = Regex('YAHOO.Media.CarouselDataManager\(({.+?}), Y\.merge')
 RE_CONTENT_ID = Regex('CONTENT_ID = "([^"]+)"')
+RE_UUID = Regex('[a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12}')
 
 HTTP.CacheTime = CACHE_1DAY
 
@@ -17,7 +18,10 @@ def NormalizeURL(url):
 	if 'movies.yahoo.com/movie' in url:
 		if '#' in url:
 			(url, video) = url.split('#', 1)
-			url = FindVideoURL(url, video)
+			if RE_UUID.match(video):
+				url = GetJSON(url, content_id=video)['meta']['url']
+			else:
+				url = FindVideoURL(url, video)
 		elif RE_VIDEO_ID.search(url):
 			url = 'http://movies.yahoo.com/video/%s' % url.split('/')[-1]
 		else:
@@ -97,10 +101,14 @@ def PlayVideo(url, bitrate):
 	raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def GetJSON(url):
+def GetJSON(url, content_id=None):
 
-	data = HTTP.Request(url).content
-	content_id = RE_CONTENT_ID.search(data)
+	if not content_id:
+		try:
+			data = HTTP.Request(url).content
+			content_id = RE_CONTENT_ID.search(data).group(1)
+		except:
+			raise Ex.MediaNotAvailable
 
 	if content_id:
 		if url.split('/')[2].split('.')[0] in ('screen', 'movies'):
@@ -108,7 +116,7 @@ def GetJSON(url):
 		else:
 			region = url.split('/')[2].split('.')[0].upper()
 
-		json = JSON.ObjectFromURL(JSON_URL % String.Quote(QUERY % (content_id.group(1), region), usePlus=False))
+		json = JSON.ObjectFromURL(JSON_URL % String.Quote(QUERY % (content_id, region), usePlus=False))
 	else:
 		raise Ex.MediaNotAvailable
 
