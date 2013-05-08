@@ -99,7 +99,7 @@ def PlayVideo(url, bitrate=None):
 	json_obj = JSON.ObjectFromURL(json_url)
 
 	for video in json_obj['video']['videoReferences']:
-		if video['playerType'] == 'ios':
+		if 'playerType' in video and video['playerType'] == 'ios':
 			video_url = video['url']
 			break
 
