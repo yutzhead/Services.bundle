@@ -73,10 +73,7 @@ def MediaObjectsForURL(url):
 			parts = [
 				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
 			],
-			container = 'mpegts',
-			video_codec = VideoCodec.H264,
 			video_resolution = '480',
-			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
