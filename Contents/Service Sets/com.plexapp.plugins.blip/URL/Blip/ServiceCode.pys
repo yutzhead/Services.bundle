@@ -14,6 +14,11 @@ def NormalizeURL(url):
 		post_id = url.split('/rss/flash/')[-1].split('&')[0]
 		url = 'http://blip.tv/posts/%s' % post_id
 
+	url = url.split('?')[0]
+
+	if url.endswith('.x'):
+		url = url.split('.x')[0]
+
 	return String.StripDiacritics(url)
 
 ####################################################################################################
