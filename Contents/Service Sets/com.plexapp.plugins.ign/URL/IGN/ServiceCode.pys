@@ -12,8 +12,6 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	video_page_url = VideoPageURL(url)
-	if not video_page_url:
-		return None
 
 	data = HTML.ElementFromURL(video_page_url)
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
@@ -102,7 +100,10 @@ def MediaObjectsForURL(url):
 def VideoPageURL(url):
 
 	# Try to find the 'real' video page url
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
 
 	# See if we can find the url in the flashvars (xpath)
 	flashvars = HTML.ElementFromString(page).xpath('//param[@name="flashvars"]')
@@ -130,8 +131,6 @@ def VideoPageURL(url):
 def PlayVideo(url, bitrate):
 
 	video_page_url = VideoPageURL(url)
-	if not video_page_url:
-		return None
 
 	data = JSON.ObjectFromURL(CONFIG_URL % (video_page_url, String.Quote(video_page_url, usePlus=False)))
 	media_url = data['playlist']['media']['url']
