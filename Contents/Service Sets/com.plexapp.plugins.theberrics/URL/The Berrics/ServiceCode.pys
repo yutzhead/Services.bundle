@@ -6,6 +6,12 @@ def MetadataObjectForURL(url):
 
 	page = HTML.ElementFromURL(url)
 
+	# Extract the configuration of the player, to determine the id of the associated content
+	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')
+
+	if len(id) < 1:
+		raise Ex.MediaNotAvailable
+
 	# Get a description from the main page.
 	description = page.xpath("//div[@class='text-item']/text()")
 	if len(description) < 1:
@@ -13,11 +19,8 @@ def MetadataObjectForURL(url):
 	else:
 		summary = description[0].strip()
 
-	# Extract the configuration of the player, to determine the id of the associated content
-	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')[0]
-
 	# Obtain the details associated with the video.
-	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
+	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id[0])
 	title = details['name']
 	thumb = PHOTO_URL % details['file_video_still']
 	date = Datetime.ParseDate(details['created'])
@@ -48,9 +51,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	page = HTML.ElementFromURL(url)
-	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')[0]
+	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')
+
+	if len(id) < 1:
+		raise Ex.MediaNotAvailable
 
 	# Obtain the details associated with the video and return a redirect to the actual video.
-	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
+	details = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id[0])
 
 	return IndirectResponse(VideoClipObject, key=details['brightcove_url'])
