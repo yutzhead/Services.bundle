@@ -18,6 +18,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://www.svtplay.se/(?!kanaler|sok).+</string>
+				<string>^http://www.oppetarkiv.se/.+</string>
 			</array>
 		</dict>
 	</dict>
