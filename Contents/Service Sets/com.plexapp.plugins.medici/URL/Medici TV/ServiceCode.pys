@@ -6,20 +6,25 @@ MediaObject.audio_codec   = 'aac'
 
 ####################################################################################################
 def NormalizeURL(url):
+
   return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
   data = GetJSON(url)
   title = data['nom']
   summary = String.StripTags(data['infos']['subtitle'])
+
   try:
     for chapter in data['chapters']:
       if chapter['description']:
         summary += '\n' + chapter['description']
   except:
     pass
+
   thumb = data['url_thumbnail']
+
   return VideoClipObject(
     title=title,
     summary=summary,
@@ -48,7 +53,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res='3'):
 
   data = GetJSON(url)
-  
+
   video_url = data['url_daily'][res].replace('&rtmp=1','')
 
   return Redirect(video_url)
@@ -62,18 +67,22 @@ def GetJSON(url):
   page = url.split('/#!')[1]
   post_data = {'json':'true','page':page}
   content = HTTP.Request(BASE_URL, headers=headers, values=post_data).content
-  
+
   details = JSON.ObjectFromString(content)
 
   return details['video']['videos']['video1']
 
 ####################################################################################################
 def TestURLs():
+
   test_urls = []
   data = HTML.ElementForURL('http://www.medici.tv/#!/new')
+
   for link in data.xpath('//div[@id="header_live_box"]//a'):
     if "/#!/live/" not in link.get('href'):
       test_urls.append(link.get('href'))
+
     if len(test_urls) > 2:
       break
-  return
+
+  return test_urls
