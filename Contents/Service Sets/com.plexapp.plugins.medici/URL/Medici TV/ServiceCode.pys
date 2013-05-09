@@ -1,0 +1,79 @@
+BASE_URL = 'http://www.medici.tv'
+
+MediaObject.container     = 'mp4'
+MediaObject.video_codec   = 'h264'
+MediaObject.audio_codec   = 'aac'
+
+####################################################################################################
+def NormalizeURL(url):
+  return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  data = GetJSON(url)
+  title = data['nom']
+  summary = String.StripTags(data['infos']['subtitle'])
+  try:
+    for chapter in data['chapters']:
+      if chapter['description']:
+        summary += '\n' + chapter['description']
+  except:
+    pass
+  thumb = data['url_thumbnail']
+  return VideoClipObject(
+    title=title,
+    summary=summary,
+    thumb=thumb
+  )
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+  return [
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res='3'))],
+      video_resolution = '720'
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res='2'))],
+      video_resolution = '480'
+    ),
+    MediaObject(
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res='1'))],
+      video_resolution = '288'
+    )
+  ]
+
+####################################################################################################
+def PlayVideo(url, res='3'):
+
+  data = GetJSON(url)
+  
+  video_url = data['url_daily'][res].replace('&rtmp=1','')
+
+  return Redirect(video_url)
+
+####################################################################################################
+def GetJSON(url):
+
+  data = HTML.ElementFromURL(url)
+  CSRFToken = data.xpath('//input[@name="csrfmiddlewaretoken"]')[0].get('value')
+  headers = {'X-CSRFToken':CSRFToken}
+  page = url.split('/#!')[1]
+  post_data = {'json':'true','page':page}
+  content = HTTP.Request(BASE_URL, headers=headers, values=post_data).content
+  
+  details = JSON.ObjectFromString(content)
+
+  return details['video']['videos']['video1']
+
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementForURL('http://www.medici.tv/#!/new')
+  for link in data.xpath('//div[@id="header_live_box"]//a'):
+    if "/#!/live/" not in link.get('href'):
+      test_urls.append(link.get('href'))
+    if len(test_urls) > 2:
+      break
+  return
