@@ -76,11 +76,11 @@ def GetJSON(url):
 def TestURLs():
 
   test_urls = []
-  data = HTML.ElementForURL('http://www.medici.tv/#!/new')
+  data = HTML.ElementFromURL('http://www.medici.tv/#!/new')
 
-  for link in data.xpath('//div[@id="header_live_box"]//a'):
-    if "/#!/live/" not in link.get('href'):
-      test_urls.append(link.get('href'))
+  for url in data.xpath('//div[@id="header_live_box"]//a/@href'):
+    if "/#!/live/" not in url and url.startswith('http://') and url not in test_urls:
+      test_urls.append(url)
 
     if len(test_urls) > 2:
       break
