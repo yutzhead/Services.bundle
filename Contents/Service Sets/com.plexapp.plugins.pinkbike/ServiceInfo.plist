@@ -6,19 +6,11 @@
 	<dict>
 		<key>pinkbike</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.tou.tv/decouverte/S2011E28</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.tou.tv/.+</string>
+				<string>^http://www.pinkbike.com/.*(V|v)ideo.+</string>
 			</array>
 		</dict>
 	</dict>
-	<key>PlexFrameworkFlags</key>
-	<array>
-		<string>UseRealRTMP</string>
-	</array>
 </dict>
 </plist>
