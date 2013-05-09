@@ -51,8 +51,12 @@ def PlayVideo(url):
 	page_content = HTTP.Request(url).content
 
 	# Find the 'flashvars' associated with the player. This contains the required config path.
-	config_url = RE_FLASHVARS.search(page_content).group('url')
-	config_url = String.Unquote(config_url, usePlus=True)
+	config_url = RE_FLASHVARS.search(page_content)
+
+	if not config_url:
+		raise Ex.MediaNotAvailable
+
+	config_url = String.Unquote(config_url.group('url'), usePlus=True)
 
 	# We can use the config path to actually get a JSON page which contains the actual MP4 path to the associated video.
 	json_page = HTTP.Request('http://surf-proxy.de/index.php?q=%s' % String.Quote(config_url, usePlus=True)).content
