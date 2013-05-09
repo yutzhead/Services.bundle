@@ -7,14 +7,14 @@ def MetadataObjectForURL(url):
     page_content = HTTP.Request(url).content
     page = HTML.ElementFromString(page_content)
 
-    title = page.xpath("//meta[@property = 'og:title']")[0].get('content')
+    title = page.xpath("//meta[@property='og:title']")[0].get('content')
     title = title.replace('- video', '')
-    summary = page.xpath("//meta[@property = 'og:description']")[0].get('content')
-    tags = page.xpath("//meta[@name = 'keywords']")[0].get('content').split(',')
+    summary = page.xpath("//meta[@property='og:description']")[0].get('content')
+    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
 
     date = None
     try:
-        page.xpath("//meta[@property = 'article:published_time']")[0].get('content')
+        page.xpath("//meta[@property='article:published_time']")[0].get('content')
         date = Datetime.ParseDate(date)
     except: pass
 
@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
     try:
         thumb = RE_THUMB.search(page_content).group('thumb')
     except:
-        thumb = page.xpath("//meta[@property = 'og:image']")[0].get('content')
+        thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
     thumb = thumb.replace('https://', 'http://')
 
     return VideoClipObject(
@@ -44,17 +44,21 @@ def MediaObjectsForURL(url):
             audio_codec = AudioCodec.AAC,
             container = Container.MP4,
             video_resolution = "360",
-            parts = [PartObject(key=Callback(PlayVideo, url = url))]
+            parts = [PartObject(key=Callback(PlayVideo, url=url))]
         )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
     page_content = HTTP.Request(url).content
 
     # Find the src url
-    video_url = RE_VIDEO.search(page_content).group('url')
-    video_url = video_url.replace('https://', 'http://')
+    video_url = RE_VIDEO.search(page_content)
 
-    return Redirect(video_url)
+    if video_url:
+        video_url = video_url.group('url').replace('https://', 'http://')
+        return IndirectResponse(VideoClipObject, key=video_url)
+
+    raise Ex.MediaNotAvailable
