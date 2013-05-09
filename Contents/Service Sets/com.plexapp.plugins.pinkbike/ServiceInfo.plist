@@ -4,11 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>pinkbike</key>
+		<key>Pinkbike</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.pinkbike.com/.*(V|v)ideo.+</string>
+				<string>^http://www.pinkbike.com/(V|v)ideo/\d+</string>
 			</array>
 		</dict>
 	</dict>
