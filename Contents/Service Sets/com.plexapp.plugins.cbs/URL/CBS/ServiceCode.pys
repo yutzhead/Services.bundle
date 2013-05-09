@@ -30,20 +30,27 @@ def MetadataObjectForURL(url):
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].replace('_140x80.jpg', '_640x360.jpg')
 
-	air_date = html.xpath('//div[@class="airdate"]/text()')[0].replace('Air Date: ', '')
-	originally_available_at = Datetime.ParseDate(air_date).date()
+	try:
+		air_date = html.xpath('//div[@class="airdate"]/text()')[0].replace('Air Date: ', '')
+		originally_available_at = Datetime.ParseDate(air_date).date()
+	except:
+		originally_available_at = None
 
 	if xml.xpath('//a:switch[1]//a:param[@name="EpisodeFlag"]/@value', namespaces=SMIL_NS)[0] == 'true':
 		show = xml.xpath('//a:switch[1]//a:param[@name="SeriesTitle"]/@value', namespaces=SMIL_NS)[0]
 		title = title.split(' - ', 1)[-1]
 
-		season = xml.xpath('//a:switch[1]//a:param[@name="SeasonNumber"]/@value', namespaces=SMIL_NS)[0]
-		episode = xml.xpath('//a:switch[1]//a:param[@name="EpisodeNumber"]/@value', namespaces=SMIL_NS)[0]
+		try:
+			season = xml.xpath('//a:switch[1]//a:param[@name="SeasonNumber"]/@value', namespaces=SMIL_NS)[0]
+			episode = xml.xpath('//a:switch[1]//a:param[@name="EpisodeNumber"]/@value', namespaces=SMIL_NS)[0]
+		except:
+			season = None
+			episode = None
 
 		return EpisodeObject(
 			show = show,
-			season = int(season) if season != '' else None,
-			index = int(episode) if episode != '' else None,
+			season = int(season) if season else None,
+			index = int(episode) if episode else None,
 			title = title,
 			summary = summary,
 			duration = int(duration),
