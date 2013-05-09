@@ -1,9 +1,10 @@
 JQUERY_URL = "http://qi.ckm.onetapi.pl/?callback=jQuery18301313681446481496_1367943744470&body[id]=8A67BFDA247710F7E270D11E23E37B3C&body[jsonrpc]=2.0&body[method]=get_asset_detail&body[params][ID_Publikacji]=%s&body[params][Service]=ofsajd.onet.pl&content-type=application/jsonp&x-onet-app=player.front.onetapi.pl&_=1367943746388"
 IMAGE_BASE = "http://m.ocdn.eu/_m/"
 
-MediaObject.video_codec = 'h264'
-MediaObject.audio_codec = 'aac'
-MediaObject.container   = 'mp4'
+MediaObject.video_codec 	= 'h264'
+MediaObject.audio_codec 	= 'aac'
+MediaObject.container   	= 'mp4'
+AudioStreamObject.language_code = Locale.Language.Polish
 
 def NormalizeURL(url):
     return url
@@ -13,7 +14,7 @@ def MetadataObjectForURL(url):
     title = data['meta']['title']
     summary = data['meta']['description']
     thumb = IMAGE_BASE + data['meta']['image'].replace('.jpg',',8,1.jpg')
-    duration = int(data['playlist']['length'])*1000
+    duration = int(data['playlist'][0]['length'])*1000
     return VideoClipObject(
         title=title,
         summary=summary,
@@ -41,19 +42,19 @@ def PlayVideo(url, bitrate=1500):
     data = GetDetails(url)
     available_bitrates = []
     for video in data['formats']['wideo']['mp4']:
-        available_bitrates.append(video['video_bitrate']
+	available_bitrates.append(video['video_bitrate'].split('.')[0])
     if len(available_bitrates) < 1:
-		raise Ex.MediaNotAvailable
+	raise Ex.MediaNotAvailable
     closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
     index = available_bitrates.index(closest)
     video_url = data['formats']['wideo']['mp4'][index]['url']
     return Redirect(video_url)
 
 def GetDetails(url):
-    data = HTML.ObjectFromURL(url)
+    data = HTML.ElementFromURL(url)
     video_id = data.xpath('//div[@class="mvp"]')[0].get('id').split(':')[1]
     content = HTTP.Request(JQUERY_URL % video_id).content
-    json_data = JSON.ObjectFromString(content.lsplit('(',1)[1].rsplit(')',1)[0])
+    json_data = JSON.ObjectFromString(content.split('(',1)[1].rstrip(');'))
     if 'result' in json_data:
         return json_data['result']['0']
     else:
@@ -61,7 +62,7 @@ def GetDetails(url):
         
 def TestURLs():
     test_urls = []
-    data = HTML.ELementFromURL('http://www.onet.pl/')
+    data = HTML.ElementFromURL('http://www.onet.pl/')
     for video in data.xpath('//a[span/@class="icon videoIcon Small"]'):
         test_urls.append(video.get('href'))
         if len(test_urls) > 2:
