@@ -49,8 +49,8 @@ def MetadataObjectForURL(url):
 
 		return EpisodeObject(
 			show = show,
-			season = int(season) if season else None,
-			index = int(episode) if episode else None,
+			season = int(season) if season and season.isdigit() else None,
+			index = int(episode) if episode and episode.isdigit() else None,
 			title = title,
 			summary = summary,
 			duration = int(duration),
