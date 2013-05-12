@@ -8,16 +8,17 @@ JSON_VIDEO_URL = "http://video.nationalgeographic.com/video/player/data/mp4/json
 M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s,180,0.mp4.csmil/master.m3u8?__b__=300'
 
 HTTP_IPAD_UA = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
+
 ####################################################################################################
 def MetadataObjectForURL(url):
   data = HTML.ElementFromURL(url, cacheTime=7200)
-  
+
   if len(url.split('/full-episodes/')) > 1:
     full_episode = True
     show_title = (url.split('/full-episodes/')[1].split('/')[0].replace('-', ' ')).title()
   else:
     full_episode = False
-  
+
   title = data.xpath('//title')[0].text
 
   if ' -- ' in title:
@@ -28,30 +29,28 @@ def MetadataObjectForURL(url):
   thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
   description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
   keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
-  
+
   if full_episode:
     # Construct a metadata item
-    eo = EpisodeObject(
+    return EpisodeObject(
       title = title,
       show = show_title,
       summary = description,
       thumb = thumbUrl,
       #tags = keywords
-      )
-    return eo
+    )
   else:
     # Construct a metadata item
-    vc = VideoClipObject(
+    return VideoClipObject(
       title = title,
       summary = description,
       thumb = thumbUrl,
       tags = keywords
-      )
-    return vc
-  
+    )
+
 ####################################################################################################
 def MediaObjectsForURL(url):
-  
+
   return [
     MediaObject(
       parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
@@ -62,13 +61,8 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
   video_id = RE_VIDEO_ID.search(url).group(1)
-  try:
-    content = HTTP.Request(url, headers = HTTP_IPAD_UA, follow_redirects=False).content
-  except Ex.RedirectError, e:
-    breadcrumbs = url.split('#BREADCRUMBS=')[1]
-    url = 'http://video.nationalgeographic.com' + breadcrumbs
-    content = HTTP.Request(url, headers = HTTP_IPAD_UA, follow_redirects=True).content
-  
+  content = HTTP.Request(url, headers=HTTP_IPAD_UA).content
+
   try:
     m3u8_url = RE_HTML5_URL.search(content).group(1)
   except:
@@ -79,10 +73,10 @@ def PlayVideo(url):
       m3u8_url = M3U8_URL % akamai_id
     else:
       m3u8_url = data.xpath('//video[@id="ngs_player"]/source[@type="video/mp4"]')[0].get('src')
-  
+
   if not m3u8_url:
     m3u8_url = IPAD_URL % video_id
-  
+
   if not m3u8_url.startswith('http://'):
     m3u8_url = 'http://video.nationalgeographic.com' + m3u8_url
     playlist = HTTP.Request(m3u8_url, follow_redirects=False).content
@@ -101,7 +95,7 @@ def PlayVideo(url):
     sorted_streams = sorted(streams, key=lambda stream: stream['size'], reverse=True)
     for stream in sorted_streams:
       new_playlist += '\n' + stream['stream']
-    
+
     return new_playlist
   else:
     try:
@@ -110,7 +104,7 @@ def PlayVideo(url):
       if 'Location' in e.headers:
         m3u8_url = e.headers['Location']
         playlist = HTTP.Request(m3u8_url).content
-  
+
     playlist_base = m3u8_url.split('master.m3u8')[0]
     new_playlist = '#EXTM3U'
     streams = {}
@@ -122,10 +116,10 @@ def PlayVideo(url):
         line = playlist_base + line
         stream_index = int(RE_INDEX.search(line).group(1))
         streams[stream_index] = previous_line + '\n' + line  
-    
+
     i = 0
     while i < len(streams):
       new_playlist = new_playlist + '\n' + streams[i]
       i += 1
-  
+
     return new_playlist
