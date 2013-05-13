@@ -99,20 +99,25 @@ def PlayVideo(url, res=720):
 		title = xml.xpath('//headline')[0].text.strip().lower()
 		title = String.StripDiacritics(title)
 		title = RE_CLEANUP.sub('', title).strip()
+
 		json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
 
 		if 'entry' in json_obj['feed']:
-			yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
-			media = URLService.MediaObjectsForURL(yt_url)
+			yt_title = json_obj['feed']['entry'][0]['title']['$t'].strip().lower()
+			yt_title = String.StripDiacritics(yt_title)
+			yt_title = RE_CLEANUP.sub('', yt_title).strip()
 
-			for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
-				for video in media:
-					if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
-						continue
+			if yt_title.startswith(title):
+				yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
+				media = URLService.MediaObjectsForURL(yt_url)
 
-					if str(video.video_resolution) == str(VIDEO_RES[i]):
-						#return Redirect(video.parts[0].key)
-						return IndirectResponse(VideoClipObject, key=video.parts[0].key)
+				for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
+					for video in media:
+						if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
+							continue
+
+						if str(video.video_resolution) == str(VIDEO_RES[i]):
+							return Redirect(video.parts[0].key)
 
 		try:
 			video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
