@@ -11,10 +11,10 @@
 				<string>^http://www.aetv.com(/.+?)/video/.+</string>
 			</array>
 		</dict>
+	</dict>
 	<key>PlexFrameworkFlags</key>
 	<array>
 		<string>UseRealRTMP</string>
 	</array>
-	</dict>
 </dict>
 </plist>
