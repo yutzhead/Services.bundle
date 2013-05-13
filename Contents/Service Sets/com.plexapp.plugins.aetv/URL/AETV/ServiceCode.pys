@@ -1,0 +1,149 @@
+import binascii, hmac
+import sha as sha1
+
+RE_PLAYLIST = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
+RE_VIDEO_ID = Regex('-([0-9]+)(?!-)')
+RE_BASE = Regex('meta base="(rtmp.+)"')
+
+SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
+
+MediaObject.container = Container.MP4
+MediaObject.video_codec = VideoCodec.H264
+MediaObject.audio_codec = AudioCodec.AAC
+AudioStreamObject.language_code = Locale.Language.English
+
+RESOLUTIONS = ["540","432","404","360"]
+####################################################################################################
+def TestURLs():
+  test_urls = []
+  data = HTML.ElementFromURL('http://www.aetv.com/videos/display.jsp')
+  for video in data.xpath('//div[@class="video-frame"]'):
+    url = video.xpath('//a')[0].get(href)
+    if url.startswith('http'):
+      test_urls.append(url)
+    if len(test_urls) > 2:
+      break
+  return test_urls
+
+####################################################################################################
+def MetadataObjectForURL(url):
+  video = GetJSON(url)
+  releaseURL = video['videoURLs']['releaseURL'] + '&format=script'
+  data = JSON.ObjectFromURL(releaseURL)
+  thumb = data['defaultThumbnailUrl']
+  summary = data['description']
+  duration = data['duration']
+  date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
+  content_rating = data['ratings'][0]['rating']
+  title = data['title']
+  if data['AETN$mrssLengthType'] == "Episode":
+    show = data['AANDE$seriesName']
+    index = int(data['AETN$episode'])
+    return EpisodeObject(
+      title=title,
+      show=show,
+      summary=summary,
+      absolute_index=index,
+      duration = duration,
+      originally_available_at=date,
+      content_rating=content_rating,
+      thumb=thumb
+    )
+  else:
+    return VideoClipObject(
+      title=title,
+      summary=summary,
+      duration = duration,
+      originally_available_at=date,
+      content_rating=content_rating,
+      thumb=thumb)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+  media_objects = []
+  if 'pfilter=CLIPS#' in url:
+    for res in RESOLUTIONS:
+      media_objects.append(
+        MediaObject(
+          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+          video_resolution = res,
+          protocol = 'rtmp'
+        )
+      )
+  else:
+    for res in RESOLUTIONS:
+      media_objects.append(
+        MediaObject(
+          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+          video_resolution = res,
+          container = Container.MP4
+        )
+      )
+  return media_objects
+
+####################################################################################################
+@indirect
+def PlayVideo(url, res):
+  video = GetJSON(url)
+  smil_url = video['videoURLs']['releaseURL']
+  smil_url = smil_url.replace('switch=hds', 'format=SMIL')
+  sig = sign_url(smil_url)
+  smil_url += '&sig='+sig
+  Log(HTTP.Request(smil_url).content)
+  smil = XML.ElementFromURL(smil_url)
+  index = RESOLUTIONS.index(res)
+  video_url = None
+  if smil.xpath('//a:ref', namespaces=SMIL_NS)[0].get('title') == "Geographic Restriction":
+    raise Ex.MediaGeoblocked
+  while index < len(RESOLUTIONS):
+    for video in smil.xpath("//a:video", namespaces=SMIL_NS):
+      if video.get('height') == RESOLUTIONS[index]:
+        video_url = video.get('src')
+        break
+    index += 1
+  if not video_url:
+    raise Ex.MediaNotAvailable
+  if video_url.startswith('http://'):
+    return IndirectResponse(VideoClipObject, key=video_url)
+  elif video_url.startswith('MP4:') or video_url.startswith('mp4:'):
+    smil_string = HTTP.Request(smil_url).content
+    rtmp_base = RE_BASE.search(smil_string).group(1)
+    rtmp_clip = video_url
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_base, clip=rtmp_clip))
+
+####################################################################################################
+
+def GetJSON(url):
+  videoId = RE_VIDEO_ID.search(url).group(1)
+  content = HTTP.Request(url).content.decode('utf8','replace')
+  playlist = RE_PLAYLIST.search(content).group(1)
+  playlist = "{'entries':[" + playlist.strip().replace('\n', '') + "]}"
+  playlist_json = JSON.ObjectFromString(playlist)
+  for video in playlist_json['entries']:
+    if int(video['mpxid']) == int(videoId):
+      return video
+    else:
+      pass
+    
+  raise Ex.MediaNotAvailable
+
+####################################################################################################
+def sign_url(url):
+  hmac_key = 'crazyjava'
+  SEC_HEX = '733363723374' #'s3cr3t'
+  expiration = get_expiration()
+  path = url.split('http://link.theplatform.com/s/')[1].split('?')[0]
+  sign_data = binascii.unhexlify('00'+expiration+binascii.hexlify(path).lower())
+  sig = hmac.new(hmac_key, sign_data, sha1)
+  sigHEX = sig.hexdigest()
+  signature = '00' + expiration + sigHEX + SEC_HEX
+  return signature
+
+####################################################################################################
+def get_expiration(auth_length = 600):
+  current_time = Datetime.TimestampFromDatetime(Datetime.Now())+auth_length
+  expiration = ('%0.2X' % current_time).lower()
+  return expiration
+
+
+
