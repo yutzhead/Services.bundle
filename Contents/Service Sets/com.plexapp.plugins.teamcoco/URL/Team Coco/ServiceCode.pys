@@ -2,6 +2,7 @@ VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
 YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
 RE_CLEANUP = Regex('[^-a-z0-9 ]')
+RE_BANDWIDTH = Regex('BANDWIDTH=(\d+)')
 FULL_EP_RES = [480]
 VIDEO_RES = [1080, 720, 480, 360]
 
@@ -46,7 +47,7 @@ def MediaObjectsForURL(url):
 			media_objects.append(
 				MediaObject(
 					parts = [
-						PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res=res)))
+						PartObject(key=HTTPLiveStreamURL(Callback(PlayEpisode, url=url, res=res)))
 					],
 					video_resolution = str(res),
 					audio_channels = 2,
@@ -72,6 +73,54 @@ def MediaObjectsForURL(url):
 	return media_objects
 
 ####################################################################################################
+def PlayEpisode(url, res):
+
+	video_id = GetVideoId(url)
+
+	if not video_id:
+		Log.Exception("Could not retrieve video_id in PlayVideo function")
+		raise Ex.MediaExpired
+
+	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
+
+	if len(xml.xpath('//files/file')) < 1:
+		raise Ex.MediaNotAvailable
+
+	src = xml.xpath('//files/file[@bitrate="ipad"]/text()')[0]
+	m3u8_url = 'http://ht.cdn.turner.com/tbs/big/teamcoco/%s' % src.lstrip('/')
+	base_url = m3u8_url.rsplit('/',1)[0]
+	playlist = HTTP.Request(m3u8_url).content
+	new_playlist = '#EXTM3U'
+	streams = []
+	bandwidth = None
+
+	for line in playlist.splitlines(False)[1:]:
+		if line.startswith('#'):
+			bandwidth = RE_BANDWIDTH.search(line)
+			previous_line = line
+			continue
+		elif len(line) < 1:
+			continue
+		else:
+			if not bandwidth:
+				continue
+			if not line.startswith('http://'):
+				line = '%s/%s' % (base_url, line)
+
+			streams.append({
+				'bandwidth': int(bandwidth.group(1)),
+				'stream': '%s\n%s' % (previous_line, line)
+			})
+
+	sorted_streams = sorted(streams, key=lambda stream: stream['bandwidth'])
+
+	# Throw away the audio-only stream
+	for stream in sorted_streams[1:]:
+		new_playlist += '\n%s' % stream['stream']
+
+	return new_playlist
+
+####################################################################################################
 @indirect
 def PlayVideo(url, res=720):
 
@@ -86,48 +135,41 @@ def PlayVideo(url, res=720):
 	if len(xml.xpath('//files/file')) < 1:
 		raise Ex.MediaNotAvailable
 
-	if 'full-episode' in url:
-		src = xml.xpath('//files/file[@bitrate="ipad"]/text()')[0]
-		url = 'http://ht.cdn.turner.com/tbs/big/teamcoco/%s' % src.lstrip('/')
+	if res not in VIDEO_RES:
+		res = VIDEO_RES[-1]
 
-		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
+	title = xml.xpath('//headline')[0].text.strip().lower()
+	title = String.StripDiacritics(title)
+	title = RE_CLEANUP.sub('', title).strip()
 
-	else:
-		if res not in VIDEO_RES:
-			res = VIDEO_RES[-1]
+	json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
 
-		title = xml.xpath('//headline')[0].text.strip().lower()
-		title = String.StripDiacritics(title)
-		title = RE_CLEANUP.sub('', title).strip()
+	if 'entry' in json_obj['feed']:
+		yt_title = json_obj['feed']['entry'][0]['title']['$t'].strip().lower()
+		yt_title = String.StripDiacritics(yt_title)
+		yt_title = RE_CLEANUP.sub('', yt_title).strip()
 
-		json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
+		if yt_title.startswith(title):
+			yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
+			media = URLService.MediaObjectsForURL(yt_url)
 
-		if 'entry' in json_obj['feed']:
-			yt_title = json_obj['feed']['entry'][0]['title']['$t'].strip().lower()
-			yt_title = String.StripDiacritics(yt_title)
-			yt_title = RE_CLEANUP.sub('', yt_title).strip()
+			for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
+				for video in media:
+					if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
+						continue
 
-			if yt_title.startswith(title):
-				yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
-				media = URLService.MediaObjectsForURL(yt_url)
+					if str(video.video_resolution) == str(VIDEO_RES[i]):
+						return Redirect(video.parts[0].key)
 
-				for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
-					for video in media:
-						if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
-							continue
-
-						if str(video.video_resolution) == str(VIDEO_RES[i]):
-							return Redirect(video.parts[0].key)
-
+	try:
+		video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
+	except:
 		try:
-			video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
+			video_url = xml.xpath('//file[@type="standard"]')[0].text
 		except:
-			try:
-				video_url = xml.xpath('//file[@type="standard"]')[0].text
-			except:
-				raise Ex.MediaNotAvailable
+			raise Ex.MediaNotAvailable
 
-		return IndirectResponse(VideoClipObject, key=video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetVideoId(url):
