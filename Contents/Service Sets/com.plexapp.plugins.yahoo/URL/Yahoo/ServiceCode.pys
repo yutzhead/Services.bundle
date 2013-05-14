@@ -8,8 +8,6 @@ RE_JSON = Regex('YAHOO.Media.CarouselDataManager\(({.+?}), Y\.merge')
 RE_CONTENT_ID = Regex('CONTENT_ID = "([^"]+)"')
 RE_UUID = Regex('[a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12}')
 
-HTTP.CacheTime = CACHE_1DAY
-
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -105,7 +103,7 @@ def GetJSON(url, content_id=None):
 
 	if not content_id:
 		try:
-			data = HTTP.Request(url, cacheTime=CACHE_1DAY).content
+			data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
 			content_id = RE_CONTENT_ID.search(data).group(1)
 		except:
 			raise Ex.MediaNotAvailable
@@ -136,7 +134,7 @@ def FindVideoURL(url, video):
 	else:
 		url = '%s/' % url
 
-	data = HTTP.Request(url, cacheTime=CACHE_1DAY).content
+	data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
 	json = RE_JSON.search(data)
 
 	if not json:
