@@ -80,9 +80,12 @@ def GetDetails(url):
     data = HTML.ElementFromURL(url)
     vid_id = data.xpath('//div[@class="player rtbfPlayer rtbfVideo autostart"]')[0].get('rel')
 
-  details = JSON.ObjectFromURL(API_URL + vid_id)['data']
+  json_obj = JSON.ObjectFromURL(API_URL + vid_id)
 
-  return details
+  if 'data' in json_obj and json_obj['data'] is not None:
+    return json_obj['data']
+
+  raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
