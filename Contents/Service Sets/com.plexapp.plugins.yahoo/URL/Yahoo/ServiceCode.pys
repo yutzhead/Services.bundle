@@ -105,7 +105,7 @@ def GetJSON(url, content_id=None):
 
 	if not content_id:
 		try:
-			data = HTTP.Request(url).content
+			data = HTTP.Request(url, cacheTime=CACHE_1DAY).content
 			content_id = RE_CONTENT_ID.search(data).group(1)
 		except:
 			raise Ex.MediaNotAvailable
@@ -116,7 +116,7 @@ def GetJSON(url, content_id=None):
 		else:
 			region = url.split('/')[2].split('.')[0].upper()
 
-		json = JSON.ObjectFromURL(JSON_URL % String.Quote(QUERY % (content_id, region), usePlus=False))
+		json = JSON.ObjectFromURL(JSON_URL % String.Quote(QUERY % (content_id, region), usePlus=False), cacheTime=0)
 	else:
 		raise Ex.MediaNotAvailable
 
@@ -136,7 +136,7 @@ def FindVideoURL(url, video):
 	else:
 		url = '%s/' % url
 
-	data = HTTP.Request(url).content
+	data = HTTP.Request(url, cacheTime=CACHE_1DAY).content
 	json = RE_JSON.search(data)
 
 	if not json:
