@@ -4,7 +4,7 @@ import hmac
 CLIP_DATA = 'http://api.justin.tv/api/clip/show/%s.json'
 STREAM_DATA = 'http://api.justin.tv/api/stream/list.json?channel=%s'
 TOKEN_URL = 'http://usher.justin.tv/stream/iphone_token/%s.json?type=iphone'
-M3U8_URL = 'http://usher.twitch.tv/stream/multi_playlist/%s.m3u8?token=%s&hd=true'
+M3U8_URL = 'http://usher.justin.tv/stream/multi_playlist/%s.m3u8?token=%s&hd=true'
 YEK = 'evhmL62Ss9jY57dW'[::-1]
 
 ####################################################################################################
@@ -17,25 +17,20 @@ def MetadataObjectForURL(url):
 
 	if '/b/' in url:
 		video_id = url.split('/')[-1]
-		video = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
+		json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
 
-		if len(video) < 1:
-			raise Ex.MediaNotAvailable
-		else:
-			video = video[0]
-
-		try: originally_available_at = Datetime.ParseDate(video['created_on'])
+		try: originally_available_at = Datetime.ParseDate(json_obj['created_on'])
 		except: originally_available_at = None
 
 		thumbs = []
-		for size in ['image_url_huge', 'image_url_large', 'image_url_medium']:
-			if size in video:
-				thumbs.append(video[size])
+		for size in ['image_url_large', 'image_url_medium']:
+			if size in json_obj:
+				thumbs.append(json_obj[size])
 
 		return VideoClipObject(
-			title = video['title'],
+			title = json_obj['title'],
 			originally_available_at = originally_available_at,
-			duration = int(video['length']) * 1000,
+			duration = int(json_obj['length']) * 1000,
 			thumb = Resource.ContentsOfURLWithFallback(thumbs)
 		)
 
@@ -49,7 +44,7 @@ def MetadataObjectForURL(url):
 			video = video[0]
 
 		thumbs = []
-		for size in ['screen_cap_url_huge', 'screen_cap_url_large', 'screen_cap_url_medium']:
+		for size in ['screen_cap_url_large', 'screen_cap_url_medium']:
 			if size in video['channel']:
 				thumbs.append(video['channel'][size])
 
@@ -107,14 +102,9 @@ def PlayVideo(url):
 
 	if '/b/' in url:
 		video_id = url.split('/')[-1]
-		video = JSON.ObjectFromURL(CLIP_DATA % video_id)
+		json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id)
 
-		if len(video) < 1:
-			raise Ex.MediaNotAvailable
-		else:
-			video = video[0]
-
-		return IndirectResponse(VideoClipObject, key=video['video_file_url'])
+		return IndirectResponse(VideoClipObject, key=json_obj['video_file_url'])
 
 	elif len(url.split('/')) == 4:
 		user_id = url.split('/')[-1]
@@ -138,7 +128,7 @@ def GetToken(user_id, attempt=0):
 		raise Ex.LiveMediaNotStarted
 
 	try:
-		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0, sleep=3.0)
+		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)
 		token = token[0]['token']
 		hash = hmac.new(YEK, token, sha1).hexdigest()
 		full_token = String.Quote('%s:%s' % (hash, token))
