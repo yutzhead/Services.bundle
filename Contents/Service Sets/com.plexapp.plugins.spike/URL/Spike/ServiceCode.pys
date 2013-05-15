@@ -183,7 +183,10 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	guids = mrss_data.xpath('//guid')
-	
+
+	if len(guids) < 1:
+		raise Ex.MediaNotAvailable
+
 	if index >= len(guids):
 		ad_index = len(guids) - index
 		ad_segment_uri = mrss_data.xpath('//guid')[ad_index].text
