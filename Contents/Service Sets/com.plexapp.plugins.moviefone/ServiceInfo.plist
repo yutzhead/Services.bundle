@@ -13,8 +13,8 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.moviefone.com/movie/safe-house/52486/main</string>
-				<string>http://www.moviefone.com/movie/men-in-black-3/10037625/main?icid=mfm_poster</string>
-				<string>http://www.moviefone.com/movie/rock-of-ages/1423458/main?icid=mfm_poster</string>
+				<string>http://www.moviefone.com/movie/men-in-black-3/10037625/main</string>
+				<string>http://www.moviefone.com/movie/rock-of-ages/1423458/main</string>
 			</array>
 		</dict>
 	</dict>
