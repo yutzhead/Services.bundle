@@ -8,7 +8,10 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://watchabc.go.com/[^/]+/SH\d+/VDKA\d_[^/]+/.+</string>
+				<!-- This is the old regex, but we keep it for now since ABC didn't update their URLs in some locations (yet..., probably) -->
+				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://abc(news)?.go.com/watch/[^/]+/SH\d+/VDKA\d_[^/]+/.+</string>
+				<!-- The new ABC video site/subdomain -->
+				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://watchabc.go.com/[^/]+/SH\d+/VDKA\d_[^/]+/.+</string><!-- mew -->
 				<!--
 				Excluded Shows:
 				559036:   ABC News Specials
