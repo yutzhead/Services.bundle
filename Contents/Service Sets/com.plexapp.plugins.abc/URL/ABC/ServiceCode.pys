@@ -4,7 +4,10 @@ RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0].replace(' ', '%20')
+	url = url.split('?')[0].replace(' ', '%20')
+	url = url.replace('http://abc.go.com/watch/', 'http://watchabc.go.com/')
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
