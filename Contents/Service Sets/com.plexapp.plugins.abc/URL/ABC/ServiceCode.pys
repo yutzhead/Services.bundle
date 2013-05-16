@@ -7,6 +7,9 @@ def NormalizeURL(url):
 	url = url.split('?')[0].replace(' ', '%20')
 	url = url.replace('http://abc.go.com/watch/', 'http://watchabc.go.com/')
 
+	if 'this-week' in url:
+		url = url.replace('http://watchabc.go.com/', 'http://abcnews.go.com/watch/')
+
 	return url
 
 ####################################################################################################
@@ -16,7 +19,7 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
-	episode_title = data.xpath('//div[@class="video_title"]/text()')
+	episode_title = data.xpath('//div[@class="video_title"]/text()|//h2[@id="video_title"]/text()')
 
 	if len(episode_title) < 1:
 		raise Ex.MediaExpired
@@ -32,9 +35,12 @@ def MetadataObjectForURL(url):
 		season = None
 		index = None
 
-	duration = data.xpath('//span[contains(@class, "video_duration")]/text()')[0]
-	duration_parts = duration.split(':')
-	duration = ((int(duration_parts[0])*60) + int(duration_parts[1]))*1000
+	try:
+		duration = data.xpath('//span[contains(@class, "video_duration")]/text()')[0]
+		duration_parts = duration.split(':')
+		duration = ((int(duration_parts[0])*60) + int(duration_parts[1]))*1000
+	except:
+		duration = None
 
 	try:
 		airdate = data.xpath('//span[contains(@class, "airdate")]/text()')[0].split(' ')[-1]
@@ -42,7 +48,11 @@ def MetadataObjectForURL(url):
 	except:
 		airdate = None
 
-	rating = data.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
+	try:
+		rating = data.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
+	except:
+		rating = None
+
 	thumb_url = data.xpath('//meta[@property="og:image"]/@content')[0]
 
 	return EpisodeObject(
