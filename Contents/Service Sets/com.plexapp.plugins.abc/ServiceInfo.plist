@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://abc(news)?.go.com/watch/[^/]+/SH\d+/VDKA\d_[^/]+/.+</string>
+				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://watchabc.go.com/[^/]+/SH\d+/VDKA\d_[^/]+/.+</string>
 				<!--
 				Excluded Shows:
 				559036:   ABC News Specials
