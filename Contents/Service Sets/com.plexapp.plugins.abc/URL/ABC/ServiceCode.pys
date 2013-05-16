@@ -33,6 +33,12 @@ def MetadataObjectForURL(url):
 	duration_parts = duration.split(':')
 	duration = ((int(duration_parts[0])*60) + int(duration_parts[1]))*1000
 
+	try:
+		airdate = data.xpath('//span[contains(@class, "airdate")]/text()')[0].split(' ')[-1]
+		airdate = Datetime.ParseDate(airdate).date()
+	except:
+		airdate = None
+
 	rating = data.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
 	thumb_url = data.xpath('//meta[@property="og:image"]/@content')[0]
 
@@ -43,6 +49,7 @@ def MetadataObjectForURL(url):
 		season = int(season) if season else None,
 		index = int(index) if index else None,
 		content_rating = rating,
+		originally_available_at = airdate,
 		summary = summary,
 		thumb = thumb_url
 	)
