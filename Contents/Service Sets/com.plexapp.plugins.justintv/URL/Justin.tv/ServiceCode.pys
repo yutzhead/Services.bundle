@@ -1,11 +1,15 @@
 from hashlib import sha1
 import hmac
+from time import sleep
 
 CLIP_DATA = 'http://api.justin.tv/api/clip/show/%s.json'
 STREAM_DATA = 'http://api.justin.tv/api/stream/list.json?channel=%s'
-TOKEN_URL = 'http://usher.justin.tv/stream/iphone_token/%s.json?type=iphone'
-M3U8_URL = 'http://usher.justin.tv/stream/multi_playlist/%s.m3u8?token=%s&hd=true'
-YEK = 'evhmL62Ss9jY57dW'[::-1]
+
+HLS_TOKEN_URL = 'http://usher.justin.tv/stream/iphone_token/%s.json?type=iphone&connection=wifi'
+HLS_TRANSCODE_REQUEST = 'http://usher.justin.tv/stream/transcode_iphone.json'
+HLS_PLAYLIST_URL = 'http://usher.justin.tv/stream/multi_playlist/%s.m3u8?token=%s&hd=true'
+
+YEK_NEKOT = 'evhmL62Ss9jY57dW'[::-1]
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -108,33 +112,34 @@ def PlayVideo(url):
 
 	elif len(url.split('/')) == 4:
 		user_id = url.split('/')[-1]
+		token = GetToken(user_id)
+		video_url = HLS_PLAYLIST_URL % (user_id, token)
+		Log(' --> Final video_url: %s' % video_url)
 
-		try:
-			token = GetToken(user_id)
-			video_url = M3U8_URL % (user_id, token)
-			Log(' --> Final video_url: %s' % video_url)
-
-			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
-		except:
-			raise Ex.LiveMediaNotStarted
+		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
 
 	else:
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def GetToken(user_id, attempt=0):
+def GetToken(user_id):
 
-	if attempt > 2:
-		raise Ex.LiveMediaNotStarted
+	post_data = {'channel': user_id, 'type': 'iphone'}
+	try: transcode_request = HTTP.Request(HLS_TRANSCODE_REQUEST, values=post_data, sleep=1.0).content
+	except: pass
 
 	try:
-		token = JSON.ObjectFromURL(TOKEN_URL % user_id, cacheTime=0)
-		token = token[0]['token']
-		hash = hmac.new(YEK, token, sha1).hexdigest()
+		json_obj = JSON.ObjectFromURL(HLS_TOKEN_URL % user_id, cacheTime=0)
+		token = json_obj[0]['token']
+		sleep_time = int(json_obj[0]['sleep_time']) + 1
+		Log("Stream will be ready in %d seconds" % sleep_time)
+		sleep(sleep_time)
+
+		hash = hmac.new(YEK_NEKOT, token, sha1).hexdigest()
 		full_token = String.Quote('%s:%s' % (hash, token))
 		return full_token
 	except:
-		return GetToken(user_id=user_id, attempt=attempt+1)
+		raise Ex.LiveMediaNotStarted
 
 ####################################################################################################
 def TestURLs():
