@@ -36,22 +36,42 @@ def MediaObjectsForURL(url):
 	media_objects = []
 	json_obj = GetJSON(url)
 
-	for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']:
-		resolution = rendition['frameHeight']
-		url = rendition['defaultURL']
+	if 'renditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']) > 0:
 
-		if resolution < 360 or not url.endswith('.mp4'):
-			continue
+		for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']:
+			resolution = rendition['frameHeight']
+			url = rendition['defaultURL']
 
-		bitrate = int(float(rendition['encodingRate'])/1000)
-		width = rendition['frameWidth']
+			if resolution < 360 or not url.endswith('.mp4'):
+				continue
+
+			bitrate = int(float(rendition['encodingRate'])/1000)
+			width = rendition['frameWidth']
+
+			media_objects.append(
+				MediaObject(
+					parts = [PartObject(key=url)],
+					container = Container.MP4,
+					video_codec = VideoCodec.H264,
+					video_resolution = str(resolution),
+					audio_codec = AudioCodec.AAC,
+					audio_channels = 2,
+					bitrate = bitrate,
+					optimized_for_streaming = True
+				)
+			)
+
+	if len(media_objects) < 1 and 'FLVFullLengthURL' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']:
+
+		url = json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
+		bitrate = int(float(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['encodingRate'])/1000)
 
 		media_objects.append(
 			MediaObject(
 				parts = [PartObject(key=url)],
 				container = Container.MP4,
 				video_codec = VideoCodec.H264,
-				video_resolution = str(resolution),
+				video_resolution = 'sd',
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				bitrate = bitrate,
