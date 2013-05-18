@@ -1,53 +1,35 @@
-import re
+def NormalizeURL(url):
 
-VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
+	return url.split('?')[0]
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    # Attempt to extract the details of the title from the page.
-    page = HTML.ElementFromURL(url)
+	# Attempt to extract the details of the title from the page.
+	page = HTML.ElementFromURL(url)
 
-    # The page only currently contains the title and a brief description
-    title = page.xpath("//h1/a[@class='active']/text()")[0]
-    description = page.xpath("//div[@class='stv-primary']/div[@class='inner-container']/p/text()")[0]
-    thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-    
-    date = None
-    try: date = Datetime.ParseDate(page.xpath("//div[@class='video-player']/..//p[@class='meta']/text()")[0])
-    except: pass
+	# The page only currently contains the title and a brief description
+	title = page.xpath('//h1/a[@class="active"]/text()')[0]
+	description = page.xpath('//div[@class="stv-primary"]/div[@class="inner-container"]/p/text()')[0]
+	thumb = page.xpath('//meta[@property="og:image"]/@content')[0]
 
-    return VideoClipObject(
-        title = title,
-        summary = description,
-        thumb = thumb,
-        originally_available_at = date
-    )
+	try: date = Datetime.ParseDate(page.xpath('//div[@class="video-player"]/..//p[@class="meta"]/text()')[0])
+	except: date = None
+
+	return VideoClipObject(
+		title = title,
+		summary = description,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		originally_available_at = date
+	)
 
 ####################################################################################################
-
+@deferred
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))],
-        audio_channels = 2
-      )
-    ]
 
-####################################################################################################
+	html = HTML.ElementFromURL(url)
+	player_key = html.xpath('//param[@name="playerKey"]/@value')
+	video_player = html.xpath('//param[@name="@videoPlayer"]/@value')
 
-def PlayVideo(url):
-    content = HTTP.Request(url).content
-    playerId = re.search('param name="playerID" value="([0-9]+)"', content).group(1)
-    videoId = re.search('param name="@videoPlayer"  value="([0-9]+)"', content).group(1)
-
-    video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (playerId, videoId)).content
-    experience = re.search('var experienceJSON = (.+)};', video_details_page).group(1) + '}'
-    details = JSON.ObjectFromString(experience)
-
-    video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
-    return Redirect(video_url)
+	if len(player_key) > 0 and len(video_player) > 0:
+		return URLService.MediaObjectsForURL('http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key[0], video_player[0]))
