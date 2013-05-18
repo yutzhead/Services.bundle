@@ -8,12 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://en.video.canoe.tv/#1252116208001</string>
-				<string>http://en.video.canoe.tv/#1251445009001</string>
+				<string>http://en.video.canoe.tv/video/featured/featured-videos/1906868830/virtual-reality-too-real-for-this-guy/2366105694001</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://.+\.video\.canoe\.tv/.+</string>
+				<string>^http://(en|fr)\.video\.canoe\.tv/video/[^/]+/[^/]+/\d+/[^/]+/\d+</string>
 			</array>
 		</dict>
 	</dict>
