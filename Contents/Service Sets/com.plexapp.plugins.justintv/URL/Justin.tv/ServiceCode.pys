@@ -132,7 +132,7 @@ def GetToken(user_id):
 		json_obj = JSON.ObjectFromURL(HLS_TOKEN_URL % user_id, cacheTime=0)
 		token = json_obj[0]['token']
 		sleep_time = int(json_obj[0]['sleep_time']) + 1
-		Log("Stream will be ready in %d seconds" % sleep_time)
+		Log(" --> Stream will be ready in %d seconds" % sleep_time)
 		sleep(sleep_time)
 
 		hash = hmac.new(YEK_NEKOT, token, sha1).hexdigest()
