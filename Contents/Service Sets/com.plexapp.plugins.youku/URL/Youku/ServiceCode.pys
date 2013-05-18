@@ -52,7 +52,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-	page = HTTP.Request(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY).content
+	try:
+		page = HTTP.Request(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY).content
+	except:
+		raise Ex.MediaExpired
+
 	video_id = RE_VIDEO_ID_HTML.search(page)
 
 	if not video_id:
