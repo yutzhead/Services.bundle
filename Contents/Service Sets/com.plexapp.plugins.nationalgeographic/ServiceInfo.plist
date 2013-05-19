@@ -28,12 +28,12 @@
 				<string>^http://photography.nationalgeographic.com/photography/</string>
 			</array>
 		</dict>
-        <key>NationalGeographicCanada</key>
+        <key>National Geographic Canada</key>
     	<dict>
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://natgeotv.com/ca/.+?/videos/.+</string>
-                <string>^http://natgeotv.com/ca//webisodes/web-shows/.+</string
+				<string>^http://natgeotv.com/ca/webisodes/web-shows/.+</string
 			</array>
 		</dict>
 	</dict>
