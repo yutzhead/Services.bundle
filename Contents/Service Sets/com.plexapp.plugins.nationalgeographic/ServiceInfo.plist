@@ -28,6 +28,14 @@
 				<string>^http://photography.nationalgeographic.com/photography/</string>
 			</array>
 		</dict>
+        <key>NationalGeographicCanada</key>
+    	<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>^http://natgeotv.com/ca/.+?/videos/.+</string>
+                <string>^http://natgeotv.com/ca//webisodes/web-shows/.+</string
+			</array>
+		</dict>
 	</dict>
 </dict>
 </plist>
