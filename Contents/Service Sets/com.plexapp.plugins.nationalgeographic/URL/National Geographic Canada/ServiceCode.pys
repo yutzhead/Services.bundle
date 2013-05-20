@@ -19,7 +19,7 @@ def MetadataObjectForURL(url):
 	summary = details['description']
 	thumb = details['defaultThumbnailUrl']
 	duration = details['duration']
-	date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
+	date = Datetime.FromTimestamp(float(details['pubDate'])/1000).date()
 
 	return VideoClipObject(
 		title = title,
@@ -41,10 +41,10 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url):
 
-	data = XML.ElementFromURL(PlatformURL(url).replace('format=smil', 'format=SMIL'))
+	data = XML.ElementFromURL(PlatformURL(url))
 
 	try:
-		mp4_url = data.xpath('//a:video',namespace=SMIL_NS)[0].get('src')
+		mp4_url = data.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
 		return Redirect(mp4_url)
 	except:
 		raise Ex.MediaNotAvailable
@@ -55,7 +55,7 @@ def PlatformURL(url):
 	data = HTML.ElementFromURL(url)
 
 	try:
-		platform_url = data.xpath('//div[@class="tpPlayer"])[0].get('tp:releaseUrl')
+		platform_url = data.xpath('//div[@class="tpPlayer"]/@*[name()="tp:releaseurl"]')[0]
 		return platform_url
 	except:
 		raise Ex.MediaNotAvailable
