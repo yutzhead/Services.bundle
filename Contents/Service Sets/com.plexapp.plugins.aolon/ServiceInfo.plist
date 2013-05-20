@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<dict>
+		<key>AOL On</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<!-- AOL On site -->
+				<string>^http://on.aol.com/video/(\d+)</string>
+				<string>^http://on.aol.com/video/.+\-(\d{9,})</string>
+				<string>^http://on.aol.com/playlist/.+videoid=(\d+)</string>
+				<!-- Embeds in other websites -->
+				<string>^http://cfiles.5min.com/.+videoID=(\d+)</string>
+				<string>^https?://s?pshared.5min.com/.+playList=(\d+)</string>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
