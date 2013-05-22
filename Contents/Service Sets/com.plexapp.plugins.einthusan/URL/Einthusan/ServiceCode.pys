@@ -58,6 +58,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
+	# Blu-ray quality movies require login, which we can't handle from the bookmarklet.
+	if 'bluray=true' in url:
+		raise Ex.MediaNotAvailable
+
 	content = HTTP.Request(url).content
 	video_files = RE_FILE_URL.findall(content)
 
