@@ -1,7 +1,7 @@
 VIDEO_URL = 'http://on.aol.com/video/%s'
 JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&playlist=%s&url=http'
 
-RE_VIDEO_ID = Regex('(videoid|playlist)=(?P<video_id>\d+)', Regex.IGNORECASE)
+RE_VIDEO_ID = Regex('(videoid=|playlist=|/episode/)(?P<video_id>\d+)', Regex.IGNORECASE)
 RE_VIDEO_URL = Regex('videoUrl=(?P<video_url>[^&]+)')
 
 MediaObject.container = Container.MP4
@@ -15,22 +15,24 @@ HTTP.CacheTime = CACHE_1WEEK
 ####################################################################################################
 def NormalizeURL(url):
 
-	video_id = None
+	if 'videoid=' in url:
+		video_id = RE_VIDEO_ID.search(url).group('video_id')
+		return VIDEO_URL % video_id
 
-	if 'on.aol.com/video/' in url and len(url.split('-')) > 1:
+	elif 'on.aol.com/video/' in url and len(url.split('-')) > 1:
 		url = url.split('?')[0]
 		video_id = url.split('-')[-1]
-	elif 'on.aol.com/playlist/' in url and not 'videoid=' in url:
+		return VIDEO_URL % video_id
+
+	elif 'on.aol.com/playlist/' in url:
 		html = HTML.ElementFromURL(url)
 		embed_url = html.xpath('//meta[@property="og:video"]/@content')[0]
 		video_id = embed_url.split('/')[-1].split('&')[0]
+		return VIDEO_URL % video_id
+
 	elif not 'on.aol.com/video/' in url:
 		video_id = RE_VIDEO_ID.search(url).group('video_id')
-
-	if video_id:
 		return VIDEO_URL % video_id
-	else:
-		return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -40,12 +42,17 @@ def MetadataObjectForURL(url):
 
 	if 'success' in json_obj and json_obj['success']:
 		json_obj = json_obj['binding'][0]
+	elif 'errorMessage' in json_obj:
+		if json_obj['errorMessage'] == 'ErrorVideoUserNotGeo':
+			raise Ex.MediaGeoblocked
 	else:
 		raise Ex.MediaNotAvailable
 
 	title = json_obj['Title']
-	thumb = '%s_c_o.jpg' % json_obj['ThumbURL'].rsplit('_c', 1)[0]
 	duration = Datetime.MillisecondsFromString(json_obj['Duration'])
+
+	thumb = json_obj['ThumbURL']
+	thumb_orig = thumb.replace('.jpg', '_o.jpg')
 
 	html = HTML.ElementFromURL(url)
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
@@ -60,7 +67,7 @@ def MetadataObjectForURL(url):
 		title = title,
 		summary = summary,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+		thumb = Resource.ContentsOfURLWithFallback([thumb_orig, thumb]),
 		originally_available_at = date
 	)
 
