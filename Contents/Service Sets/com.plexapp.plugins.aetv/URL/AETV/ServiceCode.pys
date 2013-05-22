@@ -67,26 +67,28 @@ def MediaObjectsForURL(url):
 
   media_objects = []
 
-  if 'pfilter=CLIPS#' in url:
-    for res in RESOLUTIONS:
-      media_objects.append(
-        MediaObject(
-          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
-          video_resolution = res,
-          protocol = 'rtmp'
-        )
+#   we can't guarantee any kind of codec options due to a lot of legacy content
+#   but let's leave this around for later (if they ever finish their cleanup)
+#   if 'pfilter=CLIPS#' in url:
+  for res in RESOLUTIONS:
+    media_objects.append(
+      MediaObject(
+        parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+        video_resolution = res,
+        protocol = 'rtmp'
       )
-  else:
-    for res in RESOLUTIONS:
-      media_objects.append(
-        MediaObject(
-          parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
-          container = Container.MP4,
-          video_codec = VideoCodec.H264,
-          video_resolution = res,
-          audio_codec = AudioCodec.AAC
-        )
-      )
+    )
+#   else:
+#     for res in RESOLUTIONS:
+#       media_objects.append(
+#         MediaObject(
+#           parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
+#           container = Container.MP4,
+#           video_codec = VideoCodec.H264,
+#           video_resolution = res,
+#           audio_codec = AudioCodec.AAC
+#         )
+#       )
 
   return media_objects
 
@@ -114,11 +116,22 @@ def PlayVideo(url, res):
         break
     index += 1
 
+  # try falling back to the default //video/@src if we have one
+  # (like for older style flv based videos)
+  if not video_url:
+    video_url=smil.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
+  
+  # now if we still don't have a video_url bail
   if not video_url:
     raise Ex.MediaNotAvailable
 
   if video_url.startswith('http://'):
     return IndirectResponse(VideoClipObject, key=video_url)
+  elif video_url.startswith('flv:'):
+    smil_string = HTTP.Request(smil_url).content
+    rtmp_base = RE_BASE.search(smil_string).group(1)
+    rtmp_clip = video_url.replace("flv:","").replace(".flv?","?")
+    return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_base, clip=rtmp_clip))
   elif video_url.startswith('MP4:') or video_url.startswith('mp4:'):
     smil_string = HTTP.Request(smil_url).content
     rtmp_base = RE_BASE.search(smil_string).group(1)
