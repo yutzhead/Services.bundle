@@ -9,7 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(.+?)\.onet\.pl/.+</string>
-                <string>^http://vod\.pl/.+</string>
+				<string>^http://vod\.pl/.+</string>
 			</array>
 		</dict>
 	</dict>
