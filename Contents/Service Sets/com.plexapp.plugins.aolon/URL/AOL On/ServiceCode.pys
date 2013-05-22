@@ -37,16 +37,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	video_id = url.split('/')[-1]
-	json_obj = JSON.ObjectFromURL(JSON_DATA_URL % (video_id))
-
-	if 'success' in json_obj and json_obj['success']:
-		json_obj = json_obj['binding'][0]
-	elif 'errorMessage' in json_obj:
-		if json_obj['errorMessage'] == 'ErrorVideoUserNotGeo':
-			raise Ex.MediaGeoblocked
-	else:
-		raise Ex.MediaNotAvailable
+	json_obj = GetJSON(url)
 
 	title = json_obj['Title']
 	duration = Datetime.MillisecondsFromString(json_obj['Duration'])
@@ -97,13 +88,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, rendition_id=8):
 
-	video_id = url.split('/')[-1]
-	json_obj = JSON.ObjectFromURL(JSON_DATA_URL % (video_id))
-
-	if 'success' in json_obj and json_obj['success']:
-		json_obj = json_obj['binding'][0]
-	else:
-		raise Ex.MediaNotAvailable
+	json_obj = GetJSON(url)
 
 	embed_url = json_obj['EmbededURL']
 	video_url = String.Unquote(RE_VIDEO_URL.search(embed_url).group('video_url'))
@@ -121,3 +106,19 @@ def PlayVideo(url, rendition_id=8):
 		index = index + 1
 
 	raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetJSON(url):
+
+	video_id = url.split('/')[-1]
+	json_obj = JSON.ObjectFromURL(JSON_DATA_URL % (video_id))
+
+	if 'success' in json_obj and json_obj['success']:
+		return json_obj['binding'][0]
+	elif 'errorMessage' in json_obj:
+		if json_obj['errorMessage'] == 'ErrorVideoUserNotGeo':
+			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
+	else:
+		raise Ex.MediaNotAvailable
