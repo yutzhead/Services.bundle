@@ -71,6 +71,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
 	video_id = RE_VIDEO_ID.search(url)
@@ -79,7 +80,7 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id.group('id'), headers=HTTP_HEADERS, cacheTime=0)
-	return Redirect(json_obj['tokenizedURL'])
+	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(json_obj['tokenizedURL']))
 
 ####################################################################################################
 def TestURLs():
