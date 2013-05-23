@@ -1,4 +1,5 @@
 BASE_URL = 'http://www.svtplay.se'
+BASE_OA_URL = 'http://www.oppetarkiv.se'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -41,11 +42,20 @@ def MetadataObjectForURL(url):
 	except:
 		air_date = None
 
+	# Airdate for Öppet Arkiv
+	if air_date == None:
+		try:
+			air_date = page.xpath("//span[@class='svt-video-meta']//time/@datetime")[0].split('T')[0]
+			air_date = Datetime.ParseDate(air_date).date()
+		except:
+			air_date = None
+
 	try:
-		duration = page.xpath('//div[@class="playVideoInfo"]//span/strong[contains(text(), "ngd:")]/following-sibling::text()')[0].strip().split(' ')[0]
-		duration = int(duration) * 60 * 1000 #millisecs
+		duration = page.xpath("//a[@id='player']/@data-length")
+		duration = int(duration[0]) * 1000
 	except:
 		duration = None
+		pass
 
 	if show:
 		return EpisodeObject(
@@ -92,7 +102,11 @@ def PlayVideo(url, bitrate=None):
 	if len(json_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	json_url = '%s%s?output=json' % (BASE_URL, json_url[0])
+	base_url = BASE_URL
+	if 'oppetarkiv' in url:
+		base_url = BASE_OA_URL
+
+	json_url = '%s%s?output=json' % (base_url, json_url[0])
 	json_obj = JSON.ObjectFromURL(json_url)
 
 	for video in json_obj['video']['videoReferences']:
