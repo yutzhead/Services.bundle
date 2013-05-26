@@ -3,7 +3,7 @@ HTTP_HEADERS = {
 	'Cookie': 'mir=true'
 }
 
-JSON_URL = 'http://www.videodetective.net/html5/jsonconfiguration.aspx?customerid=300120&publishedid=320257&playerid=%s&videokbrate=%d&bandwidth=%d'
+JSON_URL = 'http://www.videodetective.net/html5/jsonconfiguration.aspx?customerid=300120&publishedid=%s&playerid=%s&videokbrate=%d&bandwidth=%d'
 BITRATES = {
 	'2500':	{ 'resolution': '720' },
 	'1500':	{ 'resolution': '480' },
@@ -75,7 +75,8 @@ def PlayVideo(url, bitrate=2500):
 		raise Ex.MediaNotAvailable
 
 	player_id = video[0].split('playerid=')[-1].split('&')[0]
-	json_obj = JSON.ObjectFromURL(JSON_URL % (player_id, bitrate, bitrate))
+	published_id = video[0].split('publishedid=')[-1].split('&')[0]
+	json_obj = JSON.ObjectFromURL(JSON_URL % (published_id, player_id, bitrate, bitrate))
 
 	if not 'file' in json_obj:
 		raise Ex.MediaNotAvailable
