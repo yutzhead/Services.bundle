@@ -1,5 +1,6 @@
 RE_EPISODE_ID = Regex("var episodeId = '(.+?)'")
 RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
+RE_BANDWIDTH = Regex('BANDWIDTH=([0-9]+),')
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
@@ -148,8 +149,26 @@ def GetSMIL(url):
 def GetPlaylist(url, device):
     pID = GetPID(url)
     json = JSON.ObjectFromURL(MEDIA_URL % (device, pID))
-    playlist = json['url']
-
+    m3u8_url = json['url']
+    playlist = HTTP.Request(m3u8_url, follow_redirects=False).content
+    new_playlist = '#EXTM3U'
+    streams = []
+    for line in playlist.splitlines()[1:]:
+      line = line.strip()
+      if line.startswith('#'):
+        previous_line = line
+        continue
+      elif len(line) < 1:
+        continue
+      else:
+        bandwidth = int(RE_BANDWIDTH.search(line).group(1))
+        streams.append({'size' : bandwidth, 'stream' : previous_line + '\n' + line})
+    sorted_streams = sorted(streams, key=lambda stream: stream['size'], reverse=True)
+    for stream in sorted_streams:
+        if ',RESOLUTION=' in stream['stream']:
+            new_playlist += '\n' + stream['stream']
+        else: #discard audio-only streams
+            pass
     return playlist
 
 ####################################################################################################
