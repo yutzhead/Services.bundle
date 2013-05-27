@@ -1,8 +1,9 @@
 VIDEO_URL = 'http://on.aol.com/video/%s'
-JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&playlist=%s&url=http'
+JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&playlist=%s&sid=%s&url=http'
 
 RE_VIDEO_ID = Regex('(videoid=|playlist=|/episode/)(?P<video_id>\d+)', Regex.IGNORECASE)
 RE_VIDEO_URL = Regex('videoUrl=(?P<video_url>[^&]+)')
+RE_SID = Regex('(\?|&)sid=(?P<sid>\d+)')
 
 MediaObject.container = Container.MP4
 MediaObject.video_codec = VideoCodec.H264
@@ -110,8 +111,16 @@ def PlayVideo(url, rendition_id=8):
 ####################################################################################################
 def GetJSON(url):
 
+	page = HTTP.Request(url).content
+	sid = RE_SID.search(page)
+
+	if sid:
+		sid = sid.group('sid')
+	else:
+		sid = ''
+
 	video_id = url.split('/')[-1]
-	json_obj = JSON.ObjectFromURL(JSON_DATA_URL % (video_id))
+	json_obj = JSON.ObjectFromURL(JSON_DATA_URL % (video_id, sid))
 
 	if 'success' in json_obj and json_obj['success']:
 		return json_obj['binding'][0]
