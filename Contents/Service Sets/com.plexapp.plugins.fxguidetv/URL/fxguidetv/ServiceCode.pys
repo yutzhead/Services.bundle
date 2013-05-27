@@ -27,7 +27,7 @@ def MetadataObjectForURL(url):
 	else:
 		return TrackObject(
 			title = title,
-			thumb = thumb
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 ####################################################################################################
