@@ -8,6 +8,8 @@ HTTP_HEADERS = {
 
 RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n\d{4,})')
 
+AudioStreamObject.language_code = Locale.Language.English
+
 ####################################################################################################
 def NormalizeURL(url):
 
