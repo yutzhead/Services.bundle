@@ -51,7 +51,7 @@ def MetadataObjectForURL(url):
 		duration = None
 
 	thumb = GetThumb(url)
-	thumb_alt = THUMB_PROXY % String.Quote(thumb)
+	thumb_alt = THUMB_PROXY % String.Base64Encode(thumb)
 
 	if video['contentType'] == "Full Episodes":    
 		return EpisodeObject(
