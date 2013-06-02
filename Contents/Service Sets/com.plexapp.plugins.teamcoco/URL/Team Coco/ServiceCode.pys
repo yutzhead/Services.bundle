@@ -42,7 +42,7 @@ def MediaObjectsForURL(url):
 
 	media_objects = []
 
-	if 'full-episode' in url:
+	if '/full-episode-' in url:
 		for res in FULL_EP_RES:
 			media_objects.append(
 				MediaObject(
