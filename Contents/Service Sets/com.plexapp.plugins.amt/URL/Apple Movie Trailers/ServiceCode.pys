@@ -145,7 +145,9 @@ def FindVideoId(url):
 	else:
 		title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4' % video)
 
-		if len(title) < 1 and video != 'trailer':
+		if len(title) == 1:
+			video = title[0].xpath('./parent::a/@href')[0].split('/')[1]
+		elif len(title) < 1 and video != 'trailer':
 			raise Ex.MediaNotAvailable
 		else:
 			# Fallback to 'trailer 2', 'theatrical trailer', 'international trailer', etc.
