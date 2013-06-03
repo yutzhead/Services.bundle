@@ -1,10 +1,13 @@
-XML_HTTP_HEADERS = {'User-Agent': 'iTunes/10.7'}
-AMT_XML_NS = {'a': 'http://www.apple.com/itms/'}
+HTTP_HEADERS = {'User-Agent': 'AppleCoreMedia/1.0.0.12D78 (Macintosh; U; Intel Mac OS X 10_8_3; en_us)'}
+ALL_VIDEOS_INC = '%s/includes/automatic.html'
+VIDEO_INC = '%s/includes/%s/automatic.html'
 
-# 'Large' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
-QUALITY = ['HD 1080p', 'HD 720p', 'HD 480p', 'Large']
+# 'h640w' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
+QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
 
 RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
+
+HTTP.CacheTime = CACHE_1DAY
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -18,48 +21,38 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	xml = GetXML(url)
+	video = FindVideoId(url)
 
-	if not xml:
-		raise Ex.MediaNotAvailable
+	inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % url.split('/#')[0])
+	title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4/text()' % video)[0]
 
-	movie_title = xml.xpath('//a:Path/a:PathElement[last()]', namespaces=AMT_XML_NS)[0].get('displayName')
-	summary = xml.xpath('//a:ScrollView//comment()[contains(.,"DESCRIPTION")]/following-sibling::a:TextView[1]/a:SetFontStyle', namespaces=AMT_XML_NS)[0].text.strip()
-	duration = None
-	tracklist = xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_XML_NS)
-
-	if len(tracklist) > 0:
-		movie = tracklist[0]
-
-		subtitle = movie.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_XML_NS)[0].text.rsplit(' (', 1)[0]
-		title = movie_title + ' (' + subtitle + ')'
-
-		duration = movie.xpath('./a:key[text()="duration"]/following-sibling::*[1]', namespaces=AMT_XML_NS)[0].text
-		duration = int(duration)
-	elif url.endswith('/web'):
-		subtitle = String.Unquote(url.split('#')[-1].split('/web')[0])
-		title = movie_title + ' (' + subtitle + ')'
-	else:
-		title = movie_title
-
-	# Poster
 	try:
-		thumb = xml.xpath('//a:PictureView[contains(@url, "poster.jpg") or contains(@url, "poster-large.jpg")]', namespaces=AMT_XML_NS)[0].get('url')
+		duration = inc_html.xpath('//a[contains(@href, "/%s/")]/p[contains(text(), "Runtime:")]/text()' % video)[0].split('Runtime:')[-1].strip()
+		duration = Datetime.MillisecondsFromString(duration)
 	except:
-		try:
-			thumb = xml.xpath('//a:PictureView[contains(@url, "poster") and contains(@url, ".jpg")]', namespaces=AMT_XML_NS)[0].get('url')
-		except:
-			thumb = None
+		duration = None
 
-	if thumb is not None and not thumb.startswith('http'):
-		thumb = 'http://trailers.apple.com%s' % thumb
+	try:
+		originally_available_at = inc_html.xpath('//a[contains(@href, "/%s/")]/p[contains(text(), "Posted:")]/text()' % video)[0].split('Posted:')[-1].strip()
+		originally_available_at = Datetime.ParseDate(originally_available_at).date()
+	except:
+		originally_available_at = None
 
-	# Construct a metadata item
+	amt_html = HTML.ElementFromURL(url.split('#')[0])
+
+	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content')[0].split(' - Movie Trailers')[0]
+	summary = amt_html.xpath('//meta[@property="og:description"]/@content')[0]
+
+	thumb = amt_html.xpath('//meta[@property="og:image"]/@content')[0]
+	thumb_large = thumb.replace('poster.jpg', 'poster-large.jpg')
+	thumb_xlarge = thumb.replace('poster.jpg', 'poster-xlarge.jpg')
+
 	return VideoClipObject(
-		title = title,
+		title = '%s (%s)' % (movie_title, title),
 		summary = summary,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(thumb)
+		originally_available_at = originally_available_at,
+		thumb = Resource.ContentsOfURLWithFallback([thumb_xlarge, thumb_large, thumb])
 	)
 
 ####################################################################################################
@@ -67,7 +60,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 1080p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h1080p'))],
 			video_resolution = '1080',
 			container = Container.MOV,
 			video_codec = VideoCodec.H264,
@@ -76,7 +69,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 720p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h720p'))],
 			video_resolution = '720',
 			container = Container.MOV,
 			video_codec = VideoCodec.H264,
@@ -85,7 +78,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='HD 480p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h480p'))],
 			video_resolution = '480',
 			container = Container.MOV,
 			video_codec = VideoCodec.H264,
@@ -96,87 +89,71 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def GetXML(url):
-
-	xml_url = '%s.xml' % url.replace('#', 'itsxml/')
-
-	try:
-		xml_data = HTTP.Request(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR).content.encode('latin-1').decode('utf-8')
-		return XML.ElementFromString(xml_data)
-	except:
-		try:
-			# Sometimes 'trailer' is not present, try 'trailer1'
-			xml_url = xml_url.replace('/trailer.xml', '/trailer1.xml')
-			xml_data = HTTP.Request(xml_url, headers=XML_HTTP_HEADERS, cacheTime=CACHE_1HOUR).content.encode('latin-1').decode('utf-8')
-			return XML.ElementFromString(xml_data)
-		except:
-			pass
-
-	(studio, title, video) = RE_URL_INFO.findall(url)[0]
-	if title.startswith('the'):
-		url = 'http://trailers.apple.com/trailers/%s/%s/#%s' % (studio, title[3:], video)
-		return GetXML(url)
-
-	Log('Loading XML failed!')
-	return None
-
-####################################################################################################
 @indirect
 def PlayVideo(url, fmt=None):
 
 	if fmt is None or url.split('.')[-1] in ('mov', 'm4v', 'mp4'):
 		return None
 
-	# Try to 'fix' old /web type URLs
-	if url.endswith('/web') and '#' in url:
-		(url, video) = url.split('#', 1)
-		video = String.Unquote(video.split('/')[0]).replace(' ', '').lower()
-		url = '%s#%s' % (url, video)
+	fmt = fmt.replace('HD ', 'h') # Keep backwards compatibility
+	video = FindVideoId(url)
 
-	xml = GetXML(url)
+	html = HTML.ElementFromURL(VIDEO_INC % (url.split('/#')[0], video))
+	video_url = html.xpath('//a[@class="movieLink"]/@href')
 
-	if not xml:
-		return None
-
-	video_url = None
-	available = {}
-
-	for video in xml.xpath('//a:TrackList//a:array/a:dict', namespaces=AMT_XML_NS):
-		key = video.xpath('./a:key[text()="songName"]/following-sibling::*[1]', namespaces=AMT_XML_NS)[0].text.rsplit(' (', 1)[1][:-1]
-
-		if key in QUALITY:
-			video_url = video.xpath('./a:key[text()="previewURL"]/following-sibling::*[1]', namespaces=AMT_XML_NS)[0].text
-			available[key] = video_url
+	if len(video_url) < 1:
+		raise Ex.MediaNotAvailable
+	else:
+		video_url = video_url[0].rsplit('_' ,1)[0]
 
 	# Find the requested video quality or figure out what the next best available quality is
-	start_index = QUALITY.index(fmt)
-	end_index = len(QUALITY)
+	for i in range(QUALITY.index(fmt), len(QUALITY)):
+		final_url = '%s_%s.mov' % (video_url, QUALITY[i])
 
-	for i in range(start_index, end_index):
-		key = QUALITY[i]
-		if key in available:
-			video_url = available[key]
-			break
+		try:
+			test = HTTP.Request(final_url, headers=HTTP_HEADERS).headers
+			oc = ObjectContainer(http_headers=HTTP_HEADERS)
 
-	if not video_url:
-		for i in reversed(range(0, start_index)):
-			key = QUALITY[i]
-			if key in available:
-				video_url = available[key]
-				break
+			oc.add(VideoClipObject(
+				items = [
+					MediaObject(
+						parts = [PartObject(key=final_url)]
+					)
+				]
+			))
 
-	if not video_url:
+			return oc
+
+		except:
+			continue
+
+	raise Ex.MediaNotAvailable
+
+####################################################################################################
+def FindVideoId(url):
+
+	(base_url, video) = url.split('/#')
+
+	try:
+		inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % base_url)
+	except:
 		raise Ex.MediaNotAvailable
 
-	oc = ObjectContainer()
+	# If there's only one video available, use that one
+	if len(inc_html.xpath('//a/h4')) == 1:
+		video = inc_html.xpath('//a/h4/parent::a/@href')[0].split('/')[1]
+	else:
+		title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4' % video)
 
-	oc.add(VideoClipObject(
-		items = [
-			MediaObject(
-				parts = [PartObject(key=video_url)]
-			)
-		]
-	))
+		if len(title) < 1 and video != 'trailer':
+			raise Ex.MediaNotAvailable
+		else:
+			# Fallback to 'trailer 2', 'theatrical trailer', 'international trailer', etc.
+			title = inc_html.xpath('//a[contains(@href, "trailer")]/h4')
 
-	oc.http_headers = XML_HTTP_HEADERS
-	return oc
+			if len(title) < 1:
+				raise Ex.MediaNotAvailable
+			else:
+				video = title[0].xpath('./parent::a/@href')[0].split('/')[1]
+
+	return video
