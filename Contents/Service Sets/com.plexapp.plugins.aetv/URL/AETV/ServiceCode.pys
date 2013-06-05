@@ -2,7 +2,7 @@ from hashlib import sha1
 import binascii, hmac
 
 RE_PLAYLIST = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
-RE_VIDEO_ID = Regex('-([0-9]+)(?!-)')
+RE_VIDEO_ID = Regex('\-(\d+)$')
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
@@ -33,7 +33,7 @@ def TestURLs():
 def MetadataObjectForURL(url):
 
   video = GetJSON(url)
-  releaseURL = video['videoURLs']['releaseURL'] + '&format=script'
+  releaseURL = '%s&format=script' % video['videoURLs']['releaseURL']
   data = JSON.ObjectFromURL(releaseURL)
 
   thumb = data['defaultThumbnailUrl']
@@ -48,23 +48,23 @@ def MetadataObjectForURL(url):
     index = int(data['AETN$episode'])
 
     return EpisodeObject(
-      title=title,
-      show=show,
-      summary=summary,
-      absolute_index=index,
+      title = title,
+      show = show,
+      summary = summary,
+      absolute_index = index,
       duration = duration,
-      originally_available_at=date,
-      content_rating=content_rating,
-      thumb=thumb
+      originally_available_at = date,
+      content_rating = content_rating,
+      thumb = Resource.ContentsOfURLWithFallback(thumb)
     )
   else:
     return VideoClipObject(
-      title=title,
-      summary=summary,
+      title = title,
+      summary = summary,
       duration = duration,
-      originally_available_at=date,
-      content_rating=content_rating,
-      thumb=thumb
+      originally_available_at = date,
+      content_rating = content_rating,
+      thumb = Resource.ContentsOfURLWithFallback(thumb)
     )
 
 ####################################################################################################
@@ -151,12 +151,15 @@ def GetJSON(url):
   video_id = RE_VIDEO_ID.search(url).group(1)
   content = HTTP.Request(url).content.decode('utf8','replace')
   playlist = RE_PLAYLIST.search(content).group(1)
-  playlist = "{'entries':[" + playlist.strip().replace('\n', '') + "]}"
+  playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
   playlist_json = JSON.ObjectFromString(playlist)
 
   for video in playlist_json['entries']:
     if int(video['mpxid']) == int(video_id):
-      return video
+      if video['isBehindWall'] == 'true':
+        raise Ex.MediaNotAuthorized
+      else:
+        return video
 
   raise Ex.MediaNotAvailable
 
