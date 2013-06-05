@@ -1,4 +1,3 @@
-RE_PLAYER = Regex('media.mtvnservices.com/.*?(?P<id>mgid:.+(thedailyshow|comedycentral)\.com:\d+)')
 MRSS_URL = 'http://www.thedailyshow.com/feeds/video_player/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
@@ -37,7 +36,7 @@ def MetadataObjectForURL(url):
 	elif 'video clip' in page_title.lower():
 
 		try:
-			air_date = html.xpath('//div[@class="airDate"]//a/text()')[0]
+			air_date = html.xpath('//div[@class="air_date"]//a/text()')[0]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
@@ -48,9 +47,6 @@ def MetadataObjectForURL(url):
 			thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 			originally_available_at = originally_available_at
 		)
-
-	else:
-		return None
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -177,19 +173,21 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
-	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
-	mgid = RE_PLAYER.search(content)
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	video_player_box = html.xpath('//div[@id="video_player_box"]')
 
-	if not mgid:
-		raise Ex.MediaNotAvailable
+	if len(video_player_box) < 1:
+		raise Ex.MediaExpired
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % mgid.group('id'))
+	uri = video_player_box[0].get('data-mgid')
+
+	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
 	if index < len(media_url):
 		player_url = media_url[index].get('url')
 	else:
-		# Return small 'filler' movie
+		# Return small filler movie for desktop clients
 		return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
 	try:
