@@ -1,7 +1,6 @@
 MRSS_URL = 'http://shadow.comedycentral.com/feeds/video_player/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
-RE_DATE = Regex('[0-9]{4}-[0-9]{2}-[0-9]{2}')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -36,12 +35,8 @@ def MetadataObjectForURL(url):
 
 	elif 'video clip' in page_title.lower():
 
-		full_title = html.xpath('//title')[0].text
-
 		try:
-			air_date = RE_DATE.findall(full_title)[0]
-			a = air_date.split('-')
-			air_date = '%s-%s-%s' % (a[0], a[2], a[1])
+			air_date = html.xpath('//li[@class="airDate"]/text()')[-1]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
