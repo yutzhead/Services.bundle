@@ -153,8 +153,11 @@ def PlayVideo(url):
 	html = HTML.ElementFromURL(player_url, headers=HTTP_IPAD_UA, cacheTime=0)
 	video_src = html.xpath('//video/source[contains(@src, "std")]/@src')
 
-	if len(video_src) < 0:
-		raise Ex.MediaNotAvailable
+	if len(video_src) < 1:
+		video_src = html.xpath('//video/source/@src')
+
+		if len(video_src) < 1:
+			raise Ex.MediaNotAvailable
 
 	if not video_src[0].startswith('http://'):
 		url = 'http://www.uitzendinggemist.nl/%s' % video_src[0].lstrip('/')
