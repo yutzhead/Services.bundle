@@ -1,6 +1,6 @@
 MRSS_URL = 'http://www.tvland.com/feeds/video_player/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/gsp.alias/%s'
+MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -258,8 +258,15 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
 	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
 	rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
-	stream_url = rtmp_url.split('/gsp.alias/')[1]
-	mp4_url = MP4_URL % stream_url
+
+	if '/gsp.alias/' in rtmp_url:
+		stream_url = rtmp_url.split('/gsp.alias/')[1]
+		mp4_url = MP4_URL % ('gsp.alias', stream_url)
+	elif '/gsp.tvlandcomstor/' in rtmp_url:
+		stream_url = rtmp_url.split('/gsp.tvlandcomstor/')[1]
+		mp4_url = MP4_URL % ('gsp.tvlandcomstor', stream_url)
+	else:
+		raise Ex.MediaNotAvailable
 
 	return Redirect(mp4_url)
 
