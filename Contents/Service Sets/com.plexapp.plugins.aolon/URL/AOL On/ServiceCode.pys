@@ -1,5 +1,5 @@
 VIDEO_URL = 'http://on.aol.com/video/%s'
-JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&playlist=%s&sid=%s&url=http'
+JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&playlist=%s&sid=%s&url=http://on.aol.com'
 
 RE_VIDEO_ID = Regex('(videoid=|playlist=|/episode/)(?P<video_id>\d+)', Regex.IGNORECASE)
 RE_VIDEO_URL = Regex('videoUrl=(?P<video_url>[^&]+)')
