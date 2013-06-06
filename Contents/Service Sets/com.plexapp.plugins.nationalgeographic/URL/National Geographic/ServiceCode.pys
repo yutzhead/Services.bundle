@@ -67,8 +67,11 @@ def PlayVideo(url):
     m3u8_url = RE_HTML5_URL.search(content).group(1)
   except:
     data = HTML.ElementFromString(content)
-    flv_url = data.xpath('//meta[@property="og:video"]')[0].get('content')
-    if '/Nat_Geo_Channels/' in flv_url:
+    flv_url = data.xpath('//meta[@property="og:video"]/@content')
+
+    if len(flv_url) < 1:
+      raise Ex.MediaNotAvailable
+    elif '/Nat_Geo_Channels/' in flv_url[0]:
       akamai_id = flv_url.split('/Nat_Geo_Channels/')[1].split('015.flv')[0]
       m3u8_url = M3U8_URL % akamai_id
     else:
