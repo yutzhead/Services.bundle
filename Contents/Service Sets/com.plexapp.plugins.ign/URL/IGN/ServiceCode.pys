@@ -122,7 +122,7 @@ def PlayVideo(url, bitrate):
 			raise Ex.MediaNotAvailable
 
 		closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-		video_url = smil.xpath('//smil:video[@system-bitrate="' + closest + '"]', namespaces=IGN_NS)[0].get('src')
+		video_url = smil.xpath('//smil:video[@system-bitrate="%s"]/@src' % closest, namespaces=IGN_NS)[0]
 
 	else:
 		video_url = media_url
