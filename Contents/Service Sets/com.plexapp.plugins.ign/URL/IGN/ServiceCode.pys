@@ -1,40 +1,47 @@
-CONFIG_URL = "%s.config?windowLocation=%s"
+CONFIG_URL = '%s.config'
 IGN_NS = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
-RE_DATE = Regex('([a-z]{3}\s[0-9]{1,2},\s[0-9]{4})', Regex.IGNORECASE)
-RE_FLASHVARS_URL = Regex('var videoUrl = "([^"]+)')
+RE_VIDEO_URL = Regex('var videoUrl = "([^"]+)')
 
 ####################################################################################################
 def NormalizeURL(url):
 
+	if 'widgets.ign.com' in url and '?url=' in url:
+		url = String.Unquote(url.split('?url=')[-1])
+	elif not '/videos/' in url:
+		page = HTTP.Request(url).content
+		video_url = RE_VIDEO_URL.search(page)
+
+		if video_url:
+			return video_url.group(1)
+
 	return url.split('?')[0]
- 
+
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	video_page_url = VideoPageURL(url)
+	html = HTML.ElementFromURL(url)
 
-	if not video_page_url:
-		return None
+	title = html.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
-	data = HTML.ElementFromURL(video_page_url)
-	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
-	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
-
-	originally_available_at = None
 	try:
-		date = data.xpath('//ul[@class="video-details"]/li')
-		if len(date) > 0:
-			date = RE_DATE.search(date[0].text)
-			if date:
-				originally_available_at = Datetime.ParseDate(date.group(1)).date()
+		duration = html.xpath('//span[@class="video-duration"]/text()')[0].strip()
+		duration = Datetime.MillisecondsFromString(duration)
 	except:
-		pass
+		duration = None
+
+	try:
+		date = html.xpath('//div[@class="sub-details"]/text()')[0].strip()
+		originally_available_at = Datetime.ParseDate(date).date()
+	except:
+		originally_available_at = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		duration = duration,
 		originally_available_at = originally_available_at
 	)
 
@@ -100,46 +107,11 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-def VideoPageURL(url):
-
-	# Try to find the 'real' video page url
-	try:
-		page = HTTP.Request(url).content
-	except:
-		raise Ex.MediaNotAvailable
-
-	# See if we can find the url in the flashvars (xpath)
-	flashvars = HTML.ElementFromString(page).xpath('//param[@name="flashvars"]')
-
-	if len(flashvars) >= 1:
-		video_page_url = flashvars[0].get('value').split('url=',1)[1]
-		return video_page_url
-
-	# See if we can find the url in some javascript code
-	video_page_url = RE_FLASHVARS_URL.search(page)
-
-	if video_page_url:
-		return video_page_url.group(1).replace('\\x3A', ':').replace('\\x2F', '/').replace('\\x2D', '-')
-
-	# See if we can find a link to the video page
-	link = HTML.ElementFromString(page).xpath('//a[contains(@href, "/videos/")]//span[contains(@class, "play")]/parent::a')
-
-	if len(link) >= 1:
-		return link[0].get('href')
-
-	return None
-
-####################################################################################################
 @indirect
 def PlayVideo(url, bitrate):
 
-	video_page_url = VideoPageURL(url)
-
-	if not video_page_url:
-		raise Ex.MediaNotAvailable
-
-	data = JSON.ObjectFromURL(CONFIG_URL % (video_page_url, String.Quote(video_page_url, usePlus=False)))
-	media_url = data['playlist']['media']['url']
+	json_obj = JSON.ObjectFromURL(CONFIG_URL % url)
+	media_url = json_obj['playlist']['media']['url']
 	video_url = None
 
 	if '.smil' in media_url:

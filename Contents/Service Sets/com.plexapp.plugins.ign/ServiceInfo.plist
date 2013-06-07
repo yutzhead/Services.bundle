@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://((www|uk|au|ca)\.)?ign\.com/.+</string>
+				<string>^(http://widgets.ign.com/video/embed/content.html\?url=)?http://(www|[a-z]{2})\.ign\.com/(articles|videos)/(\d{4})/(\d{2})/(\d{2})/.+</string>
 			</array>
 		</dict>
 	</dict>
