@@ -1,4 +1,4 @@
-RE_DATA = Regex("Published Date: (.+) Rating: (\d)/\d Views:.+Length: (\d+m\d+)s  Watch (.+) and other p")
+RE_DATA = Regex("Published Date: (.+) Rating: (\d+).+Views:.+Length: (\d+m\d+)s  Watch (.+) and other p")
 RE_VIDEO_ID = Regex("/videoconfig\?v=([0-9\-]+)")
 XML_URL = 'http://www.4tube.com/player/videoconfig?v=%s'
 
@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
 	(date, rating, duration, title) = RE_DATA.findall(description)[0]
 
 	originally_available_at = Datetime.ParseDate(date).date()
-	rating = float(rating) * 2
+	rating = float(rating)/10
 	duration = TimeToMs(duration.replace('m', ':'))
 
 	xml = XML.ElementFromURL(XML_URL % video_id)
