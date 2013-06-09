@@ -13,7 +13,7 @@ AudioStreamObject.language_code = Locale.Language.English
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url.split('?')[0]
+  return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def TestURLs():
