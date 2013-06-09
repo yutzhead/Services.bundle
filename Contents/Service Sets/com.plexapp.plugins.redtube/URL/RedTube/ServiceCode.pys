@@ -33,8 +33,8 @@ def MetadataObjectForURL(url):
 
 	tags = []
 	if 'tags' in data:
-		for tag in data['tags']:
-			tags.append(tag)
+		for key in data['tags']:
+			tags.append(data['tags'][key])
 
 	try: originally_available_at = Datetime.ParseDate(data['publish_date']).date()
 	except: originally_available_at = None
