@@ -2,7 +2,7 @@ from hashlib import sha1
 import binascii, hmac
 
 RE_PLAYLIST = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
-RE_VIDEO_ID = Regex('\-(\d+)$')
+RE_VIDEO_ID = Regex('\-(\d+)(#\d+)?$')
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
@@ -13,7 +13,7 @@ AudioStreamObject.language_code = Locale.Language.English
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url.split('#')[0].split('?')[0]
+  return url.split('?')[0]
 
 ####################################################################################################
 def TestURLs():
