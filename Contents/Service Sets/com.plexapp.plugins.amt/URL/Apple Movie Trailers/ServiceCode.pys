@@ -40,10 +40,10 @@ def MetadataObjectForURL(url):
 
 	amt_html = HTML.ElementFromURL(url.split('#')[0])
 
-	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content')[0].split(' - Movie Trailers')[0]
-	summary = amt_html.xpath('//meta[@property="og:description"]/@content')[0]
+	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content|//title/text()')[0].split(' - Movie Trailers')[0]
+	summary = amt_html.xpath('//meta[@property="og:description"]/@content|//meta[@name="Description"]/@content')[0]
 
-	thumb = amt_html.xpath('//meta[@property="og:image"]/@content')[0]
+	thumb = amt_html.xpath('//meta[@property="og:image"]/@content|//img[contains(@src, "poster.jpg")]/@src')[0]
 	thumb_large = thumb.replace('poster.jpg', 'poster-large.jpg')
 	thumb_xlarge = thumb.replace('poster.jpg', 'poster-xlarge.jpg')
 
