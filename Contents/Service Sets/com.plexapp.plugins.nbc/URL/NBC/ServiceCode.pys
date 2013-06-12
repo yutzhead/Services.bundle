@@ -102,8 +102,17 @@ def PlayVideo(url):
 	if not video_id:
 		raise Ex.MediaNotAvailable
 
-	json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id.group('id'), headers=HTTP_HEADERS, cacheTime=0)
-	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(json_obj['tokenizedURL']))
+	json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id.group('id'), headers=HTTP_HEADERS, cacheTime=10)
+	m3u8_url = json_obj['tokenizedURL']
+
+	playlist = HTTP.Request(m3u8_url, cacheTime=10)
+	content = playlist.content
+	cookie = playlist.headers['set-cookie']
+
+	return IndirectResponse(VideoClipObject,
+		key = HTTPLiveStreamURL(m3u8_url),
+		http_cookies = cookie
+	)
 
 ####################################################################################################
 def TestURLs():
