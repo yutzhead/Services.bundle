@@ -182,7 +182,10 @@ def GetVideoId(url):
 	if len(part) > 4 and part[4].isdigit():
 		return part[4]
 	else:
-		page = HTTP.Request(url).content
+		try:
+			page = HTTP.Request(url).content
+		except:
+			raise Ex.MediaNotAvailable
 
 		try:
 			video_id = HTML.ElementFromString(page).xpath('//article[@data-id]')[0].get('data-id')
