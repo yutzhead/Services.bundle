@@ -149,7 +149,12 @@ def PlayVideo(url, res):
 def GetJSON(url):
 
   video_id = RE_VIDEO_ID.search(url).group(1)
-  content = HTTP.Request(url).content.decode('utf8','replace')
+
+  try:
+    content = HTTP.Request(url).content.decode('utf8','replace')
+  except:
+    raise Ex.MediaExpired
+
   playlist = RE_PLAYLIST.search(content).group(1)
   playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
   playlist_json = JSON.ObjectFromString(playlist)
