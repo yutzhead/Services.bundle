@@ -14,13 +14,14 @@ def MetadataObjectForURL(url):
 	# Determine the id of the associated title, we can then request the appropriate details
 	# page. It doesn't matter if we use the HD or non HD version, as they both contain the
 	# same meta data.
-	full_url = page.xpath("//noscript/object/param[@name='movie']")[0].get('value')
+	full_url = page.xpath('//noscript/object/param[@name="movie"]/@value')[0]
 	id = full_url[full_url.rindex('/') + 1:]
 	details_page = HTTP.Request(VIDEO_URL % id).content.decode('latin-1')
 	details = cgi.parse_qs(details_page)
 
 	title = details['filmtitle'][0]
 	description = details['trailerd'][0]
+	duration = int(details['vidlength'][0]) * 1000
 
 	# The image field actually points to a php file to resize/embed the thumbnail. However, it contains
 	# a property 'dir' which points to the relative path of the original image.
@@ -32,26 +33,36 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb)
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
 			container = Container.MP4,
-			parts = [PartObject(key=Callback(PlayVideo, url = url,  res = 'hd'))]
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True,
+			parts = [PartObject(key=Callback(PlayVideo, url=url,  res='hd'))]
 		),
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
 			container = Container.MP4,
-			parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True,
+			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
 		)
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
 	page = HTML.ElementFromURL(url)
@@ -70,4 +81,4 @@ def PlayVideo(url, res):
 	details = cgi.parse_qs(details_page)
 
 	video_url = details['fileurl'][0]
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
