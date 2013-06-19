@@ -9,13 +9,13 @@ VIDEO_RES = [1080, 720, 480, 360]
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	try:
-		xml_url = VIDEO_INFO % GetVideoId(url)
-	except:
-		Log.Exception("Could not retrieve video_id in MetadataObjectForURL function")
+	video_id = GetVideoId(url)
+
+	if not video_id:
+		Log.Exception("Could not retrieve video_id in MetadataObjectForURL")
 		raise Ex.MediaNotAvailable
 
-	xml = XML.ElementFromURL(xml_url)
+	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
 	title = xml.xpath('//headline/text()')[0].strip()
 	summary = String.StripTags(xml.xpath('//description/text()')[0]).strip()
 
@@ -81,7 +81,7 @@ def PlayEpisode(url, res):
 	video_id = GetVideoId(url)
 
 	if not video_id:
-		Log.Exception("Could not retrieve video_id in PlayVideo function")
+		Log.Exception("Could not retrieve video_id in PlayEpisode")
 		raise Ex.MediaExpired
 
 	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
@@ -89,7 +89,7 @@ def PlayEpisode(url, res):
 	if len(xml.xpath('//files/file')) < 1:
 		raise Ex.MediaNotAvailable
 
-	src = xml.xpath('//files/file[@bitrate="ipad"]/text()')[0]
+	src = xml.xpath('//files/file[@bitrate="ipad"]/text()|//files/file[contains(text(), "ipad")]/text()')[0]
 	m3u8_url = 'http://ht.cdn.turner.com/tbs/big/teamcoco/%s' % src.lstrip('/')
 	base_url = m3u8_url.rsplit('/',1)[0]
 	playlist = HTTP.Request(m3u8_url).content
@@ -130,7 +130,7 @@ def PlayVideo(url, res=720):
 	video_id = GetVideoId(url)
 
 	if not video_id:
-		Log.Exception("Could not retrieve video_id in PlayVideo function")
+		Log.Exception("Could not retrieve video_id in PlayVideo")
 		raise Ex.MediaExpired
 
 	xml = XML.ElementFromURL(VIDEO_INFO % video_id)
@@ -176,6 +176,9 @@ def PlayVideo(url, res=720):
 
 ####################################################################################################
 def GetVideoId(url):
+
+	if '/deoncolesblackbox/' in url:
+		return None
 
 	part = url.split('/')
 
