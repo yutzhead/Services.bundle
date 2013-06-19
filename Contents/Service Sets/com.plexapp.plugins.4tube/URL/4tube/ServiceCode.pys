@@ -46,7 +46,7 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, res=1080))],
-			container = 'mp4',
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = '1080',
 			audio_codec = AudioCodec.AAC,
@@ -55,7 +55,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))],
-			container = 'mp4',
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = '720',
 			audio_codec = AudioCodec.AAC,
@@ -64,7 +64,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))],
-			container = 'mp4',
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = '480',
 			audio_codec = AudioCodec.AAC,
