@@ -2,6 +2,8 @@ HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:1
 JSON_URL = 'http://video.disney.com/_grill/json/watch/%s'
 STREAM_BASE = 'http://cdn.videos.dolimg.com/channel_longform/%s'
 
+AudioStreamObject.language_code = Locale.Language.English
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -51,8 +53,7 @@ def MediaObjectsForURL(url):
 			media_objects.append(
 				MediaObject(
 					parts = [PartObject(
-						key = Callback(PlayVideo, url=url, bitrate=bitrate),
-						streams = [AudioStreamObject(language_code=Locale.Language.English)]
+						key = Callback(PlayVideo, url=url, bitrate=bitrate)
 						)
 					],
 					bitrate = int(bitrate),
