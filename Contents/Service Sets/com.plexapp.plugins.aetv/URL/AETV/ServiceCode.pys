@@ -101,6 +101,9 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
+  url = url.split('?')[0] # Should not be necessary, but apparently some clients use cached XML data
+                          # from when we did not do this split in NormalizeURL
+
   video = GetJSON(url)
   smil_url = video['videoURLs']['releaseURL']
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
