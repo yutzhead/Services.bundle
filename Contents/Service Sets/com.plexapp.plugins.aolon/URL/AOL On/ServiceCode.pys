@@ -3,7 +3,7 @@ JSON_DATA_URL = 'http://syn.5min.com/handlers/SenseHandler.ashx?func=GetResults&
 
 RE_VIDEO_ID = Regex('(videoid=|playlist=|/episode/)(?P<video_id>\d+)', Regex.IGNORECASE)
 RE_VIDEO_URL = Regex('videoUrl=(?P<video_url>[^&]+)')
-RE_SID = Regex('(\?|&)sid=(?P<sid>\d+)')
+RE_SID = Regex('embed\.5min\.com.+(\?|&(amp;)?)sid=(?P<sid>\d+)')
 
 MediaObject.container = Container.MP4
 MediaObject.video_codec = VideoCodec.H264
