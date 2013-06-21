@@ -1,4 +1,4 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:21.0) Gecko/20100101 Firefox/21.0'}
 JSON_URL = 'http://video.disney.com/_grill/json/watch/%s'
 STREAM_BASE = 'http://cdn.videos.dolimg.com/channel_longform/%s'
 
@@ -52,8 +52,9 @@ def MediaObjectsForURL(url):
 		for bitrate in bitrates[res]:
 			media_objects.append(
 				MediaObject(
-					parts = [PartObject(
-						key = Callback(PlayVideo, url=url, bitrate=bitrate)
+					parts = [
+						PartObject(
+							key = Callback(PlayVideo, url=url, bitrate=bitrate)
 						)
 					],
 					bitrate = int(bitrate),
@@ -69,6 +70,7 @@ def MediaObjectsForURL(url):
 	return media_objects
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate):
 
 	bitrates = ["600","1000","1500","2200","3000","4300","6000","8000"]
@@ -80,9 +82,12 @@ def PlayVideo(url, bitrate):
 		for video in videos:
 			if video['format'] == 'mp4' and video['bitrate'] <= int(bitrates[index]):
 					video_url = video['url']
+
 					if not video_url.startswith('http://'):
 						video_url = STREAM_BASE % video_url.split('channel_longform/',1)[1]
-					return Redirect(video_url)
+
+					return IndirectResponse(VideoClipObject, key=video_url)
+
 		index = index - 1
 
 	raise Ex.MediaNotAvailable
