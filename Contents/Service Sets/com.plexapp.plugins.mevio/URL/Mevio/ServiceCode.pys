@@ -1,165 +1,78 @@
-RE_JSON_DATA = Regex('var q = (\{.*\});')
 RE_DEFAULT_MEDIA_JSON = Regex('args\.default_media = (\{.*\});')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url
+	if not '/episode/' in url:
+		json_obj = GetJSON(url)
+		url = json_obj['link']
+
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  clip_details = GetClipJSON(url)
+	json_obj = GetJSON(url)
 
-  try:
-    title = "%s: %s" % (clip_details["parent_name"], clip_details["name"])
-    summary = clip_details["summary"]
-    thumbUrl = clip_details["images"]["large"]
-    duration = int(clip_details["data"]["playtime_seconds"])*1000
-    date = Datetime.ParseDate(clip_details["date_created_formatted"]).date()
-    rating = float(clip_details["rating"]["group"]["Rating"])
-  except:
-    clip_xml = GetXML(url)
-    title = clip_xml.title
-    summary = String.StripTags(clip_xml.description)
-    thumbUrl = clip_xml.image.href
-    duration = int(clip_xml.enclosures[0].length)
-    date = Datetime.ParseDate(clip_xml.updated).date()
-    rating = None
-
-  # Construct a metadata item
-  vc = VideoClipObject(
-    title = title,
-    summary = summary,
-    thumb = thumbUrl,
-    duration = duration,
-    originally_available_at = date,
-    rating = rating
-  )
-
-  return vc
+	return VideoClipObject(
+		title = json_obj['name'],
+		summary = json_obj['summary'],
+		duration = json_obj['data']['playtime_seconds'] * 1000,
+		originally_available_at = Datetime.ParseDate(json_obj['date_created_formatted']).date(),
+		thumb = Resource.ContentsOfURLWithFallback(json_obj['images']['large'].split('?')[0])
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720'))],
-      container = Container.MP4,
-      bitrate = '1600',
-      video_resolution = '720',
-      #aspect_ratio = '1.78',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='544'))],
-      container = Container.MP4,
-      bitrate = '1000',
-      video_resolution = '544',
-      #aspect_ratio = '1.78',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
-      container = Container.MP4,
-      bitrate = '500',
-      video_resolution = 'sd',
-      #aspect_ratio = '1.78',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC
-    )
-  ]
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720'))],
+			container = Container.MP4,
+			bitrate = 1600,
+			video_codec = VideoCodec.H264,
+			video_resolution = '720',
+			aspect_ratio = '1.78',
+			audio_codec = AudioCodec.AAC
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
+			container = Container.MP4,
+			bitrate = 500,
+			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
+			aspect_ratio = '1.78',
+			audio_codec = AudioCodec.AAC
+		)
+	]
 
 ####################################################################################################
-def PlayVideo(url, fmt=''):
+@indirect
+def PlayVideo(url, fmt='720'):
 
-  clip_details = GetClipJSON(url)
+	json_obj = GetJSON(url)
 
-  try:
-    try:
-      video_url = clip_details["media_urls"]["h264"]
-    except:
-      video_url = clip_details["media_urls"]["mov"]
-      
-    if fmt == '720':
-      try: video_url = clip_details["media_urls"]["mp4"]
-      except: pass
-    elif fmt == '544':
-      try: video_url = clip_details["media_urls"]["m4v"]
-      except: pass
-    elif fmt == 'sd':
-      try: video_url = clip_details["media_urls"]["h264"]
-      except: pass
-  except:
-    clip_xml = GetXML(url)
-    video_url = clip_xml.guid
+	if 'h264' in json_obj['media_urls']:
+		video_url = json_obj['media_urls']['h264']
+	elif 'default' in json_obj['media_urls']:
+		video_url = json_obj['media_urls']['default']
 
-  return Redirect(video_url)
+	if fmt == '720':
+		if 'm4v' in json_obj['media_urls']:
+			video_url = json_obj['media_urls']['m4v']
+		if 'mp4' in json_obj['media_urls']:
+			video_url = json_obj['media_urls']['mp4']
+
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetJSON(url):
 
-  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:14.0) Gecko/20100101 Firefox/14.0.1'}
-  content = HTTP.Request(url, cacheTime=CACHE_1HOUR, headers=headers).content
+	headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:21.0) Gecko/20100101 Firefox/21.0'}
+	content = HTTP.Request(url, cacheTime=CACHE_1HOUR, headers=headers).content
+	json = RE_DEFAULT_MEDIA_JSON.search(content)
 
-  try:
-    data = RE_DEFAULT_MEDIA_JSON.search(content).group(1)
-  except:
-    data = RE_JSON_DATA.search(content).group(1)
-
-  details = JSON.ObjectFromString(data)
-
-  return details
-
-####################################################################################################
-def GetClipJSON(url):
-
-  details = GetJSON(url)
-
-  try:
-    clip_id = url.split('mId=')[1]
-    key_id = None
-  except:
-    clip_id = None
-    key_id = url.split('episode/')[1].split('/')[0]
-
-  clip_details = {}
-
-  try:
-    if details['key_id'] == key_id:
-      return details
-    elif details['id'] == clip_id:
-      return details
-    else:
-      raise Exception("clip_details not specific to clip.")
-  except:
-    for item in details["items"]:
-      if clip_id:
-        if item["media"]["id"] == clip_id:
-          clip_details = item["media"]
-        else:
-          pass
-      else:
-        if item["media"]["key_id"] == key_id:
-          clip_details = item["media"]
-        else:
-          pass
-
-  return clip_details
-
-####################################################################################################
-def GetXML(url):
-
-  clip_details = GetJSON(url)
-  rss_url = clip_details['feed_urls']['xml']['url']
-  feed = RSS.FeedFromURL(rss_url)
-
-  for item in feed.entries:
-    if item.link == url:
-      return item
-    else:
-      pass
-
-  return None
+	if json:
+		return JSON.ObjectFromString(json.group(1))
+	else:
+		raise Ex.MediaNotAvailable

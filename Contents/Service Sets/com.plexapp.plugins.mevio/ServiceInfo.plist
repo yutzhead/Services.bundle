@@ -8,12 +8,13 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.mevio.com/channels/?cId=911677mId=8122039</string>
 				<string>http://www.mevio.com/episode/308991/beat-the-fitness-slump</string>
+				<string>http://www.mevio.com/channels/?cId=911677&amp;mId=8122039</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.mevio.com/.+</string>
+				<string>^http://www\.mevio\.com/episode/\d+/.+</string>
+				<string>^http://www\.mevio\.com/channels/\?cId=\d+&amp;mId=\d+</string>
 			</array>
 		</dict>
 	</dict>
