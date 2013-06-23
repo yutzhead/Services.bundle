@@ -1,6 +1,6 @@
-NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
-MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 RE_AMPERSANDS = Regex('&(?!amp;)')
 
 MediaObject.container = Container.MP4
@@ -12,17 +12,15 @@ AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	uri = GetURI(url)
-
-	if not uri:
-		return None
-
 	feed = RSS.FeedFromURL(MRSS_URL % uri)
+
 	video = feed.entries[0]
 	title = video.title
 	date = video.updated
@@ -69,15 +67,12 @@ def MediaObjectsForURL(url):
 	return media_objects
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 
 	BITRATES = ['1200', '1700', '2200', '3500']
 
 	uri = GetURI(url)
-
-	if not uri:
-		return None
-
 	mrss_data = HTTP.Request(MRSS_URL % uri).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
@@ -106,7 +101,7 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 	stream_url = rtmp_url.split('/mtvnorigin/')[1]
 	mp4_url = MP4_URL % stream_url
 
-	return Redirect(mp4_url)
+	return IndirectResponse(VideoClipObject, key=mp4_url)
 
 ####################################################################################################
 def GetURI(url):
@@ -115,6 +110,6 @@ def GetURI(url):
 	uri = data.xpath('//div[@id="video-player"]')
 
 	if len(uri) < 1:
-		return None
+		raise Ex.MediaNotAvailable
 	else:
 		return uri[0].get('data-mgid')
