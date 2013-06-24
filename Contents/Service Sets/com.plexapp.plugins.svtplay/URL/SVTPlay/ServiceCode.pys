@@ -34,7 +34,12 @@ def MetadataObjectForURL(url):
 
 	summary = page.xpath('//meta[@property="og:description"]/@content')[0].replace('&amp;', '&')
 	summary = String.DecodeHTMLEntities(summary)
-	thumb = page.xpath('//meta[@property="og:image"]/@content')[0].replace('/small/', '/large/')
+	thumb = page.xpath('//meta[@property="og:image"]/@content')
+
+	if len(thumb) < 1:
+		thumb = None
+	else:
+		thumb = thumb[0].replace('/small/', '/large/')
 
 	try:
 		air_date = page.xpath('//div[@class="playVideoInfo"]//time/@datetime')[0].split('T')[0]
