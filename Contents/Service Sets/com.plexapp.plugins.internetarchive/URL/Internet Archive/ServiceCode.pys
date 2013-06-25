@@ -38,8 +38,8 @@ def MetadataObjectForURL(url):
             summary = summary,
             artist = meta_xml.xpath('//creator')[0].text,
             originally_available_at = Datetime.ParseDate(meta_xml.xpath('//publicdate')[0].text).date(),
-            rating = rating,
-            thumb = Callback(Thumb, url=url)
+            rating = rating
+            #thumb = Callback(Thumb, url=url)
         )
     elif meta_xml.xpath('//mediatype')[0].text == 'movies':
         '''year is about the only useful date info (usually available) that applies to the actual release of the video
@@ -61,8 +61,8 @@ def MetadataObjectForURL(url):
             summary = summary,
             year = year,
             rating = rating,
-            duration = duration,
-            thumb = Callback(Thumb, url=url)
+            duration = duration
+            #thumb = Callback(Thumb, url=url)
         )
     else:
         '''if it's not audio or video, I have no idea what it is or how to handle it (yet)'''
