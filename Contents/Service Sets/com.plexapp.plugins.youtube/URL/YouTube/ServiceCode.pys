@@ -266,6 +266,9 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
           video_url = video_url + '&signature=' + decrypt_signature(map['s'])
 
         if 'signature' in video_url:
+          if 'ratebypass' not in video_url:
+            video_url += '&ratebypass=yes'
+
           fmts_info[quality] = video_url
           fmts.append(quality)
 
