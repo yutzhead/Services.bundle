@@ -262,6 +262,8 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
         if not 'signature' in video_url and 'sig' in map:
           video_url = video_url + '&signature=' + map['sig']
+        elif not 'signature' in video_url and 's' in map:
+          video_url = video_url + '&signature=' + decrypt_signature(map['s'])
 
         if 'signature' in video_url:
           fmts_info[quality] = video_url
@@ -290,3 +292,17 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   Log("VIDEO URL (fmt=%d): %s", fmt, final_url)
 
   return IndirectResponse(VideoClipObject, key=final_url)
+
+
+####################################################################################################
+# Source: https://github.com/rg3/youtube-dl/blob/master/youtube_dl/extractor/youtube.py#L132
+def decrypt_signature(s):
+  """Decrypt the key the two subkeys must have a length of 43"""
+  (a,b) = s.split('.')
+  if len(a) != 43 or len(b) != 43:
+    Log('Unable to decrypt signature, subkeys lengths not valid')
+    raise Ex.MediaNotAvailable
+  b = ''.join([b[:8],a[0],b[9:18],b[-4],b[19:39], b[18]])[0:40]
+  a = a[-40:]
+  s_dec = '.'.join((a,b))[::-1]
+  return s_dec
