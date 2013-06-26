@@ -7,14 +7,21 @@ def MetadataObjectForURL(url):
 
 	mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@id="video_player_box"]/@data-mgid')
 	if len(mgid) < 1:
-		return None
+		raise Ex.MediaNotAvailable
 
 	item = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).xpath('//item')[0]
 
-	title = item.xpath('./title')[0].text
-	summary = item.xpath('./description')[0].text
-	thumb = item.xpath('.//media:thumbnail', namespaces=NAMESPACES)[0].get('url')
-	duration = int(float(item.xpath('.//media:content', namespaces=NAMESPACES)[0].get('duration')) * 1000)
+	title = item.xpath('./title/text()')[0]
+	summary = item.xpath('./description/text()')[0]
+	duration = int(float(item.xpath('.//media:content/@duration', namespaces=NAMESPACES)[0]) * 1000)
+
+	try:
+		thumb = item.xpath('.//media:thumbnail/@url', namespaces=NAMESPACES)[0]
+	except:
+		try:
+			thumb = item.xpath('./parent::channel/image/url/text()')[0].split('?')[0].replace('/cc/', '/')
+		except:
+			thumb = ''
 
 	try:
 		date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
