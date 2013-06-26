@@ -1,6 +1,6 @@
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:21.0) Gecko/20100101 Firefox/21.0'}
 JSON_URL = 'http://video.disney.com/_grill/json/watch/%s'
-STREAM_BASE = 'http://cdn.videos.dolimg.com/channel_longform/%s'
+STREAM_BASE = 'http://cdn.videos.dolimg.com/%s'
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -83,8 +83,8 @@ def PlayVideo(url, bitrate):
 			if video['format'] == 'mp4' and video['bitrate'] <= int(bitrates[index]):
 					video_url = video['url']
 
-					if not video_url.startswith('http://'):
-						video_url = STREAM_BASE % video_url.split('channel_longform/',1)[1]
+					if video_url.startswith('mp4:'):
+						video_url = STREAM_BASE % video_url.split('mp4:',1)[-1]
 
 					return IndirectResponse(VideoClipObject, key=video_url)
 
