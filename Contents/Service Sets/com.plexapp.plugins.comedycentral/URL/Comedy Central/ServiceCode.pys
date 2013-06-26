@@ -9,30 +9,30 @@ def MetadataObjectForURL(url):
 	if len(mgid) < 1:
 		raise Ex.MediaNotAvailable
 
-	item = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).xpath('//item')[0]
+	xml = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR)
 
-	title = item.xpath('./title/text()')[0]
-	summary = item.xpath('./description/text()')[0]
-	duration = int(float(item.xpath('.//media:content/@duration', namespaces=NAMESPACES)[0]) * 1000)
+	title = xml.xpath('//channel/title/text()')[0]
+	summary = xml.xpath('//channel/description/text()')[0]
+
+	duration = 0
+	for timecode in xml.xpath('//item//media:content/@duration', namespaces=NAMESPACES):
+		duration += int(float(timecode) * 1000)
 
 	try:
-		thumb = item.xpath('.//media:thumbnail/@url', namespaces=NAMESPACES)[0]
+		thumb = xml.xpath('//channel/image/url/text()')[0].split('?')[0].replace('/cc/', '/')
 	except:
-		try:
-			thumb = item.xpath('./parent::channel/image/url/text()')[0].split('?')[0].replace('/cc/', '/')
-		except:
-			thumb = ''
+		thumb = ''
 
 	try:
-		date = Datetime.ParseDate(item.xpath('./pubDate')[0].text).date()
+		date = Datetime.ParseDate(xml.xpath('//item[1]/pubDate')[0].text).date()
 	except:
 		date = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
+		duration = duration if duration > 0 else None,
 		originally_available_at = date,
-		duration = duration,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
