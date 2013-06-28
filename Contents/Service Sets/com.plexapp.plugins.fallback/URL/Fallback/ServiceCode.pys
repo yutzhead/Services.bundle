@@ -56,6 +56,9 @@ def ValidURL(url):
 	if not isinstance(url, basestring):
 		return False
 
+	if url.startswith('ipad:'):
+		url = url.lstrip('ipad:')
+
 	url = urlparse.urlparse(url)
 
 	if url.scheme not in ('http', 'https'):
