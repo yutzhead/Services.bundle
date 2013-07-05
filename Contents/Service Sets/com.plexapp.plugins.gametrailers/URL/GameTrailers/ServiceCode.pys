@@ -23,17 +23,21 @@ def MetadataObjectForURL(url):
 
 	video = feed.entries[0]
 	title = video.title
-	date = video.updated
 	description = video.summary
 	duration = int(float(video.media_content[0]['duration'])*1000)
 	thumb = video.media_thumbnail[0]['url']
 
+	try:
+		originally_available_at = Datetime.ParseDate(video.updated).date()
+	except:
+		originally_available_at = None
+
 	return VideoClipObject(
 		title = title,
-		originally_available_at = Datetime.ParseDate(date).date(),
 		summary = description,
 		duration = duration,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		originally_available_at = originally_available_at
 	)
 
 ####################################################################################################
