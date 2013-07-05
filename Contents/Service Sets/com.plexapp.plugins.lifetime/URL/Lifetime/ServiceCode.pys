@@ -119,8 +119,11 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetJSON(url):
 
-  videoId = url.split('www.mylifetime.com')[1]
-  content = HTTP.Request(url).content.decode('utf8','replace')
+  try:
+    content = HTTP.Request(url).content.decode('utf8','replace')
+  except:
+    raise Ex.MediaNotAvailable
+
   playlist = RE_PLAYLIST.search(content).group(1)
   playlist_json = JSON.ObjectFromString(playlist)
 
