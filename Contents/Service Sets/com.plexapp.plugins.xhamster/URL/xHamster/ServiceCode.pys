@@ -1,9 +1,14 @@
+VIDEO_URL = 'http://xhamster.com/movies/%s/.html'
 RE_SRV_FILE = Regex("'srv': '([^']+)'.+'file': '([^']+)'", Regex.DOTALL)
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	if '/xembed.php' in url:
+		video_id = url.split('video=')[-1]
+		return VIDEO_URL % video_id
+	else:
+		return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
