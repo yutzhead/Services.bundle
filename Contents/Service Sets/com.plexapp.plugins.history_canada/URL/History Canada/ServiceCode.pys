@@ -2,6 +2,8 @@ NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language", "tp":"http://xml.the
 
 SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
 
+SWF_URL = 'http://www.history.ca/video/swf/flvPlayer.swf'
+
 #########################################################################################
 def NormalizeURL(url):
 	return url
@@ -68,7 +70,7 @@ def PlayVideo(url):
 	else:
 		clip = clip.replace(".flv", "")
 
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, swf_url=SWF_URL))
 
 #########################################################################################
 def GetSMIL(url):
