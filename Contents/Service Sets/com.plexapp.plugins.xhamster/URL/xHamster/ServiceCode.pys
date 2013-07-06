@@ -1,4 +1,5 @@
 VIDEO_URL = 'http://xhamster.com/movies/%s/.html'
+RE_THUMB = Regex("'image':'([^']+)'")
 RE_SRV_FILE = Regex("'srv': '([^']+)'.+'file': '([^']+)'", Regex.DOTALL)
 
 ####################################################################################################
@@ -13,7 +14,8 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	page = HTTP.Request(url).content
+	html = HTML.ElementFromString(page)
 
 	title = html.xpath('//title/text()')[0].rsplit(' - ', 1)[0].strip()
 
@@ -26,15 +28,15 @@ def MetadataObjectForURL(url):
 	if summary.startswith('xHamster'):
 		summary = None
 
-	if len(html.xpath('//a[contains(@href, ".mp4")]/img/@src')) > 0:
-		thumb = html.xpath('//a[contains(@href, ".mp4")]/img/@src')[0].replace('/pl580/', '/').replace('_', '_b_')
-	else:
-		thumb = None
+	try:
+		thumb = RE_THUMB.search(page).group(1)
+	except:
+		thumb = ''
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		genres = ['XXX','Adult','18+'],
 		content_rating = 'X'
 	)
