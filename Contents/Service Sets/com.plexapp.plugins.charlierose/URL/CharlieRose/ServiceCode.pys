@@ -8,21 +8,28 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
-	title = data.xpath('//meta[@name="title"]/@content')[0].split('Charlie Rose -')[-1].strip()
-	summary = data.xpath('//dl[@class="video-description"]/dt[text()="Description"]/following-sibling::dd/p/text()')[0]
+	html = HTML.ElementFromURL(url)
+	title = html.xpath('//meta[@name="title"]/@content')[0].split('Charlie Rose -')[-1].strip()
+	summary = html.xpath('//dl[@class="video-description"]/dt[text()="Description"]/following-sibling::dd/p/text()')[0]
 
-	thumb = data.xpath('//link[@rel="image_src"]/@href')
+	thumb = html.xpath('//link[@rel="image_src"]/@href')
 
 	if len(thumb) < 1:
 		thumb = 'http://www.charlierose.com//images/assets/flashplayer.jpg'
 	else:
 		thumb = thumb[0]
 
+	try:
+		date = html.xpath('//div[@id="container"]//h2/following-sibling::p/text()[contains(., "day")]')[0].split(',',1)[-1].strip()
+		originally_available_at = Datetime.ParseDate(date).date()
+	except:
+		originally_available_at = None
+
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(thumb)
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		originally_available_at = originally_available_at
 	)
 
 ####################################################################################################
