@@ -10,7 +10,7 @@ def MetadataObjectForURL(url):
 
 	data = HTML.ElementFromURL(url)
 	title = data.xpath('//meta[@name="title"]/@content')[0].split('Charlie Rose -')[-1].strip()
-	summary = data.xpath('//meta[@name="description"]/@content')[0]
+	summary = data.xpath('//dl[@class="video-description"]/dt[text()="Description"]/following-sibling::dd/p/text()')[0]
 
 	thumb = data.xpath('//link[@rel="image_src"]/@href')
 
