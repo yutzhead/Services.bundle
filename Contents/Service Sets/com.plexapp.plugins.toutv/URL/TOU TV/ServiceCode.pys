@@ -9,8 +9,7 @@ MEDIA_URL = "http://api.radio-canada.ca/validationMedia/v1/Validation.html?appCo
 
 IPAD_HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
 
-""" Tou.TV seem to have really locked down the HLS streams. I can't find a way to get at them currently """
-CLIENT_COMPAT_EHLS = []  #['iOS', 'Android', 'Roku', 'Safari']
+CLIENT_COMPAT_EHLS = ['iOS', 'Android', 'Roku', 'Safari']
 
 SWF_URL = 'http://static.tou.tv/lib/ThePlatform/4.2.9c/swf/flvPlayer.swf'
 ####################################################################################################
@@ -67,8 +66,8 @@ def MetadataObjectForURL(url):
             season = season, 
             index = episode,
             originally_available_at = date,
-            directors = directors,
-            writers = writers,
+            #directors = directors,
+            #writers = writers,
             thumb = Resource.ContentsOfURLWithFallback(url=thumb)
             )
     except:
@@ -92,9 +91,7 @@ def MediaObjectsForURL(url):
         return [
             MediaObject(
                 parts = [
-                    PartObject(
-                        key = Callback(PlayVideo, url=url, stream_type='HLS')
-                        )
+                    PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, stream_type='HLS')))
                     ],
                 protocol = 'hls',
                 optimized_for_streaming = True
@@ -155,10 +152,9 @@ def GetPlaylist(url, device):
         return json['url']
     else:
         m3u8_url = json['url']
-        playlist = HTTP.Request(m3u8_url, follow_redirects=False)
-        content = playlist.content
-        cookie = playlist.headers['set-cookie']
-        new_playlist = '#EXTM3U'
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=m3u8_url))
+    '''
+	new_playlist = '#EXTM3U'
         streams = []
         for line in content.splitlines()[1:]:
             line = line.strip()
@@ -176,7 +172,8 @@ def GetPlaylist(url, device):
                 new_playlist += '\n' + stream['stream']
             else: #discard audio-only streams
                 pass
-        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=new_playlist), http_cookies=cookie)
+        return new_playlist
+    '''
 
 ####################################################################################################
 def GetSRC(smil):
