@@ -3,6 +3,8 @@ SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s"
 VIDEO_URL = 'http://www.globaltv.com/video/%s/video.html?v=%s&pid=%s#%s/video/full+episodes'
 RE_PID = Regex('pid: \"([^"]+)\"')
 
+SWF_URL = "http://www.globaltv.com/widgets/ThePlatformContentBrowser/swf/flvPlayer.swf"
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -71,7 +73,7 @@ def PlayVideo(url):
 	app = 'ondemand' + src[0].split('ondemand')[1]
 	clip = src[1].replace(".flv","") # replace .flv needed if legacy <break> was used
 
-	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, app=app))
+	return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=clip, app=app, swf_url=SWF_URL))
 
 ####################################################################################################
 def GetSMIL(url):
