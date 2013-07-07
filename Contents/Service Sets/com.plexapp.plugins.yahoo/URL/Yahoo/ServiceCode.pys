@@ -108,19 +108,29 @@ def GetJSON(url, content_id=None):
 		except:
 			raise Ex.MediaNotAvailable
 
-	if content_id:
-		if url.split('/')[2].split('.')[0] in ('screen', 'movies'):
-			region = 'US'
-		else:
-			region = url.split('/')[2].split('.')[0].upper()
-
-		json = JSON.ObjectFromURL(JSON_URL % String.Quote(QUERY % (content_id, region), usePlus=False), cacheTime=0)
-	else:
+	if not content_id:
 		raise Ex.MediaNotAvailable
 
-	if json['query']['results']['mediaObj'][0]['status']['msg'] == 'ready':
-		return json['query']['results']['mediaObj'][0]
-	elif json['query']['results']['mediaObj'][0]['status']['msg'] == 'geo restricted':
+	if url.split('/')[2].split('.')[0] in ('screen', 'movies'):
+		region = 'US'
+	else:
+		region = url.split('/')[2].split('.')[0].upper()
+
+	json_url = JSON_URL % String.Quote(QUERY % (content_id, region), usePlus=False)
+
+	try:
+		json_data = HTTP.Request(json_url, cacheTime=0).content
+	except Ex.IncompleteRead, e:
+		json_data = e.partial
+
+	try:
+		json_obj = JSON.ObjectFromString(json_data)
+	except:
+		json_obj = {}
+
+	if json_obj['query']['results']['mediaObj'][0]['status']['msg'] == 'ready':
+		return json_obj['query']['results']['mediaObj'][0]
+	elif json_obj['query']['results']['mediaObj'][0]['status']['msg'] == 'geo restricted':
 		raise Ex.MediaGeoblocked
 	else:
 		raise Ex.MediaNotAvailable
