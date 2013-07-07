@@ -91,7 +91,6 @@ def PlayVideo(url, index=None):
         content = HTTP.Request(VIDEO_URL % clipId).content
         video_url = RE_VIDEO.search(content).group(1)
         return Redirect(video_url)
-        #return IndirectResponse(VideoClipObject, key=video_url)
     else:
         playlistId = RE_PLAYLIST.search(url).group(1)
         binId = RE_BIN.search(url)
@@ -115,8 +114,7 @@ def PlayVideo(url, index=None):
             clipId = RE_CLIPID.search(clips[index]).group(1)
             content = HTTP.Request(VIDEO_URL % clipId).content
             video_url = RE_VIDEO.search(content).group(1)
-            return Redirect(video_url) ###Redirect()s not supported on Win-PMS
-            #return IndirectResponse(VideoClipObject, key=video_url) ###IndirectResponse()s for stacked PartObjects not supported by Laika
+            return Redirect(video_url)
         except:
             raise Ex.MediaNotAvailable
     return
