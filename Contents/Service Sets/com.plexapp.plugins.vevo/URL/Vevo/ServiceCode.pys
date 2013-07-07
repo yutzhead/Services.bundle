@@ -122,6 +122,8 @@ def PlayVideo(url, bitrate, res=None):
     video_url = ''
     index = BITRATES.index(bitrate)
     try:
+        if Client.Platform == 'iOS':
+            raise e # for some reason, the VEVO server refuses to return the MP4s to the iOS client but HLS seems to work well.
         smil = XML.ElementFromURL(MP4_SMIL_URL % (id, id.lower()))
         while index > -1:
             try:
@@ -132,7 +134,6 @@ def PlayVideo(url, bitrate, res=None):
             if index == 0:
                 if video_url == '':
                     video_url = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
-        
         return IndirectResponse(VideoClipObject, key="http://vstream.vevo.com/%s" % video_url)
     except:
         try:
