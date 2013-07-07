@@ -21,7 +21,11 @@ def MetadataObjectForURL(url):
 
 	if '/b/' in url:
 		video_id = url.split('/')[-1]
-		json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
+
+		try:
+			json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
+		except:
+			raise Ex.MediaNotAvailable
 
 		try: originally_available_at = Datetime.ParseDate(json_obj['created_on'])
 		except: originally_available_at = None
@@ -106,7 +110,11 @@ def PlayVideo(url):
 
 	if '/b/' in url:
 		video_id = url.split('/')[-1]
-		json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id)
+
+		try:
+			json_obj = JSON.ObjectFromURL(CLIP_DATA % video_id, cacheTime=CACHE_1MONTH)
+		except:
+			raise Ex.MediaNotAvailable
 
 		return IndirectResponse(VideoClipObject, key=json_obj['video_file_url'])
 
