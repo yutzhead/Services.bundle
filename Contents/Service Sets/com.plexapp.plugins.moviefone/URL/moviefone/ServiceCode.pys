@@ -1,11 +1,18 @@
 def NormalizeURL(url):
 
-	return '%s/main' % url.rsplit('/', 1)[0]
+	return '%s/trailers' % url.rsplit('/', 1)[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	url = url.replace('/main', '/synopsis')
+	html = HTML.ElementFromURL(url)
+
+	# Use AOL On URL Service if we find such a video
+	aol_on_video = html.xpath('//script[contains(@src, "pshared.5min.com")]/@src')
+	if len(aol_on_video) == 1:
+		return URLService.MetadataObjectForURL(aol_on_video[0])
+
+	url = url.replace('/trailers', '/synopsis')
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath('//h1//text()')[0].strip()
@@ -16,7 +23,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -56,7 +63,6 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt):
 
-	url = url.replace('/main', '/trailers')
 	video_url = None
 	html = HTML.ElementFromURL(url)
 
