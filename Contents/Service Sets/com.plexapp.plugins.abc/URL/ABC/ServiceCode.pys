@@ -4,6 +4,12 @@ RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 ####################################################################################################
 def NormalizeURL(url):
 
+	if not '/VDKA' in url:
+		try:
+			url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//meta[@property="og:url"]/@content')[0]
+		except:
+			raise Ex.MediaNotAvailable
+
 	url = url.split('?')[0].replace(' ', '%20')
 	url = url.replace('http://abc.go.com/watch/', 'http://watchabc.go.com/')
 
@@ -15,45 +21,41 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	if not '/VDKA' in url:
-		raise Ex.MediaNotAvailable
-
-	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
-	episode_title = data.xpath('//div[@class="video_title"]/text()|//h2[@id="video_title"]/text()')
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
+	episode_title = html.xpath('//div[@class="video_title"]/text()|//h2[@id="video_title"]/text()')
 
 	if len(episode_title) < 1:
 		raise Ex.MediaExpired
 
 	episode_title = episode_title[0]
-	show_title = data.xpath('//meta[@name="title"]/@content')[0].split('  ')[0]
-	summary = data.xpath('//meta[@property="og:description"]/@content')[0]
+	show_title = html.xpath('//meta[@name="title"]/@content')[0].split('  ')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 
 	try:
-		sxx_exx = data.xpath('//meta[@name="title"]/@content')[0]
+		sxx_exx = html.xpath('//meta[@name="title"]/@content')[0]
 		(season, index) = RE_SXX_EXX.search(sxx_exx).groups()
 	except:
 		season = None
 		index = None
 
 	try:
-		duration = data.xpath('//span[contains(@class, "video_duration")]/text()')[0]
-		duration_parts = duration.split(':')
-		duration = ((int(duration_parts[0])*60) + int(duration_parts[1]))*1000
+		duration = html.xpath('//span[contains(@class, "video_duration")]/text()')[0]
+		duration = Datetime.MillisecondsFromString(duration)
 	except:
 		duration = None
 
 	try:
-		airdate = data.xpath('//span[contains(@class, "airdate")]/text()')[0].split(' ')[-1]
+		airdate = html.xpath('//span[contains(@class, "airdate")]/text()')[0].split(' ')[-1]
 		airdate = Datetime.ParseDate(airdate).date()
 	except:
 		airdate = None
 
 	try:
-		rating = data.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
+		rating = html.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
 	except:
 		rating = None
 
-	thumb_url = data.xpath('//meta[@property="og:image"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
 	return EpisodeObject(
 		title = episode_title,
@@ -64,14 +66,11 @@ def MetadataObjectForURL(url):
 		content_rating = rating,
 		originally_available_at = airdate,
 		summary = summary,
-		thumb = thumb_url
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-	if not '/VDKA' in url:
-		raise Ex.MediaNotAvailable
 
 	video_id = url.split('/')[-2].replace('VDKA', '')
 	storage_id = 1561
@@ -126,9 +125,9 @@ def PlayVideo(f4m_url=None, **kwargs):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL('http://abc.go.com/', headers=HTTP_HEADERS)
+	html = HTML.ElementFromURL('http://abc.go.com/', headers=HTTP_HEADERS)
 
-	for url in data.xpath('//h2[contains(text(), "full episodes")]/following-sibling::div[@class="carouselListWrapper"]//a[@class="framedThumbnail"]/@href'):
+	for url in html.xpath('//a[contains(@href, "SH") and contains(@href, "VDKA")]/@href'):
 		if url not in test_urls:
 			test_urls.append(url)
 
