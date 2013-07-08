@@ -75,7 +75,10 @@ def PlayVideo(url, fmt):
 	if not video_url and fmt in ('HD 480p', 'HD 720p', 'HD 1080p') and len(html.xpath('//span[@class="butoneshd hd480"]/a/@href')) > 0:
 		video_url = html.xpath('//span[@class="butoneshd hd480"]/a/@href')[0]
 
-	if not video_url:
+	if not video_url and len(html.xpath('//span[contains(@class, "butoneshd")]/a/@href')) > 0:
 		video_url = html.xpath('//span[contains(@class, "butoneshd")]/a/@href')[0]
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	if video_url:
+		return IndirectResponse(VideoClipObject, key=video_url)
+	else:
+		raise Ex.MediaNotAvailable
