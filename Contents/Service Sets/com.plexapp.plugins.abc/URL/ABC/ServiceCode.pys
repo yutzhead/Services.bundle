@@ -57,6 +57,8 @@ def MetadataObjectForURL(url):
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
+	source_title = 'ABC Family' if 'watchabcfamily' in url else 'ABC'
+
 	return EpisodeObject(
 		title = episode_title,
 		show = show_title,
@@ -66,7 +68,8 @@ def MetadataObjectForURL(url):
 		content_rating = rating,
 		originally_available_at = airdate,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(thumb)
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		source_title = source_title
 	)
 
 ####################################################################################################
