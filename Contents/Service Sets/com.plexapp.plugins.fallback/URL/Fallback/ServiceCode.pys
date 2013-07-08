@@ -12,6 +12,7 @@ EMBEDDED_VIDEO = [
 	'//object/@data',
 	'//param[@name="flashvars"]/@value',
 	'//meta[@property="og:video"]/@content',
+	'//meta[@property="og:video:url"]/@content',
 	'//@*[starts-with(name(), "data-")]',
 	'//script/@src'
 ]
