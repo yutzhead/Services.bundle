@@ -4,7 +4,7 @@ YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&
 RE_CLEANUP = Regex('[^-a-z0-9 ]')
 RE_BANDWIDTH = Regex('BANDWIDTH=(\d+)')
 FULL_EP_RES = [480]
-VIDEO_RES = [1080, 720, 480, 360]
+VIDEO_RES = [1080, 720, 480]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
