@@ -19,7 +19,13 @@ def MetadataObjectForURL(url):
 		title = episode_title
 		season = 1
 
-	index = xml.xpath('//video/episodeNumber/text()')[0]
+	index = xml.xpath('//video/episodeNumber/text()')
+
+	if len(index) == 1:
+		index = index[0]
+	else:
+		index = None
+
 	summary = xml.xpath('//video/episodeDescription/text()')[0]
 	thumb = 'http://www.lstudio.com%s' % xml.xpath('//video/thumbnail/text()')[0]
 	originally_available_at = Datetime.ParseDate(xml.xpath('//video/datepublished/text()')[0]).date()
@@ -28,7 +34,7 @@ def MetadataObjectForURL(url):
 		show = show,
 		title = title,
 		season = int(season),
-		index = int(index),
+		index = int(index) if index else None,
 		summary = summary,
 		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		originally_available_at = originally_available_at
