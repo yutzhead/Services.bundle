@@ -20,7 +20,10 @@ def MetadataObjectForURL(url):
 	else:
 		video_id = video_id.group('video_id')
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+	try:
+		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@name="title"]/@content')[0]
 	summary = html.xpath('//meta[@name="description"]/@content')[0]
