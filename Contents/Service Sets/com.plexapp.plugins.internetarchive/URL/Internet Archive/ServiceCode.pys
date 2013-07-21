@@ -23,6 +23,9 @@ def MetadataObjectForURL(url):
     rating = GetRating(url)
     title = meta_xml.xpath('//title')[0].text
 
+    creator = meta_xml.xpath('//creator')
+    artist = creator[0] if len(creator) > 0 else None
+
     summary = None
     for summary_node in ['//description', '//notes']:
       try: 
@@ -36,7 +39,7 @@ def MetadataObjectForURL(url):
             key = Callback(GetTracks, url=url),
             title = title,
             summary = summary,
-            artist = meta_xml.xpath('//creator')[0].text,
+            artist = artist,
             originally_available_at = Datetime.ParseDate(meta_xml.xpath('//publicdate')[0].text).date(),
             rating = rating,
             thumb = Callback(Thumb, url=url)
