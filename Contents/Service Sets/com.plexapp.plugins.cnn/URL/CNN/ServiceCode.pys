@@ -2,7 +2,6 @@ XML_URL = 'http://www.cnn.com/video/data/3.0/video/%s/index.xml'
 MEDIA_URL = 'http://ht.cdn.turner.com/cnn/big/%s'
 CNN_URL = 'http://www.cnn.com/video/'
 NAMESPACES = {'smil': 'http://www.w3.org/2001/SMIL20/Language'}
-RESOLUTIONS = ['640x360','768x432','896x504','1280x720']
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -125,49 +124,33 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, resolution):
 
+	video = None
 	data_url = XML_URL % url.split('/?/video/')[1]
 	data = XML.ElementFromURL(data_url, cacheTime=CACHE_1DAY)
-	
-	video = None
+
 	try:
-		other_source = data.xpath("//groupFiles/file[contains(text(), '.smil')]/text()")[0]
-		smil = XML.ElementFromURL(other_source)
-		base = 'http://ht.cdn.turner.com'
-		clip = smil.xpath("//smil:video[contains(@src, '%s')]" % resolution, namespaces = NAMESPACES)[0].get('src')
-		video = '%s/%s' % (base, clip)
+		other_source = data.xpath('//groupFiles/file[contains(text(), ".smil")]/text()')[0]
+		xml = XML.ElementFromURL(other_source)
+		clip = xml.xpath('//smil:video[contains(@src, "%s")]/@src' % resolution, namespaces=NAMESPACES)[0]
+		video = 'http://ht.cdn.turner.com/%s' % clip
 	except:
 		pass
 
-	if video is None:
-		videos = data.xpath("//file")
-		found = False
-		res = RESOLUTIONS.index(resolution)
-		i = 0
-
-		while not found:
-			if i == len(RESOLUTIONS):
-				break
-			for v in videos:
-				if v.text.endswith('.mp4'):
-					if v.get('bitrate') == RESOLUTIONS[(res - i)]:
-						video = video.text
-						found = True
-						break
-					else:
-						pass
-				else:
-					continue
-			i = i+1
+	if not video:
+		available_bitrates = data.xpath('//file/@bitrate')
+		available_bitrates = [int(bitrate.split('x')[-1]) for bitrate in available_bitrates]
+		closest = min((abs(int(resolution.split('x')[-1]) - i), i) for i in available_bitrates)[1]
+		video = data.xpath('//file[contains(@bitrate, "x%d")]/text()' % closest)[0]
 
 	# Some videos do not have the appropriate base URL
-	if video != None and video.startswith("http://") == False:
+	if video and not video.startswith('http://'):
 		video = MEDIA_URL % video
-	
-	if video is None:
-		other_videos = data.xpath("//groupFiles/file[contains(text(), '%s')]/text()" % resolution)
+
+	if not video:
+		other_videos = data.xpath('//groupFiles/file[contains(text(), "%s")]/text()' % resolution)
 		if len(other_videos) > 0:
-			base = data.xpath("//groupFiles/baseUrl/text()")[0]
-			clip = other-videos[0]
+			base = data.xpath('//groupFiles/baseUrl/text()')[0]
+			clip = other_videos[0]
 			video = '%s/%s' % (base, clip)
 
 	if not video:
