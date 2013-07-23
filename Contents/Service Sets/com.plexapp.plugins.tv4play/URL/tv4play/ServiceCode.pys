@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
         title = None
              
     try:
-        match   = RE_SHOW_EPISODE.search(xmlElement.xpath(title)).groups()
+        match   = RE_SHOW_EPISODE.search(title).groups()
         show    = match[0]
         episode = int(match[2])
     except:
