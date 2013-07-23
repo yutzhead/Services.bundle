@@ -62,9 +62,16 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res='1080', **kwargs):
 
     id = url.split('/')[-1]
+    json_obj = JSON.ObjectFromURL(AUTH_URL % id)
     yt_id = None
 
-    for version in JSON.ObjectFromURL(AUTH_URL % id)['video']['videoVersions']:
+    if 'video' not in json_obj or not json_obj['video']:
+        if 'statusMessage' in json_obj and 'where you live' in json_obj['statusMessage']:
+            raise Ex.MediaGeoblocked
+
+        raise Ex.MediaNotAvailable
+
+    for version in json_obj['video']['videoVersions']:
         if 'sourceType' in version and version['sourceType'] == 0:
             yt_id = version['id']
             break
