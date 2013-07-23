@@ -110,7 +110,6 @@ def PlayLive(url):
         raise Ex.MediaNotAvailable
       
     streams = GetHLSStreams(hlsurl)
-    Log(hlsurl)
 
     return IndirectResponse(
         VideoClipObject,
