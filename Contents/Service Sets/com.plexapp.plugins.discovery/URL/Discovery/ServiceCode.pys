@@ -108,12 +108,10 @@ def PlayLive(url):
         hlsurl          = 'http://iphone-streaming.ustream.tv/uhls/%s/streams/live/iphone/playlist.m3u8?appType=11&amp;appVersion=2' % videoID
     except:
         raise Ex.MediaNotAvailable
-      
-    streams = GetHLSStreams(hlsurl)
-
+   
     return IndirectResponse(
         VideoClipObject,
-        key = HTTPLiveStreamURL(streams[0]['url'])
+        key = HTTPLiveStreamURL(GetClientDependentURL(hlsurl))
     )
 
 ####################################################################################################
@@ -125,12 +123,21 @@ def PlayHLS(url):
     except:
         raise Ex.MediaNotAvailable
 
-    streams = GetHLSStreams(hlsurl)
-
     return IndirectResponse(
         VideoClipObject,
-        key = HTTPLiveStreamURL(streams[0]['url'])
+        key = HTTPLiveStreamURL(GetClientDependentURL(hlsurl))
     )
+
+####################################################################################################
+def GetClientDependentURL(url):
+    if Client.Platform in ['MacOSX', 'Windows']:
+        streams = GetHLSStreams(url)
+    
+        # Return highest bitrate url since PMC can't handle HLS correctly
+        return streams[0]['url']
+    else:
+        # Other clients can handle HLS correctly
+        return url 
 
 ####################################################################################################
 def GetHLSStreams(url):

@@ -112,11 +112,9 @@ def PlayVideo(id):
             clip = item.xpath(".//url/text()")[0]
             
             if base.startswith('http') and base.endswith('.m3u8'):
-                    streams = GetHLSStreams(clip)
-
                     return IndirectResponse(
                         VideoClipObject,
-                        key = HTTPLiveStreamURL(streams[0]['url'])
+                        key = HTTPLiveStreamURL(GetClientDependentURL(clip))
                     )
 
     # Add Webkit playback if we couldn't find a stream.
@@ -124,6 +122,17 @@ def PlayVideo(id):
         VideoClipObject,
         key = WebVideoURL("http://embed.tv4play.se/tv4play/syndication/v1/popout.html?vid=" + id)
     )
+
+###########################################################
+def GetClientDependentURL(url):
+    if Client.Platform in ['MacOSX', 'Windows']:
+        streams = GetHLSStreams(url)
+    
+        # Return highest bitrate url since PMC can't handle HLS correctly
+        return streams[0]['url']
+    else:
+        # Other clients can handle HLS correctly
+        return url 
 
 ###########################################################
 def GetHLSStreams(url):
