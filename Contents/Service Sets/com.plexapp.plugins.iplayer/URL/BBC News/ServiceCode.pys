@@ -8,22 +8,25 @@ def MetadataObjectForURL(url):
 	# Find the playlist url that the item is associated with
 	playlist_url = page.xpath("//param[@name='playlist']")
 
-	if len(playlist_url) == 0:
-		return None
+	if len(playlist_url) < 1:
+		raise Ex.MediaNotAvailable
 
 	playlist_url = playlist_url[0].get('value')
 	playlist_page = XML.ElementFromURL(playlist_url)
 
 	# Extract the available information
-	title = playlist_page.xpath("//p:playlist/p:title/text()", namespaces = NAMESPACES)[0]
-	try: summary = playlist_page.xpath("//p:playlist/p:summary/text()", namespaces = NAMESPACES)[0]
+	title = playlist_page.xpath("//p:playlist/p:title/text()", namespaces=NAMESPACES)[0]
+
+	try: summary = playlist_page.xpath("//p:playlist/p:summary/text()", namespaces=NAMESPACES)[0]
 	except: summary = None
-	thumb = playlist_page.xpath("//p:playlist/p:link[@rel='holding']", namespaces = NAMESPACES)[0].get('href')
+
+	try: thumb = playlist_page.xpath("//p:playlist/p:link[@rel='holding']/@href", namespaces=NAMESPACES)[0]
+	except: thumb = ''
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
