@@ -1,13 +1,19 @@
-HTTP_HEADERS = {'User-Agent': 'AppleCoreMedia/1.0.0.12D78 (Macintosh; U; Intel Mac OS X 10_8_3; en_us)'}
+HTTP_HEADERS_VID = {
+	'User-Agent': 'AppleCoreMedia/1.0.0.12D78 (Macintosh; U; Intel Mac OS X 10_8_3; en_us)'
+}
+
+HTTP_HEADERS = {
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1',
+	'Host': 'trailers.apple.com'
+}
+
 ALL_VIDEOS_INC = '%s/includes/automatic.html'
 VIDEO_INC = '%s/includes/%s/automatic.html'
 
 # 'h640w' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
 QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
 
-RE_URL_INFO = Regex('^http://trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
-
-HTTP.CacheTime = CACHE_1DAY
+RE_URL_INFO = Regex('^http://(?:trailers|www)\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -16,14 +22,15 @@ def NormalizeURL(url):
 	(studio, title, video) = RE_URL_INFO.findall(url)[0]
 	if not video: video = 'trailer'
 
-	return 'http://trailers.apple.com/trailers/%s/%s/#%s' % (studio, title, video)
+	host = 'www.apple.com' if Client.Product == 'PlexConnect' else 'trailers.apple.com'
+	return 'http://%s/trailers/%s/%s/#%s' % (host, studio, title, video)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	video = FindVideoId(url)
 
-	inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % url.split('/#')[0])
+	inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % url.split('/#')[0], headers=HTTP_HEADERS)
 	title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4/text()' % video)[0]
 
 	try:
@@ -38,7 +45,7 @@ def MetadataObjectForURL(url):
 	except:
 		originally_available_at = None
 
-	amt_html = HTML.ElementFromURL(url.split('#')[0])
+	amt_html = HTML.ElementFromURL(url.split('#')[0], headers=HTTP_HEADERS)
 
 	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content|//title/text()')[0].split(' - Movie Trailers')[0]
 	summary = amt_html.xpath('//meta[@property="og:description"]/@content|//meta[@name="Description"]/@content')[0]
@@ -52,41 +59,31 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		duration = duration,
 		originally_available_at = originally_available_at,
-		thumb = Resource.ContentsOfURLWithFallback([thumb_xlarge, thumb_large, thumb])
+		thumb = Callback(GetThumb, thumbs=[thumb_xlarge, thumb_large, thumb], client=Client.Product)
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h1080p'))],
-			video_resolution = '1080',
-			container = Container.MOV,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h720p'))],
-			video_resolution = '720',
-			container = Container.MOV,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h480p'))],
-			video_resolution = '480',
-			container = Container.MOV,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)
-	]
+	if Client.Product == 'PlexConnect':
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
+				video_resolution = resolution
+			) for resolution in ['1080', '720', '480']
+		]
+	else:
+		return [
+			MediaObject(
+				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
+				video_resolution = resolution,
+				container = Container.MOV,
+				video_codec = VideoCodec.H264,
+				audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			) for resolution in ['1080', '720', '480']
+		]
 
 ####################################################################################################
 @indirect
@@ -98,7 +95,7 @@ def PlayVideo(url, fmt=None):
 	fmt = fmt.replace('HD ', 'h') # Keep backwards compatibility
 	video = FindVideoId(url)
 
-	html = HTML.ElementFromURL(VIDEO_INC % (url.split('/#')[0], video))
+	html = HTML.ElementFromURL(VIDEO_INC % (url.split('/#')[0], video), headers=HTTP_HEADERS)
 	video_url = html.xpath('//a[@class="movieLink"]/@href')
 
 	if len(video_url) < 1:
@@ -109,10 +106,11 @@ def PlayVideo(url, fmt=None):
 	# Find the requested video quality or figure out what the next best available quality is
 	for i in range(QUALITY.index(fmt), len(QUALITY)):
 		final_url = '%s_%s.mov' % (video_url, QUALITY[i])
+		final_url = final_url.replace('http://trailers.apple.com/', 'http://movietrailers.apple.com/')
 
 		try:
-			test = HTTP.Request(final_url, headers=HTTP_HEADERS).headers
-			oc = ObjectContainer(http_headers=HTTP_HEADERS)
+			test = HTTP.Request(final_url, headers=HTTP_HEADERS_VID, cacheTime=0).headers
+			oc = ObjectContainer(http_headers=HTTP_HEADERS_VID)
 
 			oc.add(VideoClipObject(
 				items = [
@@ -135,7 +133,7 @@ def FindVideoId(url):
 	(base_url, video) = url.split('/#')
 
 	try:
-		inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % base_url)
+		inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % base_url, headers=HTTP_HEADERS)
 	except:
 		raise Ex.MediaNotAvailable
 
@@ -159,3 +157,18 @@ def FindVideoId(url):
 				video = title[0].xpath('./parent::a/@href')[0].split('/')[1]
 
 	return video
+
+####################################################################################################
+def GetThumb(thumbs=[], client=''):
+
+	for url in thumbs:
+		if client == 'PlexConnect':
+			url = url.replace('http://trailers.apple.com/', 'http://www.apple.com/')
+
+		try:
+			data = HTTP.Request(url, cacheTime=CACHE_1MONTH, headers=HTTP_HEADERS).content
+			return DataObject(data, 'image/jpeg')
+		except:
+			continue
+
+	return Redirect('http://resources-cdn.plexapp.com/image/source/com.plexapp.plugins.amt.jpg')
