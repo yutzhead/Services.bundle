@@ -4,7 +4,7 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>tv4play</key>
+		<key>TV4 Play</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
