@@ -10,7 +10,7 @@ RE_CLIP_URL     = Regex("url:'(http://.+\.m3u8)'")
 
 
 EPISODE_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
-CLIP_LOOKUP     = 'http://esi.ctv.ca/datafeed/flv/urlgenjsext.aspx?vid=%s&formatid=28'
+CLIP_LOOKUP     = 'http://esi.ctv.ca/datafeed/flv/urlgenjsext.aspx?formatid=28&vid=%s'
 AD_LOOKUP       = 'http://ad.doubleclick.net/pfadx/ctv.ctvprimetimeiphone;clip=%s;sz=1x1;tile=%s;envr=prod'
 
 SITES = ['ctv.ca', 'tsn.ca', 'discoverychannel.ca', 'thecomedynetwork.ca', 'bravo.ca', 'spacecast.com', 'fashiontelevision.com']
@@ -154,8 +154,12 @@ def PlayVideo(url, index=None):
     if index < (len(clip_ids) - 1):
       '''grab the proper rtmp segment based on the given index'''
       clipid = clip_ids[index]
-      clip_json = HTTP.Request(CLIP_LOOKUP % clipid, headers={'User-Agent':'CTV/1.0.7 CFNetwork/609.1.4 Darwin/13.0.0'}).content
-      clip_url = RE_CLIP_URL.search(clip_json).group(1)
+      clip_json = HTTP.Request(CLIP_LOOKUP % clipid).content
+      try:
+        clip_url = RE_CLIP_URL.search(clip_json).group(1)
+      except:
+        Log("This media requires stacked RTMP streams which is currenlty not supported.")
+        raise Ex.MediaNotAvailable
       return Redirect(clip_url)
     else:
       ''' if there are no more episode segments, return an ad'''
@@ -168,8 +172,12 @@ def PlayVideo(url, index=None):
   else:
     '''grab just the single clip'''
     clipid = RE_CLIPID.search(url).group(1)
-    clip_json = HTTP.Request(CLIP_LOOKUP % clipid, headers={'User-Agent':'CTV/1.0.7 CFNetwork/609.1.4 Darwin/13.0.0'}).content
-    clip_url = RE_CLIP_URL.search(clip_json).group(1)
+    clip_json = HTTP.Request(CLIP_LOOKUP % clipid).content
+    try:
+      clip_url = RE_CLIP_URL.search(clip_json).group(1)
+    except:
+      Log("This media requires stacked RTMP streams which is currenlty not supported.")
+      raise Ex.MediaNotAvailable
     return Redirect(clip_url)
   
 ####################################################################################################
