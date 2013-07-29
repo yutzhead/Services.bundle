@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>http://www.tv4play.se/program/.*video_id=[0-9]+</string>
+				<string>http://www\.tv4play\.se/program/.*video_id=\d+</string>
 			</array>
 		</dict>
 	</dict>
