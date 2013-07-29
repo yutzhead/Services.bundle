@@ -158,7 +158,7 @@ def PlayVideo(url, index=None):
       try:
         clip_url = RE_CLIP_URL.search(clip_json).group(1)
       except:
-        Log("This media requires stacked RTMP streams which is currenlty not supported.")
+        Log("This media requires stacked RTMP streams which is currently not supported.")
         raise Ex.MediaNotAvailable
       return Redirect(clip_url)
     else:
@@ -176,7 +176,7 @@ def PlayVideo(url, index=None):
     try:
       clip_url = RE_CLIP_URL.search(clip_json).group(1)
     except:
-      Log("This media requires stacked RTMP streams which is currenlty not supported.")
+      Log("This media requires stacked RTMP streams which is currently not supported.")
       raise Ex.MediaNotAvailable
     return Redirect(clip_url)
   
