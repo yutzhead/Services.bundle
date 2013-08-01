@@ -201,7 +201,14 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
 	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
 	rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
-	stream_url = rtmp_url.split('/viacomccstrm/')[1]
+
+	if '/viacomccstrm/' in rtmp_url:
+		stream_url = rtmp_url.split('/viacomccstrm/')[1]
+	elif '/mtvnorigin/' in rtmp_url:
+		stream_url = rtmp_url.split('/mtvnorigin/')[1]
+	else:
+		raise Ex.MediaNotAvailable
+
 	mp4_url = MP4_URL % stream_url
 
 	return Redirect(mp4_url)
