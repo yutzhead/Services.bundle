@@ -76,7 +76,7 @@ def PlayVideo(url):
 	details = GetDetails(url, API_IPAD_EXT)
 
 	if 'reasonsForNoStreams' in details:
-		if "Videon Ã¤r inte tillgÃ¤nglig i din region." in details['reasonsForNoStreams']:
+		if "Videon är inte tillgänglig i din region." in details['reasonsForNoStreams']:
 			raise Ex.MediaGeoblocked
 		else:
                         return PlayRTMPVideo(url)
@@ -184,7 +184,7 @@ def PlayRTMPVideo(url):
 	details = GetDetails(url)
 
 	if 'reasonsForNoStreams' in details:
-		if "Videon Ã¤r inte tillgÃ¤nglig i din region." in details['reasonsForNoStreams']:
+		if "Videon är inte tillgänglig i din region." in details['reasonsForNoStreams']:
 			raise Ex.MediaGeoblocked
 		else:
 			raise Ex.MediaNotAvailable
