@@ -197,7 +197,7 @@ def PlayVideo(url, media_selector_url=None, height='720'):
     rtmp_url = 'rtmp://%s/%s?%s' % (server, application, auth)
 
     clip = stream.get('identifier')
-    swf_url = 'http://www.bbc.co.uk/emp/10player.swf'
+    swf_url = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
     return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
 
   except:
