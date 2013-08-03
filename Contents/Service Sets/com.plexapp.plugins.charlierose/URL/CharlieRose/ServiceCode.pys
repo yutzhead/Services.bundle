@@ -9,7 +9,13 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
-	title = html.xpath('//meta[@name="title"]/@content')[0].split('Charlie Rose -')[-1].strip()
+	title = html.xpath('//meta[@name="title"]/@content')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
+	else:
+		title = title[0].split('Charlie Rose -')[-1].strip()
+
 	summary = html.xpath('//dl[@class="video-description"]/dt[text()="Description"]/following-sibling::dd/p/text()')[0]
 
 	thumb = html.xpath('//link[@rel="image_src"]/@href')
