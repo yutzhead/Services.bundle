@@ -193,6 +193,7 @@ def PlayVideo(url, media_selector_url=None, height='720'):
     swf_url = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
     rtmp_url = 'rtmp://%s/%s?%s' % (server, application, auth)
 
+    app = None
     if supplier in ['limelight']:      
       rtmp_url = 'rtmp://' + server + "/" + application 
       
@@ -201,7 +202,7 @@ def PlayVideo(url, media_selector_url=None, height='720'):
         rtmp_url = rtmp_url + "?" + auth
         app = application + "?" + auth
       
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
+    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, app = app, swf_url = swf_url))
 
   except:
     # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
