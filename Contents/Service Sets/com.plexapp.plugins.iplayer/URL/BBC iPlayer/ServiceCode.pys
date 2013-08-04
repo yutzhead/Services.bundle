@@ -165,39 +165,35 @@ def PlayVideo(url, media_selector_url=None, height='720'):
     if not media_selector_url:
       raise
 
-    stream_details = XML.ElementFromURL(media_selector_url)
+    stream_details = XML.ElementFromURL(media_selector_url, cacheTime=0)
 
-    last_stream = None
-    heights = ['720', '468', '360']
-    index = heights.index(height)
-    for height_index in range(index, len(heights)):
-      streams = stream_details.xpath('//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index], namespaces = NAMESPACES)
-      if len(streams) > 0:
+    min_height_diff_found = 1000000 # Some huge number to get it started
+    for media in stream_details.xpath('//m:media[@kind = "video"]', namespaces = NAMESPACES):
+      height_diff = abs(int(height) - int(media.get('height')))
+      if height_diff < min_height_diff_found:
+        for connection in media.xpath('./m:connection', namespaces = NAMESPACES):
+          if 'rtmp' in connection.get('protocol') and 'level3' in connection.get('supplier'):
+            min_height_diff_found = height_diff
+            stream = connection
 
-        stream = None
-        for potential_stream in streams:
-          # Give preference to ondemand streams
-          if potential_stream.get('application') == 'ondemand':
-            stream = potential_stream
-            break
-
-        if stream == None:
-          stream = streams[0]
-        Log("Stream: " + heights[height_index])
-        break
-    
     server = stream.get('server')
+    Log("Server: " + server)
     auth = stream.get('authString')
-
+    Log("Auth: " + auth)
     supplier = stream.get('supplier')
+    Log("Supplier: " + supplier)
     application = stream.get('application')
+    Log("App: " + application)
+    clip = stream.get('identifier')
+    Log("Clip: " + clip)
+
     if application is None and supplier == 'akamai':
-      application = 'ondemand'
+      application = 'ondemand'      
 
     rtmp_url = 'rtmp://%s/%s?%s' % (server, application, auth)
 
-    clip = stream.get('identifier')
     swf_url = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
+
     return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
 
   except:
