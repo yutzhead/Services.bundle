@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>URL</key>
 	<dict>
 		<key>MTV</key>
 		<dict>
-			<key>URLPatterns</key>
+		<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.(vh1|mtv)\.com/videos?/.+/\d{6,7}/.+</string>
-				<string>^http://www\.(vh1|mtv)\.com/videos?/\?vid=\d{6}</string>
-				<string>^http://www\.mtvhive\.com/.+/videos?/.+/\d{6,7}/.+</string>
+				<string>^http://www.(vh1|mtv|cmt).com/(videos|video)/(.+?)[0-9]{7}/(playlist|full-episode).+</string> 		
+				<string>^http://www.(vh1|mtv|cmt).com/(videos|video)/misc/[0-9]{6}/.+</string> 
+				<string>^http://www.(vh1|mtv|cmt).com/(videos|video)/(.+?)/[0-9]{5,6}/.+</string>				
+				<string>^http://www.(vh1|mtv|cmt).com/(videos|video)/(.+?)(id=|vid=)[0-9]{6}</string> 		
+				<string>^http://www.mtvhive.com/(videos|video)/[0-9]{6}/</string> 		
+				<string>^http://www.mtvhive.com/(.+?)/[0-9]{6}/.+</string> 		
 			</array>
-			<key>TestURLs</key>
+		<key>TestURLs</key>
 			<array>
 				<string>http://www.mtv.com/videos/awkward-season-3-ep-10-redefining-jenna/1708844/playlist.jhtml</string>
 				<string>http://www.mtv.com/videos/taylor-swift/377889/you-belong-with-me.jhtml</string>
@@ -20,7 +23,6 @@
 				<string>http://www.vh1.com/video/couples-therapy/full-episodes/love-by-the-numbers/1709409/playlist.jhtml</string>
 				<string>http://www.vh1.com/video/misc/791444/sht-basketball-wives-say.jhtml#id=1687433</string>
 				<string>http://www.vh1.com/video/justin-timberlake/889887/mirrors.jhtml</string>
-				<string>http://www.mtvhive.com/artist/adele/videos/448506/chasing_pavements_live</string>
 			</array>
 		</dict>
 	</dict>
