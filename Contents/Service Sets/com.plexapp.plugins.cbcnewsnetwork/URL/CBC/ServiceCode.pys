@@ -76,7 +76,12 @@ def PlayVideo(url):
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
-    id = url.split('/')[-2]
+    fields=url.split('/')
+    for i,item in enumerate(fields):
+    	if item=='ID': break
+    else:
+    	raise Ex.MediaNotAvailable
+    id=fields[i+1]
     json_obj = JSON.ObjectFromURL(JSON_URL + id + JSON_FIELDS)
 
     if 'entries' in json_obj:
