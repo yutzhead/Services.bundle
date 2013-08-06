@@ -84,7 +84,7 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
             if bitrate=='3500':
                 video_res='720'
             else:
-                video_res='420'
+                video_res='360'
             if str(video.video_resolution) == video_res:
                 vevo_video = video.parts[0].key
             else:
