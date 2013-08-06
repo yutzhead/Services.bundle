@@ -26,7 +26,10 @@ def MetadataObjectForURL(url):
 
     data = GetRSS(url)
     title = data.xpath('//title')[0].text
-    summary = data.xpath('//description')[0].text
+
+    try: summary = data.xpath('//description')[0].text
+    except: summary = None
+
     # The thumb is in item vs the main content in the MTV/VH1/CMT xml files
     thumb = data.xpath('//item/image//@url')[0]
     date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
