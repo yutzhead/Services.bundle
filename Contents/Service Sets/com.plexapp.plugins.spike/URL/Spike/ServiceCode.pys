@@ -1,6 +1,6 @@
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
-MRSS_URL = "http://udat.mtvnservices.com/service1/dispatch.htm?feed=player_arc_feed&mgid=%s"
+MRSS_URL = "http://www.spike.com/feeds/mrss/?uri=%s&ref=www.spike.com"
 FEED_URL = 'http://www.spike.com/feeds/mediagen/?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
