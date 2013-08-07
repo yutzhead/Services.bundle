@@ -3,14 +3,7 @@ BASE_OA_URL = 'http://www.oppetarkiv.se'
 import re 
 ####################################################################################################
 def NormalizeURL(url):
-
-	if not '/video/' in url and not '/klipp' in url:
-		try:
-			url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
-		except:
-			pass
-
-	return url
+    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
