@@ -137,6 +137,9 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         elif '/gsp.mtvnshrdstor/' in rtmp_url:
             stream_url = rtmp_url.split('/gsp.mtvnshrdstor/')[1]
             mp4_url = MP4_URL % ('gsp.mtvnshrdstor', stream_url)
+        elif '/gsp.ctnstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.ctnstor/')[1]
+            mp4_url = MP4_URL % ('gsp.ctnstor', stream_url)
         else:
             raise Ex.MediaNotAvailable
 
