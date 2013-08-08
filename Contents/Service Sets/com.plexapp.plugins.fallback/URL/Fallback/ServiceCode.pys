@@ -132,12 +132,10 @@ def MetadataObjectForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if url.startswith('ipad:'):
-			headers = HTTP_IPAD_UA
-		else:
-			headers = HTTP_DESKTOP_UA
-
-		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
+		is_ipad_url = url.startswith('ipad:')
+		url = url.lstrip('ipad:')
+		headers = HTTP_IPAD_UA if is_ipad_url else HTTP_DESKTOP_UA
+		req = HTTP.Request(url, cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
 
 		try:
 			req.headers
@@ -148,7 +146,13 @@ def MetadataObjectForURL(url):
 
 				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					Log.Debug(' --> [Metadata] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
-					return URLService.MetadataObjectForURL(e.headers['Location'])
+					location = e.headers['Location']
+
+					# Make sure we stay in "iPad mode" if necessary.
+					if is_ipad_url:
+						location = 'ipad:' + location
+
+					return URLService.MetadataObjectForURL(location)
 
 				return None
 
@@ -264,7 +268,7 @@ def MetadataObjectForURL(url):
 
 				return URLService.MetadataObjectForURL(bc_url)
 
-		if not url.startswith('ipad:'):
+		if not is_ipad_url:
 			return URLService.MetadataObjectForURL('ipad:%s' % url)
 
 	except:
@@ -277,12 +281,10 @@ def MediaObjectsForURL(url):
 		if not ValidURL(url):
 			return None
 
-		if url.startswith('ipad:'):
-			headers = HTTP_IPAD_UA
-		else:
-			headers = HTTP_DESKTOP_UA
-
-		req = HTTP.Request(url.lstrip('ipad:'), cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
+		is_ipad_url = url.startswith('ipad:')
+		url = url.lstrip('ipad:')
+		headers = HTTP_IPAD_UA if is_ipad_url else HTTP_DESKTOP_UA
+		req = HTTP.Request(url, cacheTime=0, headers=headers, sleep=1.0, follow_redirects=False)
 
 		try:
 			req.headers
@@ -293,7 +295,13 @@ def MediaObjectsForURL(url):
 
 				if e.headers['Location'].split('://',1)[1] != url.split('://',1)[1]:
 					Log.Debug(' --> [Media] Found an HTTP redirect to a new URL: %s' % e.headers['Location'])
-					return URLService.MediaObjectsForURL(e.headers['Location'])
+					location = e.headers['Location']
+
+					# Make sure we stay in "iPad mode" if necessary.
+					if is_ipad_url:
+						location = 'ipad:' + location
+
+					return URLService.MediaObjectsForURL(location)
 
 				return None
 
@@ -375,7 +383,7 @@ def MediaObjectsForURL(url):
 						)
 					]
 
-		if not url.startswith('ipad:'):
+		if not is_ipad_url:
 			return URLService.MediaObjectsForURL('ipad:%s' % url)
 
 	except:
