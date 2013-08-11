@@ -1,223 +1,281 @@
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
-RE_PID = Regex('iplayer/episode/([^/$]{8})')
+
+RE_PID     = Regex('iplayer/episode/([^/$]{8})')
 RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
+
 NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
 
 ####################################################################################################
 def NormalizeURL(url):
-
-  return url
+    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+    pid       = RE_PID.findall(url)[0]
+    thumb     = 'http://node2.bbcimg.co.uk/iplayer/images/episode/%s_640_360.jpg' % pid
+    programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=HTTP_HEADERS)['programme']
 
-  pid = RE_PID.findall(url)[0]
-  thumb = 'http://node2.bbcimg.co.uk/iplayer/images/episode/%s_640_360.jpg' % pid
-  programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=HTTP_HEADERS)['programme']
+    if programme['long_synopsis']:
+        summary = programme['long_synopsis']
+    elif programme['medium_synopsis']:
+        summary = programme['medium_synopsis']
+    elif programme['short_synopsis']:
+        summary = programme['short_synopsis']
+    else:
+        summary = ''
 
-  if programme['long_synopsis']:
-    summary = programme['long_synopsis']
-  elif programme['medium_synopsis']:
-    summary = programme['medium_synopsis']
-  elif programme['short_synopsis']:
-    summary = programme['short_synopsis']
-  else:
-    summary = ''
+    if programme['first_broadcast_date']:
+        originally_available_at = Datetime.ParseDate(programme['first_broadcast_date']).date()
+    else:
+        originally_available_at = None
 
-  if programme['first_broadcast_date']:
-    originally_available_at = Datetime.ParseDate(programme['first_broadcast_date']).date()
-  else:
-    originally_available_at = None
+    duration = programme['versions'][0]['duration']
 
-  duration = programme['versions'][0]['duration']
+    if 'parent' in programme:
+        parent_programme = programme['parent']['programme']
+        if parent_programme['type'] == 'series':
+            # Create an EpisodeObject...
+            show_title = parent_programme['parent']['programme']['title'] if 'parent' in parent_programme else parent_programme['title']
+            episode_title = programme['display_title']['subtitle']
 
-  if 'parent' in programme:
-    parent_programme = programme['parent']['programme']
-    if parent_programme['type'] == 'series':
-      # Create an EpisodeObject...
-      show_title = parent_programme['parent']['programme']['title'] if 'parent' in parent_programme else parent_programme['title']
-      episode_title = programme['display_title']['subtitle']
+            try: season = parent_programme['position']
+            except: season = None
 
-      try: season = parent_programme['position']
-      except: season = None
+            try: episode = programme['position']
+            except: episode = None
 
-      try: episode = programme['position']
-      except: episode = None
+            video = EpisodeObject(
+                show = show_title,
+                title = episode_title,
+                season = season,
+                index = episode,
+                summary = summary,
+                originally_available_at = originally_available_at,
+                duration = duration * 1000,
+                thumb = thumb
+            )
 
-      video = EpisodeObject(
-        show = show_title,
-        title = episode_title,
-        season = season,
-        index = episode,
-        summary = summary,
-        originally_available_at = originally_available_at,
-        duration = duration * 1000,
-        thumb = thumb
-      )
+        if programme['parent']['programme']['type'] == 'brand':
+            # Create a VideoClipObject...
+            title = programme['display_title']['title']
 
-    if programme['parent']['programme']['type'] == 'brand':
-      # Create a VideoClipObject...
-      title = programme['display_title']['title']
+            video = VideoClipObject(
+                title = title,
+                summary = summary,
+                originally_available_at = originally_available_at,
+                duration = duration * 1000,
+                thumb = thumb
+            )
 
-      video = VideoClipObject(
-        title = title,
-        summary = summary,
-        originally_available_at = originally_available_at,
-        duration = duration * 1000,
-        thumb = thumb
-      )
+    elif 'categories' in programme:
+        if programme['categories'] is not None and len(programme['categories']) > 0:
 
-  elif 'categories' in programme:
-    if programme['categories'] is not None and len(programme['categories']) > 0:
+            for category in programme['categories']:
+                # If this is a film...
+                if category['title'] == 'Films':
+                    # Create a MovieObject...
+                    title = programme['display_title']['title']
 
-      for category in programme['categories']:
-        # If this is a film...
-        if category['title'] == 'Films':
-          # Create a MovieObject...
-          title = programme['display_title']['title']
+                    video = MovieObject(
+                        title = title,
+                        summary = summary,
+                        originally_available_at = originally_available_at,
+                        duration = duration * 1000,
+                        thumb = thumb
+                    )
 
-          video = MovieObject(
-            title = title,
-            summary = summary,
-            originally_available_at = originally_available_at,
-            duration = duration * 1000,
-            thumb = thumb
-          )
+                    break
 
-          break
+                else:
+                    title = programme['display_title']['title']
+                    # Create a VideoClipObject...
+                    video = VideoClipObject(
+                        title = title,
+                        summary = summary,
+                        originally_available_at = originally_available_at,
+                        duration = duration * 1000,
+                        thumb = thumb
+                    )
+
+                    break
 
         else:
-          title = programme['display_title']['title']
-          # Create a VideoClipObject...
-          video = VideoClipObject(
-            title = title,
-            summary = summary,
-            originally_available_at = originally_available_at,
-            duration = duration * 1000,
-            thumb = thumb
-          )
+            title = programme['title']
 
-          break
+            video = VideoClipObject(
+                title = title,
+                summary = summary,
+                originally_available_at = originally_available_at,
+                duration = duration * 1000,
+                thumb = thumb
+            )
 
-    else:
-      title = programme['title']
-
-      video = VideoClipObject(
-        title = title,
-        summary = summary,
-        originally_available_at = originally_available_at,
-        duration = duration * 1000,
-        thumb = thumb
-      )
-
-  return video
+    return video
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-  return [
-    MediaObject(
-      protocol = 'rtmp',
-      video_resolution = '720',
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '720'))],
-    ),
-    MediaObject(
-      protocol = 'rtmp',
-      video_resolution = '468',
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '468'))],
-    ),
-    MediaObject(
-      protocol = 'rtmp',
-      video_resolution = 'sd',
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(DetermineAvailableVideo, url = url, height = '360'))],
-    )
-  ]
+    return [
+        MediaObject(
+            protocol = 'rtmp',
+            video_resolution = '720',
+            audio_channels = 2,
+            parts = [
+                PartObject(
+                    key=Callback(DetermineAvailableVideo, url = url, height = '720')
+                )
+            ]
+        ),
+        MediaObject(
+            protocol = 'rtmp',
+            video_resolution = '468',
+            audio_channels = 2,
+            parts = [
+                PartObject(
+                    key=Callback(DetermineAvailableVideo, url = url, height = '468')
+                )
+            ]
+        ),
+        MediaObject(
+            protocol = 'rtmp',
+            video_resolution = 'sd',
+            audio_channels = 2,
+            parts = [
+                PartObject(
+                    key=Callback(DetermineAvailableVideo, url = url, height = '360')
+                )
+            ]
+        )
+    ]
 
 ####################################################################################################
-
 @indirect
 def DetermineAvailableVideo(url, height):
-
-  try:
-    page_contents = HTTP.Request(url).content
-    details_json = RE_DETAILS.findall(page_contents)[0]
-    details = JSON.ObjectFromString(details_json)
+    try:
+        pid = RE_PID.findall(url)[0]
+        
+    except:
+        raise Ex.MediaNotAvailable
+               
+    try:
+        page_contents      = HTTP.Request(url).content
+        details_json       = RE_DETAILS.findall(page_contents)[0]
+        details            = JSON.ObjectFromString(details_json)
+        pid_details        = details[pid]
+        media_selector_url = pid_details['my_mediaselector_xml_url']
+            
+    except:
+        media_selector_url = 'http://www.bbc.co.uk/mediaselector/4/mtis/all/%s' % pid
     
-    pid = RE_PID.findall(url)[0]
-    pid_details = details[pid]
-    media_selector_url = pid_details['my_mediaselector_xml_url']
-    return IndirectResponse(VideoClipObject, key = Callback(PlayVideo, url = url, media_selector_url = media_selector_url, height = height, post_url = media_selector_url))
-
-  except:
-    # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
-    Log.Exception("Error obtaining RTMP details, falling back to WebKit")
-    return IndirectResponse(VideoClipObject, key = WebVideoURL(url)) 
+    return IndirectResponse(
+        VideoClipObject,
+        key = 
+            Callback(
+                PlayVideo,
+                post_url = media_selector_url,
+                url = url, 
+                media_selector_url = media_selector_url, 
+                height = height
+            )     
+    )
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, media_selector_url=None, height='720'):
+def PlayVideo(url, media_selector_url, height):
+    try:
+        stream_details = XML.ElementFromURL(media_selector_url, cacheTime = 0)
+    except:
+        raise Ex.MediaGeoBlocked
 
-  try:
-    # Make PlayVideo function backwards compatible
-    if not media_selector_url:
-      raise
+    # Try to get a video stream
+    stream = GetStream(stream_details = stream_details, type = 'video', height = height)
 
-    stream_details = XML.ElementFromURL(media_selector_url)
-
-    last_stream = None
-    heights = ['720', '468', '360']
-    index = heights.index(height)
-    for height_index in range(index, len(heights)):
-      streams = stream_details.xpath('//m:media[@kind = "video" and @height = "%s"]/m:connection[@protocol = "rtmp"]' % heights[height_index], namespaces = NAMESPACES)
-      if len(streams) > 0:
-
-        stream = None
-        for potential_stream in streams:
-          # Give preference to ondemand streams
-          if potential_stream.get('application') == 'ondemand':
-            stream = potential_stream
-            break
-
-        if stream == None:
-          stream = streams[0]
-        Log("Stream: " + heights[height_index])
-        break
+    if not stream:
+        # Try to get an audio stream instead
+        stream = GetStream(stream_details = stream_details, type = 'audio')
+        
+    if stream:      
+        return IndirectResponse(
+                    VideoClipObject, 
+                    key = RTMPVideoURL(
+                            url = stream['rtmp_url'], 
+                            clip = stream['clip'], 
+                            app = stream['app'], 
+                            swf_url = stream['swf_url'],
+                            live = stream['live']
+                    )
+        )
+        
+    else:
+        raise Ex.MediaNotAvailable
     
-    server = stream.get('server')
-    auth = stream.get('authString')
+####################################################################################################
+def GetStream(stream_details, type = 'video', height = 720):
+    height = int(height)
+    stream = {}
 
-    supplier = stream.get('supplier')
-    application = stream.get('application')
-    if application is None and supplier == 'akamai':
-      application = 'ondemand'
-
-    rtmp_url = 'rtmp://%s/%s?%s' % (server, application, auth)
-
-    clip = stream.get('identifier')
-    swf_url = 'http://www.bbc.co.uk/emp/10player.swf'
-    return IndirectResponse(VideoClipObject, key = RTMPVideoURL(url = rtmp_url, clip = clip, swf_url = swf_url))
-
-  except:
-    # Just in case there is a problem obtaining the RTMP details, we'll fallback to the older WebKit implementation.
-    Log.Exception("Error obtaining RTMP details, falling back to WebKit")
-    return IndirectResponse(VideoClipObject, key = WebVideoURL(url)) 
+    if type == 'video':
+        min_height_diff_found = 1000000 # Some huge number to get it started
+    else:
+        max_bitrate_found = 0
+        
+    for media in stream_details.xpath('//m:media[@kind = "%s"]' % type, namespaces = NAMESPACES):
+        if type == 'video':
+            height_diff                  = abs(height - int(media.get('height'))) 
+            possible_better_source_found = height_diff < min_height_diff_found
+        else:
+            possible_better_source_found = int(media.get('bitrate')) > max_bitrate_found
+        
+        if possible_better_source_found:
+            for connection in media.xpath('./m:connection', namespaces = NAMESPACES):
+                if 'rtmp' in connection.get('protocol'):
+                    supplier = connection.get('supplier') 
+                    if not 'akamai' in supplier or type == 'audio':
+                        if type == 'video':
+                            min_height_diff_found = height_diff
+                        else:
+                            max_bitrate_found = int(media.get('bitrate'))
+                
+                        server = connection.get('server')
+                        auth   = connection.get('authString')
+                        
+                        if not auth:
+                            auth = ''
+        
+                        app  = connection.get('application')
+                        clip = connection.get('identifier')
+                        
+                        if not app and 'akamai' in supplier:
+                            app = 'ondemand'
+                        
+                        stream['rtmp_url'] = 'rtmp://%s/%s' % (server, app)
+                        stream['app']      = app
+                        stream['clip']     = clip
+                        stream['live']     = 'live' in stream['app']
+                        stream['supplier'] = supplier
+                        
+                        if auth:
+                            stream['rtmp_url'] = stream['rtmp_url'] + '?' + auth
+                            stream['app']      = stream['app'] + '?' + auth
+                            
+    if stream:
+        stream['swf_url'] = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
+    
+    return stream 
 
 ####################################################################################################
 def TestURLs():
-  test_urls = []
-  data = HTML.ElementFromURL('http://www.bbc.co.uk/iplayer')
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.bbc.co.uk/iplayer')
 
-  for item in data.xpath('//div[contains(@class, "most-popular")]//li/a'):
-    video_url = item.get('href')
-    if video_url.startswith('/'):
-      video_url = 'http://www.bbc.co.uk' + video_url
+    for item in data.xpath('//div[contains(@class, "most-popular")]//li/a'):
+        video_url = item.get('href')
+        if video_url.startswith('/'):
+            video_url = 'http://www.bbc.co.uk' + video_url
 
-    test_urls.append(video_url)
+            test_urls.append(video_url)
 
-    if len(test_urls) > 3:
-      break
+        if len(test_urls) > 3:
+            break
 
-  return test_urls
+    return test_urls
+
