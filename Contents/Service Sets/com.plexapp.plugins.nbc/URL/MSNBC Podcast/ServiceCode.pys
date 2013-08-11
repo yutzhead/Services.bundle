@@ -6,22 +6,22 @@ RE_VIDEO_ID = Regex('/(\d{8})/')
 
 ####################################################################################################
 def NormalizeURL(url):
-	if not url.endswith('/'):
-		url = url + '/'
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	feed = RSS.FeedFromURL(url)
 	
-	title = data.xpath('//meta[@name="title"]')[0].get('content')
-	summary = data.xpath('//meta[@name="description"]')[0].get('content')
-	thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
+	title = feed.entries[0].title
+	desc = feed.entries[0].description
+	duration = Datetime.MillisecondsFromString(feed.entries[0].itunes_duration)
+	thumb = feed.channel.image['href']
 
 	return VideoClipObject(
 		title = title,
-		summary = summary,
+		summary = desc,
+		duration = duration,
 		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
@@ -34,25 +34,23 @@ def MediaObjectsForURL(url):
 					key=Callback(PlayVideo, url=url)
 				)
 			],
-			container = 'flv',
-			video_codec = 'VP6',
-			audio_codec = 'MP3',
+			container = 'm4v',
+			video_codec = 'H264',
+			audio_codec = 'AAC',
 			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
 def PlayVideo(url):
-	vid_id = RE_VIDEO_ID.search(url).group(1)
-	return Redirect(VIDEO_URL % vid_id)
-
+	return Redirect(XML.ElementFromURL(url).xpath('//enclosure')[0].get('url'))
+	
 ####################################################################################################
 def TestURLs():
 
-	test_urls = []
-	feed = RSS.FeedFromURL('http://rss.msnbc.msn.com/id/21426473/device/rss/')
-	for item in feed.entries:
-		test_urls.append(item.link)
-		if len(test_urls) > 2:
-			break
+	test_urls = [
+		'http://podcastfeeds.nbcnews.com/audio/podcast/MSNBC-MADDOW-NETCAST-M4V.xml',
+		'http://podcastfeeds.nbcnews.com/audio/podcast/MSNBC-NN-NETCAST-M4V.xml',
+		'http://podcastfeeds.nbcnews.com/audio/podcast/MSNBC-MTP-NETCAST-M4V.xml'
+	]
 	return test_urls
