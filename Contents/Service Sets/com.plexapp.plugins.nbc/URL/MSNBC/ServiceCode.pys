@@ -1,0 +1,59 @@
+VIDEO_URL = "http://www.msnbc.msn.com/default.cdnx/id/%s/displaymode/1157?t=.flv" #video_id
+
+AudioStreamObject.language_code = Locale.Language.English
+
+RE_VIDEO_ID = Regex('/(\d{8})/')
+
+####################################################################################################
+def NormalizeURL(url):
+	if not url.endswith('/'):
+		url = url + '/'
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	data = HTML.ElementFromURL(url)
+	
+	title = data.xpath('//meta[@name="title"]')[0].get('content')
+	summary = data.xpath('//meta[@name="description"]')[0].get('content')
+	thumb = data.xpath('//link[@rel="image_src"]')[0].get('href')
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key=Callback(PlayVideo, url=url)
+				)
+			],
+			container = 'flv',
+			video_codec = 'VP6',
+			audio_codec = 'AAC',
+			optimized_for_streaming = True
+		)
+	]
+
+####################################################################################################
+def PlayVideo(url):
+	vid_id = RE_VIDEO_ID.search(url).group(1)
+	return Redirect(VIDEO_URL % vid_id)
+
+####################################################################################################
+def TestURLs():
+
+	test_urls = []
+	feed = RSS.FeedFromURL('http://rss.msnbc.msn.com/id/21426473/device/rss/')
+	for item in feed.entries:
+		test_urls.append(item.link)
+		if len(test_urls) > 2:
+			break
+	return test_urls
