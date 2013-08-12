@@ -158,7 +158,9 @@ def GetRSS(url):
     if not mgid:
         raise Ex.MediaExpired
 
-    if 'playlist' in url or 'full-episode' in url:
+    # There are a few errors popping up because MTV is using videolist instead of video for some of their misc videos now
+    # So changing this line to length will fix the issue, since all mgids with 7 digits use videolist, while mgids with 6 or less digits use video
+    if len(mgid) > 6:
         mrss_data = XML.ElementFromURL(MRSS_URL %('videolist', mgid))
     else:
         mrss_data = XML.ElementFromURL(MRSS_URL %('video', mgid))
