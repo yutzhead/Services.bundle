@@ -6,13 +6,14 @@ RE_VIDEO_ID = Regex('/(\d{8})/')
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	feed = RSS.FeedFromURL(url)
-	
+
 	title = feed.entries[0].title
 	desc = feed.entries[0].description
 	duration = Datetime.MillisecondsFromString(feed.entries[0].itunes_duration)
@@ -27,24 +28,28 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
 	return [
 		MediaObject(
 			parts = [
 				PartObject(
-					key=Callback(PlayVideo, url=url)
+					key = Callback(PlayVideo, url=url)
 				)
 			],
 			container = 'm4v',
-			video_codec = 'H264',
-			audio_codec = 'AAC',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
 			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
-	return Redirect(XML.ElementFromURL(url).xpath('//enclosure')[0].get('url'))
-	
+
+	video_url = XML.ElementFromURL(url).xpath('//enclosure')[0].get('url')
+	return IndirectResponse(VideoClipObject, key=video_url)
+
 ####################################################################################################
 def TestURLs():
 
@@ -53,4 +58,5 @@ def TestURLs():
 		'http://podcastfeeds.nbcnews.com/audio/podcast/MSNBC-NN-NETCAST-M4V.xml',
 		'http://podcastfeeds.nbcnews.com/audio/podcast/MSNBC-MTP-NETCAST-M4V.xml'
 	]
+
 	return test_urls
