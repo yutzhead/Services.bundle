@@ -66,6 +66,8 @@ def PlayVideo(url, fmt='hi'):
 	while index > -1:
 		if ('%s_url' % fmts[index]) in clip:
 			video_url = clip['%s_url' % fmts[index]]
+            if fmt == 'hd':
+                video_url = video_url + '&
 			break
 		else:
 			index = index - 1
