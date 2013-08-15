@@ -86,7 +86,12 @@ def PlayVideo(url, bitrate):
 def GetVideoXML(url):
 
 	content = HTTP.Request(url).content
-	player_vars = RE_PLAYER_VARS.search(content).groupdict()
+	player_vars = RE_PLAYER_VARS.search(content)
+
+	if not player_vars:
+		raise Ex.MediaNotAvailable
+	else:
+		player_vars = player_vars.groupdict()
 
 	try:
 		# Once in a while we encounter an empty xml file
