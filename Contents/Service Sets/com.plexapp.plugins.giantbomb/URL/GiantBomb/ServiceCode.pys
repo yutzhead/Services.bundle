@@ -67,7 +67,7 @@ def PlayVideo(url, fmt='hi'):
 		if ('%s_url' % fmts[index]) in clip:
 			video_url = clip['%s_url' % fmts[index]]
             if fmt == 'hd':
-                video_url = video_url + '&
+                video_url = '%s&%s' % (video_url, ApiKey())
 			break
 		else:
 			index = index - 1
