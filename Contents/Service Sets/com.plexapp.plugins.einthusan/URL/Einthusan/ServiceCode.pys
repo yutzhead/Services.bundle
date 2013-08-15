@@ -65,6 +65,9 @@ def PlayVideo(url, res):
 	content = HTTP.Request(url).content
 	video_files = RE_FILE_URL.findall(content)
 
+	if len(video_files) < 1:
+		raise Ex.MediaNotAvailable
+
 	if res == 'hd' and len(video_files) > 1:
 		video_url = video_files[1]
 	else:
