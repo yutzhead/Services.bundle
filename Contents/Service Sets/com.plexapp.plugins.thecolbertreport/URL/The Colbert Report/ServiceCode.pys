@@ -16,6 +16,21 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
 	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
 	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	try:
+		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+	except:
+		video_player_box = html.xpath('//div[@id="video_player_box"]')
+		if len(video_player_box) < 1:
+			raise Ex.MediaExpired
+
+		uri = video_player_box[0].get('data-mgid')
+
+		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+		duration = 0
+		for segment in media_urls:
+			duration = duration + int(segment.get('duration'))
+		duration = duration*1000
 
 	if 'full episode' in page_title.lower():
 
@@ -29,6 +44,7 @@ def MetadataObjectForURL(url):
 			show = 'The Colbert Report',
 			title = title,
 			summary = summary,
+			duration = duration,
 			thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 			originally_available_at = originally_available_at
 		)
@@ -44,6 +60,7 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
+			duration = duration,
 			thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 			originally_available_at = originally_available_at
 		)
