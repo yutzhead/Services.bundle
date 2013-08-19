@@ -125,10 +125,12 @@ def PlayVideo(id):
 
 ###########################################################
 def GetClientDependentURL(url):
-    if Client.Platform in ['MacOSX', 'Windows']:
+    if Client.Platform in ['MacOSX', 'Windows', None]:
         streams = GetHLSStreams(url)
     
         # Return highest bitrate url since PMC can't handle HLS correctly
+        # Also consider a client not identifying itself as needing help,
+        # the Samsung client is one of those. 
         return streams[0]['url']
     else:
         # Other clients can handle HLS correctly
