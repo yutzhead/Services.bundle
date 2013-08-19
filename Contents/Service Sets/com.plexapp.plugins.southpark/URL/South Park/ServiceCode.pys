@@ -30,11 +30,32 @@ def MetadataObjectForURL(url):
 	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
 	summary = data.xpath('//meta[@name="og:description"]')[0].get('content')
 	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
+	try:
+		duration = int(data.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+	except:
+		content = HTTP.Request(url).content
+		uri = RE_URI.search(content)
+
+		if not uri:
+			raise Ex.MediaNotAvailable
+
+		host = url.split('/')[2]
+
+		mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1))).content
+		mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+		mrss_data = XML.ElementFromString(mrss_data)
+		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+		duration = 0
+		for segment in media_urls:
+			duration = duration + int(segment.get('duration'))
+		duration = duration*1000
+
 
 	if 'clips' in url:
 		return VideoClipObject(
 			title = title,
 			summary = summary,
+			duration = duration,
 			thumb = thumb
 		)
 
@@ -50,6 +71,7 @@ def MetadataObjectForURL(url):
 			season = int(season),
 			index = int(index),
 			summary = summary,
+			duration = duration,
 			thumb = thumb
 		)
 
