@@ -7,10 +7,13 @@ MediaObject.optimized_for_streaming = True
 MediaObject.video_codec = VideoCodec.H264
 MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
+
 ####################################################################################################
 def NormalizeURL(url):
+
 	if not url.endswith('/'):
 		url = url +'/'
+
 	return url
 
 ####################################################################################################
@@ -42,7 +45,7 @@ def MediaObjectsForURL(url):
 			video_resolution = 1080
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='high'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hi'))],
 			bitrate = 1800,
 			video_resolution = 720
 		),
@@ -56,22 +59,22 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, fmt='hi'):
 
-	fmts = ['low','high','hd']
+	fmts = ['low','hi','hd']
 	index = fmts.index(fmt)
-	
-	clip = GetClip(url)
-	
 	video_url = None
-	
+
+	clip = GetClip(url)
+
 	while index > -1:
 		if ('%s_url' % fmts[index]) in clip:
 			video_url = clip['%s_url' % fmts[index]]
-            if fmt == 'hd':
-                video_url = '%s&api_key=%s' % (video_url, ApiKey())
+
+			if fmt == 'hd':
+				video_url = '%s&api_key=%s' % (video_url, ApiKey())
 			break
 		else:
 			index = index - 1
-	
+
 	if not video_url:
 		raise Ex.MediaNotAvailable
 
@@ -98,10 +101,12 @@ def GetClip(url):
 
 ####################################################################################################
 def ApiKey():
+
 	link_code = Prefs['link_code']
+
 	if link_code and len(link_code) == 6:
 		response = JSON.ObjectFromURL(API_PATH + '/validate?link_code=' + link_code.upper() + '&format=json')
 		if 'api_key' in response:
 			return response['api_key']
-	
+
 	return API_KEY
