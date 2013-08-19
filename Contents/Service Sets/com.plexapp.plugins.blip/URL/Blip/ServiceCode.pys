@@ -26,6 +26,9 @@ def MetadataObjectForURL(url):
 
 	data = GetJson(url)
 
+	if 'title' not in data:
+		raise Ex.MediaNotAvailable
+
 	tags = []
 	if 'tags' in data:
 		for tag in data['tags']:
