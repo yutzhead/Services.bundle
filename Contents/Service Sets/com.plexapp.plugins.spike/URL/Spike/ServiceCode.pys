@@ -3,6 +3,7 @@ NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 MRSS_URL = "http://www.spike.com/feeds/mrss/?uri=%s&ref=www.spike.com"
 FEED_URL = 'http://www.spike.com/feeds/mediagen/?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+RE_AMPERSANDS = Regex('&(?!amp;)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -181,7 +182,10 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	mrss_data = HTTP.Request(MRSS_URL % uri).content
+	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	guids = mrss_data.xpath('//guid')
 
 	if len(guids) < 1:
