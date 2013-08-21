@@ -82,7 +82,9 @@ def GetJSON(url):
 	if not json:
 		raise Ex.MediaNotAvailable
 
-	return JSON.ObjectFromString(json.group(1))
+	json = json.group(1).replace('playerPlaylistSources', '""')
+
+	return JSON.ObjectFromString(json)
 
 ####################################################################################################
 def TestURLs():
