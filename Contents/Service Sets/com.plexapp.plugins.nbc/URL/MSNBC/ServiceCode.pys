@@ -2,7 +2,7 @@ VIDEO_URL = "http://www.msnbc.msn.com/default.cdnx/id/%s/displaymode/1157?t=.flv
 
 AudioStreamObject.language_code = Locale.Language.English
 
-RE_VIDEO_ID = Regex('/(\d{8})/')
+RE_VIDEO_ID = Regex('\/(\d{8})')
 
 ####################################################################################################
 def NormalizeURL(url):
