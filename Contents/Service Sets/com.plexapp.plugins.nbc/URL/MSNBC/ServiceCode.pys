@@ -6,7 +6,8 @@ RE_VIDEO_ID = Regex('\/(\d{8})')
 
 ####################################################################################################
 def NormalizeURL(url):
-
+	if '#' in url:
+		url = url.split('#')[0]
 	if not url.endswith('/'):
 		url = url + '/'
 
@@ -48,7 +49,9 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	vid_id = RE_VIDEO_ID.search(url).group(1)
+	vid_id = RE_VIDEO_ID.findall(url)[-1]
+	Log(vid_id)
+	Log(VIDEO_URL % vid_id)
 	return IndirectResponse(VideoClipObject, key=VIDEO_URL % vid_id)
 
 ####################################################################################################
