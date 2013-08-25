@@ -17,7 +17,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.nbcnews.com/video/.+</string>
+				<string>^http://www.nbcnews.com/(id|video)/.+</string>
 				<string>^hhttp://www.today.com/video/.+</string>
 				<string>^http://video.msnbc.msn.com/.+</string>
 			</array>
