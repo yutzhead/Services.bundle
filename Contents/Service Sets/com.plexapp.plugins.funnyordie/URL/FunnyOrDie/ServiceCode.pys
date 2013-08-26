@@ -27,11 +27,18 @@ def MetadataObjectForURL(url):
 	except:
 		duartion = None
 
+	try:
+		date = html.xpath('//meta[@itemprop="uploadDate"]/@content')[0].split(' ')[0]
+		date = Datetime.ParseDate(date)
+	except:
+		date = None
+
 	return VideoClipObject(
 		title = title,
 		summary = description,
 		thumb = Resource.ContentsOfURLWithFallback(thumb),
-		duration = duration
+		duration = duration,
+		originally_available_at = date
 	)
 
 ####################################################################################################
