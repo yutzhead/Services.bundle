@@ -1,10 +1,10 @@
-IPAD_URL = 'http://v.fod4.com/i/v/%s/v,%s,.mp4.csmil/master.m3u8?__b__=600__a__=off'
-RE_VIDEO_ID = Regex('/videos/(?P<video_id>[^/]+)')
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
+RE_VIDEO_URL = Regex('type: "application/vnd.apple.mpegurl", src: "([^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split('?',1)[0]
+	url = url.split('?')[0]
 
 	if '/embed/' in url:
 		url = url.replace('/embed/', '/videos/')
@@ -14,22 +14,23 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	# Extract the details available directly form the page.
-	title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
-	description = page.xpath("//head//meta[@property='og:description']")[0].get('content')
-	thumb = page.xpath("//head//meta[@property='og:image']")[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	description = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
 	try:
-		duration = int(page.xpath("//head//meta[@property='video:duration']")[0].get('content'))*1000
+		duration = html.xpath('//meta[@property="video:duration"]/@content')[0]
+		duration = int(duration) * 1000
 	except:
 		duartion = None
 
 	return VideoClipObject(
 		title = title,
 		summary = description,
-		thumb = thumb,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		duration = duration
 	)
 
@@ -38,52 +39,27 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
+			parts = [
+				PartObject(
+					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			],
 			video_resolution = '720',
-			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res='RESOLUTION=1280x720')))],
-			audio_channels = 2
-		),
-		MediaObject(
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			video_resolution = 'sd',
-			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, res='RESOLUTION=480x270')))],
 			audio_channels = 2
 		)
 	]
 
 ####################################################################################################
-def PlayVideo(url=None, res='RESOLUTION=1280x720', **kwargs):
+@indirect
+def PlayVideo(url, **kwargs):
 
 	if not url:
 		raise Ex.MediaNotAvailable
 
-	video_id = RE_VIDEO_ID.search(url).group('video_id')
+	data = HTTP.Request(url, headers=HTTP_HEADERS).content
+	video_url = RE_VIDEO_URL.search(data)
 
-	# Not all clips are available in higher bitrates, but most appear to have up to 1200 at least.
-	# Use 110 as a last resort.
+	if not video_url:
+		raise Ex.MediaNotAvailable
 
-	try:
-		master_playlist = HTTP.Request(IPAD_URL % (video_id, '110,200,400,600,1200,1800,2500')).content.split('\n')
-	except:
-		try: 
-			master_playlist = HTTP.Request(IPAD_URL % (video_id, '110,200,400,600,1200')).content.split('\n')
-		except:
-			try:
-				master_playlist = HTTP.Request(IPAD_URL % (video_id, '110')).content.split('\n')
-			except:
-				raise Ex.MediaNotAvailable
-
-	playlist_url = None
-
-	for i, line in enumerate(master_playlist):
-		if res in line:
-			playlist_url = master_playlist[i+1]
-		if 'avc1' in line:
-			fallback_playlist_url = master_playlist[i+1]
-
-	if not playlist_url:
-		playlist_url = fallback_playlist_url
-
-	return Redirect(playlist_url)
+	return IndirectResponse(VideoClipObject, key=video_url.group(1))
