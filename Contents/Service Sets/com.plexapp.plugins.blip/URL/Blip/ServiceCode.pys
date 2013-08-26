@@ -43,7 +43,7 @@ def MetadataObjectForURL(url):
 		summary = summary,
 		originally_available_at = Datetime.ParseDate(data['datestamp']).date(),
 		duration = int(data['media']['duration']) * 1000,
-		thumb = data['thumbnailUrl'],
+		thumb = Resource.ContentsOfURLWithFallback(data['thumbnailUrl']),
 		genres = [data['categoryName']],
 		tags = tags
 	)
