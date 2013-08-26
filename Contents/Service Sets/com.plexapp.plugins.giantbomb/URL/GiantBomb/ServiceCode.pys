@@ -57,6 +57,7 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, fmt='hi'):
 
 	fmts = ['low','hi','hd']
@@ -70,7 +71,7 @@ def PlayVideo(url, fmt='hi'):
 			video_url = clip['%s_url' % fmts[index]]
 
 			if fmt == 'hd':
-				video_url = '%s&api_key=%s' % (video_url, ApiKey())
+				video_url = '%s?api_key=%s' % (video_url, ApiKey())
 			break
 		else:
 			index = index - 1
@@ -78,7 +79,7 @@ def PlayVideo(url, fmt='hi'):
 	if not video_url:
 		raise Ex.MediaNotAvailable
 
-	return Redirect(video_url)
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetClip(url):
