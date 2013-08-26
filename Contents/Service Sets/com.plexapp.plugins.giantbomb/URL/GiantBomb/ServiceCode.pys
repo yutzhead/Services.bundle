@@ -45,7 +45,7 @@ def MediaObjectsForURL(url):
 			video_resolution = 1080
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hi'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='high'))],
 			bitrate = 1800,
 			video_resolution = 720
 		),
@@ -58,9 +58,13 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, fmt='hi'):
+def PlayVideo(url, fmt='high'):
 
-	fmts = ['low','hi','hd']
+	fmts = ['low','high','hd']
+
+	if fmt not in fmt:
+		fmt = 'high'
+
 	index = fmts.index(fmt)
 	video_url = None
 
