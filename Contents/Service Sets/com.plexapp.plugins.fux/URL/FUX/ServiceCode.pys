@@ -1,5 +1,6 @@
 BASE_URL = 'http://www.fux.com'
 RE_PLAYLIST = Regex('playlist: \[(.+)\],', Regex.DOTALL)
+RE_SOURCES = Regex('playerPlaylistSources = (\[.+\]);')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -82,7 +83,12 @@ def GetJSON(url):
 	if not json:
 		raise Ex.MediaNotAvailable
 
-	json = json.group(1).replace('playerPlaylistSources', '""')
+	json_sources = RE_SOURCES.search(data)
+
+	if not json_sources:
+		raise Ex.MediaNotAvailable
+
+	json = json.group(1).replace('playerPlaylistSources', json_sources.group(1))
 
 	return JSON.ObjectFromString(json)
 
