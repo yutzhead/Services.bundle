@@ -1,33 +1,34 @@
-RE_DURATION = Regex('Time: (?P<mins>[0-9]+) minutes (?P<secs>[0-9]+) seconds')
+RE_DURATION = Regex('(?P<min>\d+) minutes (?P<sec>\d+) seconds')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	html = HTML.ElementFromURL(url)
+
+	# Check to see if we have a video
+	video_url = html.xpath('//video/source[contains(@src, ".mp4")]/@src')
+
+	if len(video_url) < 1:
+		raise Ex.MediaNotAvailable
+
+	try: title = html.xpath('//div[@class="page-footing"]/h2/text()')[0]
+	except: title = html.xpath('//title/text()')[0]
+
+	summary = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = html.xpath('//video/@poster')[0]
+
 	try:
-		page = HTML.ElementFromURL(url)
-	except:
-		return None
-
-	try: title = page.xpath("//div[@class='page-footing']//h2/text()")[0]
-	except: title = page.xpath("//title/text()")[0]
-
-	thumb = page.xpath("//div[@class='video-player-container']//video")[0].get('poster')
-	summary = page.xpath("//meta[@name='description']")[0].get('content')
-
-	try:
-		duration_text = page.xpath("//div[@id='page']//section[@class='primary']/p/text()")[0]
+		duration_text = html.xpath('//span[contains(text(), "Total Time")]/parent::p/text()')[0]
 		duration_dict = RE_DURATION.search(duration_text).groupdict()
-		mins = int(duration_dict['mins'])
-		secs = int(duration_dict['secs'])
-		duration = ((mins * 60) + secs) * 1000
+		duration = Datetime.MillisecondsFromString('%s:%s' % (duration_dict['min'], duration_dict['sec']))
 	except:
 		duration = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
-		duration = duration
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -35,11 +36,17 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			container = 'mp4',
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url)
+				)
+			],
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
 			audio_codec = AudioCodec.AAC,
-			parts = [PartObject(key=Callback(PlayVideo, url = url))],
-			audio_channels = 2
+			audio_channels = 2,
+			optimized_for_streaming = True
 		)
 	]
 
@@ -47,6 +54,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	page = HTML.ElementFromURL(url)
-	video_url = page.xpath("//div[@class='video-player-container']//video/source")[0].get('src')
-	return IndirectResponse(VideoClipObject, key=video_url)
+	html = HTML.ElementFromURL(url)
+	video_url = html.xpath('//video/source[contains(@src, ".mp4")]/@src')
+
+	if len(video_url) < 1:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url[0])
