@@ -1,6 +1,6 @@
 # Variables for Vevo Music videos
 VEVO_URL = 'http://www.vevo.com/watch/%s/%s/%s'
-RE_VEVO_URL_PATH = Regex('http://www\.(?:mtv|vh1|cmt)\.com/videos/([^/]+)/\d{6}/(.+?)\.jhtml')
+RE_VEVO_URL_PATH = Regex('http://www\.(?:mtv|vh1|cmt)\.com/videos?/([^/]+)/\d{6}/(.+?)\.jhtml')
 RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 
 # rss needs video and videolist option based on clips or full episodes
