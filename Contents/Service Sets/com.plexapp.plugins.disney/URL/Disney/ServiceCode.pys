@@ -76,6 +76,10 @@ def PlayVideo(url, bitrate):
 	bitrates = ["600","1000","1500","2200","3000","4300","6000","8000"]
 	index = bitrates.index(bitrate)
 	json = GetJSON(url)
+
+	if not 'flavors' in json:
+		raise Ex.MediaExpired
+
 	videos = sorted(json['flavors'], key=lambda k: k['bitrate'], reverse=True)
 
 	while index > -1:
