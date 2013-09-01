@@ -54,6 +54,9 @@ def PlayVideo(url, res='3'):
 
   data = GetJSON(url)
 
+  if not 'url_daily' in data:
+    raise Ex.MediaNotAvailable
+
   video_url = data['url_daily'][res].replace('&rtmp=1','')
 
   return Redirect(video_url)
