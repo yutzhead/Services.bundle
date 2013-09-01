@@ -9,16 +9,19 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	content = HTML.ElementFromURL(url)
-	title = content.xpath('//title')[0].text
+	html = HTML.ElementFromURL(url)
+	title = html.xpath('//title/text()')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
 
 	try:
-		thumb = content.xpath('//link[@rel="image_src"]')[0].get('href').replace('/160x90', '/640x360')
+		thumb = html.xpath('//link[@rel="image_src"]/@href')[0].replace('/160x90', '/640x360')
 	except:
 		thumb = ''
 
 	return VideoClipObject(
-		title = title,
+		title = title[0],
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
@@ -27,7 +30,11 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url)
+				)
+			],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = '720',
@@ -44,4 +51,4 @@ def PlayVideo(url):
 	link = url.rsplit('/', 1)[1]
 	video = VIDEO_FILE % link
 
-	return IndirectResponse(VideoClipObject, key = video)
+	return IndirectResponse(VideoClipObject, key=video)
