@@ -1,20 +1,12 @@
-BASE_URL = 'http://www.svtplay.se'
-BASE_OA_URL = 'http://www.oppetarkiv.se'
+SSL_CAPABLE_CLIENTS = ['Android', 'iOS', 'Roku', 'Safari', 'Firefox', 'Chrome']
+RE_KEY_URI = Regex('URI *= *"(.*)"')
 
 ####################################################################################################
 def NormalizeURL(url):
-
-	if not '/video/' in url:
-		try:
-			url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
-		except:
-			pass
-
-	return url
+    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-
 	try:
 		page = HTML.ElementFromURL(url)
 	except:
@@ -42,7 +34,7 @@ def MetadataObjectForURL(url):
 		thumb = thumb[0].replace('/small/', '/large/')
 
 	try:
-		air_date = page.xpath('//div[@class="playVideoInfo"]//time/@datetime')[0].split('T')[0]
+		air_date = page.xpath('//div[@class="playBoxConnectedToVideoMain"]//time/@datetime')[0].split('T')[0]
 		air_date = Datetime.ParseDate(air_date).date()
 	except:
 		air_date = None
@@ -88,38 +80,85 @@ def MediaObjectsForURL(url):
 			parts = [
 				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
 			],
-			video_resolution = '480',
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
 	]
 
 ####################################################################################################
-def PlayVideo(url, bitrate=None):
-
-	try:
-		page = HTML.ElementFromURL(url)
-	except:
-		raise Ex.MediaNotAvailable
-
-	video_url = None
-	json_url = page.xpath('//a[@id="player"]/@data-json-href')
-	if len(json_url) < 1:
-		raise Ex.MediaNotAvailable
-
-	base_url = BASE_URL
-	if 'oppetarkiv' in url:
-		base_url = BASE_OA_URL
-
-	json_url = '%s%s?output=json' % (base_url, json_url[0])
-	json_obj = JSON.ObjectFromURL(json_url)
-
-	for video in json_obj['video']['videoReferences']:
-		if 'playerType' in video and video['playerType'] == 'ios':
-			video_url = video['url']
+def PlayVideo(url):
+	json_obj = JSON.ObjectFromURL(url + '?output=json')
+	playlist_url = None
+	
+	for item in json_obj['video']['videoReferences']: 
+		if '.m3u8' in item['url']:
+			playlist_url = item['url']
 			break
+		elif '.f4m' in item['url']:
+			playlist_url = item['url'].replace("/z/", "/i/").replace("manifest.f4m", "master.m3u8")
 
-	if not video_url:
+	if playlist_url:
+		if Client.Platform in SSL_CAPABLE_CLIENTS:
+			return Redirect(playlist_url)
+		else:
+			streams  = GetHLSStreams(playlist_url)
+			playlist = CreatePatchedPlaylist(streams[0]['url'])
+			return playlist
+	else:
 		raise Ex.MediaNotAvailable
 
-	return Redirect(video_url)
+####################################################################################################
+def GetHLSStreams(url):
+	streams = []
+
+	playlist = HTTP.Request(url).content
+
+	# Parse the m3u8 file to get:
+	# - URL
+	# - Resolution
+	# - Bitrate
+	for line in playlist.splitlines():
+		if "BANDWIDTH" in line:
+			stream            = {}
+			stream["bitrate"] = int(Regex('(?<=BANDWIDTH=)[0-9]+').search(line).group(0))        
+
+			if "RESOLUTION" in line:
+				stream["resolution"] = int(Regex('(?<=RESOLUTION=)[0-9]+x[0-9]+').search(line).group(0).split("x")[1])
+			else:
+				stream["resolution"] = 0
+
+		elif ".m3u8" in line:
+			path = ''
+			if not line.startswith("http"):
+				path = url[ : url.rfind('/') + 1]
+
+			stream["url"] = path + line
+
+			streams.append(stream)
+
+	sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)        
+
+	return sorted_streams
+
+####################################################################################################
+def CreatePatchedPlaylist(url):
+	original_playlist = HTTP.Request(url).content
+	new_playlist = ''
+
+	for line in original_playlist.splitlines():
+		if line.startswith('#EXT-X-KEY'):
+			original_key_url = RE_KEY_URI.search(line).groups()[0]
+			new_key_url = Callback(ContentOfHTTPSURL, url = original_key_url)
+			new_playlist = new_playlist + line.replace(original_key_url, new_key_url) + '\n'
+		elif line.startswith('https'):
+			original_segment_url = line
+			new_segment_url = Callback(ContentOfHTTPSURL, url = original_segment_url)
+			new_playlist = new_playlist + new_segment_url + '\n'
+		else:
+			new_playlist = new_playlist + line + '\n'
+	
+	return new_playlist
+	
+####################################################################################################
+def ContentOfHTTPSURL(url):
+	return HTTP.Request(url).content
