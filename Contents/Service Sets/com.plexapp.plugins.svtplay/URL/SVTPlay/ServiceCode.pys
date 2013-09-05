@@ -101,9 +101,13 @@ def PlayVideo(url):
 		if Client.Platform in SSL_CAPABLE_CLIENTS:
 			return Redirect(playlist_url)
 		else:
-			streams  = GetHLSStreams(playlist_url)
-			playlist = CreatePatchedPlaylist(streams[0]['url'])
-			return playlist
+			streams = GetHLSStreams(playlist_url)
+			
+			if 'svtplay' in playlist_url:
+				playlist = CreatePatchedPlaylist(streams[0]['url'])
+				return playlist
+			else:
+				return Redirect(streams[0]['url'])
 	else:
 		raise Ex.MediaNotAvailable
 
