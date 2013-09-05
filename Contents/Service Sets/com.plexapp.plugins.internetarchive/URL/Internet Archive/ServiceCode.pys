@@ -136,7 +136,7 @@ def GetMetadata(url):
 
     xml_url = ''
     size = 0
-    for meta in page.xpath('//table[@class="fileFormats"]//a[contains(@href, "_meta.xml")]'):
+    for meta in page.xpath('//table[contains(@class, "fileFormats")]//a[contains(@href, "_meta.xml")]'):
         file_size = ConvertToBytes(meta.xpath('./text()')[0])
         if file_size > size:
             xml_url = METADATA_BASE_URL + meta.get('href')
