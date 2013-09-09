@@ -14,7 +14,10 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	title = content.xpath('//a[@class="movie-title"]/text()')[0]
+	title = content.xpath('//a[@class="movie-title"]/text()')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
 
 	try:
 		thumb = content.xpath('//a[@class="movie-cover-wrapper"]/img/@src')[0]
@@ -28,7 +31,7 @@ def MetadataObjectForURL(url):
 	summary = content.xpath('//div[@class="movie-description"]//p[@class="desc_body"]/text()')[0]
 
 	return VideoClipObject(
-		title = title,
+		title = title[0],
 		summary = summary,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
