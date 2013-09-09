@@ -199,7 +199,11 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
 	uri = video_player_box[0].get('data-mgid')
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	try:
+		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	except:
+		raise Ex.MediaNotAvailable
+
 	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
 	if index < len(media_url):
