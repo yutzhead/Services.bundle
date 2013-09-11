@@ -531,7 +531,7 @@ def PlayVideo(url, fmt=None):
     files = XML.ElementFromURL(FileListURL(url))
 
     '''default to the "original" file in case the chosen format isn't found'''
-    file_name = files.xpath('//file[@source="original"]')[0].get('name')
+    file_name = files.xpath('//file[@source="original" and not(contains(@name, ".xml"))]')[0].get('name')
     found = False
 
     try:
