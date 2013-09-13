@@ -44,8 +44,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	content = HTTP.Request(url, headers=HTTP_HEADERS).content
-	video_url = VIDEO_PATTERN.search(content)
+	try:
+		content = HTTP.Request(url, headers=HTTP_HEADERS).content
+		video_url = VIDEO_PATTERN.search(content)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if video_url:
 		video_url = String.Unquote(video_url.group(1))
