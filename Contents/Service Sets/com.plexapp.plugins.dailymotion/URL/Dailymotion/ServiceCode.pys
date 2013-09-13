@@ -21,7 +21,14 @@ def MetadataObjectForURL(url):
 
 	title = video['title']
 	summary = String.StripTags(video['description'])
-	thumb_url = video['thumbnail_large_url']
+
+	if 'thumbnail_large_url' in video:
+		thumb_url = video['thumbnail_large_url']
+	elif 'thumbnail_url' in video:
+		thumb_url = video['thumbnail_url']
+	else:
+		thumb_url = ''
+
 	duration = int(video['duration'])*1000
 	rating = float(video['rating'])
 
@@ -35,7 +42,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb_url,
+		thumb = Resource.ContentsOfURLWithFallback(thumb_url),
 		duration = duration,
 		originally_available_at = originally_available_at,
 		rating = rating
