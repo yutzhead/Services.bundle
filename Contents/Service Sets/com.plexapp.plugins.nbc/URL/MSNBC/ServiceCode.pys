@@ -14,9 +14,22 @@ def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
 
-	title = html.xpath('//meta[@name="title"]/@content')[0]
-	summary = html.xpath('//meta[@name="description"]/@content')[0]
-	thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
+	title = html.xpath('//meta[@name="title"]/@content')
+
+	if len(title) < 1:
+		if 'nbcnews.com/id/' in url and '#' in url:
+			url = 'http://www.nbcnews.com/id/%s' % url.split('#')[-1]
+			html = HTML.ElementFromURL(url)
+
+			title = html.xpath('//div[@cn]/@cn')[0].strip()
+			summary = html.xpath('//span[@class="textMed"]/text()')[0].strip()
+			thumb = html.xpath('//a/img[contains(@src, ".jpg")]/@src')[0]
+		else:
+			raise Ex.MediaNotAvailable
+	else:
+		title = title[0]
+		summary = html.xpath('//meta[@name="description"]/@content')[0]
+		thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
 
 	return VideoClipObject(
 		title = title,
