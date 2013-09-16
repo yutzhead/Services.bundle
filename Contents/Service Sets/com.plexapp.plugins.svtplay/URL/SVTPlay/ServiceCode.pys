@@ -124,47 +124,7 @@ def getVideoUrls(url):
 def PlayVideo(url, bitrate=None):
     urls = getVideoUrls(url)
     if 'ios' in urls:
-        stream = selectBestHLSStream(urls['ios'])
-        return Redirect(HTTPLiveStreamURL(stream))
+        return Redirect(HTTPLiveStreamURL(urls['ios']))
     if 'flash' in urls:
         pass
 
-def selectBestHLSStream(videoURL):
-    streams = getHLSStreams(videoURL)
-    sortedStreams = sorted(streams, key=lambda stream: stream["bitrate"], reverse=True)
-    return sortedStreams[0]['url']
-
-def getHLSStreams(hlsUrl):
-    streams = []
-    m3u8 = ""
-
-    try:
-        request = HTTP.Request(url=hlsUrl, immediate=True)
-        request.load()
-        m3u8 = request.content
-    except:
-        return streams
-
-    streamSpecLines = m3u8.splitlines()
-
-    # Parse the m3u8 file to get:
-    # - URL
-    # - Resolution
-    # - Bitrate
-    for line in streamSpecLines:
-        if "BANDWIDTH" in line:
-            bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
-            stream = {}
-            stream["bitrate"] = int(bwm.group(0))
-
-            if "RESOLUTION" in line:
-                rnm = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
-                stream["resolution"] = int(rnm.group(0).split("x")[1])
-            else:
-                stream["resolution"] = 0
-
-        elif ".m3u8" in line:
-            stream["url"] = line
-            streams.append(stream)
-
-    return streams
