@@ -103,8 +103,8 @@ def GetJSON(url, content_id=None):
 
 	if not content_id:
 		try:
-			data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
-			content_id = RE_CONTENT_ID.search(data).group(1)
+			html = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'})
+			content_id = html.xpath('//section[@id="mediacontentvideo"]/@data-uuid|//div[contains(@class, "video-meta")]/@data-uuid')[0]
 		except:
 			raise Ex.MediaNotAvailable
 

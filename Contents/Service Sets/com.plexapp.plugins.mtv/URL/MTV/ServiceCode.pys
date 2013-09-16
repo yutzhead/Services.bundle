@@ -1,161 +1,191 @@
-# Variables for MTV Music
-VEVO_URL = 'http://www.vevo.com/watch/%s/%s'
-RE_VEVO_URL_PATH = Regex('http://www\.mtv\.com/videos/([^/]+)/\d{6}/(.+?)\.jhtml')
-RE_VEVO_ID = Regex('vevoVideoId = "(?P<vevo_id>[^"]+)"')
+# Variables for Vevo Music videos
+VEVO_URL = 'http://www.vevo.com/watch/%s/%s/%s'
+RE_VEVO_URL_PATH = Regex('http://www\.(?:mtv|vh1|cmt)\.com/videos?/([^/]+)/\d+/(.+?)\.jhtml')
+RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 
-# changed to mtv rss
-MRSS_FULL_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
-# for VH1 video clips, the address has to be vh1 and not mtv and be video not videolist
-MRSS_VH1_URL = 'http://www.vh1.com/player/embed/AS3/rss/?uri=mgid:uma:video:vh1.com:%s'
-
+# rss needs video and videolist option based on clips or full episodes
+MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
-RE_MGID = Regex('(\/|vid=)(\d{6,7})\/?')
+RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
 
 ####################################################################################################
+# added normalize to separate
 def NormalizeURL(url):
-
-	return url.split('#')[0]
+    return url.split('#')[0]
 
 ####################################################################################################
+# Took out thumb and separate check for title in episodes since all mgid return as video or playlist
 def MetadataObjectForURL(url):
 
-	# this part is only for music videos
-	vevo_id = VevoID(url)
-	if vevo_id:
-		vevo_url = GetVevoURL(url, vevo_id)
-		return URLService.MetadataObjectForURL(vevo_url)
+    # this part is only for music videos
+    vevo_id = VevoID(url)
+    if vevo_id:
+        vevo_url = GetVevoURL(url, vevo_id)
+        return URLService.MetadataObjectForURL(vevo_url)
 
-	data = GetRSS(url)
-	title = data.xpath('//title')[0].text
-	summary = data.xpath('//description')[0].text
-	# The thumb is in item in the MTV xml files
-	thumb = data.xpath('//item/image//@url')[0]
-	date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+    data = GetRSS(url)
+    title = data.xpath('//title')[0].text
 
-	return VideoClipObject(
-		title = title,
-		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
-		originally_available_at = date
-	)
+    try: summary = data.xpath('//description')[0].text
+    except: summary = None
+
+    # The thumb is in item vs the main content in the MTV/VH1/CMT xml files
+    thumb = data.xpath('//item/image//@url')[0]
+    date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+        originally_available_at = date
+        )
 
 ####################################################################################################
-# We may need to add more parts to playlist. Found that the number of parts for shows varies widely from 4 to 10
-# When I put eight or ten in the Num_Parts value, it loads another part and locks up there at the end of shorter videos
-# NEED TO PUT ADD A FILLER MOVIE FOR SHORTER VIDEOS - NOT SURE HOW
+# Found that the number of parts for shows varies widely from 4 to 10. 
+# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml.
+# RESOLUTIONS FOR VEVO VIDEOS ARE: 1080, 720, and 432
+# So in PlayVideo function, just using 432 and 720 (if not 720, then use 432)
 def MediaObjectsForURL(url):
 
-	if 'playlist' in url:
-		num_parts = 10
-	else:
-		num_parts = 1
+    if 'playlist' in url or 'full-episode' in url:
+        num_parts = 11
+    else:
+        num_parts = 1
 
-	return [
-		MediaObject(
-			parts = [
-				PartObject(
-					key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-					) for i in range(num_parts)
-			],
-			bitrate = bitrate,
-			container = Container.MP4,
-			video_resolution = resolution,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
-	]
+    return [
+        MediaObject(
+            parts = [
+                PartObject(
+                    key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
+                    ) for i in range(num_parts)
+            ],
+            bitrate = bitrate,
+            container = Container.MP4,
+            video_resolution = resolution,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+	    # Resolutions for old videos are different. And include 1200/360, 1800/432, 600/240  
+	    # But they are handled with the closest command in the PlayVideo function
+        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
+    ]
 ####################################################################################################
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
-	mrss_data = GetRSS(url)
-	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+    # this part is only for music videos
+    vevo_id = VevoID(url)
+    if vevo_id:
+        vevo_url = GetVevoURL(url, vevo_id)
+        vevo_media = URLService.MediaObjectsForURL(vevo_url)
+        if not vevo_media:
+            raise Ex.MediaNotAvailable
+        vevo_video = 'None'
+        for video in vevo_media:
+            #Since Vevo videos only come in two resolutions similar to the Viacom vidoes, if not 720, then 420
+            if bitrate=='3500':
+                video_res='720'
+            else:
+                video_res='360'
+            if str(video.video_resolution) == video_res:
+                vevo_video = video.parts[0].key
+            else:
+                pass
+        if vevo_video is 'None':
+            vevo_video= vevo_media[-1].parts[0].key
+        return Redirect(vevo_video)
+    
+    else:
+        mrss_data = GetRSS(url)
+        media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
-	if index < len(media_url):
-		player_url = media_url[index].get('url')
-	else:
-		# Return small filler movie for desktop clients
-		return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
+        if index < len(media_url):
+            player_url = media_url[index].get('url')
+        else:
+            # Return small filler movie for desktop clients
+            return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
-	try:
-		player_data = XML.ElementFromURL(player_url)
-	except:
-		raise Ex.MediaNotAvailable
+        try:
+            player_data = XML.ElementFromURL(player_url)
+        except:
+            raise Ex.MediaNotAvailable
 
-	available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
-	if len(available_bitrates) < 1:
-		raise Ex.MediaNotAvailable
+        available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
+        if len(available_bitrates) < 1:
+            raise Ex.MediaNotAvailable
 
-	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-	rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
+        closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+        rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
 
-	# Changed split to reflect the rtmp address for mtv videos. Found two types.
-	if '/gsp.originmusicstor/' in rtmp_url:
-		stream_url = rtmp_url.split('/gsp.originmusicstor/')[1]
-		mp4_url = MP4_URL % ('gsp.originmusicstor', stream_url)
-	elif '/gsp.egvrenditions/' in rtmp_url:
-		stream_url = rtmp_url.split('/gsp.egvrenditions/')[1]
-		mp4_url = MP4_URL % ('gsp.egvrenditions', stream_url)
-	elif '/gsp.vhonecomstor/' in rtmp_url:
-		stream_url = rtmp_url.split('/gsp.vhonecomstor/')[1]
-		mp4_url = MP4_URL % ('gsp.vhonecomstor', stream_url)
-	else:
-		raise Ex.MediaNotAvailable
+        # Split reflects the rtmp address for MTV, VH1, and CMT videos.
+        if '/gsp.originmusicstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.originmusicstor/')[1]
+            mp4_url = MP4_URL % ('gsp.originmusicstor', stream_url)
+        elif '/gsp.egvrenditions/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.egvrenditions/')[1]
+            mp4_url = MP4_URL % ('gsp.egvrenditions', stream_url)
+        elif '/gsp.mtvcomstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.mtvcomstor/')[1]
+            mp4_url = MP4_URL % ('gsp.mtvcomstor', stream_url)
+        elif '/gsp.vhonecomstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.vhonecomstor/')[1]
+            mp4_url = MP4_URL % ('gsp.vhonecomstor', stream_url)
+        elif '/gsp.cmtstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.cmtstor/')[1]
+            mp4_url = MP4_URL % ('gsp.cmtstor', stream_url)
+        elif '/gsp.mtvnshrdstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.mtvnshrdstor/')[1]
+            mp4_url = MP4_URL % ('gsp.mtvnshrdstor', stream_url)
+        elif '/gsp.ctnstor/' in rtmp_url:
+            stream_url = rtmp_url.split('/gsp.ctnstor/')[1]
+            mp4_url = MP4_URL % ('gsp.ctnstor', stream_url)
+        else:
+            raise Ex.MediaNotAvailable
 
-	return Redirect(mp4_url)
+        return Redirect(mp4_url)
 
 ####################################################################################################
-# changed first three lines of function to get mgid from the meta name uri, have left alternative thru regex variable as comment
-def GetRSSOld(url):
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
-	mgid = html.xpath('//meta[@name="mtvn_uri"]//@content')[0]
-
-	if not mgid:
-		raise Ex.MediaExpired
-
-	mrss_data = XML.ElementFromURL(MRSS_URL % mgid)
-
-	return mrss_data
-####################################################################################################
-# changed first three lines of function to get mgid from the meta name uri, have left alternative thru regex variable as comment
+# Using regex to pull mgid from url. Added id option to regex for CMT videos. 
+# Also full episodes use videolist while clips and music videos use video in rss url
 def GetRSS(url):
-	mgid = RE_MGID.search(url).group(0)
-	mgid = mgid.replace('/', '')
+    mgid = RE_MGID.search(url).group(1)
+    #Log('the value of mgid is %s' %mgid)
+    # The new regex is still not deleting slashes from music videos so need this line to pull them out
+    if '/' in mgid:
+        mgid = mgid.replace('/', '')
 
-	if not mgid:
-		raise Ex.MediaExpired
-	if 'playlist' in url:
-		rss_url = MRSS_FULL_URL %('videolist', mgid)
-		Log ('the value of rss_url is %s' %rss_url)
-		mrss_data = XML.ElementFromURL(MRSS_FULL_URL %('videolist', mgid))
-	else:
-		rss_url = MRSS_FULL_URL %('video', mgid)
-		Log ('the value of rss_url is %s' %rss_url)
-		mrss_data = XML.ElementFromURL(MRSS_FULL_URL %('video', mgid))
+    if not mgid:
+        raise Ex.MediaExpired
 
-	return mrss_data
+    # There are a few errors popping up because MTV is using videolist instead of video for some of their misc videos now
+    # So changing this line to length will fix the issue, since all mgids with 7 digits use videolist, while mgids with 6 or less digits use video
+    if len(mgid) > 6:
+        mrss_data = XML.ElementFromURL(MRSS_URL %('videolist', mgid))
+    else:
+        mrss_data = XML.ElementFromURL(MRSS_URL %('video', mgid))
+
+    return mrss_data
 ##################################################################################################
+# This is a function to check for Vevo video IDs
 def VevoID(url):
 
-	content = HTTP.Request(url).content
+    id = ''
+    content = HTTP.Request(url).content
 
-	try:
-		vevo_id = RE_VEVO_ID.search(content).group('vevo_id')
-	except:
-		vevo_id = None
+    try:
+        id = RE_VEVO_ID.search(content).group(1)
+    except:
+        pass
 
-	return vevo_id
+    return id
 
 ####################################################################################################
 def GetVevoURL(url, vevo_id):
 
-	html = HTML.ElementFromURL(url)
-	local_url = html.xpath('//meta[@property="og:url"]')[0].get('content')
-	url_path1 = RE_VEVO_URL_PATH.search(local_url).group(1)
-	url_path2 = RE_VEVO_URL_PATH.search(local_url).group(2)
-	url_path = url_path1 + url_path2
-	vevo_url = VEVO_URL % (url_path, vevo_id)
+    html = HTML.ElementFromURL(url)
+    local_url = html.xpath('//meta[@property="og:url"]')[0].get('content')
+    (artist, title) = RE_VEVO_URL_PATH.search(local_url).groups()
+    vevo_url = VEVO_URL % (artist, title, vevo_id)
 
-	return vevo_url
+    return vevo_url

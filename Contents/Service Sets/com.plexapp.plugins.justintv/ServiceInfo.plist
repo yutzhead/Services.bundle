@@ -10,6 +10,7 @@
 			<array>
 				<string>^http://www\.justin\.tv/[^/]+/b/\d+</string>
 				<string>^http://www\.justin\.tv/[^/#]+</string>
+				<string>^http://www\.twitch\.tv/[^/]+$</string>
 			</array>
 		</dict>
 	</dict>

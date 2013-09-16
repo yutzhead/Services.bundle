@@ -9,8 +9,8 @@ RE_AMPERSAND = Regex('&(?!amp;)')
 def TestURLs():
   test_urls = []
 
-  for url in HTML.ElementFromURL('http://www.gamekings.tv/videos').xpath('//section[@id="archiefoverzicht"]/article[position() < 4]/a'):
-    test_urls.append( url.get('href') )
+  for url in HTML.ElementFromURL('http://www.gamekings.tv/videos').xpath('//section[@id="archiefoverzicht"]/article[position() < 4]/a/@href'):
+    test_urls.append(url)
 
   return test_urls
 
@@ -19,12 +19,12 @@ def MetadataObjectForURL(url):
 
   page = HTML.ElementFromURL(url)
 
-  title = page.xpath('//section[@id="MainContent"]//h1')[0].text
+  title = page.xpath('//section[@id="MainContent"]//h1/text()')[0]
   summary = '\n\n'.join( page.xpath('//section[@id="MainContent"]//small/following-sibling::p[not(@class)]/text()') )
-  thumb = page.xpath('//img[@id="videocover"]')[0].get('src')
+  thumb = page.xpath('//img[@id="videocover"]/@src')[0]
 
   try:
-    date = page.xpath('//section[@id="MainContent"]//small')[0].text
+    date = page.xpath('//section[@id="MainContent"]//small/text()')[0]
     date = RE_DATE.search(date).group(1)
     originally_available_at = Datetime.ParseDate(date).date()
   except:

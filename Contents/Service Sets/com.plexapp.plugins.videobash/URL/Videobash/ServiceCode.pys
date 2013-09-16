@@ -4,19 +4,22 @@ VIDEO_PATTERN = Regex("flashvars.+?'http://'.+?'([^']+)")
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
-	title = page.xpath("//meta[@property='og:title']")[0].get('content')
-	summary = ''.join(page.xpath("//p[@class='description']/text()")).strip()
-	thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-	thumb_hq = thumb.replace('/320x240/320x240_', '/original/original')
-	date = page.xpath("//span[@class='time-upload']/text()")[0].strip("on").strip()
-	date = Datetime.ParseDate(date)
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = ''.join(html.xpath('//p[@class="description"]/text()')).strip()
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+
+	try:
+		date = html.xpath('//span[@class="time-upload"]/text()')[0].strip('on').strip()
+		date = Datetime.ParseDate(date)
+	except:
+		date = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback([thumb_hq, thumb]),
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		originally_available_at = date
 	)
 
@@ -41,8 +44,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	content = HTTP.Request(url, headers=HTTP_HEADERS).content
-	video_url = VIDEO_PATTERN.search(content)
+	try:
+		content = HTTP.Request(url, headers=HTTP_HEADERS).content
+		video_url = VIDEO_PATTERN.search(content)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if video_url:
 		video_url = String.Unquote(video_url.group(1))

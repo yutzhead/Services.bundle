@@ -111,7 +111,11 @@ def PlayVideo(url, rendition_id=8):
 ####################################################################################################
 def GetJSON(url):
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	sid = RE_SID.search(page)
 
 	if sid:

@@ -1,7 +1,6 @@
-RE_DATA = Regex("(.+?) - Rating.+Length: (\d+m\d+)s - Watch (.+) and other s")
-RE_XML = Regex("((?<=')[^']+\?v=([0-9]*-){1,})")
-#BASE_URL = 'http://www.fux.com'
-BASE_URL = 'http://old.fux.com'
+BASE_URL = 'http://www.fux.com'
+RE_PLAYLIST = Regex('playlist: \[(.+)\],', Regex.DOTALL)
+RE_SOURCES = Regex('playerPlaylistSources = (\[.+\]);')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -11,30 +10,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	# Temporary/quick fix
-	url = url.replace('http://www.', 'http://old.')
-
-	try:
-		data = HTTP.Request(url).content
-		xml_url = '%s%s' % (BASE_URL, RE_XML.search(data).group(1))
-		html = HTML.ElementFromString(data)
-	except:
-		raise Ex.MediaNotAvailable
-
-	description = html.xpath('//meta[@http-equiv="description"]/@content')[0].replace('\n', '')
-	(date, duration, title) = RE_DATA.findall(description)[0]
-
-	originally_available_at = Datetime.ParseDate(date).date()
-	duration = TimeToMs(duration.replace('m', ':'))
-
-	xml = XML.ElementFromURL(xml_url)
-	thumb = xml.xpath('//image/text()')[0]
+	json_obj = GetJSON(url)
 
 	return VideoClipObject(
-		title = title,
-		duration = duration,
-		originally_available_at = originally_available_at,
-		thumb = thumb,
+		title = json_obj['title'],
+		thumb = json_obj['image'],
 		genres = ['XXX','Adult','18+'],
 		content_rating = 'X'
 	)
@@ -76,25 +56,41 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res=1080):
 
-	# Temporary/quick fix
-	url = url.replace('http://www.', 'http://old.')
+	json_obj = GetJSON(url)
+	available_versions = []
 
-	try:
-		data = HTTP.Request(url).content
-		xml_url = '%s%s' % (BASE_URL, RE_XML.search(data).group(1))
-		xml = XML.ElementFromURL(xml_url)
-	except:
-		raise Ex.MediaNotAvailable
-
-	available_versions = xml.xpath('//stream[@label]/@label')
+	for source in json_obj['sources']:
+		label = int(source['label'].strip('p'))
+		available_versions.append(label)
 
 	if len(available_versions) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(res - int(i.split('p')[0])), i.split(' ')[0]) for i in available_versions)[1]
-	video_url = xml.xpath('//stream[starts-with(@label, "%s")]/file/text()' % closest)[0]
+	closest = min((abs(res - i), i) for i in available_versions)[1]
 
-	return IndirectResponse(VideoClipObject, key=video_url)
+	for source in json_obj['sources']:
+		if source['label'] == '%dp' % closest:
+			return IndirectResponse(VideoClipObject, key=source['file'])
+
+	raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetJSON(url):
+
+	data = HTTP.Request(url).content
+	json = RE_PLAYLIST.search(data)
+
+	if not json:
+		raise Ex.MediaNotAvailable
+
+	json_sources = RE_SOURCES.search(data)
+
+	if not json_sources:
+		raise Ex.MediaNotAvailable
+
+	json = json.group(1).replace('playerPlaylistSources', json_sources.group(1))
+
+	return JSON.ObjectFromString(json)
 
 ####################################################################################################
 def TestURLs():
@@ -113,15 +109,3 @@ def TestURLs():
 			break
 
 	return test_urls
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000

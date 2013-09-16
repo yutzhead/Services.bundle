@@ -1,8 +1,9 @@
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
-MRSS_URL = "http://udat.mtvnservices.com/service1/dispatch.htm?feed=player_arc_feed&mgid=%s"
+MRSS_URL = "http://www.spike.com/feeds/mrss/?uri=%s&ref=www.spike.com"
 FEED_URL = 'http://www.spike.com/feeds/mediagen/?uri=%s'
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+RE_AMPERSANDS = Regex('&(?!amp;)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -21,6 +22,21 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
 	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
 	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	try:
+		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+	except:
+		video_player_box = html.xpath('//div[@id="video_player_box"]')
+		if len(video_player_box) < 1:
+			raise Ex.MediaExpired
+
+		uri = video_player_box[0].get('data-mgid')
+
+		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+		duration = 0
+		for segment in media_urls:
+			duration = float(duration) + float(segment.get('duration'))
+		duration = int(duration*1000)
 
 	if '/full-episodes/' in url or '/episodes/' in url:
 		show_title = html.xpath('//title')[0].text.split(' | ')[0]
@@ -34,6 +50,7 @@ def MetadataObjectForURL(url):
 			show = show_title,
 			title = title,
 			summary = summary,
+			duration=duration,
 			thumb = thumb,
 			originally_available_at = originally_available_at
 		)
@@ -43,6 +60,7 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
+			duration=duration,
 			thumb = thumb
 		)
 
@@ -181,7 +199,10 @@ def PlayVideo(url, bitrate='1700', index=0):
 
 	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	mrss_data = HTTP.Request(MRSS_URL % uri).content
+	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	guids = mrss_data.xpath('//guid')
 
 	if len(guids) < 1:

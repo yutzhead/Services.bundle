@@ -1,0 +1,8 @@
+[
+	{
+        "id": "link_code",
+        "label": "Link Code",
+        "type": "text",
+        "default": ""
+    }
+]

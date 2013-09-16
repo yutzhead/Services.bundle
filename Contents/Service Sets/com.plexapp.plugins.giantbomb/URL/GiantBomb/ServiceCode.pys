@@ -1,10 +1,20 @@
 API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
+API_PATH = 'http://api.giantbomb.com'
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:18.0) Gecko/20100101 Firefox/18.0'}
+
+MediaObject.container = 'mp4'
+MediaObject.optimized_for_streaming = True
+MediaObject.video_codec = VideoCodec.H264
+MediaObject.audio_codec = AudioCodec.AAC
+MediaObject.audio_channels = 2
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	if not url.endswith('/'):
+		url = url +'/'
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -15,11 +25,13 @@ def MetadataObjectForURL(url):
 	summary = clip['deck']
 	thumbUrl = clip['image']['super_url']
 	date = Datetime.ParseDate(clip['publish_date']).date()
+	duration = int(clip['length_seconds'])*1000
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumbUrl,
+		thumb = Resource.ContentsOfURLWithFallback(thumbUrl),
+		duration = duration,
 		originally_available_at = date
 	)
 
@@ -28,40 +40,47 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hi'))],
-			container = Container.MP4,
-			bitrate = 1500,
-			optimized_for_streaming = True,
-			video_resolution = 'sd',
-			#aspect_ratio = '1.78',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
+			bitrate = 2400,
+			video_resolution = 1080
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='lo'))],
-			container = Container.MP4,
-			bitrate = 700,
-			optimized_for_streaming = True,
-			video_resolution = 'sd',
-			#aspect_ratio = '1.78',
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='high'))],
+			bitrate = 1800,
+			video_resolution = 720
+		),
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='low'))],
+			bitrate = 800,
+			video_resolution = 360
 		)
 	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, fmt='hi'):
+def PlayVideo(url, fmt='high'):
+
+	fmts = ['low','high','hd']
+
+	if fmt not in fmt:
+		fmt = 'high'
+
+	index = fmts.index(fmt)
+	video_url = None
 
 	clip = GetClip(url)
 
-	if fmt == 'hi' and 'high_url' in clip:
-		video_url = clip['high_url']
-	elif 'low_url' in clip:
-		video_url = clip['low_url']
-	else:
+	while index > -1:
+		if ('%s_url' % fmts[index]) in clip:
+			video_url = clip['%s_url' % fmts[index]]
+
+			if fmt == 'hd':
+				video_url = '%s?api_key=%s' % (video_url, ApiKey())
+			break
+		else:
+			index = index - 1
+
+	if not video_url:
 		raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=video_url)
@@ -69,11 +88,14 @@ def PlayVideo(url, fmt='hi'):
 ####################################################################################################
 def GetClip(url):
 
-	video_id = url.split('-')[-1].strip('/')
-	clip_detail_url = 'http://api.giantbomb.com/video/%s/?api_key=%s&format=json' % (video_id, API_KEY)
+	video_id = url.split('/')[-2]
+	clip_detail_url = API_PATH + '/video/%s/?api_key=%s&format=json&limit=1' % (video_id, ApiKey())
 
 	try:
 		data = JSON.ObjectFromURL(clip_detail_url)
+		if data['status_code'] == 100:
+			clip_detail_url = API_PATH + '/video/%s/?api_key=%s&format=json&limit=1' % (video_id, API_KEY)
+			data = JSON.ObjectFromURL(clip_detail_url)
 	except:
 		raise Ex.MediaNotAvailable
 
@@ -81,3 +103,15 @@ def GetClip(url):
 		raise Ex.MediaNotAvailable
 
 	return(data['results'])
+
+####################################################################################################
+def ApiKey():
+
+	link_code = Prefs['link_code']
+
+	if link_code and len(link_code) == 6:
+		response = JSON.ObjectFromURL(API_PATH + '/validate?link_code=' + link_code.upper() + '&format=json')
+		if 'api_key' in response:
+			return response['api_key']
+
+	return API_KEY

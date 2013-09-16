@@ -136,7 +136,7 @@ def GetMetadata(url):
 
     xml_url = ''
     size = 0
-    for meta in page.xpath('//table[@class="fileFormats"]//a[contains(@href, "_meta.xml")]'):
+    for meta in page.xpath('//table[contains(@class, "fileFormats")]//a[contains(@href, "_meta.xml")]'):
         file_size = ConvertToBytes(meta.xpath('./text()')[0])
         if file_size > size:
             xml_url = METADATA_BASE_URL + meta.get('href')
@@ -457,7 +457,7 @@ def FileListURL(url):
     '''It's possible that there are more than one file list available. However, we want to ensure 
        that in this case, we return at least one which is valid. We've found that some albums have
        broken URL links associated with them. Therefore we should at least try and validate first.'''
-    track_list_urls = page.xpath('.//table[@class="fileFormats"]//a[contains(@href, "_files.xml")]')
+    track_list_urls = page.xpath('.//table[contains(@class, "fileFormats")]//a[contains(@href, "_files.xml")]')
     for file_url in track_list_urls:
       try: 
         track_list_url = BASE_URL + file_url.get('href')
@@ -531,7 +531,7 @@ def PlayVideo(url, fmt=None):
     files = XML.ElementFromURL(FileListURL(url))
 
     '''default to the "original" file in case the chosen format isn't found'''
-    file_name = files.xpath('//file[@source="original"]')[0].get('name')
+    file_name = files.xpath('//file[@source="original" and not(contains(@name, ".xml"))]')[0].get('name')
     found = False
 
     try:

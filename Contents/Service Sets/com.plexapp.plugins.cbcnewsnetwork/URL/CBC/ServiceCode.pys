@@ -64,8 +64,13 @@ def PlayVideo(url):
     if (len(smil.xpath('//a:ref[contains(@title, "Geo") or contains(@title, "geo")]', namespaces=NAMESPACES)) > 0):
         raise Ex.MediaGeoblocked
 
-    player = smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base')
-    playpath = smil.xpath('//a:video', namespaces=NAMESPACES)[0].get('src')
+    player = smil.xpath('//a:meta/@base', namespaces=NAMESPACES)
+    if len(player) < 1:
+        raise Ex.MediaNotAvailable
+    else:
+        player = player[0]
+
+    playpath = smil.xpath('//a:video/@src', namespaces=NAMESPACES)[0]
     if playpath[-4:] == '.mp4':
         playpath = 'MP4:' + playpath
     elif playpath[-4:] == '.flv':
@@ -76,7 +81,12 @@ def PlayVideo(url):
         return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=player, clip=playpath))
 
 def GetDetails(url):
-    id = url.split('/')[-2]
+    fields=url.split('/')
+    for i,item in enumerate(fields):
+    	if item=='ID': break
+    else:
+    	raise Ex.MediaNotAvailable
+    id=fields[i+1]
     json_obj = JSON.ObjectFromURL(JSON_URL + id + JSON_FIELDS)
 
     if 'entries' in json_obj:
@@ -91,7 +101,7 @@ def TestURLs():
     test_urls = []
     data = HTML.ElementFromURL(BASE_URL + '/player/')
     for clip in data.xpath('//div[@class="clips"]//div[contains(@class, "clip col")]'):
-	clip_url = BASE_URL + clip.xpath('.//a')[0].get('href')
+	clip_url = BASE_URL + clip.xpath('.//a/@href')[0]
         test_urls.append(clip_url)
         if len(test_urls) > 2:
             break

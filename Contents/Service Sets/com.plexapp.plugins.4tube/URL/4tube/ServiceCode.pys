@@ -1,5 +1,5 @@
 RE_DATA = Regex("Published Date: (.+) Rating: (\d+).+Views:.+Length: (\d+m\d+)s  Watch (.+) and other p")
-RE_VIDEO_ID = Regex("/videoconfig\?v=([0-9\-]+)")
+RE_VIDEO_ID = Regex("videoconfig(?:\?v=|%3Fv%3D)([\d\-]+)")
 XML_URL = 'http://www.4tube.com/player/videoconfig?v=%s'
 
 ####################################################################################################

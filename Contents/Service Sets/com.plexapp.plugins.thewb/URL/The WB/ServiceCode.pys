@@ -124,7 +124,7 @@ def GetThumbList(url):
 
 	thumb_list = sorted(thumb_list, key=lambda thumb: int(thumb['height']), reverse=True)
 
-	return thumb_list
+	return thumb_list[0:2]
 
 ####################################################################################################
 def TestURLs():

@@ -1,4 +1,8 @@
 RE_FLASHVARS = Regex('flashvars=&quot;config=(?P<url>[^&]+)&quot;')
+HTTP_HEADERS = {
+	'Cookie': 'age_gate_birthday=19800101',
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:23.0) Gecko/20100101 Firefox/23.0'
+}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -8,12 +12,14 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-#	page = HTML.ElementFromURL(url)
-	page = HTML.ElementFromURL('http://surf-proxy.de/index.php?q=%s' % String.Quote(url, usePlus=True), cacheTime=CACHE_1MONTH)
+	if url.endswith('#local'):
+		page = HTML.ElementFromURL(url)
+	else:
+		page = HTML.ElementFromURL('http://www.uswebproxy.com/index.php?q=%s' % String.Base64Encode(url), headers=HTTP_HEADERS, timeout=5.0, cacheTime=CACHE_1MONTH)
 
-	title = page.xpath("//meta[@name='title']")[0].get('content')
-	description = page.xpath("//meta[@name='description']")[0].get('content')
-	thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
+	title = page.xpath('//meta[@property="og:title"]/@content')[0]
+	description = page.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = page.xpath('//meta[@property="og:image"]/@content')[0]
 
 	# Attempt to extract the date.
 	try:
@@ -59,7 +65,11 @@ def PlayVideo(url):
 	config_url = String.Unquote(config_url.group('url'), usePlus=True)
 
 	# We can use the config path to actually get a JSON page which contains the actual MP4 path to the associated video.
-	json_page = HTTP.Request('http://surf-proxy.de/index.php?q=%s' % String.Quote(config_url, usePlus=True)).content
+	if url.endswith('#local'):
+		json_page = HTTP.Request('http://www.uswebproxy.com/index.php?q=%s' % String.Base64Encode(config_url), timeout=5.0).content
+	else:
+		json_page = HTTP.Request(config_url).content
+
 	json_page = json_page.replace("'", '"')
 	json = JSON.ObjectFromString(json_page)
 
