@@ -80,21 +80,9 @@ def MediaObjectsForURL(url):
                 parts = [
                     PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
                     ],
-                # Too expensive...
-                # video_resolution = getMaxResolution(url),
                 audio_channels = 2,
                 optimized_for_streaming = True
-                )# ,
-            # This won't work with my Samsung - would be preferred to manage FLV and HLS...
-            # MediaObject(
-            # 	parts = [
-            # 		PartObject(key=Callback(PlayVideo, url=url))
-            # 	],
-            # 	# video_resolution = getMaxResolution(url),
-            # 	audio_channels = 2,
-            # 	optimized_for_streaming = True
-            # )
-
+                )
             ]
 
 ####################################################################################################
@@ -133,49 +121,4 @@ def getVideoUrl(url):
 
 def PlayVideo(url, bitrate=None):
     (urlType, videoUrl) = getVideoUrl(url)
-    if urlType == 'hls':
-        HLSStreams = getHLSStreams(videoUrl)
-        maxBitrateUrl = ""
-        sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
-        for s in sortedStreams:
-            maxBitrateUrl = s["url"]
-            break
-        return Redirect(HTTPLiveStreamURL(maxBitrateUrl))
-    else:
-        return Redirect(videoUrl)
     return Redirect(HTTPLiveStreamURL(videoUrl))
-
-def getHLSStreams(hlsUrl):
-    streams = []
-    m3u8 = ""
-
-    try:
-        request = HTTP.Request(url=hlsUrl, immediate=True)
-        request.load()
-        m3u8 = request.content
-    except:
-        return streams
-
-    streamSpecLines = m3u8.splitlines()
-
-    # Parse the m3u8 file to get:
-    # - URL
-    # - Resolution
-    # - Bitrate
-    for line in streamSpecLines:
-        if "BANDWIDTH" in line:
-            bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
-            stream = {}
-            stream["bitrate"] = int(bwm.group(0))
-
-            if "RESOLUTION" in line:
-                rnm = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
-                stream["resolution"] = int(rnm.group(0).split("x")[1])
-            else:
-                stream["resolution"] = 0
-
-        elif ".m3u8" in line:
-            stream["url"] = line
-            streams.append(stream)
-
-    return streams
