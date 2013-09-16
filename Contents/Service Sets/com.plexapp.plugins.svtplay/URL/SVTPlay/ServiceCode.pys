@@ -87,7 +87,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 
-def getVideoUrl(url):
+def getVideoUrls(url):
     try:
         page = HTML.ElementFromURL(url)
     except:
@@ -114,11 +114,57 @@ def getVideoUrl(url):
 
     if not ios_url and not flash_url:
         raise Ex.MediaNotAvailable
-    elif not ios_url:
-        return ('flash', flash_url)
-    else:
-        return ('hls', ios_url)
+    urls = {}
+    if ios_url:
+        urls['ios'] = ios_url
+    if flash_url:
+        urls['flash'] = flash_url
+    return urls
 
 def PlayVideo(url, bitrate=None):
-    (urlType, videoUrl) = getVideoUrl(url)
-    return Redirect(HTTPLiveStreamURL(videoUrl))
+    urls = getVideoUrls(url)
+    if 'ios' in urls:
+        stream = selectBestHLSStream(urls['ios'])
+        return Redirect(HTTPLiveStreamURL(stream))
+    if 'flash' in urls:
+        pass
+
+def selectBestHLSStream(videoURL):
+    streams = getHLSStreams(videoURL)
+    sortedStreams = sorted(streams, key=lambda stream: stream["bitrate"], reverse=True)
+    return sortedStreams[0]['url']
+
+def getHLSStreams(hlsUrl):
+    streams = []
+    m3u8 = ""
+
+    try:
+        request = HTTP.Request(url=hlsUrl, immediate=True)
+        request.load()
+        m3u8 = request.content
+    except:
+        return streams
+
+    streamSpecLines = m3u8.splitlines()
+
+    # Parse the m3u8 file to get:
+    # - URL
+    # - Resolution
+    # - Bitrate
+    for line in streamSpecLines:
+        if "BANDWIDTH" in line:
+            bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
+            stream = {}
+            stream["bitrate"] = int(bwm.group(0))
+
+            if "RESOLUTION" in line:
+                rnm = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
+                stream["resolution"] = int(rnm.group(0).split("x")[1])
+            else:
+                stream["resolution"] = 0
+
+        elif ".m3u8" in line:
+            stream["url"] = line
+            streams.append(stream)
+
+    return streams
