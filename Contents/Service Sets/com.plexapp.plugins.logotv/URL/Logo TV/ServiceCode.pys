@@ -89,158 +89,30 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if '/episode-' in url:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=5))
-				],
-				bitrate = 3500,
-				container = Container.MP4,
-				video_resolution = '720',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=5))
-				],
-				bitrate = 2200,
-				container = Container.MP4,
-				video_resolution = '540',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=5))
-				],
-				bitrate = 1700,
-				container = Container.MP4,
-				video_resolution = '432',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=5))
-				],
-				bitrate = 1200,
-				container = Container.MP4,
-				video_resolution = '360',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=5))
-				],
-				bitrate = 750,
-				container = Container.MP4,
-				video_resolution = '288',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
-				],
-				bitrate = 3500,
-				container = Container.MP4,
-				video_resolution = '720',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
-				],
-				bitrate = 2200,
-				container = Container.MP4,
-				video_resolution = '540',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
-				],
-				bitrate = 1700,
-				container = Container.MP4,
-				video_resolution = '432',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
-				],
-				bitrate = 1200,
-				container = Container.MP4,
-				video_resolution = '360',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
-				],
-				bitrate = 750,
-				container = Container.MP4,
-				video_resolution = '288',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
+    if 'playlist' in url:
+        num_parts = 11
+    else:
+        num_parts = 1
 
+    return [
+        MediaObject(
+            parts = [
+                PartObject(
+                    key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
+                    ) for i in range(num_parts)
+            ],
+            bitrate = bitrate,
+            container = Container.MP4,
+            video_resolution = resolution,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+	    # Resolutions for old videos are different. And include 1200/360, 1800/432, 600/240  
+	    # But they are handled with the closest command in the PlayVideo function
+        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360'), (750, '288')]
+    ]
+    
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0):
 
