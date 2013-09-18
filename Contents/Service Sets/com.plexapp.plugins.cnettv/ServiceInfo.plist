@@ -15,10 +15,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(cnettv|reviews).cnet.com/.+/.+</string>
-<<<<<<< HEAD
-=======
 				<string>^http://www.cbsnews.com/video/watch/\?id=.+</string>
->>>>>>> 484d131... took out code for cbsnews main video page
 			</array>
 		</dict>
 	</dict>

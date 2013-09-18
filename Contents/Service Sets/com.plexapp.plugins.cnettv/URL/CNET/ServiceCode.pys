@@ -124,11 +124,8 @@ def GetVideoIdFromUrl(url):
 
   if 'cnettv' in url and '.html' in url:
     video_id = url.split('-')[-1].strip('.html')
-<<<<<<< HEAD
-=======
   elif 'cbsnews.com' in url and '?id=' in url:
     video_id = url.split('?id=')[1].strip('n')
->>>>>>> 484d131... took out code for cbsnews main video page
   else:
     data = HTML.ElementFromURL(url, cacheTime=7200)
     try:
