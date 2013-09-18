@@ -22,6 +22,10 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
+
+	if 'Error' in html.xpath('//title/text()')[0]:
+		raise Ex.MediaNotAvailable
+
 	episode_title = html.xpath('//div[@class="video_title"]/text()|//h2[@id="video_title"]/text()')
 
 	if len(episode_title) < 1:
