@@ -4,6 +4,10 @@ RE_PLAYER_CONFIG = Regex('new FM.Player\([^{]+(.+)\);')
 def NormalizeURL(url):
 
 	url = url.replace('?hd=1', '')
+
+	if '/embed' in url:
+		url = url.split('/embed')[0]
+
 	return url
 
 ####################################################################################################
