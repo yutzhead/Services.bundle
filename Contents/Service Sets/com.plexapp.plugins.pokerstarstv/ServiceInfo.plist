@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(www.)?pokerstars.tv/.+</string>
+				<string>^http://(www\.)?pokerstars\.tv/poker\-video\-\d+\-.+\.html</string>
 			</array>
 		</dict>
 	</dict>
