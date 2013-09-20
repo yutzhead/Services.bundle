@@ -9,7 +9,11 @@ def MetadataObjectForURL(url):
     asset_id = RE_ASSED_ID.search(url).group('asset_id')
 
     # Once we've determined the asset id, we can request the associated son.
-    json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
+    try:
+        json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
+    except:
+        raise Ex.MediaNotAvailable
+
     json_root = json_page['channel']['item']
 
     # Extract the available information from the page...
@@ -48,7 +52,11 @@ def PlayVideo(url):
     asset_id = RE_ASSED_ID.search(url).group('asset_id')
 
     # Once we've determined the asset id, we can request the associated son.
-    json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
+    try:
+        json_page = JSON.ObjectFromURL(JSON_FEED % asset_id)
+    except:
+        raise Ex.MediaExpired
+
     json_root = json_page['channel']['item']
 
     # Redirect to the associated video url. It appears that some older videos are not MP4 but are FLVs
