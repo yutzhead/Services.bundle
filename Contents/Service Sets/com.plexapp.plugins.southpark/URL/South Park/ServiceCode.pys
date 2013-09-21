@@ -1,12 +1,12 @@
-RE_EP_DATA = Regex('.+Season (?P<season>[0-9]+), Episode (?P<episode>[0-9]+).+')
+RE_EP_DATA = Regex('\/s(?P<season>\d+)e(?P<episode>\d+)\-')
 RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
 RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
 RE_AMPERSANDS = Regex('&(?!amp;)')
 
 MRSS_URL = 'http://%s/feeds/video-player/mrss/mgid%%3Acms%%3Acontent%%3Asouthparkstudios.com%%3A%s'
-MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
-NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -27,51 +27,27 @@ def MetadataObjectForURL(url):
 			else:
 				raise Ex.MediaNotAvailable
 
-	title = data.xpath('//meta[@property="og:title"]')[0].get('content').split(' - ')[0]
-	summary = data.xpath('//meta[@name="og:description"]')[0].get('content')
-	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
-	try:
-		duration = int(data.xpath('//meta[@itemprop="duration"]')[0].get('content'))
-	except:
-		content = HTTP.Request(url).content
-		uri = RE_URI.search(content)
+	title = data.xpath('//title/text()')[0].split(' - ')[0]
+	summary = data.xpath('//meta[@name="description"]/@content')[0]
+	thumb = data.xpath('//img[@class="player-sizer"]/@src')[0].split('?')[0]
 
-		if not uri:
-			raise Ex.MediaNotAvailable
-
-		host = url.split('/')[2]
-
-		mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1))).content
-		mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
-		mrss_data = XML.ElementFromString(mrss_data)
-		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-		duration = 0
-		for segment in media_urls:
-			duration = duration + int(segment.get('duration'))
-		duration = duration*1000
-
-
-	if 'clips' in url:
-		return VideoClipObject(
-			title = title,
-			summary = summary,
-			duration = duration,
-			thumb = thumb
-		)
-
-	else:
-		ep_title = title.split(' (')[0]
-		ep_data = RE_EP_DATA.search(title).groupdict()
+	if '/full-episodes/' in url:
+		ep_data = RE_EP_DATA.search(url).groupdict()
 		season = ep_data['season']
 		index = ep_data['episode']
 
 		return EpisodeObject(
-			title = ep_title,
+			title = title,
 			show = "South Park",
 			season = int(season),
 			index = int(index),
 			summary = summary,
-			duration = duration,
+			thumb = thumb
+		)
+	else:
+		return VideoClipObject(
+			title = title,
+			summary = summary,
 			thumb = thumb
 		)
 
