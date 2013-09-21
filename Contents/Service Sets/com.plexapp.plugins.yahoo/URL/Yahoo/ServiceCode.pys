@@ -5,7 +5,6 @@ BITRATES = [4000, 3000, 2000, 1500, 1000]
 
 RE_VIDEO_ID = Regex('\-(\d{9,})\.html')
 RE_JSON = Regex('YAHOO.Media.CarouselDataManager\(({.+?}), Y\.merge')
-RE_CONTENT_ID = Regex('CONTENT_ID = "([^"]+)"')
 RE_UUID = Regex('[a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12}')
 
 ####################################################################################################
