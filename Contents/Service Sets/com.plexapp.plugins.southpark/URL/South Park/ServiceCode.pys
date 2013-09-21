@@ -1,9 +1,7 @@
 RE_EP_DATA = Regex('\/s(?P<season>\d+)e(?P<episode>\d+)\-')
-RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
-RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
 RE_AMPERSANDS = Regex('&(?!amp;)')
 
-MRSS_URL = 'http://%s/feeds/video-player/mrss/mgid%%3Acms%%3Acontent%%3Asouthparkstudios.com%%3A%s'
+MRSS_URL = 'http://%s/feeds/video-player/mrss/%s'
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
@@ -16,20 +14,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	# Pages of older episodes sometimes redirect to the same URL, creating an endless loop. If we
-	# are redirected, first check if the destination URL isn't the same as the input URL.
-	try:
-		data = HTML.ElementFromURL(url, follow_redirects=False)
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers:
-			if e.headers['Location'] != url:
-				data = HTML.ElementFromURL(e.headers['Location'])
-			else:
-				raise Ex.MediaNotAvailable
+	html = GetHTML(url)
 
-	title = data.xpath('//title/text()')[0].split(' - ')[0]
-	summary = data.xpath('//meta[@name="description"]/@content')[0]
-	thumb = data.xpath('//img[@class="player-sizer"]/@src')[0].split('?')[0]
+	title = html.xpath('//title/text()')[0].split(' - ')[0]
+	summary = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = html.xpath('//img[@class="player-sizer"]/@src')[0].split('?')[0]
 
 	if '/full-episodes/' in url:
 		ep_data = RE_EP_DATA.search(url).groupdict()
@@ -54,47 +43,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if 'clips' in url:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="600", index=0)),
-				],
-				bitrate = 600,
-				#container = Container.MP4,
-				video_resolution = '480',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="500", index=0)),
-				],
-				bitrate = 500,
-				#container = Container.MP4,
-				video_resolution = '480',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="300", index=0)),
-				],
-				bitrate = 300,
-				#container = Container.MP4,
-				video_resolution = '480',
-				#video_codec = VideoCodec.H264,
-				#audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-
-	else:
+	if '/full-episodes/' in url:
 		return [
 			MediaObject(
 				parts = [
@@ -139,25 +88,64 @@ def MediaObjectsForURL(url):
 				optimized_for_streaming = True
 			)
 		]
+	else:
+		return [
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="600", index=0)),
+				],
+				bitrate = 600,
+				#container = Container.MP4,
+				video_resolution = '480',
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="500", index=0)),
+				],
+				bitrate = 500,
+				#container = Container.MP4,
+				video_resolution = '480',
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			),
+			MediaObject(
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate="300", index=0)),
+				],
+				bitrate = 300,
+				#container = Container.MP4,
+				video_resolution = '480',
+				#video_codec = VideoCodec.H264,
+				#audio_codec = AudioCodec.AAC,
+				audio_channels = 2,
+				optimized_for_streaming = True
+			)
+		]
 
 ####################################################################################################
 def PlayVideo(url, bitrate='1200', index=0):
 
-	if 'clips' in url:
-		BITRATES = ['300','500','600']
-	else:
+	if '/full-episodes/' in url:
 		BITRATES = ['450', '750', '1200']
+	else:
+		BITRATES = ['300','500','600']
 	rtmp_url = None
 
-	content = HTTP.Request(url).content
-	uri = RE_URI.search(content)
+	html = GetHTML(url)
+	mgid = html.xpath('//div[@id="player_page_player"]/@data-mgid')
 
-	if not uri:
+	if len(mgid) < 1:
 		raise Ex.MediaNotAvailable
 
 	host = url.split('/')[2]
 
-	mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1))).content
+	mrss_data = HTTP.Request(MRSS_URL % (host, mgid[0])).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
@@ -166,7 +154,7 @@ def PlayVideo(url, bitrate='1200', index=0):
 	if title.startswith('South Park Intro'):
 		index = index + 1
 
-	player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
+	player_url = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)[index]
 
 	try:
 		player_data = XML.ElementFromURL(player_url)
@@ -188,6 +176,8 @@ def PlayVideo(url, bitrate='1200', index=0):
 	if rtmp_url:
 		if '/viacomspstrm/' in rtmp_url:
 			stream_url = rtmp_url.split('/viacomspstrm/')[1]
+		elif '/viacomccstrm/' in rtmp_url:
+			stream_url = rtmp_url.split('/viacomccstrm/')[1]
 		elif '/mtvnorigin/' in rtmp_url:
 			stream_url = rtmp_url.split('/mtvnorigin/')[1]
 		else:
@@ -198,3 +188,19 @@ def PlayVideo(url, bitrate='1200', index=0):
 		return Redirect(mp4_url)
 	else:
 		raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetHTML(url):
+
+	# Pages of older episodes sometimes redirect to the same URL, creating an endless loop. If we
+	# are redirected, first check if the destination URL isn't the same as the input URL.
+	try:
+		html = HTML.ElementFromURL(url, follow_redirects=False)
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			if e.headers['Location'] != url:
+				html = HTML.ElementFromURL(e.headers['Location'])
+			else:
+				raise Ex.MediaNotAvailable
+
+	return html
