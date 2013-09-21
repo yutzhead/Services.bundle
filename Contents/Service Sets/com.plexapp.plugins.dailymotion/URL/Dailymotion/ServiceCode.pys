@@ -91,7 +91,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url=None, fmt=None, **kwargs):
 
-	if not url or not fmt:
+	if not url or not fmt or '/json/' in url:
 		raise Ex.MediaNotAvailable
 
 	try:
