@@ -1,16 +1,33 @@
-import re
-
+RE_CHANNEL    = Regex('http://www\.kanal([5,9])play\.se')
 RE_CACHETOKEN = Regex('cacheToken: "(.+?)",')
-RE_VIDEO_ID	= Regex('/video/([0-9]+)')
-RE_EP_INDEX = Regex('Avsnitt ([0-9]+)')
-RE_SE_INDEX = Regex('song ([0-9]+)')
+RE_VIDEO_ID   = Regex('/video/([0-9]+)')
+RE_EP_INDEX   = Regex('Avsnitt ([0-9]+)')
+RE_SE_INDEX   = Regex('song ([0-9]+)')
+RE_PATH       = Regex('mp4:(.*)_[0-9]+')
 
-API_IPAD = 'http://www.kanal5play.se/api/getVideoCached?cacheToken=%s&format=IPAD&videoId=%s&withTheme=true'
-API_FLASH = 'http://www.kanal5play.se/api/getVideoCached?cacheToken=%s&format=FLASH&videoId=%s&withTheme=true'
-RSS_URLS = ['http://www.kanal5play.se/rss?type=CLIP', 'http://www.kanal5play.se/rss?type=PROGRAM']
+API_URL  = 'http://www.kanal%splay.se/api/getVideoCached?cacheToken=%s&format=%s&videoId=%s&withTheme=true'
+RSS_URLS = ['http://www.kanal%splay.se/rss?type=CLIP', 'http://www.kanal%splay.se/rss?type=PROGRAM']
 
-API_IPAD_EXT = '/api/getVideoCached?cacheToken=%s&format=IPAD&videoId=%s&withTheme=true'
-API_FLASH_EXT = '/api/getVideoCached?cacheToken=%s&format=FLASH&videoId=%s&withTheme=true'
+PLATFORMS_WITH_REAL_RTMP_SUPPORT = [
+	'Plex Home Theater',
+	'iOS',
+	'MacOSX',
+	'Android',
+	'Windows',
+	'Roku',
+	'Unknown',
+	'Firefox',
+	'Internet Explorer',
+	'Opera',
+	'Safari',
+	'Chrome',
+	'OmniWeb',
+	'iCab',
+	'Konqueror',
+	'Camino',
+	'Netscape',
+	'Mozilla'
+]
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -25,7 +42,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	details = GetDetails(url)
+	details = GetDetails(url = url, format = 'FLASH')
 
 	episode_title = details['title']
 	show_title = details['program']['name']
@@ -63,159 +80,155 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-	return [
-		MediaObject(
-			optimized_for_streaming = True,
-			parts = [
-				PartObject(
-					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
-				)
-			]
-		)
-	]
+	if Client.Platform in PLATFORMS_WITH_REAL_RTMP_SUPPORT:
+		# Use RTMP. All programs are available
+		# in this format, so even for iOS clients we prefer this.
+		return [
+			MediaObject(
+				protocol                = 'rtmp',
+				video_resolution        = 480,
+            	video_codec             = VideoCodec.H264,
+            	audio_codec             = AudioCodec.AAC,          
+            	audio_channels          = 2,
+				optimized_for_streaming = True,
+				parts = [
+					PartObject(
+						key = Callback(PlayRTMP, url = url)
+					)
+				]
+			)
+		]
+		
+	else:
+		# Use HLS for the rest. Not all programs are available
+		# in this format, but this is the best we can do.
+		return [
+			MediaObject(
+				video_resolution        = 480,
+				audio_channels          = 2,
+				optimized_for_streaming = True,
+				parts = [
+					PartObject(
+						key = HTTPLiveStreamURL(Callback(PlayHLS, url = url))
+					)
+				]
+			)
+		]
 
 ####################################################################################################
-def PlayVideo(url):
-
-	details = GetDetails(url, API_IPAD_EXT)
-
-	if 'reasonsForNoStreams' in details:
-		if "Videon är inte tillgänglig i din region." in details['reasonsForNoStreams']:
-			raise Ex.MediaGeoblocked
-		else:
-			return PlayRTMPVideo(url)
-
-	HLSStreams = getHLSStreams(details['streams'][0]['source'])
-
-	maxBitrateUrl = ""
-	sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
-
-	for s in sortedStreams:
-		maxBitrateUrl = s["url"]
-		break
-
-	newPlaylist = ""
-	orgPlayList = HTTP.Request(maxBitrateUrl).content
-	prefix = re.sub("(.*_ipad/).*", "\\1", maxBitrateUrl)
-	path = url[ : url.rfind('/') + 1]
+def PlayHLS(url):
+	details = GetDetails(url, 'IPAD')
+	
+	try:
+		url = details['streams'][0]['source']
+	except:
+		raise Ex.MediaNotAvailable
+	
+	# Patch playlist so that it contains absolute URLs
+	# The Samsung client has problems with this otherwise
+	streams       = GetHLSStreams(url)
+	maxBitrateURL = streams[0]["url"]
+	path          = url[ : url.rfind('/') + 1]
+		
+	orgPlayList = HTTP.Request(maxBitrateURL).content
+	newPlayList = ''
 
 	for line in orgPlayList.splitlines():
-		if 'media' in line:
-			newPlaylist = newPlaylist + prefix + line + '\n'
+		if line.startswith("#"):
+			newPlayList = newPlayList + line + '\n'
 		else:
-			newPlaylist = newPlaylist + line + '\n'
+			newPlayList = newPlayList + path + line + '\n'
 
-	return newPlaylist
-
-####################################################################################################
-def getHLSStreams(hlsUrl):
-
-	streams = []
-	Found = True
-
-	try:
-		pageElement = HTML.ElementFromURL(hlsUrl)
-	except:
-		Found = False
-
-	if Found:
-		streamSpec = pageElement.xpath("text()")[0]
-		streamSpecLines = streamSpec.splitlines()
-
-		path = hlsUrl[ : hlsUrl.rfind('/') + 1]
-
-		# Parse the m3u8 file to get:
-		# - URL
-		# - Resolution
-		# - Bitrate
-		for line in streamSpecLines:
-			if "BANDWIDTH" in line:
-				bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
-
-				stream = {}
-				stream["bitrate"] = int(bwm.group(0))
-
-				if "RESOLUTION" in line:
-					rnm = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
-					stream["resolution"] = int(rnm.group(0).split("x")[1])
-				else:
-					stream["resolution"] = 0
-
-			elif ".m3u8" in line:
-				stream["url"] = line
-				Log("STREAM: " + stream["url"])
-				streams.append(stream)
-
-	return streams
+	return newPlayList
 
 ####################################################################################################
-def GetDetails(url, api=API_FLASH_EXT):
+@indirect
+def PlayRTMP(url):
+	details = GetDetails(url, 'FLASH')
 
-	base_url = "http://www.kanal5play.se"
-
-	if base_url in url:
-		api = base_url + api
+	maxBitrateFound = 0
+	for stream in details['streams']:
+		if stream['bitrate'] > maxBitrateFound:
+			maxBitrateFound = stream['bitrate']
+			clip            = stream['source']
+			rtmpURL         = details['streamBaseUrl']
+			
+	if rtmpURL:
+		Log(rtmpURL)
+		return IndirectResponse(
+			VideoClipObject,
+			key = RTMPVideoURL(
+				url = rtmpURL,
+				clip = clip,
+				swf_url = 'http://www.kanal5play.se/flash/K5StandardPlayer.swf'
+			)
+		)
+		
 	else:
-		api = "http://www.kanal9play.se" + api
+		raise Ex.MediaNotAvailable
 
-	content = HTTP.Request(url).content
+####################################################################################################
+def GetDetails(url, format):
+	channel    = RE_CHANNEL.search(url).groups()[0]
+	content    = HTTP.Request(url).content
 	cacheToken = RE_CACHETOKEN.search(content).group(1)
-
+	
 	try:
 		vid_id = RE_VIDEO_ID.search(url).group(1)
 	except:
-		data = HTML.ElementFromString(content)
+		data   = HTML.ElementFromString(content)
 		og_url = data.xpath('//meta[@property="og:url"]')[0].get('content')
 		vid_id = RE_VIDEO_ID.search(url).group(1)
 
-	try:
-		details = JSON.ObjectFromURL(api % (cacheToken, vid_id))
-	except:
-		raise Ex.MediaNotAvailable
+	details = JSON.ObjectFromURL(API_URL % (channel, cacheToken, format, vid_id))
 
 	return details
+
+####################################################################################################
+def GetHLSStreams(url):
+	streams = []
+
+	playList = HTTP.Request(url).content
+	
+	# Parse the m3u8 file to get:
+	# - URL
+	# - Resolution
+	# - Bitrate
+	for line in playList.splitlines():
+		if "BANDWIDTH" in line:
+			stream            = {}
+			stream["bitrate"] = int(Regex('(?<=BANDWIDTH=)[0-9]+').search(line).group(0))
+		
+		elif line.startswith("#"):
+			pass
+		
+		elif ".m3u8" in line:
+			path = ''
+			if not line.startswith("http://"):
+				path = url[ : url.rfind('/') + 1]
+			
+			stream["url"] = path + line
+			streams.append(stream)
+
+	sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)
+
+	return sorted_streams
 
 ####################################################################################################
 def TestURLs():
 
 	test_urls = []
 
-	for url in RSS_URLS:
-		data = XML.ElementFromURL(url)
+	for channel in ["5", "9"]:
+		for url in RSS_URLS % channel:
+			data  = XML.ElementFromURL(url)
+			count = 0
 
-		for item in data.xpath('//item/link'):
-			test_urls.append(item.text)
+			for item in data.xpath('//item/link'):
+				test_urls.append(item.text)
+				count = count+1
 
-			if len(test_urls) > 2:
-				break
+				if count > 1:
+					break
 
 	return test_urls
-
-####################################################################################################
-def PlayRTMPVideo(url):
-
-	details = GetDetails(url)
-
-	if 'reasonsForNoStreams' in details:
-		if "Videon är inte tillgänglig i din region." in details['reasonsForNoStreams']:
-			raise Ex.MediaGeoblocked
-		else:
-			raise Ex.MediaNotAvailable
-
-	rtmp_url = details['streamBaseUrl']
-	playpath = ''
-
-	for stream in details['streams']:
-		if stream['bitrate'] == 900000:
-			playpath = stream['source']
-			break
-
-	if playpath == '':
-		playpath = details['streams'][-1]['source']
-
-		playpath = re.sub("^.*:(.*)", ".\\1.mp4", playpath)
-		rtmp_url = rtmp_url + playpath
-		playpath = None
-
-		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url=rtmp_url, clip=playpath))
