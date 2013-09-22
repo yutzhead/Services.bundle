@@ -9,7 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://www.logotv.com/video/.+/\d{7}/playlist.jhtml</string>
-                <string>^http://www.logotv.com/video/misc/\d{6}/.+</string>
+				<string>^http://www.logotv.com/video/(interview|misc)/\d{6}/.+</string>
 				<string>^http://www.logotv.com/video/\?id=\d{7}</string>
 			</array>
 		</dict>
