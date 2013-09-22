@@ -86,27 +86,27 @@ def PlayVideo(url):
 		else:
 			return PlayRTMPVideo(url)
 
-		HLSStreams = getHLSStreams(details['streams'][0]['source'])
+	HLSStreams = getHLSStreams(details['streams'][0]['source'])
 
-		maxBitrateUrl = ""
-		sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
+	maxBitrateUrl = ""
+	sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
 
-		for s in sortedStreams:
-			maxBitrateUrl = s["url"]
-			break
+	for s in sortedStreams:
+		maxBitrateUrl = s["url"]
+		break
 
-		newPlaylist = ""
-		orgPlayList = HTTP.Request(maxBitrateUrl).content
-		prefix = re.sub("(.*_ipad/).*", "\\1", maxBitrateUrl)
-		path = url[ : url.rfind('/') + 1]
+	newPlaylist = ""
+	orgPlayList = HTTP.Request(maxBitrateUrl).content
+	prefix = re.sub("(.*_ipad/).*", "\\1", maxBitrateUrl)
+	path = url[ : url.rfind('/') + 1]
 
-		for line in orgPlayList.splitlines():
-			if 'media' in line:
-				newPlaylist = newPlaylist + prefix + line + '\n'
-			else:
-				newPlaylist = newPlaylist + line + '\n'
+	for line in orgPlayList.splitlines():
+		if 'media' in line:
+			newPlaylist = newPlaylist + prefix + line + '\n'
+		else:
+			newPlaylist = newPlaylist + line + '\n'
 
-		return newPlaylist
+	return newPlaylist
 
 ####################################################################################################
 def getHLSStreams(hlsUrl):
