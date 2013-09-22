@@ -10,7 +10,7 @@
 			<array>
 				<string>^http://www.(vh1|mtv|cmt).com/videos?/.+?\d{7}/(playlist|full-episode)\.jhtml</string>
 				<string>^http://www.(vh1|mtv|cmt).com/videos?/misc/\d{6}/.+</string>
-				<string>^http://www.(vh1|mtv|cmt).com/videos?/.+?/\d{5,6}/.+</string>
+				<string>^http://www.(vh1|mtv|cmt).com/videos?/.+?/\d{4,6}/.+</string>
 				<string>^http://www.(vh1|mtv|cmt).com/videos?/.+?v?id=\d{5,6}</string>
 				<string>^http://www.mtvhive.com/videos?/\d{6}/</string>
 				<string>^http://www.mtvhive.com/.+?/\d{6}/.+</string>

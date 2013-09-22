@@ -6,7 +6,10 @@ RE_VIDEO_SRC = Regex('htmlVideoSrc.+?"([^"]+)')
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	# Extract the details available from the various pages.
 	title = page.xpath("//head//meta[@property='og:title']")[0].get('content')
@@ -37,7 +40,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	source = RE_VIDEO_SRC.search(page).group(1)
 
 	if source.startswith("http") == False:

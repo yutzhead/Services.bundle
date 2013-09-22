@@ -36,7 +36,7 @@ def MetadataObjectForURL(url):
   summary = data['description']
   duration = data['duration']
   date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
-  content_rating = data['ratings'][0]['rating']
+  content_rating = data['ratings'][0]['rating'] if len(data['ratings']) > 0 else None
   title = data['title']
 
   if data['AETN$mrssLengthType'] == "Episode":

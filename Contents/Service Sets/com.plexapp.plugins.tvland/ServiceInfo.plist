@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.tvland.com/(episodes|video-clips)/[0-9]{4,5}/.+</string>
+				<string>^http://www.tvland.com/(episodes|video-clips)/[0-9]{3,5}/.+</string>
 			</array>
 		</dict>
 	</dict>

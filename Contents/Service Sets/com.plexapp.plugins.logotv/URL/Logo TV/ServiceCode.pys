@@ -1,277 +1,102 @@
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
 MRSS_URL = "http://www.logotv.com/player/includes/rss.jhtml?uri=%s"
-PLAYLIST_URL = "http://www.logotv.com/player/includes/mediaGen.jhtml?uri=%s&vid=%s"
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
 RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
 RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
 
-RE_SEASON = Regex('Season (?P<season>\d+)')
-RE_EPISODE = Regex('Episode (?P<episode>\d+)')
-
-RE_DATE = Regex('[0-9]{4}-[0-9]{2}-[0-9]{2}')
-
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url.split('#')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	content = HTTP.Request(url).content
-	try:
-		uri = RE_EPISODE_URI.search(content).group(1)
-		video_type = "episode"
-	except:
-		uri = RE_CLIP_URI.search(content).group(1)
-		video_type = "clip"
+    data = GetRSS(url)
+    title = data.xpath('//title')[0].text
 
-	data = XML.ElementFromURL(MRSS_URL % uri)
+    try: summary = data.xpath('//description')[0].text
+    except: summary = None
 
-	try:
-		air_date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
-	except:
-		raise Ex.MediaNotAvailable
+    # The thumb is in item vs the main content in the xml files
+    thumb = data.xpath('//item/image//@url')[0]
+    date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
 
-	try:
-		summary = data.xpath('//description')[0].text
-	except:
-		summary = None
-
-	try:
-		thumb = data.xpath('//media:thumbnail', namespaces=NAMESPACES)[0].get('url').split('?')[0]
-	except:
-		try:
-			thumb = data.xpath('//image')[0].get('url').split('?')[0]
-		except:
-			thumb = None
-
-	if video_type == "episode":
-		full_title = data.xpath('//title')[0].text
-
-		show = full_title.split(':',1)[0].split('Episode')[0].split('Season')[0].strip(' :,')
-		try:
-			title = full_title.split(':',1)
-			if len(title) == 2:
-				title = title[1]
-
-			title = title.strip(' :,')
-		except:
-			title = full_title
-
-		try: season_index = int(RE_SEASON.search(full_title).group('season'))
-		except: season_index = None
-
-		try: episode_index = int(RE_EPISODE.search(full_title).group('episode'))
-		except: episode_index = None
-
-		return EpisodeObject(
-			show = show,
-			title = title,
-			index = episode_index,
-			season = season_index,
-			summary = summary,
-			originally_available_at = air_date,
-			thumb = thumb
-		)
-
-	elif video_type == "clip":
-		clip_title = data.xpath('//item/title')[0].text
-		return VideoClipObject(
-			title = clip_title,
-			originally_available_at = air_date,
-			summary = summary,
-			thumb = thumb
-		)
-
+    return VideoClipObject(
+        title = title,
+        summary = summary,
+        thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+        originally_available_at = date
+        )
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if '/episode-' in url:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=5))
-				],
-				bitrate = 3500,
-				container = Container.MP4,
-				video_resolution = '720',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=5))
-				],
-				bitrate = 2200,
-				container = Container.MP4,
-				video_resolution = '540',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=5))
-				],
-				bitrate = 1700,
-				container = Container.MP4,
-				video_resolution = '432',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=5))
-				],
-				bitrate = 1200,
-				container = Container.MP4,
-				video_resolution = '360',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=4)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=5))
-				],
-				bitrate = 750,
-				container = Container.MP4,
-				video_resolution = '288',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
-				],
-				bitrate = 3500,
-				container = Container.MP4,
-				video_resolution = '720',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
-				],
-				bitrate = 2200,
-				container = Container.MP4,
-				video_resolution = '540',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
-				],
-				bitrate = 1700,
-				container = Container.MP4,
-				video_resolution = '432',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-				),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
-				],
-				bitrate = 1200,
-				container = Container.MP4,
-				video_resolution = '360',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
-				],
-				bitrate = 750,
-				container = Container.MP4,
-				video_resolution = '288',
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
+    if 'playlist' in url:
+        num_parts = 11
+    else:
+        num_parts = 1
 
+    return [
+        MediaObject(
+            parts = [
+                PartObject(
+                    key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
+                    ) for i in range(num_parts)
+            ],
+            bitrate = bitrate,
+            container = Container.MP4,
+            video_resolution = resolution,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+	    # Resolutions for old videos are different. And include 1200/360, 1800/432, 600/240  
+	    # But they are handled with the closest command in the PlayVideo function
+        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360'), (750, '288')]
+    ]
+    
 ####################################################################################################
 def PlayVideo(url, bitrate='1700', index=0):
 
-	BITRATES = ['750', '1200', '1700', '2200', '3500']
+    mrss_data = GetRSS(url)
+    media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
-	content = HTTP.Request(url).content
-	try:
-		uri = RE_EPISODE_URI.search(content).group(1)
-	except:
-		uri = RE_CLIP_URI.search(content).group(1)
+    if index < len(media_url):
+        player_url = media_url[index].get('url')
+    else:
+        # Return small filler movie for desktop clients
+        return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
-	data = XML.ElementFromURL(MRSS_URL % uri)
-	try:
-		clip_uri = data.xpath('//item/guid')[index].text
-	except:
-		return None
+    try:
+        player_data = XML.ElementFromURL(player_url)
+    except:
+        raise Ex.MediaNotAvailable
 
-	player_data = XML.ElementFromURL(PLAYLIST_URL % (clip_uri, clip_uri.split(':')[-1]))
-	try:
-		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
-	except:
-		rtmp_url = ''
-		index = BITRATES.index(bitrate)
-		while index > -1:
-			try:
-				rtmp_url = player_data.xpath('//rendition/src')[index].text
-				break
-			except:
-				index = index - 1
+    available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
+    if len(available_bitrates) < 1:
+        raise Ex.MediaNotAvailable
 
-	stream_url = rtmp_url.split('/viacomlogostrm/')[1]
-	mp4_url = MP4_URL % stream_url
+    closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+    rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
 
-	return Redirect(mp4_url)
+    stream_url = rtmp_url.split('/viacomlogostrm/')[1]
+    mp4_url = MP4_URL % stream_url
+
+    return Redirect(mp4_url)
+####################################################################################################
+# Using regex to pull uri. 
+# Make it a separate function so it can be used for the metadataobject too
+def GetRSS(url):
+    content = HTTP.Request(url).content
+    if 'playlist' in url:
+        uri = RE_EPISODE_URI.search(content).group(1)
+    else:
+        uri = RE_CLIP_URI.search(content).group(1)
+    if not uri:
+        raise Ex.MediaExpired
+
+    mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+
+    return mrss_data

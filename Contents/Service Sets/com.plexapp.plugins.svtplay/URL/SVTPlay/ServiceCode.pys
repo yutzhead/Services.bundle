@@ -1,219 +1,130 @@
 BASE_URL = 'http://www.svtplay.se'
 BASE_OA_URL = 'http://www.oppetarkiv.se'
-import re 
+import re
+
 ####################################################################################################
 def NormalizeURL(url):
     return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-	try:
-		page = HTML.ElementFromURL(url)
-	except:
-		raise Ex.MediaNotAvailable
+    try:
+        page = HTML.ElementFromURL(url)
+    except:
+        raise Ex.MediaNotAvailable
 
-	# Test if this page contains video
-	json_url = page.xpath('//a[@id="player"]/@data-json-href')
-	if len(json_url) < 1:
-		return None
+    # Test if this page contains video
+    json_url = page.xpath('//a[@id="player"]/@data-json-href')
+    if len(json_url) < 1:
+        return None
 
-	show = None
-	title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].replace('&amp;', '&')
-	title = String.DecodeHTMLEntities(title)
+    show = None
+    title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].replace('&amp;', '&')
+    title = String.DecodeHTMLEntities(title)
 
-	if ' - ' in title:
-		(show, title) = title.split(' - ', 1)
+    if ' - ' in title:
+        (show, title) = title.split(' - ', 1)
 
-	summary = page.xpath('//meta[@property="og:description"]/@content')[0].replace('&amp;', '&')
-	summary = String.DecodeHTMLEntities(summary)
-	thumb = page.xpath('//meta[@property="og:image"]/@content')
+    summary = page.xpath('//meta[@property="og:description"]/@content')[0].replace('&amp;', '&')
+    summary = String.DecodeHTMLEntities(summary)
+    thumb = page.xpath('//meta[@property="og:image"]/@content')
 
-	if len(thumb) < 1:
-		thumb = None
-	else:
-		thumb = thumb[0].replace('/small/', '/large/')
+    if len(thumb) < 1:
+        thumb = None
+    else:
+        thumb = thumb[0].replace('/small/', '/large/')
 
-	try:
-		air_date = page.xpath('//div[@class="playBoxConnectedToVideoMain"]//time/@datetime')[0].split('T')[0]
-		air_date = Datetime.ParseDate(air_date).date()
-	except:
-		air_date = None
+    try:
+        air_date = page.xpath('//div[@class="playBoxConnectedToVideoMain"]//time/@datetime')[0].split('T')[0]
+        air_date = Datetime.ParseDate(air_date).date()
+    except:
+        air_date = None
 
-	# Airdate for Öppet Arkiv
-	if air_date == None:
-		try:
-			air_date = page.xpath("//span[@class='svt-video-meta']//time/@datetime")[0].split('T')[0]
-			air_date = Datetime.ParseDate(air_date).date()
-		except:
-			air_date = None
+    # Airdate for Öppet Arkiv
+    if air_date == None:
+        try:
+            air_date = page.xpath("//span[@class='svt-video-meta']//time/@datetime")[0].split('T')[0]
+            air_date = Datetime.ParseDate(air_date).date()
+        except:
+            air_date = None
 
-	try:
-		duration = page.xpath("//a[@id='player']/@data-length")
-		duration = int(duration[0]) * 1000
-	except:
-		duration = None
-		pass
+    try:
+        duration = page.xpath("//a[@id='player']/@data-length")
+        duration = int(duration[0]) * 1000
+    except:
+        duration = None
+        pass
 
-	if show:
-		return EpisodeObject(
-			show = show,
-			title = title,
-			summary = summary,
-			duration = duration,
-			thumb = thumb,
-			originally_available_at = air_date
-		)
-	else:
-		return VideoClipObject(
-			title = title,
-			summary = summary,
-			duration = duration,
-			thumb = thumb,
-			originally_available_at = air_date
-		)
+    if show:
+        return EpisodeObject(
+                show = show,
+                title = title,
+                summary = summary,
+                duration = duration,
+                thumb = thumb,
+                originally_available_at = air_date
+                )
+    else:
+        return VideoClipObject(
+                title = title,
+                summary = summary,
+                duration = duration,
+                thumb = thumb,
+                originally_available_at = air_date
+                )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-
-	return [
-		MediaObject(
-			parts = [
-				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
-			],
-                        # Too expensive...
-			# video_resolution = getMaxResolution(url),
-			audio_channels = 2,
-			optimized_for_streaming = True
-		)# ,
-                # This won't work with my Samsung - would be preferred to manage FLV and HLS...
-		# MediaObject(
-		# 	parts = [
-		# 		PartObject(key=Callback(PlayVideo, url=url))
-		# 	],
-		# 	# video_resolution = getMaxResolution(url),
-		# 	audio_channels = 2,
-		# 	optimized_for_streaming = True
-		# )
-
-	]
+    return [
+            MediaObject(
+                parts = [
+                    PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+                    ],
+                audio_channels = 2,
+                optimized_for_streaming = True
+                )
+            ]
 
 ####################################################################################################
-## Unused and not updated with new return value from getVideoUrl - i.e. in case of flv...
-# def getVideoResolution(url):
-        # max_bitrate  = getMaxBitrate(getVideoUrl(url))
-        # return bitRateToResolution(max_bitrate)
 
-def getVideoUrl(url):
-	try:
-		page = HTML.ElementFromURL(url)
-	except:
-		raise Ex.MediaNotAvailable
+def getVideoUrls(url):
+    try:
+        page = HTML.ElementFromURL(url)
+    except:
+        raise Ex.MediaNotAvailable
 
-	video_url = None
-        flash_url = None
-	json_url = page.xpath('//a[@id="player"]/@data-json-href')
-	if len(json_url) < 1:
-		raise Ex.MediaNotAvailable
+    ios_url = None
+    flash_url = None
+    json_url = page.xpath('//a[@id="player"]/@data-json-href')
+    if len(json_url) < 1:
+        raise Ex.MediaNotAvailable
 
-	base_url = BASE_URL
-	if 'oppetarkiv' in url:
-		base_url = BASE_OA_URL
+    base_url = BASE_URL
+    if 'oppetarkiv' in url:
+        base_url = BASE_OA_URL
 
-	json_url = '%s%s?output=json' % (base_url, json_url[0])
-	json_obj = JSON.ObjectFromURL(json_url)
+    json_url = '%s%s?output=json' % (base_url, json_url[0])
+    json_obj = JSON.ObjectFromURL(json_url)
 
-	for video in json_obj['video']['videoReferences']:
-		if 'playerType' in video and video['playerType'] == 'ios':
-                        video_url = video['url']
-			break
-                elif 'playerType' in video and video['playerType'] == 'flash':
-                        flash_url = video['url']
+    for video in json_obj['video']['videoReferences']:
+        if 'playerType' in video and video['playerType'] == 'ios':
+            ios_url = video['url']
+        elif 'playerType' in video and video['playerType'] == 'flash':
+            flash_url = video['url']
 
-	if not video_url and not flash_url:
-		raise Ex.MediaNotAvailable
-        elif not video_url:
-                return ('flash', flash_url)
-        else:
-                return ('hls', video_url)
-
-def getMaxResolution(url):
-        HLSStreams = getHLSStreams(getVideoUrl(url))
-        maxResolution = ""     
-        sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
-        for s in sortedStreams:
-                maxResolution = s["resolution"]
-                break
-        return maxResolution
-
-def getMaxBitrate(url):
-        bitrates = re.sub("(.*http[^,]+),([0-9]+)(,[0-9]+)*,\..*", "\\2\\3", url).split(",")
-        maxbitrate = "0"
-        for i in bitrates:
-                if int(i) > int(maxbitrate):
-                        maxbitrate = i
-        return maxbitrate
-
-def bitRateToResolution(bitrate):
-
-        if bitrate == "2800":
-                return '720'
-        elif bitrate == "1680":
-                return '576'
-        elif bitrate == "900":
-                return '432'
-        elif bitrate == "564":
-                return '288'
-        elif bitrate == "348":
-                return '176'
+    if not ios_url and not flash_url:
+        raise Ex.MediaNotAvailable
+    urls = {}
+    if ios_url:
+        urls['ios'] = ios_url
+    if flash_url:
+        urls['flash'] = flash_url
+    return urls
 
 def PlayVideo(url, bitrate=None):
+    urls = getVideoUrls(url)
+    if 'ios' in urls:
+        return Redirect(HTTPLiveStreamURL(urls['ios']))
+    if 'flash' in urls:
+        pass
 
-        (urlType, videoUrl) = getVideoUrl(url)
-        if urlType == 'hls':
-                HLSStreams = getHLSStreams(videoUrl)
-                maxBitrateUrl = ""     
-                sortedStreams = sorted(HLSStreams, key=lambda stream: stream["bitrate"], reverse=True)
-                for s in sortedStreams:
-                        maxBitrateUrl = s["url"]
-                        break
-                return Redirect(HTTPLiveStreamURL(maxBitrateUrl))
-        else:
-                return Redirect(videoUrl)
-
-def getHLSStreams(hlsUrl):
-  streams = []
-  Found   = True  
-                  
-  try: 
-    pageElement = HTML.ElementFromURL(hlsUrl)
-  except:
-    Found = False
-          
-  if Found:
-    streamSpec      = pageElement.xpath("text()")[0]
-    streamSpecLines = streamSpec.splitlines()
-    
-    path = hlsUrl[ : hlsUrl.rfind('/') + 1]
-          
-    # Parse the m3u8 file to get:
-    # - URL
-    # - Resolution
-    # - Bitrate
-    for line in streamSpecLines:
-      if "BANDWIDTH" in line:
-        bwm = re.search('(?<=BANDWIDTH=)[0-9]+', line)
-        
-        stream               = {}
-        stream["bitrate"]    = int(bwm.group(0))        
-        
-        if "RESOLUTION" in line:
-          rnm                  = re.search('(?<=RESOLUTION=)[0-9]+x[0-9]+', line)
-          stream["resolution"] = int(rnm.group(0).split("x")[1])
-        else:
-          stream["resolution"] = 0
-            
-      elif ".m3u8" in line:
-          stream["url"] = line
-          streams.append(stream)         
-
-  return streams

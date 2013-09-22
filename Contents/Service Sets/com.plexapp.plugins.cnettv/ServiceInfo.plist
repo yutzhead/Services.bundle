@@ -15,6 +15,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(cnettv|reviews).cnet.com/.+/.+</string>
+				<string>^http://www.cbsnews.com/video/watch/\?id=.+</string>
 			</array>
 		</dict>
 	</dict>
