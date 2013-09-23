@@ -120,13 +120,22 @@ def PlayHLS(url):
 	details = GetDetails(url, 'IPAD')
 	
 	try:
-		url = details['streams'][0]['source']
+		hlsURL = details['streams'][0]['source']
 	except:
-		raise Ex.MediaNotAvailable
+		hlsURL = None
+		
+	if not hlsURL or 'm3u8' not in hlsURL:
+		details  = GetDetails(url, 'FLASH')
+		playPath = details['streams'][-1]['source']
+		hlsURL   = 'http://hls0.00607-od0.dna.qbrick.com/00607-od0/_definst_/smil:' + RE_PATH.search(playPath).groups()[0] + '_ipad/playlist.m3u8'		
 	
 	# Patch playlist so that it contains absolute URLs
 	# The Samsung client has problems with this otherwise
-	streams       = GetHLSStreams(url)
+	streams = GetHLSStreams(hlsURL)
+	
+	if len(streams) < 1:
+		raise Ex.MediaNotAvailable
+		
 	maxBitrateURL = streams[0]["url"]
 	path          = maxBitrateURL[ : maxBitrateURL.rfind('/') + 1]
 		
