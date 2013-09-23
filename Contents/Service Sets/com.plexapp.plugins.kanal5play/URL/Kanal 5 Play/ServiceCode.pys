@@ -128,7 +128,7 @@ def PlayHLS(url):
 	# The Samsung client has problems with this otherwise
 	streams       = GetHLSStreams(url)
 	maxBitrateURL = streams[0]["url"]
-	path          = url[ : url.rfind('/') + 1]
+	path          = maxBitrateURL[ : maxBitrateURL.rfind('/') + 1]
 		
 	orgPlayList = HTTP.Request(maxBitrateURL).content
 	newPlayList = ''
