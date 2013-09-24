@@ -7,7 +7,7 @@ RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
-RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
+RE_MGID = Regex('(?:\/|vid=|id=)(\d{4,7})\/?')
 
 ####################################################################################################
 # added normalize to separate
