@@ -59,7 +59,7 @@ def MetadataObjectForURL(url):
 		try:
 			jsonDrOD = JSON.ObjectFromURL("http://www.dr.dk/tjenester/medieapi/api/MediaItem/%s" % id)
 			vc.title = jsonDrOD['title']
-			vc.duration = TimeToMs(jsonDrOD['duration'])
+			vc.duration = Datetime.MillisecondsFromString(jsonDrOD['duration'])
 			vc.source_title = jsonDrOD['broadcastChannel']
 
 			if 'broadcastTime' in jsonDrOD:
@@ -97,7 +97,11 @@ def MediaObjectsForURL(url):
 		if drMeta.get('Assets'):
 			for assets in drMeta['Assets']:
 				if assets.get('Kind') == "VideoResource":
-					drAsset = JSON.ObjectFromURL(assets['Uri'])
+					try:
+						drAsset = JSON.ObjectFromURL(assets['Uri'])
+					except:
+						raise Ex.MediaNotAvailable
+
 					for links in drAsset.get('Links'):
 						if links.get('FileFormat') == 'mp4' and links.get('Target') == 'Streaming':
 							mol.append( MediaObject(bitrate = links.get('Bitrate', None), parts = [PartObject(key = RTMPVideoURL(links['Uri'].split('mp4:')[0], clip = 'mp4:' +  links['Uri'].split('mp4:')[1], width = links.get('Width', None), height = links.get('Height', None), live = False) )]))
@@ -153,15 +157,3 @@ def MediaObjectsForURL(url):
 					mol.append(mo)
 				break		
 	return mol
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds  = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
