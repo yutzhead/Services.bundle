@@ -5,8 +5,11 @@ MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtv
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@id="video_player_box"]/@data-mgid')
-	if len(mgid) < 1:
+	try:
+		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@id="video_player_box"]/@data-mgid')
+		if len(mgid) < 1:
+			raise Ex.MediaNotAvailable
+	except:
 		raise Ex.MediaNotAvailable
 
 	xml = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR)
@@ -161,15 +164,14 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
-	video_player_box = html.xpath('//div[@id="video_player_box"]')
-
-	if len(video_player_box) < 1:
+	try:
+		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@id="video_player_box"]/@data-mgid')
+		if len(mgid) < 1:
+			raise Ex.MediaNotAvailable
+	except:
 		raise Ex.MediaExpired
 
-	uri = video_player_box[0].get('data-mgid')
-
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	mrss_data = XML.ElementFromURL(MRSS_URL % mgid[0])
 	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 
 	if index < len(media_url):
