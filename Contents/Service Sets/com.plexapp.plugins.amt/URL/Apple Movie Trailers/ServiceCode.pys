@@ -31,7 +31,7 @@ def MetadataObjectForURL(url):
 	video = FindVideoId(url)
 
 	inc_html = HTML.ElementFromURL(ALL_VIDEOS_INC % url.split('/#')[0], headers=HTTP_HEADERS)
-	title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4/text()' % video)[0]
+	title = inc_html.xpath('//a[contains(@href, "/%s/")]/parent::li/parent::ul/preceding-sibling::h3/text()|//h4/text()' % video)[0]
 
 	try:
 		duration = inc_html.xpath('//a[contains(@href, "/%s/")]/p[contains(text(), "Runtime:")]/text()' % video)[0].split('Runtime:')[-1].strip()
@@ -137,23 +137,23 @@ def FindVideoId(url):
 		raise Ex.MediaNotAvailable
 
 	# If there's only one video available, use that one
-	if len(inc_html.xpath('//a/h4')) == 1:
-		video = inc_html.xpath('//a/h4/parent::a/@href')[0].split('/')[1]
+	if len(inc_html.xpath('//a[contains(@href, "includes/") and (contains(@class, "block") or contains(@class, "link-play"))]/@href')) == 1:
+		video = inc_html.xpath('//a[contains(@href, "includes/") and (contains(@class, "block") or contains(@class, "link-play"))]/@href')[0].split('/')[1]
 	else:
-		title = inc_html.xpath('//a[contains(@href, "/%s/")]/h4' % video)
+		title = inc_html.xpath('//a[contains(@href, "includes/") and (contains(@class, "block") or contains(@class, "link-play")) and contains(@href, "/%s/")]/@href' % video)
 
 		if len(title) == 1:
-			video = title[0].xpath('./parent::a/@href')[0].split('/')[1]
+			video = title[0].split('/')[1]
 		elif len(title) < 1 and video != 'trailer':
 			raise Ex.MediaNotAvailable
 		else:
 			# Fallback to 'trailer 2', 'theatrical trailer', 'international trailer', etc.
-			title = inc_html.xpath('//a[contains(@href, "trailer")]/h4')
+			title = inc_html.xpath('//a[contains(@href, "includes/") and contains(@href, "trailer")]')
 
 			if len(title) < 1:
 				raise Ex.MediaNotAvailable
 			else:
-				video = title[0].xpath('./parent::a/@href')[0].split('/')[1]
+				video = title[0].split('/')[1]
 
 	return video
 
