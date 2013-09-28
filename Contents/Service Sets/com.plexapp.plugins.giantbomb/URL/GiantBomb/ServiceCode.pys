@@ -75,13 +75,15 @@ def PlayVideo(url, fmt='high'):
 			video_url = clip['%s_url' % fmts[index]]
 
 			if fmt == 'hd':
-				video_url = '%s?api_key=%s' % (video_url, ApiKey())
+				video_url = '%s&api_key=%s' % (video_url, ApiKey())
 			break
 		else:
 			index = index - 1
 
 	if not video_url:
 		raise Ex.MediaNotAvailable
+	
+	Log(video_url)
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
@@ -106,7 +108,6 @@ def GetClip(url):
 
 ####################################################################################################
 def ApiKey():
-
 	link_code = Prefs['link_code']
 
 	if link_code and len(link_code) == 6:
