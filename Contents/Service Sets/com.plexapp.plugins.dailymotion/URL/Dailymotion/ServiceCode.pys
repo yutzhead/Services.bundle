@@ -102,20 +102,22 @@ def PlayVideo(url=None, fmt=None, **kwargs):
 		raise Ex.MediaNotAvailable
 
 	video = JSON.ObjectFromString(data)
+	video_url = None
 
 	if fmt == 'hd':
-		if video['stream_h264_hd_url']:
+		if 'stream_h264_hd_url' in video:
 			video_url = video['stream_h264_hd_url']
-		elif video['stream_h264_url']:
-			video_url = video['stream_h264_url']    
-		else:
-			video_url = video['stream_h264_sd_url']
-	elif fmt == 'sd':
-		if video['stream_h264_url']:
+		elif 'stream_h264_url' in video:
 			video_url = video['stream_h264_url']
-		else:
+		elif 'stream_h264_sd_url' in video:
 			video_url = video['stream_h264_sd_url']
-	else:
-		video_url = video['stream_h264_sd_url']
+
+	if fmt == 'sd' or video_url is None:
+		if 'stream_h264_url' in video:
+			video_url = video['stream_h264_url']
+		elif 'stream_h264_sd_url' in video:
+			video_url = video['stream_h264_sd_url']
+		else:
+			raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=video_url)
