@@ -28,7 +28,11 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@name="title"]/@content')[0]
 	summary = html.xpath('//meta[@name="description"]/@content')[0]
 
-	playlist = JSON.ObjectFromURL(PLAYLIST_URL % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+	try:
+		playlist = JSON.ObjectFromURL(PLAYLIST_URL % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+	except:
+		raise Ex.MediaNotAvailable
+
 	thumb = playlist['data'][0]['logo']
 
 	return VideoClipObject(
