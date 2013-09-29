@@ -6,15 +6,19 @@
 	<dict>
 		<key>Goal</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-				<string>http://www.goal.com/en/news/2898/euro-2012/2012/07/01/3212429/kev-the-psychic-chicken-from-kiev-predicts-euro-2012-spain</string>
-			</array>
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://www.goal.com/.+/.+/.+</string>
 			</array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://www.goal.com/en/news/2898/euro-2012/2012/07/01/3212429/kev-the-psychic-chicken-from-kiev-predicts-euro-2012-spain</string>
+			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>

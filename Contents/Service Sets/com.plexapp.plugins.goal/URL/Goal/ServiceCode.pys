@@ -32,36 +32,42 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='2400000'))],
+			protocol = 'rtmp',
 			video_resolution = '576',
 			bitrate = '2400',
 			audio_channels = 2
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1800000'))],
+			protocol = 'rtmp',
 			video_resolution = '432',
 			bitrate = '1800',
 			audio_channels = 2
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='1200000'))],
+			protocol = 'rtmp',
 			video_resolution = '432',
 			bitrate = '1200',
 			audio_channels = 2
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='800000'))],
+			protocol = 'rtmp',
 			video_resolution = '360',
 			bitrate = '800',
 			audio_channels = 2
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='484000'))],
+			protocol = 'rtmp',
 			video_resolution = '270',
 			bitrate = '484',
 			audio_channels = 2
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate='280000'))],
+			protocol = 'rtmp',
 			video_resolution = '216',
 			bitrate = '280',
 			audio_channels = 2
