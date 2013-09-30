@@ -3,6 +3,7 @@ NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 MRSS_URL = "http://www.logotv.com/player/includes/rss.jhtml?uri=%s"
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
+RE_MGID = Regex('(?:\/|vid=|id=)(\d{4,7})\/?')
 RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
 RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
 
@@ -32,9 +33,17 @@ def MetadataObjectForURL(url):
         )
 ####################################################################################################
 def MediaObjectsForURL(url):
+# It is best to determine the type by the length of the mgid number so no errors come up and all playlist have parts
+# Also movies can be much longer than episodes, so to have movies play in full, but keep parts manageable, we separate them base on url structure
 
-    if 'playlist' in url:
-        num_parts = 11
+    mgid = RE_MGID.search(url).group(1)
+    if len(mgid) > 6:
+        # This is for full episodes and can vary from 4 to 8 parts
+        if '/season-' in url or 'episode-' in url or '/operation-vacation-' in url or '/off-pitch-' in url:
+            num_parts = 8
+        # this is for movies that can vary from 7 to 17 parts. Most are 10 to 15 parts
+        else:
+            num_parts = 17
     else:
         num_parts = 1
 
@@ -52,8 +61,7 @@ def MediaObjectsForURL(url):
             audio_codec = AudioCodec.AAC,
             audio_channels = 2,
             optimized_for_streaming = True
-	    # Resolutions for old videos are different. And include 1200/360, 1800/432, 600/240  
-	    # But they are handled with the closest command in the PlayVideo function
+	    # Any other resolutions are handled by the closest command in the PlayVideo function
         ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360'), (750, '288')]
     ]
     
@@ -86,17 +94,20 @@ def PlayVideo(url, bitrate='1700', index=0):
 
     return Redirect(mp4_url)
 ####################################################################################################
-# Using regex to pull uri. 
-# Make it a separate function so it can be used for the metadataobject too
+# Using regex to pull uri. Make it a separate function so it can be used for the metadataobject too. 
+# It is best to determine the type by the length of the mgid number so no errors come up
 def GetRSS(url):
+    mgid = RE_MGID.search(url).group(1)
     content = HTTP.Request(url).content
-    if 'playlist' in url:
+    if len(mgid) > 6:
         uri = RE_EPISODE_URI.search(content).group(1)
     else:
         uri = RE_CLIP_URI.search(content).group(1)
-    if not uri:
-        raise Ex.MediaExpired
 
+    # This in case the regex field for the uri on the page is blank
+    if not uri:
+        raise Ex.MediaExpired 
+        
     mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 
     return mrss_data
