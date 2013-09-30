@@ -48,7 +48,9 @@ def MetadataObjectForURL(url):
 # So in PlayVideo function, just using 432 and 720 (if not 720, then use 432)
 def MediaObjectsForURL(url):
 
-    if 'playlist' in url or 'full-episode' in url:
+    if 'cmt.com' in url and 'full-episode' in url:
+        num_parts = 6
+    elif 'playlist' in url:
         num_parts = 11
     else:
         num_parts = 1
