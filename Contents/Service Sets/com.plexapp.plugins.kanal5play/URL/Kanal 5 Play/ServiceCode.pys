@@ -118,7 +118,13 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayHLS(url):
 	details = GetDetails(url, 'IPAD')
-	
+
+	if not 'streams' in details:
+		if 'reasonsForNoStreams' in details and 'region' in details['reasonsForNoStreams'][0]:
+			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
+
 	try:
 		hlsURL = details['streams'][0]['source']
 	except:
