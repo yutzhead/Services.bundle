@@ -21,6 +21,7 @@ def MetadataObjectForURL(url):
 		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
 	except:
 		video_player_box = html.xpath('//div[@id="video_player_box"]')
+
 		if len(video_player_box) < 1:
 			raise Ex.MediaExpired
 
@@ -29,9 +30,9 @@ def MetadataObjectForURL(url):
 		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 		duration = 0
+
 		for segment in media_urls:
-			duration = duration + int(segment.get('duration'))
-		duration = duration*1000
+			duration += Datetime.MillisecondsFromString(segment.get('duration'))
 
 	if 'full episode' in page_title.lower():
 
