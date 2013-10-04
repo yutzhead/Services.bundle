@@ -29,7 +29,11 @@ def MetadataObjectForURL(url):
 	cm_url_json = CM_JSON_URL % cm_url_html
 
 	html = HTML.ElementFromString(HTTP.Request(cm_url_html).content.replace('&ndash;', '-'))
-	json = JSON.ObjectFromURL(cm_url_json)
+
+	try:
+		json = JSON.ObjectFromURL(cm_url_json)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = json['title']
 	thumb = json['imageData']['imageURL']
