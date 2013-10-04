@@ -41,37 +41,37 @@ def MetadataObjectForURL(url):
 
   if data['AETN$mrssLengthType'] == "Episode":
     show = data['AETN$seriesNameGlobal']
-    index = int(data['AETN$episode'])
-    season = int(data['AETN$season'])
+    index = int(data['AETN$episode']) if 'AETN$episode' in data else None
+    season = int(data['AETN$season']) if 'AETN$season' in data else None
 
     return EpisodeObject(
-      title=title,
-      show=show,
-      summary=summary,
-      index=index,
-      season=season,
-      duration=duration,
-      originally_available_at=date,
-      content_rating=content_rating,
-      thumb=thumb
+      title = title,
+      show = show,
+      summary = summary,
+      index = index,
+      season = season,
+      duration = duration,
+      originally_available_at = date,
+      content_rating = content_rating,
+      thumb = thumb
     )
   elif data['AETN$mrssLengthType'] == "Feature_Film":
     return MovieObject(
-      title=title,
-      summary=summary,
+      title = title,
+      summary = summary,
       duration = duration,
-      originally_available_at=date,
-      content_rating=content_rating,
-      thumb=thumb
+      originally_available_at = date,
+      content_rating = content_rating,
+      thumb = thumb
     )
   else:
     return VideoClipObject(
-      title=title,
-      summary=summary,
+      title = title,
+      summary = summary,
       duration = duration,
       originally_available_at=date,
-      content_rating=content_rating,
-      thumb=thumb
+      content_rating = content_rating,
+      thumb = thumb
     )
 
 ####################################################################################################
