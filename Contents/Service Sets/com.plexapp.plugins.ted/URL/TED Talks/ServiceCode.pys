@@ -31,6 +31,9 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+  if url.endswith('...'): # I have no idea where those URLs come from, but we can't do anything useful with them
+    raise Ex.MediaNotAvailable
+
   data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
   html = HTML.ElementFromString(data)
 
