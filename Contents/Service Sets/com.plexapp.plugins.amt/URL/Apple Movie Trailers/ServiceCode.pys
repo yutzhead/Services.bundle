@@ -14,6 +14,7 @@ VIDEO_INC = '%s/includes/%s/automatic.html'
 QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
 
 RE_URL_INFO = Regex('^http://(?:trailers|www)\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -49,6 +50,7 @@ def MetadataObjectForURL(url):
 
 	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content|//title/text()')[0].split(' - Movie Trailers')[0]
 	summary = amt_html.xpath('//meta[@property="og:description"]/@content|//meta[@name="Description"]/@content')[0]
+	summary = String.StripTags(RE_CONTROL_CHARS.sub('', summary))
 
 	thumb = amt_html.xpath('//meta[@property="og:image"]/@content|//img[contains(@src, "poster.jpg")]/@src')[0]
 	thumb = '%s/poster-xlarge.jpg' % thumb.rsplit('/', 1)[0]
