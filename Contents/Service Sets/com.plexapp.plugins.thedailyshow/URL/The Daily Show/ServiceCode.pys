@@ -32,7 +32,8 @@ def MetadataObjectForURL(url):
 		duration = 0
 
 		for segment in media_urls:
-			duration += Datetime.MillisecondsFromString(segment.get('duration'))
+			if segment.get('duration') != "":
+				duration += Datetime.MillisecondsFromString(segment.get('duration'))
 
 	if 'full episode' in page_title.lower():
 
