@@ -91,7 +91,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 #@indirect
-def PlayVideo(url, index=None):
+def PlayVideo(url, index=0):
 
     if 'clipId=' in url:
         clipId = RE_CLIP.search(url).group(1)
@@ -108,24 +108,8 @@ def PlayVideo(url, index=None):
         else:
             binId = binId.group(1)
 
-        content = HTTP.Request(STORY_URL % binId).content
-        clips = []
-
-        try:
-            all_clips = RE_CLIP_DATA.findall(content)
-            playlistMap = "playlistMap['%s'].push(clip)" % playlistId
-
-            for clip in all_clips:
-                if playlistMap in clip:
-                    clips.append(clip)
-                else:
-                    pass
-
-            clipId = RE_CLIPID.search(clips[index]).group(1)
-            content = HTTP.Request(VIDEO_URL % clipId).content
-            video_url = RE_VIDEO.search(content).group(1)
-            return Redirect(video_url)
-        except:
-            raise Ex.MediaNotAvailable
-
-    raise Ex.MediaNotAvailable
+        data = HTML.ElementFromURL(STORY_URL % playlistId)
+        clipId = data.xpath('//article')[index].get('id')
+        content = HTTP.Request(VIDEO_URL % clipId).content
+        video_url = RE_VIDEO.search(content).group(1)
+        return Redirect(video_url)
