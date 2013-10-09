@@ -1,6 +1,6 @@
 VIDEO_URL = 'http://xhamster.com/movies/%s/.html'
 RE_THUMB = Regex("'image':'([^']+)'")
-RE_SRV_FILE = Regex("'srv': '([^']+)'.+'file': '([^']+)'", Regex.DOTALL)
+RE_SRV_FILE = Regex("'srv': '([^']*)'.+'file': '([^']+)'", Regex.DOTALL)
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -65,4 +65,11 @@ def PlayVideo(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key='%s/key=%s' % (srv, file))
+	if srv == '':
+		if file.startswith('http%3A%2F%2F'):
+			file = String.Unquote(file)
+		final_url = file
+	else:
+		final_url = '%s/key=%s' % (srv, file)
+
+	return IndirectResponse(VideoClipObject, key=final_url)
