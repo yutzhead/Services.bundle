@@ -16,7 +16,7 @@ def MetadataObjectForURL(url):
 	data = HTTP.Request(url, headers=HTTP_HEADERS).content
 	html = HTML.ElementFromString(data)
 
-	if len(html.xpath('//p[text()="No Videos Found"]')) > 0:
+	if len(html.xpath('//p[text()="No Videos Found"]|//*[contains(text(), "temporarily unavailable")]')) > 0:
 		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
