@@ -25,7 +25,7 @@ RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^17
 RE_PATTERN = Regex('("|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(\\\?/|%2F){2}|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv)((\?|%3F).+?)?)("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|m4v|flv)[^&]*)')
 RE_UNWANTED = Regex('promo|commercial', Regex.IGNORECASE)
-RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>https?:((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>(https?:)?((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_CODECS = Regex('codecs="([^"]+)"')
 RE_WHITESPACE = Regex('\s*,\s*')
 RE_META_REFRESH = Regex('<meta.+?http-equiv=.refresh.+?content=.([0-9]+;url=)?(?P<url>https?://[^"\']+)', Regex.IGNORECASE)
