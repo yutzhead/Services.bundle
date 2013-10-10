@@ -39,7 +39,11 @@ def TestURLs():
 def MetadataObjectForURL(url):
 
 	data_url = XML_URL % url.split('/?/video/')[1]
-	data = XML.ElementFromURL(data_url, cacheTime=CACHE_1DAY)
+
+	try:
+		data = XML.ElementFromURL(data_url, cacheTime=CACHE_1DAY)
+	except:
+		raise Ex.MediaNotAvailable
 
 	thumb_list = data.xpath('//image')
 	thumb_list = sorted(thumb_list, key = lambda thumb: int(thumb.get("height")), reverse=True)[0:2]
