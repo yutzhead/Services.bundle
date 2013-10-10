@@ -4,7 +4,10 @@ VIDEO_PATTERN = Regex("flashvars.+?'http://'.+?'([^']+)")
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	try:
+		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = ''.join(html.xpath('//p[@class="description"]/text()')).strip()
