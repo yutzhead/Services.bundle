@@ -15,27 +15,30 @@ def MetadataObjectForURL(url):
 	title = data.xpath('//title')[0].text
 	summary = data.xpath('//description')[0].text
 	thumb = data.xpath('//image/url')[0].text
-	date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+
+	try:
+		date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+	except:
+		date = None
 
 	if '/episodes/' in url:
-		show_title = data.xpath('//media:category[@label="Show Name"]/text()', namespaces=NAMESPACES)[0]
+		show_title = data.xpath('//media:category[@label="Show Name"]/text()', namespaces=NAMESPACES)
 
-		return EpisodeObject(
-			show = show_title,
-			title = title,
-			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb),
-			originally_available_at = date
-		)
+		if len(show_title) > 0:
+			return EpisodeObject(
+				show = show_title[0],
+				title = title,
+				summary = summary,
+				thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+				originally_available_at = date
+			)
 
-	elif 'video-clips' in url:
-
-		return VideoClipObject(
-			title = title,
-			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb),
-			originally_available_at = date
-		)
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+		originally_available_at = date
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
