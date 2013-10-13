@@ -4,7 +4,7 @@ EXTREME_INFO_URL = "http://player.extreme.com/info/%s"
 def MetadataObjectForURL(url):
 
     info = GetVideoDetails(url)
-    external_url = info.xpath('//streams/stream[contains(text(), "youtube.com") or contains(text(), "vimeo.com")]')
+    external_url = info.xpath('//streams/stream[contains(text(), "youtube.com") or contains(text(), "vimeo.com")]/text()')
 
     if len(external_url) > 0:
         return URLService.MetadataObjectForURL(external_url[0])
@@ -98,4 +98,4 @@ def GetVideoDetails(url):
     page = HTML.ElementFromURL(url)
     video_id = page.xpath('//meta[@property="og:image"]/@content')[0].split('.jpg')[0].rsplit('/',1)[1]
 
-    return XML.ElementFromURL(EXTREME_INFO_URL % (video_id))
+    return XML.ElementFromURL(EXTREME_INFO_URL % video_id)
