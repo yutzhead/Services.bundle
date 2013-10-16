@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@name="title"]/@content')
 
 	if len(title) < 1:
-		if 'nbcnews.com/id/' in url and '#' in url:
+		if ('nbcnews.com/video/' or 'nbcnews.com/id/' in url) and '#' in url:
 			url = 'http://www.nbcnews.com/id/%s' % url.split('#')[-1]
 			html = HTML.ElementFromURL(url)
 
