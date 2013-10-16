@@ -80,7 +80,11 @@ def PlayVideo(url):
 	json = JSON.ObjectFromURL(STREAM_URL % (player_id[0], token.group(1)), cacheTime=0)
 	stream = '%s?extension=m3u8&type=json' % json['streams'][0].split('?')[0]
 
-	json = JSON.ObjectFromURL(stream, cacheTime=0)
-	stream = json['url']
+	try:
+		json = JSON.ObjectFromURL(stream, cacheTime=0)
+		stream = json['url']
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(stream))
