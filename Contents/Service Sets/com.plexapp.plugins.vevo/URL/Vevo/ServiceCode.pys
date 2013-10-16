@@ -8,7 +8,7 @@ HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:2
 ####################################################################################################
 def NormalizeURL(url):
 
-    return url.split('?')[0]
+    return url.split('?')[0].strip('#')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
