@@ -27,9 +27,14 @@ def MetadataObjectForURL(url):
 		else:
 			raise Ex.MediaNotAvailable
 	else:
+		# Pages without video do not have the link rel image_src element
+		try:
+			thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
+		except:
+			raise Ex.MediaNotAvailable
+
 		title = title[0]
 		summary = html.xpath('//meta[@name="description"]/@content')[0]
-		thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
 
 	return VideoClipObject(
 		title = title,
