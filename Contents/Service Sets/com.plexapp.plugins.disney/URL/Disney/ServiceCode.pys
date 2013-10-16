@@ -18,7 +18,7 @@ def MetadataObjectForURL(url):
 	duration = int(data['duration_sec'])*1000
 	thumb = data['thumb']
 
-	if "Full Episode" in data['vType']:
+	if "Full Episode" in data['vType'] and 'ptitle' in data:
 		show_title = data['ptitle']
 
 		return EpisodeObject(
