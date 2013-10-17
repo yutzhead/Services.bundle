@@ -75,10 +75,13 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
 
 	data = HTTP.Request(url).content
-	video_id = RE_VIDEO_ID.search(data).group(1)
-	available_bitrates = []
+	video_id = RE_VIDEO_ID.search(data)
 
-	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id]['streams']
+	if not video_id:
+		raise Ex.MediaNotAvailable
+
+	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id.group(1)]['streams']
+	available_bitrates = []
 
 	for video in streams:
 		available_bitrates.append(video['video_bitrate'])
