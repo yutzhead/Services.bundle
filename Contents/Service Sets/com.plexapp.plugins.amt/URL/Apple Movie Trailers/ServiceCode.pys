@@ -9,6 +9,7 @@ HTTP_HEADERS = {
 
 ALL_VIDEOS_INC = '%s/includes/automatic.html'
 VIDEO_INC = '%s/includes/%s/automatic.html'
+VIDEO_INC_ALT = '%s/includes/%s/large.html'
 
 # 'h640w' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
 QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
@@ -96,7 +97,11 @@ def PlayVideo(url, fmt=None):
 	fmt = fmt.replace('HD ', 'h') # Keep backwards compatibility
 	video = FindVideoId(url)
 
-	html = HTML.ElementFromURL(VIDEO_INC % (url.split('/#')[0], video), headers=HTTP_HEADERS)
+	try:
+		html = HTML.ElementFromURL(VIDEO_INC % (url.split('/#')[0], video), headers=HTTP_HEADERS)
+	except:
+		html = HTML.ElementFromURL(VIDEO_INC_ALT % (url.split('/#')[0], video), headers=HTTP_HEADERS)
+
 	video_url = html.xpath('//a[@class="movieLink"]/@href')
 
 	if len(video_url) < 1:
