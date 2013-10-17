@@ -10,10 +10,14 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
-	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed/")]')
 
+	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed/")]')
 	if len(yt_iframe) == 1:
 		return URLService.MetadataObjectForURL(yt_iframe[0])
+
+	ooyala = html.xpath('//script[contains(text(), "provider_video_id")]')
+	if len(ooyala) < 1:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 
