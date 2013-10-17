@@ -1,20 +1,23 @@
-CLIP_PLAYER_ID = 'DOcJ-FxaFrRg4gtDEwOjFpaDowODE7jj'
-OTV_PLAYER_ID = 'DOcJ-FxaFrRg4gtDEwOnVhOjA4MTuX7f'
-BASE_URL = 'http://www.theverge.com'
-MP4_URL = 'http://ak.c.ooyala.com/%s/%s'
-
-RE_VIDEO_JSON = Regex('.+Util\.VideoContext\.addVideos\((.+?)\);.+')
+JSON_VIDEO_DATA = 'http://player.ooyala.com/sas/player_api/v1/authorization/embed_code/ppbnY65tdYh_HxFfIkVstq2Iq_oQ/%s?domain=player.ooyala.com&supportedFormats=mp4'
+RE_VIDEO_ID = Regex('"provider_video_id":"([^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
-	return url
+
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
+	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed/")]')
 
-	summary = ''
+	if len(yt_iframe) == 1:
+		return URLService.MetadataObjectForURL(yt_iframe[0])
+
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+
+	summary = None
 	try:
 		summary = ''.join(html.xpath('//div[contains(@class, "article-body")]/p[position()=1]//text()'))
 	except:
@@ -27,18 +30,20 @@ def MetadataObjectForURL(url):
 			pass
 
 	if not summary:
-		summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
+		summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 
 	try:
-		date = Datetime.ParseDate(h.xpath('//span[@class="publish-date"]/time')[0].text)
+		date = Datetime.ParseDate(h.xpath('//span[@class="publish-date"]/time/text()')[0])
 	except:
 		date = None
 
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+
 	return VideoClipObject(
-		title = html.xpath('//meta[@property="og:title"]')[0].get('content'),
+		title = title,
 		summary = summary,
 		originally_available_at = date,
-		thumb = Resource.ContentsOfURLWithFallback(url=html.xpath('//meta[@property="og:image"]')[0].get('content'))
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
 ####################################################################################################
@@ -46,28 +51,46 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
-			container = 'mp4',
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url, bitrate=str(bitrate))
+				)
+			],
+			bitrate = bitrate,
+			container = Container.MP4,
+			video_resolution = resolution,
 			video_codec = VideoCodec.H264,
-			video_resolution = '720',
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
-		)
+		) for bitrate, resolution in [(600, '360'), (1000, '540'), (1700, '720'), (4000, '1080')]
 	]
 
 ####################################################################################################
-def PlayVideo(url):
+@indirect
+def PlayVideo(url, bitrate):
 
-	try:
-		html = HTTP.Request(url).content.replace('\n','')
-		if 'on-the-verge' in url and not '90-seconds' in url:
-			pid = OTV_PLAYER_ID
-		else:
-			pid = CLIP_PLAYER_ID
-		vid = JSON.ObjectFromString(RE_VIDEO_JSON.match(html).group(1))[0]['provider_video_id']
-		mp4_url = MP4_URL % (vid, pid)
-	except:
+	data = HTTP.Request(url).content
+	video_id = RE_VIDEO_ID.search(data).group(1)
+	available_bitrates = []
+
+	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id]['streams']
+
+	for video in streams:
+		available_bitrates.append(video['video_bitrate'])
+
+	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+
+	for video in streams:
+		if closest == video['video_bitrate']:
+			format = video['url']['format']
+			video_url = video['url']['data']
+			break
+
+	if format and video_url:
+		if format == 'encoded':
+			video_url = String.Base64Decode(video_url)
+
+		return IndirectResponse(VideoClipObject, key=video_url)
+	else:
 		raise Ex.MediaNotAvailable
-
-	return Redirect(mp4_url)
