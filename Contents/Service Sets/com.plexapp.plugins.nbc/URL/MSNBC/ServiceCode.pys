@@ -1,8 +1,8 @@
-VIDEO_URL = "http://www.msnbc.msn.com/default.cdnx/id/%s/displaymode/1157?t=.flv" #video_id
+META_URL = 'http://www.nbcnews.com/id/%s/displaymode/1219'
+VIDEO_URL = 'http://msnbc.vo.llnwd.net/l1/video/ipad/wifi/%s.mov'
+RE_VIDEO_ID = Regex('(\d{8})')
 
 AudioStreamObject.language_code = Locale.Language.English
-
-RE_VIDEO_ID = Regex('(\d{8})')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -12,33 +12,24 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	video_id = RE_VIDEO_ID.findall(url)[-1]
+	xml = XML.ElementFromURL(META_URL % video_id)
 
-	title = html.xpath('//meta[@name="title"]/@content')
+	title = xml.xpath('//video/headline/text()')[0]
+	summary = xml.xpath('//video/caption/text()')[0]
 
-	if len(title) < 1:
-		if ('nbcnews.com/video/' or 'nbcnews.com/id/' in url) and '#' in url:
-			url = 'http://www.nbcnews.com/id/%s' % url.split('#')[-1]
-			html = HTML.ElementFromURL(url)
+	# Datetime format is in 'ticks'
+	# http://kramerc.com/2010/11/30/converting-datetime-ticks-into-a-unix-timestamp-in-php/
+	ticks = xml.xpath('//video/date/text()')[0]
+	timestamp = int(ticks[:-7]) - 62135596800
+	originally_available_at = Datetime.FromTimestamp(timestamp).date()
 
-			title = html.xpath('//div[@cn]/@cn')[0].strip()
-			summary = html.xpath('//span[@class="textMed"]/text()')[0].strip()
-			thumb = html.xpath('//a/img[contains(@src, ".jpg")]/@src')[0]
-		else:
-			raise Ex.MediaNotAvailable
-	else:
-		# Pages without video do not have the link rel image_src element
-		try:
-			thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
-		except:
-			raise Ex.MediaNotAvailable
-
-		title = title[0]
-		summary = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = xml.xpath('//video/media[@type="thumbnail"]/text()')[0].replace('.vmod.', '.ss_full.')
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
+		originally_available_at = originally_available_at,
 		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
@@ -52,9 +43,11 @@ def MediaObjectsForURL(url):
 					key = Callback(PlayVideo, url=url)
 				)
 			],
-			container = 'flv',
-			video_codec = 'vp6',
-			audio_codec = AudioCodec.MP3,
+			container = Container.MOV,
+			video_codec = VideoCodec.H264,
+			video_resolution = '480',
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
 			optimized_for_streaming = True
 		)
 	]
@@ -63,8 +56,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	vid_id = RE_VIDEO_ID.findall(url)[-1]
-	return IndirectResponse(VideoClipObject, key=VIDEO_URL % vid_id)
+	video_id = RE_VIDEO_ID.findall(url)[-1]
+	xml = XML.ElementFromURL(META_URL % video_id)
+	video_title = xml.xpath('//video/@title')[0]
+
+	return IndirectResponse(VideoClipObject, key=VIDEO_URL % video_title)
 
 ####################################################################################################
 def TestURLs():
