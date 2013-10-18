@@ -6,7 +6,13 @@ RE_CLEANUP = Regex('[^-a-z0-9 ]')
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+		if e.code == 410:
+			raise Ex.MediaExpired
 
 	show = page.xpath('//title')[0].text.rsplit(' | ', 1)[1].strip()
 	episode_title = page.xpath('//h2[@class="episodetitle"]/span/text()')[0]
