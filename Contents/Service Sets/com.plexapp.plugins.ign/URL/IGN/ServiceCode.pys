@@ -110,6 +110,8 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate):
 
+	url = URLService.NormalizeURL(url)
+
 	json_obj = JSON.ObjectFromURL(CONFIG_URL % url)
 	media_url = json_obj['playlist']['media']['url']
 	video_url = None
