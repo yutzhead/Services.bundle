@@ -9,12 +9,17 @@ RE_STREAM = Regex('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
+	try:
+		data = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	video = data.xpath('//meta[@property="og:video"]/@content')
 
 	if len(video) < 1:
