@@ -337,20 +337,6 @@ def MediaObjectsForTrack(url):
     
     mediaObjs = []
 
-    if flac_file:        
-        mediaObjs.append(
-            MediaObject(
-                parts = [
-                    PartObject(
-                        key = Callback(PlayAudio, url = url, file = flac_file, ext = 'flac')
-                    )
-                ],
-                container = Container.FLAC,
-                audio_codec = AudioCodec.FLAC,
-                audio_channels = 2
-            )
-        )
-
     if mp3_file:
         mediaObjs.append(
             MediaObject(
@@ -359,8 +345,24 @@ def MediaObjectsForTrack(url):
                         key = Callback(PlayAudio, url = url, file = mp3_file, ext = 'mp3')
                     )
                 ],
+                bitrate = 192,
                 container = Container.MP3,
                 audio_codec = AudioCodec.MP3,
+                audio_channels = 2
+            )
+        )
+      
+    if flac_file:        
+        mediaObjs.append(
+            MediaObject(
+                parts = [
+                    PartObject(
+                        key = Callback(PlayAudio, url = url, file = flac_file, ext = 'flac')
+                    )
+                ],
+                bitrate = 256,
+                container = Container.FLAC,
+                audio_codec = AudioCodec.FLAC,
                 audio_channels = 2
             )
         )
@@ -373,6 +375,7 @@ def MediaObjectsForTrack(url):
                         key = Callback(PlayAudio, url = url, file = ogg_file, ext = 'ogg')
                     )
                 ],
+                bitrate = 128,
                 container = Container.OGG,
                 audio_codec = AudioCodec.VORBIS,
                 audio_channels = 2
