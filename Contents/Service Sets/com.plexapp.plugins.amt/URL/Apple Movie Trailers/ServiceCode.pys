@@ -47,11 +47,13 @@ def MetadataObjectForURL(url):
 	except:
 		originally_available_at = None
 
-	amt_html = HTML.ElementFromURL(url.split('#')[0], headers=HTTP_HEADERS)
+	amt_html = HTTP.Request(url.split('#')[0], headers=HTTP_HEADERS).content
+	amt_html = RE_CONTROL_CHARS.sub('', amt_html)
+	amt_html = HTML.ElementFromString(amt_html)
 
 	movie_title = amt_html.xpath('//meta[@property="og:title"]/@content|//title/text()')[0].split(' - Movie Trailers')[0]
 	summary = amt_html.xpath('//meta[@property="og:description"]/@content|//meta[@name="Description"]/@content')[0]
-	summary = String.StripTags(RE_CONTROL_CHARS.sub('', summary))
+	summary = String.StripTags(summary)
 
 	thumb = amt_html.xpath('//meta[@property="og:image"]/@content|//img[contains(@src, "poster.jpg")]/@src')[0]
 	thumb = '%s/poster-xlarge.jpg' % thumb.rsplit('/', 1)[0]
