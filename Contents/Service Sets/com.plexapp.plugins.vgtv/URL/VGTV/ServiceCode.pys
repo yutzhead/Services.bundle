@@ -1,101 +1,88 @@
-VIDEO_DETAILS = "http://www.vgtv.no/api/?do=feed&action=id&value=%s"
-NAMESPACES = {'x': 'http://www.aptoma.no/produkt/tv/xmlns'}
-
+VIDEO_DETAILS = 'http://www.vgtv.no/api/?do=feed&action=id&value=%s'
 VIDEO_STATUS = 'http://www.vgtv.no/data/actions/videostatus/?id=%s'
 
-TEST_URLS = "http://www.vgtv.no/data/actions/videolist/?limit=50&callback=portal.jsonp.latest"
-TEST_URL = "http://www.vgtv.no/#!id=%s"
+NAMESPACES = {'x': 'http://www.aptoma.no/produkt/tv/xmlns'}
+
+TEST_URLS = 'http://www.vgtv.no/data/actions/videolist/?limit=3'
+TEST_URL = 'http://www.vgtv.no/#!/video/%s/%s'
+
+RE_CLEAN_URL = Regex('[^a-z0-9]', Regex.IGNORECASE)
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Obtain the XML which details the associated url.
-    id = GetIDFromURL(url)
-    details = XML.ElementFromURL(VIDEO_DETAILS % id)
+    id = url.split('#!/video/')[-1].split('/')[0]
+    xml = XML.ElementFromURL(VIDEO_DETAILS % id)
 
     # Extract the available information
-    title = details.xpath("//item/title/text()")[0]
-    summary = details.xpath("//item/description/text()")[0]
-    thumb = details.xpath("//x:image[@width = '512']", namespaces = NAMESPACES)[0].get('url')
-    date = details.xpath("//item/pubDate/text()")[0]
+    title = xml.xpath('//item/title/text()')[0]
+    summary = xml.xpath('//item/description/text()')[0]
+    thumb = xml.xpath('//x:image[@width="512"]/@url', namespaces=NAMESPACES)[0]
+    date = xml.xpath('//item/pubDate/text()')[0]
     date = Datetime.ParseDate(date)
 
     return VideoClipObject(
         title = title,
         summary = summary,
-        thumb = thumb,
+        thumb = Resource.ContentsOfURLWithFallback(thumb),
         originally_available_at = date
     )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        container = Container.MP4,
-        video_resolution = '468',
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
+        MediaObject(
+            parts = [
+                PartObject(
+                    key = Callback(PlayVideo, url=url, bitrate=bitrate)
+                )
+            ],
+            bitrate = bitrate,
+            container = Container.MP4,
+            video_resolution = resolution,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            optimized_for_streaming = True
+        ) for bitrate, resolution in [(3500, '720'), (1500, '540'), (1200, '468'), (800, '360')]
     ]
 
 ####################################################################################################
+@indirect
+def PlayVideo(url, bitrate):
 
-def PlayVideo(url):
+    id = url.split('#!/video/')[-1].split('/')[0]
+    streams = JSON.ObjectFromURL(VIDEO_STATUS % id)['formats']['http']['mp4']
+    available_bitrates = []
 
-    # Obtain the JSON page which contain the status of the available videos
-    id = GetIDFromURL(url)
-    details = JSON.ObjectFromURL(VIDEO_STATUS % id)
+    for video in streams:
+        available_bitrates.append(video['bitrate'])
 
-    # We'll only use the 'best' mp4 format available. There are likely to be smaller ones also 
-    # available, but they're pretty small. Also, there are multiple links to the same video but some
-    # might not work. Therefore we need to validate the URL before returning it.
-    video_url = None
-    for video_path in details['formats']['http']['mp4'][0]['paths']:
-        address = video_path['address']
-        port = video_path['port']
-        path = video_path['path']
-        filename = video_path['filename']
+    closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
 
-        video_url = "http://%s:%s/%s/%s" % (address, port, path, filename)
-        try: 
-            # If we can access the header, then the URL must be good.
-            HTTP.Request(video_url).header
+    for video in streams:
+        if closest == video['bitrate']:
+            host = video['paths'][0]['address']
+            path = video['paths'][0]['path']
+            file = video['paths'][0]['filename']
+            video_url = 'http://%s/%s/%s' % (host, path, file)
             break
-        except: pass
 
-    return Redirect("http://%s:%s/%s/%s" % (address, port, path, filename))
-
-####################################################################################################
-
-def GetIDFromURL(url):
-    id = None
-    id_index = url.find('!id=')
-    if id_index > 0:
-        id = url[id_index + 4:]
-    else:
-        id = id
-
-    return id
+    return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
-
 def TestURLs():
+
     test_urls = []
 
-    test_page_content = HTTP.Request(TEST_URLS).content
-    start = test_page_content.find('(') + 1
-    end = test_page_content.rfind(')')
-
-    test_json = JSON.ObjectFromString(test_page_content[start:end])
-    for item in test_json['videos']:
+    for video in JSON.ObjectFromURL(TEST_URLS)['videos']:
         if len(test_urls) < 3:
-            url = TEST_URL % item['id']
+            slug = RE_CLEAN_URL.sub('-', video['title']).lower()
+            url = TEST_URL % (video['id'], slug)
             test_urls.append(url)
         else:
             break
-    
+
     return test_urls
