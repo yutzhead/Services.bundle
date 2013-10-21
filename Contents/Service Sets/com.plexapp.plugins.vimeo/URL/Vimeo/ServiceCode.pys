@@ -67,10 +67,12 @@ def MetadataObjectForURL(url):
 
   # Fetch the page. Private videos return a HTTP 404 error.
   try:
-    json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6)[0]
-  except:
-    Log('This is a private video.')
-    raise Ex.MediaNotAuthorized
+    json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Encoding': 'gzip, deflate', 'Host': 'vimeo.com', 'Connection': 'keep-alive', 'Pragma': 'no-cache', 'Cache-Control': 'no-cache'})[0]
+  except Ex.HTTPError, e:
+    if e.code == 404:
+      raise Ex.MediaNotAuthorized
+    else:
+      raise Ex.MediaNotAvailable
 
   # Construct a metadata item.
   try:
