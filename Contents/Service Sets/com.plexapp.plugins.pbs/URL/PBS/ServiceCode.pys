@@ -23,7 +23,10 @@ def MetadataObjectForURL(url):
     airdate = Datetime.ParseDate(video['airdate']).date()
     summary = video['long_description']
     title = video['title']
-    duration = int(video['mediafiles'][0]['length_mseconds'])
+    try:
+        duration = int(video['mediafiles'][0]['length_mseconds'])
+    except:
+        duration = None
 
     return  VideoClipObject(
         title=title,
