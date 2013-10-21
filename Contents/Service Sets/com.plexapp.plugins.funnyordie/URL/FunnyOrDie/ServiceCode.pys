@@ -1,5 +1,5 @@
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
-RE_VIDEO_URL = Regex('type: "application/vnd.apple.mpegurl", src: "([^"]+)"')
+RE_VIDEO_URL = Regex('source src=.([^\'"]+). type=.application/x-mpegurl.')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -63,6 +63,7 @@ def PlayVideo(url, **kwargs):
 	if not url:
 		raise Ex.MediaNotAvailable
 
+	url = URLService.NormalizeURL(url)
 	data = HTTP.Request(url, headers=HTTP_HEADERS).content
 	video_url = RE_VIDEO_URL.search(data)
 
