@@ -91,6 +91,9 @@ def PlayVideo(url, bitrate='1700', index=0):
     closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
     rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
 
+    if not '/viacomlogostrm/' in stream_url:
+        raise Ex.MediaNotAvailable
+
     stream_url = rtmp_url.split('/viacomlogostrm/')[1]
     mp4_url = MP4_URL % stream_url
 
