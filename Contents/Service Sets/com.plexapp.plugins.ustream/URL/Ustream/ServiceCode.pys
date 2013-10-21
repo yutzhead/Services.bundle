@@ -126,7 +126,12 @@ def PlayRecorded(url):
 ####################################################################################################
 def PlayLive(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	content_id = html.xpath('//a[@data-content-id]')
 
 	if len(content_id) < 1:
