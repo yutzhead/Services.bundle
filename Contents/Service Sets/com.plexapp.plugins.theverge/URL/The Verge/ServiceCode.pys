@@ -80,7 +80,7 @@ def PlayVideo(url, bitrate):
 	if not video_id:
 		raise Ex.MediaNotAvailable
 
-	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id.group(1)]['streams']
+	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id.group(1))['authorization_data'][video_id.group(1)]['streams']
 	available_bitrates = []
 
 	for video in streams:
