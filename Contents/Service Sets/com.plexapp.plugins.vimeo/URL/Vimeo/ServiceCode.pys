@@ -1,212 +1,100 @@
-import urlparse
+API_URL = 'http://vimeo.com/api/v2/video/%s.json'
+PLAYER_URL = 'http://player.vimeo.com/v2/video/%s/config?byline=0&bypass_privacy=1&context=clip.main&portrait=0&title=0'
+RE_VIMEO_ID = Regex('(\d{6,8})')
 
-RE_VIDEO_ID = Regex("^/?(.+)?(?P<id>\d)+$")
-RE_CLIP_ID = Regex("clip_id=(?P<id>\d+)")
-RE_VIMEO_ID = Regex("vimeo\.com/(video/)?(?P<id>\d+)")
-RE_HD = Regex('"hd":(?P<hd>[0-9])')
-RE_TIMESTAMP = Regex('"timestamp":(?P<timestamp>[0-9]+)')
-RE_SIGNATURE = Regex('"signature":"(?P<signature>[0-9a-f]+)"')
+HTTP_HEADERS = {
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0'
+}
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  video_id = None
+	if isinstance(url, basestring):
+		vimeo_id = RE_VIMEO_ID.search(url)
 
-  if isinstance(url, basestring):
-    # For a 'private' video we need the original url, so don't normalize
-    if '#referer=' in url:
-      return url
-    else:
-      url = urlparse.urlparse(url)
-  else:
-    return None
-
-  # http://vimeo.com/staffpicks#24002628
-  if RE_VIDEO_ID.match(url.fragment):
-    video_id = url.fragment
-
-  # http://vimeo.com/23864381
-  if RE_VIDEO_ID.match(url.path):
-    video_id = url.path[1:]
-
-  # http://vimeo.com/groups/5dmkii/videos/44493124
-  # http://player.vimeo.com/video/42601218
-  if RE_VIDEO_ID.search(url.path):
-    video_id = url.path[url.path.rfind('/')+1:]
-
-  # http://vimeo.com/moogaloop.swf?clip_id=1711302&server=vimeo.com&show_title=1&show_byline=0&show_portrait=0&color=ececec&fullscreen=1&autoplay=0
-  # http://vimeo.com/moogaloop.swf?clip_id=31856894
-  clip_id = RE_CLIP_ID.search(url.query)
-  if clip_id:
-    video_id = clip_id.group('id')
-
-  if video_id:
-    return "http://vimeo.com/%s" % video_id
-  else:
-    return None
+		if vimeo_id:
+			return 'http://vimeo.com/%s' % vimeo_id.group(1)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  # We can't get metadata from the API (or website) for private videos. Authors of services that use
-  # Vimeo need to find another way to get some metadata for their videos.
-  if '#referer=' in url:
-    return None
+	try:
+		json_obj = JSON.ObjectFromURL(API_URL % url.split('/')[-1], cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)[0]
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAuthorized
+		else:
+			raise Ex.MediaNotAvailable
 
-  # Figure out the URL to call.
-  # Extract the video id
-  vimeo_video_id = RE_VIMEO_ID.search(url)
+	title = json_obj['title']
+	summary = String.StripTags(json_obj['description'])
+	thumb = json_obj['thumbnail_large']
+	originally_available_at = Datetime.ParseDate(json_obj['upload_date'])
 
-  if vimeo_video_id:
-    vimeo_video_id = vimeo_video_id.group('id')
-  else:
-    return None
+	duration = None
+	if isinstance(json_obj['duration'], int) and json_obj['duration'] > 0:
+		duration = json_obj['duration'] * 1000
 
-  # API call
-  vimeo_video_json_url = "http://vimeo.com/api/v2/video/%s.json" % vimeo_video_id
+	tags = []
+	if json_obj['tags']:
+		tags = json_obj['tags'].split(', ')
 
-  # Fetch the page. Private videos return a HTTP 404 error.
-  try:
-    json = JSON.ObjectFromURL(vimeo_video_json_url, cacheTime=3600*6, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Encoding': 'gzip, deflate', 'Host': 'vimeo.com', 'Connection': 'keep-alive', 'Pragma': 'no-cache', 'Cache-Control': 'no-cache'})[0]
-  except Ex.HTTPError, e:
-    if e.code == 404:
-      raise Ex.MediaNotAuthorized
-    else:
-      raise Ex.MediaNotAvailable
+	directors = [json_obj['user_name']]
 
-  # Construct a metadata item.
-  try:
-    summary = String.StripTags(json['description'])
-  except:
-    summary = None
-
-  if isinstance(json['duration'], int) and json['duration'] > 0:
-    duration = json['duration'] * 1000
-  else:
-    duration = None
-
-  originally_available_at = Datetime.ParseDate(json['upload_date'])
-  Log(isinstance(json['duration'], int))
-  tags = []
-  if json['tags']:
-    tags = json['tags'].split(', ')
-
-  return VideoClipObject(
-    title = json['title'],
-    summary = summary,
-    duration = duration,
-    thumb = json['thumbnail_large'],
-    originally_available_at = originally_available_at.date(),
-    year = originally_available_at.year,
-    tags = tags,
-    directors = [json['user_name']]
-  )
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		originally_available_at = originally_available_at.date(),
+		year = originally_available_at.year,
+		duration = duration,
+		tags = tags,
+		directors = directors
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  if not RE_VIMEO_ID.search(url) and not '#referer=' in url:
-    return None
-
-  return [
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, format='hd', codecs='H264'))],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      video_resolution = '720',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    ),
-    MediaObject(
-      parts = [PartObject(key=Callback(PlayVideo, url=url, format='sd', codecs='H264'))],
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      video_resolution = '480',
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True
-    )
-  ]
-
-####################################################################################################
-def GetVideoURL(url, format=None, codecs=None):
-
-  headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8) AppleWebKit/536.25 (KHTML, like Gecko) Version/6.0 Safari/536.25'}
-  referer = None
-
-  if '#referer=' in url:
-    (url, referer) = url.split('#referer=')
-    headers['Referer'] = String.Unquote(referer)
-
-    vimeo_video_id = RE_VIMEO_ID.search(url)
-    if vimeo_video_id:
-      key = vimeo_video_id.group('id')
-
-  else:
-    key = url[url.rfind('/')+1:]
-
-  try:
-    video = HTTP.Request(url, cacheTime=1, headers=headers).content
-  except:
-    raise Ex.MediaNotAvailable
-
-  hd = RE_HD.search(video)
-  timestamp = RE_TIMESTAMP.search(video)
-  signature = RE_SIGNATURE.search(video)
-
-  if hd and timestamp and signature:
-    hd = int(hd.group('hd'))
-    timestamp = timestamp.group('timestamp')
-    signature = signature.group('signature')
-
-    if hd == True and format == 'hd':
-      format = 'hd'
-    else:
-      format = 'sd'
-
-    if codecs != None:
-      codecs = '&codecs=' + codecs
-    else:
-      codecs = ''
-
-    video_url = 'http://player.vimeo.com/play_redirect?clip_id=%s&sig=%s&time=%s&quality=%s%s&type=moogaloop_local&embed_location=' % (key, signature, timestamp, format, codecs)
-
-    if referer is not None:
-      video_url += referer
-
-    try:
-      HTTP.Request(video_url, headers=headers, follow_redirects=False).headers
-    except Ex.RedirectError, e:
-      try:
-        return e.location
-      except:
-        pass
-
-    # The requested video could not be found. This can happen if we have requested a specific format which is not available, e.g. a known case is when we 
-    # request an SD video but HD is only available.
-    raise Ex.MediaNotAvailable
-
-  Log("Couldn't find all the required info to play this video.")
-  raise Ex.MediaNotAvailable
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = Callback(PlayVideo, url=url, bitrate=bitrate)
+				)
+			],
+			bitrate = bitrate,
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = resolution,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		) for bitrate, resolution in [(5000, '1080'), (2500, '720'), (900, '360')]
+	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url=None, format=None, codecs=None):
+def PlayVideo(url, bitrate=5000, **kwargs):
 
-  if not url:
-    return None
+	if not url:
+		raise Ex.MediaNotAvailable
 
-  try:
-    video_url = GetVideoURL(url, format, codecs)
-  except:
-    video_url = GetVideoURL(url, None, 'H264,VP8,VP6')
+	streams = JSON.ObjectFromURL(PLAYER_URL % url.split('/')[-1], cacheTime=0, headers=HTTP_HEADERS)['request']['files']['h264']
+	available_bitrates = []
 
-  if video_url is None:
-    return None
+	for video in streams.keys():
+		available_bitrates.append(streams[video]['bitrate'])
 
-  return IndirectResponse(VideoClipObject, key=video_url)
+	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+
+	for video in streams.keys():
+		if closest == streams[video]['bitrate']:
+			video_url = streams[video]['url']
+			break
+
+	if video_url:
+		return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
-# Queue fix (PlayVideoIndirect was renamed to PlayVideo at one point)
+# Queue fix (PlayVideoIndirect was renamed to PlayVideo at some point)
 PlayVideoIndirect = PlayVideo
