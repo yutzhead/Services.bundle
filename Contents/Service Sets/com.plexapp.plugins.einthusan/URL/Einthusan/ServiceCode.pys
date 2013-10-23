@@ -27,6 +27,8 @@ def MetadataObjectForURL(url):
 		thumb = content.xpath('//div[@class="video-object-thumb"]/a/@src')[0]
 		if not thumb.startswith('http'):
 			thumb = '%s/%s' % (BASE_URL, thumb.split('/',1)[1])
+	# for some strange reason einthusan sometimes uses urls with un-escaped spaces in them
+	thumb = thumb.replace(' ', '%20')
 
 	summary = content.xpath('//div[@class="movie-description"]//p[@class="desc_body"]/text()')[0]
 
