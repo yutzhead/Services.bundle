@@ -18,9 +18,15 @@ def MetadataObjectForURL(url):
     # Extract the available information
     title = xml.xpath('//item/title/text()')[0]
     summary = xml.xpath('//item/description/text()')[0]
-    thumb = xml.xpath('//x:image[@width="512"]/@url', namespaces=NAMESPACES)[0]
+
     date = xml.xpath('//item/pubDate/text()')[0]
     date = Datetime.ParseDate(date)
+
+    thumb = xml.xpath('//x:image[@width="512"]/@url', namespaces=NAMESPACES)
+    if len(thumb) > 0:
+        thumb = thumb[0]
+    else:
+        thumb = ''
 
     return VideoClipObject(
         title = title,
