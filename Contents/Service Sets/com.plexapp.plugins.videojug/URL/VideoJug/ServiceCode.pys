@@ -13,22 +13,20 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
     # Attempt to extract the details of the title from the page.
-    page = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url)
 
     # Extract the details from the page
     # We parse the document as HTML, so use lowercase only for attribute names
-    title = page.xpath("//meta[@property='og:title']")[0].get('content')
-    description = page.xpath("//meta[@property='og:description']")[0].get('content')
-    thumb = page.xpath("//link[@rel='image_src']")[0].get('href').replace('Medium.jpg', 'Large.jpg')
-    duration = TimeToMs( page.xpath("//span[@class='duration']")[0].text )
-    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+    title = html.xpath("//meta[@property='og:title']/@content")[0]
+    description = html.xpath("//meta[@property='og:description']/@content")[0]
+    thumb = html.xpath("//link[@rel='image_src']/@href")[0].replace('.WidePromo.jpg', '.jpg')
+    tags = html.xpath("//meta[@name='keywords']/@content")[0].split(',')
     tags = [ tag.strip() for tag in tags ]
 
     return VideoClipObject(
         title = title,
         summary = description,
         thumb = thumb,
-        duration = duration,
         tags = tags
     )
 
@@ -68,10 +66,10 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, file_ext):
 
-    page = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url)
 
     # Attempt to locate the ID of the video
-    video_src = page.xpath('//link[@rel = "video_src"]')[0].get('href')
+    video_src = html.xpath('//link[@rel="video_src"]/@href')[0]
     id = video_src.split('id=')[1]
 
     playlist = XML.ElementFromURL(PLAYLIST_URL % id)
@@ -86,20 +84,8 @@ def PlayVideo(url, file_ext):
     for resolution_index in range(index, len(resolutions)):
         video_url = location + video_prefix + resolutions[resolution_index]
         try:
-            HTTP.Request(video_url).headers
+            test = HTTP.Request(video_url).headers
             return Redirect(video_url)
         except: pass
 
-    return None
-
-####################################################################################################
-def TimeToMs(timecode):
-
-    seconds = 0
-    duration = timecode.split(':')
-    duration.reverse()
-
-    for i in range(0, len(duration)):
-        seconds += int(duration[i]) * (60**i)
-
-    return seconds * 1000
+    raise Ex.MediaNotAvailable
