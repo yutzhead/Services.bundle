@@ -59,7 +59,7 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [
 				PartObject(
-					key = Callback(PlayVideo, url=url, bitrate=bitrate)
+					key = Callback(PlayVideo, url=url, bitrate=bitrate, resolution=resolution)
 				)
 			],
 			bitrate = bitrate,
@@ -74,23 +74,33 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate=5000, **kwargs):
+def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 
 	if not url:
 		raise Ex.MediaNotAvailable
 
 	streams = JSON.ObjectFromURL(PLAYER_URL % url.split('/')[-1], cacheTime=0, headers=HTTP_HEADERS)['request']['files']['h264']
 	available_bitrates = []
+	available_resolutions = []
 
 	for video in streams.keys():
 		available_bitrates.append(streams[video]['bitrate'])
+		available_resolutions.append(streams[video]['height'])
 
-	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
+	if len(set(available_bitrates)) == len(set(available_resolutions)):
+		closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
 
-	for video in streams.keys():
-		if closest == streams[video]['bitrate']:
-			video_url = streams[video]['url']
-			break
+		for video in streams.keys():
+			if closest == streams[video]['bitrate']:
+				video_url = streams[video]['url']
+				break
+	else:
+		closest = min((abs(int(resolution) - int(i)), i) for i in available_resolutions)[1]
+
+		for video in streams.keys():
+			if closest == streams[video]['height']:
+				video_url = streams[video]['url']
+				break
 
 	if video_url:
 		return IndirectResponse(VideoClipObject, key=video_url)
