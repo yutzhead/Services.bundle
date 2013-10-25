@@ -80,6 +80,8 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	try:
 		jsob_obj = JSON.ObjectFromURL(PLAYER_URL % url.split('/')[-1], cacheTime=0, headers=HTTP_HEADERS)
 	except Ex.HTTPError, e:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
 
