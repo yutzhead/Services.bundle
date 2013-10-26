@@ -6,7 +6,7 @@ RE_CLIPID       = Regex("clip:?'?([0-9]{6,7})'?")
 RE_SOURCE       = Regex('http://watch.(.+\.(ca|com))/.*')
 RE_AD_URL       = Regex('Preroll:"(http.+?\.m3u8)",')
 RE_CLIP_DETAILS = Regex("({EpisodePermalink:.+, IsCanadaOnly:'.'})")
-RE_CLIP_URL     = Regex("url:'(http://.+\.m3u8)'")
+RE_CLIP_URL     = Regex("url:'(http://.+\.m3u8.*?)',")
 
 
 EPISODE_LOOKUP	= 'http://watch.%s/AJAX/ClipLookup.aspx?episodeid=%s'
