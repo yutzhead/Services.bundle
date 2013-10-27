@@ -8,11 +8,15 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
-	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = data.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content')
-	duration = data.xpath('//meta[@property="og:video:duration"]')[0].get('content')
+	html = HTML.ElementFromURL(url)
+
+	if len(html.xpath('//meta[@property="og:video"]')) < 1:
+		raise Ex.MediaNotAvailable
+
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+	duration = html.xpath('//meta[@property="og:video:duration"]/@content')[0]
 
 	return VideoClipObject(
 		title = title,
@@ -36,8 +40,8 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	data = HTML.ElementFromURL(url)
-	embed_id = data.xpath('//meta[@property="og:video"]')[0].get('content').split('/')[-1]
+	html = HTML.ElementFromURL(url)
+	embed_id = html.xpath('//meta[@property="og:video"]/@content')[0].split('/')[-1]
 
 	json_data = JSON.ObjectFromURL(JSON_URL % embed_id)
 	m3u8_url = json_data['video_balancer']['m3u8']
@@ -48,10 +52,10 @@ def PlayVideo(url):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL('http://rutube.ru/')
+	html = HTML.ElementFromURL('http://rutube.ru/')
 
-	for vid in data.xpath('//article[@data-category="editorsfeed"]'):
-		url = vid.xpath('.//meta[@itemprop="url"]')[0].get('content')
+	for vid in html.xpath('//article[@html-category="editorsfeed"]'):
+		url = vid.xpath('.//meta[@itemprop="url"]/@content')[0]
 		test_urls.append(url)
 
 		if len(test_urls) > 2:
