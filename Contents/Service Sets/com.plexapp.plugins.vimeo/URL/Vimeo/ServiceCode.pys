@@ -1,5 +1,4 @@
 API_URL = 'http://vimeo.com/api/v2/video/%s.json'
-PLAYER_URL = 'http://player.vimeo.com/v2/video/%s/config?byline=0&bypass_privacy=1&context=clip.main&portrait=0&title=0'
 RE_VIMEO_ID = Regex('(\d{6,8})')
 
 HTTP_HEADERS = {
@@ -78,12 +77,25 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 		raise Ex.MediaNotAvailable
 
 	try:
-		jsob_obj = JSON.ObjectFromURL(PLAYER_URL % url.split('/')[-1], cacheTime=0, headers=HTTP_HEADERS)
+		html = HTML.ElementFromURL(url, cacheTime=0, headers=HTTP_HEADERS)
+		config_url = html.xpath('//div[@class="player" and @data-config-url]/@data-config-url')[0].replace('&amp;', '&')
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
+
+	try:
+		jsob_obj = JSON.ObjectFromURL(config_url, cacheTime=0, headers=HTTP_HEADERS)
+	except Ex.HTTPError, e:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	if not 'h264' in jsob_obj['request']['files']:
 		raise Ex.MediaNotAvailable
