@@ -12,14 +12,18 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = GetJSON(url)
-	title = data['title']
-	summary = data['description']
-	duration = int(data['duration_sec'])*1000
-	thumb = data['thumb']
+	json_obj = GetJSON(url)
 
-	if "Full Episode" in data['vType'] and 'ptitle' in data:
-		show_title = data['ptitle']
+	if not json_obj:
+		raise Ex.MediaNotAvailable
+
+	title = json_obj['title']
+	summary = json_obj['description']
+	duration = int(json_obj['duration_sec'])*1000
+	thumb = json_obj['thumb']
+
+	if "Full Episode" in json_obj['vType'] and 'ptitle' in json_obj:
+		show_title = json_obj['ptitle']
 
 		return EpisodeObject(
 			title = title,
@@ -75,12 +79,12 @@ def PlayVideo(url, bitrate):
 
 	bitrates = ["600","1000","1500","2200","3000","4300","6000","8000"]
 	index = bitrates.index(bitrate)
-	json = GetJSON(url)
+	json_obj = GetJSON(url)
 
-	if not 'flavors' in json:
+	if not json_obj or not 'flavors' in json_obj:
 		raise Ex.MediaExpired
 
-	videos = sorted(json['flavors'], key=lambda k: k['bitrate'], reverse=True)
+	videos = sorted(json_obj['flavors'], key=lambda k: k['bitrate'], reverse=True)
 
 	while index > -1:
 		for video in videos:
@@ -100,6 +104,9 @@ def PlayVideo(url, bitrate):
 def GetJSON(url):
 
 	path = url.split('/watch/',1)[1]
-	json_url = JSON_URL % path
-	json = JSON.ObjectFromURL(json_url)
-	return json['stack'][0]['data'][0]
+
+	try:
+		json = JSON.ObjectFromURL(JSON_URL % path)
+		return json['stack'][0]['data'][0]
+	except:
+		return None
