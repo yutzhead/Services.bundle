@@ -19,6 +19,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	try:
+		json_obj = JSON.ObjectFromURL(CONFIG_URL % url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0].split(' - ')[0]
@@ -112,7 +117,11 @@ def PlayVideo(url, bitrate):
 
 	url = URLService.NormalizeURL(url)
 
-	json_obj = JSON.ObjectFromURL(CONFIG_URL % url)
+	try:
+		json_obj = JSON.ObjectFromURL(CONFIG_URL % url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	media_url = json_obj['playlist']['media']['url']
 	video_url = None
 
