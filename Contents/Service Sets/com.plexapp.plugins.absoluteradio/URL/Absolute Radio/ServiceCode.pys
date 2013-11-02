@@ -13,7 +13,10 @@ def MetadataObjectForURL(url):
     video_id = RE_ID.search(url).group('id')
 
     # Request the url and the details page
-    page = HTML.ElementFromURL(url)
+    try:
+        page = HTML.ElementFromURL(url, follow_redirects=False)
+    except Ex.RedirectError, e:
+        raise Ex.MediaExpired
 
     if len(page.xpath('//div[@id="video_container"]//*[contains(text(), "Sorry, this media is only available to UK users")]')) > 0:
         raise Ex.MediaGeoblocked
@@ -56,7 +59,11 @@ def PlayVideo(url, res):
 
     # Request the details pages.
     video_id = RE_ID.search(url).group('id')
-    details_page = XML.ElementFromURL(DETAILS_URL % video_id)
+
+    try:
+        details_page = XML.ElementFromURL(DETAILS_URL % video_id, follow_redirects=False)
+    except Ex.RedirectError, e:
+        raise Ex.MediaExpired
 
     # Obtain the video's url and replace with the required resolution, if appropriate
     video_url = details_page.xpath("//item/type[text() = 'video']/../src/text()")[0]
