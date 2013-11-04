@@ -16,7 +16,12 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HEADERS, cacheTime=CACHE_1WEEK)
+	try:
+		html = HTML.ElementFromURL(url, headers=HEADERS, cacheTime=CACHE_1WEEK)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
 
 	if len(player_id) < 0:
