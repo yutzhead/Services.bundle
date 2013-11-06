@@ -1,16 +1,9 @@
-IPAD_URL = 'http://video.nationalgeographic.com/video/player/media-mp4/%s/mp4/variant-playlist.m3u8'
-RE_VIDEO_ID = Regex(".*/([^/]+)")
-RE_HTML5_URL = Regex("HTML5src:'(.+?)'")
-RE_INDEX = Regex('index_([0-9]+)_av')
-RE_BANDWIDTH = Regex('_([0-9]+)/index')
-
-JSON_VIDEO_URL = "http://video.nationalgeographic.com/video/player/data/mp4/json/video_%s.json"
-M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s,180,0.mp4.csmil/master.m3u8?__b__=300'
-
-HTTP_IPAD_UA = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
+RE_PLATFORM_URL = Regex('http://link.theplatform.com/s/ngc/[^?]+')
+M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s,180,80,30,22,0.mp4.csmil/master.m3u8'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
   data = HTML.ElementFromURL(url, cacheTime=7200)
 
   if len(url.split('/full-episodes/')) > 1:
@@ -26,7 +19,7 @@ def MetadataObjectForURL(url):
   elif ' | ' in title:
     title = title.split(' | ')[0]
 
-  thumbUrl = data.xpath('//meta[@property="og:image"]')[0].get('content')
+  thumb_url = data.xpath('//meta[@property="og:image"]')[0].get('content')
   description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
   keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
 
@@ -36,7 +29,7 @@ def MetadataObjectForURL(url):
       title = title,
       show = show_title,
       summary = description,
-      thumb = thumbUrl,
+      thumb = thumb_url,
       #tags = keywords
     )
   else:
@@ -44,7 +37,7 @@ def MetadataObjectForURL(url):
     return VideoClipObject(
       title = title,
       summary = description,
-      thumb = thumbUrl,
+      thumb = thumb_url,
       tags = keywords
     )
 
@@ -59,70 +52,21 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
-  video_id = RE_VIDEO_ID.search(url).group(1)
-  content = HTTP.Request(url, headers=HTTP_IPAD_UA).content
 
-  try:
-    m3u8_url = RE_HTML5_URL.search(content).group(1)
-  except:
-    data = HTML.ElementFromString(content)
-    flv_url = data.xpath('//meta[@property="og:video"]/@content')
+  data = HTTP.Request(url, cacheTime=7200).content
+  platform_url = RE_PLATFORM_URL.findall(data)
 
-    if len(flv_url) < 1:
-      raise Ex.MediaNotAvailable
-    elif '/Nat_Geo_Channels/' in flv_url[0]:
-      akamai_id = flv_url.split('/Nat_Geo_Channels/')[1].split('015.flv')[0]
-      m3u8_url = M3U8_URL % akamai_id
-    else:
-      m3u8_url = data.xpath('//video[@id="ngs_player"]/source[@type="video/mp4"]')[0].get('src')
+  if len(platform_url) < 1:
+    raise Ex.MediaNotAvailable
 
-  if not m3u8_url:
-    m3u8_url = IPAD_URL % video_id
+  xml = XML.ElementFromURL(platform_url[0])
+  video_src = xml.xpath('//a:video/@src', namespaces={'a':'http://www.w3.org/2005/SMIL21/Language'})
 
-  if not m3u8_url.startswith('http://'):
-    m3u8_url = 'http://video.nationalgeographic.com' + m3u8_url
-    playlist = HTTP.Request(m3u8_url, follow_redirects=False).content
-    new_playlist = '#EXTM3U'
-    streams = []
-    for line in playlist.splitlines()[1:]:
-      line = line.strip()
-      if line.startswith('#'):
-        previous_line = line
-        continue
-      elif len(line) < 1:
-        continue
-      else:
-        bandwidth = int(RE_BANDWIDTH.search(line).group(1))
-        streams.append({'size' : bandwidth, 'stream' : previous_line + '\n' + line})
-    sorted_streams = sorted(streams, key=lambda stream: stream['size'], reverse=True)
-    for stream in sorted_streams:
-      new_playlist += '\n' + stream['stream']
+  if len(video_src) < 1:
+    raise Ex.MediaNotAvailable
 
-    return new_playlist
-  else:
-    try:
-      playlist = HTTP.Request(m3u8_url, follow_redirects=False).content
-    except Ex.RedirectError, e:
-      if 'Location' in e.headers:
-        m3u8_url = e.headers['Location']
-        playlist = HTTP.Request(m3u8_url).content
+  video_id = video_src[0].split('/Nat_Geo_Channels/')[-1].split('_')[0]
 
-    playlist_base = m3u8_url.split('master.m3u8')[0]
-    new_playlist = '#EXTM3U'
-    streams = {}
-    for line in playlist.splitlines()[1:-2]:
-      if line.startswith('#'):
-        previous_line = line
-        continue
-      else:
-        line = playlist_base + line
-        stream_index = int(RE_INDEX.search(line).group(1))
-        streams[stream_index] = previous_line + '\n' + line  
-
-    i = 0
-    while i < len(streams):
-      new_playlist = new_playlist + '\n' + streams[i]
-      i += 1
-
-    return new_playlist
+  return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(M3U8_URL % video_id))
