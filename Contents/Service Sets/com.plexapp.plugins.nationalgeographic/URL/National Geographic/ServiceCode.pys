@@ -1,5 +1,5 @@
 RE_PLATFORM_URL = Regex('http://link.theplatform.com/s/ngc/[^?]+')
-M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s,180,80,30,22,0.mp4.csmil/master.m3u8'
+M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s_,180,80,30,22,0.mp4.csmil/master.m3u8'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
