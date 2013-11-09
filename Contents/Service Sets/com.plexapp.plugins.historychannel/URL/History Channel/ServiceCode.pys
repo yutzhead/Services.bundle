@@ -125,18 +125,12 @@ def get_expiration(auth_length=600):
 def TestURLs():
 
   test_urls = []
-  page = HTML.ElementFromURL('http://www.history.com/videos')
+  data = HTML.ElementFromURL('http://www.history.com/shows/pawn-stars/videos')
 
-  shows = page.xpath('//li[contains(@class,"hasFullVideo")]/a')
+  for url in data.xpath('//li[contains(@class,"slider-item")]//a[starts-with(@data-href, "http")]/@data-href')):
+    test_urls.append(url)
 
-  for show in shows:
-    if len(test_urls) < 3:
-      url = show.xpath('//@href')[0]
-
-      if url not in test_urls:
-        test_urls.append(url)
-
-    else:
+    if len(test_urls) > 2:
       break
 
   return test_urls
