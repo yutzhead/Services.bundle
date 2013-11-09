@@ -18,7 +18,12 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
   content = HTTP.Request(url).content
-  smil_url = RE_PLAYLIST.search(content).group(1)
+  # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
+  #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
+  try:
+    smil_url = RE_PLAYLIST.search(content).group(1)
+  except:
+    raise Ex.MediaNotAvailable
   releaseURL = '%s&format=script' % smil_url
   data = JSON.ObjectFromURL(releaseURL)
 
@@ -61,7 +66,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
   content = HTTP.Request(url).content
-  smil_url = RE_PLAYLIST.search(content).group(1)
+  # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
+  #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
+  try:
+    smil_url = RE_PLAYLIST.search(content).group(1)
+  except:
+    raise Ex.MediaNotAvailable
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
   smil_url += '&sig='+sig
