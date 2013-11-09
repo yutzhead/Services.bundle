@@ -37,7 +37,7 @@ def MetadataObjectForURL(url):
     pdkURL = '%s&format=script' % video['pdk_flash_url']
   except:
     pdkURL = '%s&format=script' % video['release_url']
-  Log('the value of pdkURL is %s' %pdkURL)
+  #Log('the value of pdkURL is %s' %pdkURL)
   data = JSON.ObjectFromURL(pdkURL)
 
   thumb = data['defaultThumbnailUrl']
