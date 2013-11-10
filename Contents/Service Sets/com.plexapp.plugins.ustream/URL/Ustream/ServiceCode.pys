@@ -40,7 +40,11 @@ def MetadataObjectForURL(url):
 
 	else:
 		# For live channels, look for a video ID in the HTML...
-		html = HTML.ElementFromURL(url)
+		try:
+			html = HTML.ElementFromURL(url)
+		except:
+			raise Ex.MediaNotAvailable
+
 		content_id = html.xpath('//a[@data-content-id]')
 
 		if len(content_id) < 1:
