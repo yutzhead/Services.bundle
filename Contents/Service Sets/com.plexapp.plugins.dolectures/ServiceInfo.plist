@@ -9,11 +9,10 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://www.dolectures.com/lectures/the-wisdom-of-birds/</string>
-				<string>http://www.dolectures.com/speakers/speakers-2009/tim-birkhead</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(.+\.)?dolectures\.com/.+</string>
+				<string>^http://(www\.)?dolectures\.com/lectures/.+</string>
 			</array>
 		</dict>
 	</dict>

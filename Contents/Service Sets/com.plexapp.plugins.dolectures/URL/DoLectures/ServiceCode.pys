@@ -1,29 +1,26 @@
 def NormalizeURL(url):
-  return url.replace('layout=embed', '')
+
+  return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  
-  if len(data.xpath('//video')) == 0: # we're using a link to a non-video page... find the link to the proper page
-    url = data.xpath('//a[@class="play-bttn"]')[0].get('href')
-    data = data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  else:
-    pass
+  html = HTML.ElementFromURL(url, cacheTime=7200)
+  yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed/")]/@src')
 
-  title = data.xpath('//title')[0].text.strip(' - Do Lectures')
-  summary = data.xpath('//section[@id="video-details"]//p')[0].text
-  thumbUrl = data.xpath('//video')[0].get('poster')
+  if len(yt_iframe) > 0:
+    return URLService.MetadataObjectForURL(yt_iframe[0])
+
+  title = html.xpath('//title/text()')[0].strip(' - Do Lectures')
+  summary = html.xpath('//section[@id="video-details"]//p/text()')[0]
+  thumb_url = html.xpath('//video/@poster')[0]
 
   # Construct a metadata item
-  vc = VideoClipObject(
+  return VideoClipObject(
     title = title,
     summary = summary,
-    thumb = thumbUrl
+    thumb = thumb_url
   )
-
-  return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -52,19 +49,14 @@ def MediaObjectsForURL(url):
   ]
 
 ####################################################################################################
-def PlayVideo(url, fmt=''):
+@indirect
+def PlayVideo(url, fmt='720'):
 
-  data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-
-  if len(data.xpath('//video')) == 0: # we're using a link to a non-video page... find the link to the proper page
-    url = data.xpath('//a[@class="play-bttn"]')[0].get('href')
-    data = data = HTML.ElementFromURL(url, cacheTime=7200, errors='ignore')
-  else:
-    pass
+  html = HTML.ElementFromURL(url, cacheTime=7200)
 
   if fmt == '720':
-    video_url = data.xpath('//source[contains(@type, "video/mp4")]')[0].get('src')
-  elif fmt == 'sd':
-    video_url = data.xpath('//video')[0].get('data-iphone-video-url')
+    video_url = html.xpath('//source[contains(@type, "video/mp4")]/@src')[0]
+  else:
+    video_url = html.xpath('//video/@data-iphone-video-url')[0]
 
-  return Redirect(video_url)
+  return IndirectResponse(VideoClipObject, key=video_url)
