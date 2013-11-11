@@ -67,7 +67,6 @@ def MediaObjectsForURL(url):
 					) for i in range(num_parts)
 			],
 			bitrate = bitrate,
-			container = Container.MP4,
 			video_resolution = resolution,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
