@@ -34,7 +34,11 @@ def MetadataObjectForURL(url):
 	title = meta['title']
 	summary = String.StripTags(meta['description'])
 	duration = int(meta['duration'] * 1000)
-	thumb = meta['thumbnail']
+
+	if 'thumbnail' in meta:
+		thumb = meta['thumbnail']
+	else:
+		thumb = ''
 
 	if '/http:' in thumb or '/http%3A' in thumb:
 		thumb = String.Unquote(thumb)
