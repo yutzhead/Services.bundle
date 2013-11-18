@@ -3,7 +3,7 @@ RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
 RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
 RE_AMPERSANDS = Regex('&(?!amp;)')
 
-MRSS_URL = 'http://%s/feeds/video-player/mrss/mgid%%3Acms%%3Acontent%%3Asouthparkstudios.com%%3A%s'
+MRSS_URL = 'http://%s/feeds/video-player/mrss/%s'
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
@@ -91,6 +91,9 @@ def PlayVideo(url, bitrate='1200', index=0):
 	mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1))).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
+
+	if len(mrss_data.xpath('//item')) < 1:
+		raise Ex.MediaNotAvailable
 
 	# Some feeds have an 'intro' item. If this is the case, up the index by 1
 	title = mrss_data.xpath('//item/title')[0].text
