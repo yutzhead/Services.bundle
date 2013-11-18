@@ -40,7 +40,12 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaExpired
+
 	embed_id = html.xpath('//meta[@property="og:video"]/@content')[0].split('/')[-1]
 
 	json_data = JSON.ObjectFromURL(JSON_URL % embed_id)
