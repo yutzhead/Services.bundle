@@ -81,6 +81,7 @@ def MediaObjectsForURL(url):
         ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
     ]
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
     # this part is only for music videos
@@ -153,7 +154,8 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         else:
             raise Ex.MediaNotAvailable
 
-        return Redirect(mp4_url)
+        #return Redirect(mp4_url)
+        return IndirectResponse(VideoClipObject, key=mp4_url)
 
 ####################################################################################################
 # Using regex to pull mgid from url. Added id option to regex for CMT videos. 
