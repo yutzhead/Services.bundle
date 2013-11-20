@@ -48,16 +48,11 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 # Found that the number of parts for shows varies widely from 4 to 11. 
-# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml and have 4-6 parts.
-# But CMT awards shows are 11 parts
+# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml and did have 4-6 parts.
+# But now some of the hour long shows have 11 parts
 def MediaObjectsForURL(url):
 
-    if 'full-episode' in url:
-        if 'awards' in url:
-            num_parts = 11
-        else:
-            num_parts = 6
-    elif 'playlist' in url:
+    if 'full-episode' in url or 'playlist' in url:
         num_parts = 11
     else:
         num_parts = 1
