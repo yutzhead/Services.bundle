@@ -13,6 +13,9 @@ def MetadataObjectForURL(url):
     if not details_page:
         raise Ex.MediaNotAvailable
 
+    if len(details_page.xpath("/Content/*")) == 1:
+        raise Ex.MediaNotAvailable
+
     # Extract the information available from the page.
     title = details_page.xpath("//ContentTitle/text()")[0]
     description = details_page.xpath("//ContentDescription/text()")[0]
