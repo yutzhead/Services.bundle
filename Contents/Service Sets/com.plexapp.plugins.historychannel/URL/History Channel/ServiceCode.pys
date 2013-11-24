@@ -127,7 +127,7 @@ def TestURLs():
   test_urls = []
   data = HTML.ElementFromURL('http://www.history.com/shows/pawn-stars/videos')
 
-  for url in data.xpath('//li[contains(@class,"slider-item")]//a[starts-with(@data-href, "http")]/@data-href')):
+  for url in data.xpath('//li[contains(@class,"slider-item")]//a[starts-with(@data-href, "http")]/@data-href'):
     test_urls.append(url)
 
     if len(test_urls) > 2:
