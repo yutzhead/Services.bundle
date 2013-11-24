@@ -1,6 +1,7 @@
 META_URL = 'http://www.nbcnews.com/id/%s/displaymode/1219'
 VIDEO_URL = 'http://msnbc.vo.llnwd.net/l1/video/ipad/wifi/%s.mov'
 RE_VIDEO_ID = Regex('(\d{8})')
+RE_VIDEO_XML = Regex('<video.+</video>')
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -19,7 +20,13 @@ def MetadataObjectForURL(url):
 	else:
 		video_id = video_id[-1]
 
-	xml = XML.ElementFromURL(META_URL % video_id)
+	data = HTTP.Request(META_URL % video_id).content
+	xml = RE_VIDEO_XML.findall(data)
+
+	if xml:
+		xml = XML.ElementFromString(xml[0])
+	else:
+		raise Ex.MediaNotAvailable
 
 	title = xml.xpath('//video/headline/text()')[0]
 	summary = xml.xpath('//video/caption/text()')[0]
@@ -63,7 +70,15 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	video_id = RE_VIDEO_ID.findall(url)[-1]
-	xml = XML.ElementFromURL(META_URL % video_id)
+
+	data = HTTP.Request(META_URL % video_id).content
+	xml = RE_VIDEO_XML.findall(data)
+
+	if xml:
+		xml = XML.ElementFromString(xml[0])
+	else:
+		raise Ex.MediaNotAvailable
+
 	video_title = xml.xpath('//video/@title')[0]
 
 	return IndirectResponse(VideoClipObject, key=VIDEO_URL % video_title)
