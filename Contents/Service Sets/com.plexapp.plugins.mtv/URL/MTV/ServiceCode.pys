@@ -7,7 +7,12 @@ RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
-RE_MGID = Regex('(?:\/|vid=|id=)(\d{4,7})\/?')
+
+# A FEW VIDEOS ONLY HAVE FOUR DIGITS BUT HAVING THE REGEX ACCEPT FOUR DIGITS INTERFERES WITH ANY URL THAT HAS A YEAR IN THE NAME.
+# EXAMPLE OF FOUR DIGIT URL IS http://www.mtv.com/videos/?vid=9479
+# ADDED FOUR DIGIT TO RANGE OF SERVICEINFO.PLIST AND KEPT REGEX RANGE 5 TO 7 SINCE MUSIC VIDEOS GO TO VEVO AND DON'T USE REGEX
+# OTHER ODD URL EXAMPLE IN MUSIC VIDEOS http://www.mtv.com/videos/tye-james/975425/zombie-remix.jhtml
+RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
 
 ####################################################################################################
 # added normalize to separate
@@ -42,15 +47,12 @@ def MetadataObjectForURL(url):
         )
 
 ####################################################################################################
-# Found that the number of parts for shows varies widely from 4 to 10. 
-# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml.
-# RESOLUTIONS FOR VEVO VIDEOS ARE: 1080, 720, and 432
-# So in PlayVideo function, just using 432 and 720 (if not 720, then use 432)
+# Found that the number of parts for shows varies widely from 4 to 11. 
+# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml and did have 4-6 parts.
+# But now some of the hour long shows have 11 parts
 def MediaObjectsForURL(url):
 
-    if 'cmt.com' in url and 'full-episode' in url:
-        num_parts = 6
-    elif 'playlist' in url:
+    if 'full-episode' in url or 'playlist' in url:
         num_parts = 11
     else:
         num_parts = 1
@@ -74,6 +76,7 @@ def MediaObjectsForURL(url):
         ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
     ]
 ####################################################################################################
+@indirect
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
     # this part is only for music videos
@@ -146,14 +149,17 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         else:
             raise Ex.MediaNotAvailable
 
-        return Redirect(mp4_url)
+        #return Redirect(mp4_url)
+        return IndirectResponse(VideoClipObject, key=mp4_url)
 
 ####################################################################################################
 # Using regex to pull mgid from url. Added id option to regex for CMT videos. 
 # Also full episodes use videolist while clips and music videos use video in rss url
 def GetRSS(url):
-    mgid = RE_MGID.search(url).group(1)
-    #Log('the value of mgid is %s' %mgid)
+    try:
+        mgid = RE_MGID.search(url).group(1)
+    except:
+        raise Ex.MediaNotAvailable
     # The new regex is still not deleting slashes from music videos so need this line to pull them out
     if '/' in mgid:
         mgid = mgid.replace('/', '')
