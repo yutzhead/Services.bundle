@@ -162,7 +162,7 @@ def FindVideoId(url):
 			if len(title) < 1:
 				raise Ex.MediaNotAvailable
 			else:
-				video = title[0].split('/')[1]
+				video = title[0].get('href').split('/')[1]
 
 	return video
 
