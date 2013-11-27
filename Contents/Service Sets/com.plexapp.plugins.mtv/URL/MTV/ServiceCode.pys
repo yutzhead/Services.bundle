@@ -36,15 +36,22 @@ def MetadataObjectForURL(url):
     except: summary = None
 
     # The thumb is in item vs the main content in the MTV/VH1/CMT xml files
-    thumb = data.xpath('//item/image//@url')[0]
-    date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+    try:
+        thumb = data.xpath('//item/image/@url')[0]
+    except:
+        thumb = ''
+
+    try:
+        date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+    except:
+        date = None
 
     return VideoClipObject(
         title = title,
         summary = summary,
         thumb = Resource.ContentsOfURLWithFallback(url=thumb),
         originally_available_at = date
-        )
+    )
 
 ####################################################################################################
 # Found that the number of parts for shows varies widely from 4 to 11. 
