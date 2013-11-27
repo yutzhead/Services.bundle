@@ -12,7 +12,8 @@ def MetadataObjectForURL(url):
 		title = title
 	)
 
-	return vc
+	if '/random/' not in url:
+		return vc
 
 ####################################################################################################
 def MediaObjectsForURL(url):
