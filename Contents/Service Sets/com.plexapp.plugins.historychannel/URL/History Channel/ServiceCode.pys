@@ -2,6 +2,8 @@ from hashlib import sha1
 import binascii, hmac
 
 RE_PLAYLIST = Regex("_videoPlayer.play\('(.+?)', 'video'")
+RE_PLAYLIST2 = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
+RE_VIDEO_ID = Regex('\-(\d+)(#\d+)?$')
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
@@ -18,12 +20,7 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
   content = HTTP.Request(url).content
-  # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
-  #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
-  try:
-    smil_url = RE_PLAYLIST.search(content).group(1)
-  except:
-    raise Ex.MediaNotAvailable
+  smil_url = GetSMILURL(url)
   releaseURL = '%s&format=script' % smil_url
   data = JSON.ObjectFromURL(releaseURL)
 
@@ -66,12 +63,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
   content = HTTP.Request(url).content
-  # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
-  #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
-  try:
-    smil_url = RE_PLAYLIST.search(content).group(1)
-  except:
-    raise Ex.MediaNotAvailable
+  smil_url = GetSMILURL(url)
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
   smil_url += '&sig='+sig
@@ -100,6 +92,32 @@ def PlayVideo(url, res):
   if video_url.startswith('http://'):
     return IndirectResponse(VideoClipObject, key=video_url)
   else:
+    raise Ex.MediaNotAvailable
+
+####################################################################################################
+# SOME OF THE VIDEOS USE THE A&E FORMAT SO SEARCH BOTH METHODS FOR URL AND SKIP THOSE THAT ARE BLOCKED
+def GetSMILURL(url):
+
+    try:
+        content = HTTP.Request(url).content.decode('utf8','replace')
+    except:
+        raise Ex.MediaExpired
+    # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
+    #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
+    try:
+        smil_url = RE_PLAYLIST.search(content).group(1)
+        return smil_url
+    except:
+        playlist = RE_PLAYLIST2.search(content).group(1)
+        playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
+        playlist_json = JSON.ObjectFromString(playlist)
+
+        if playlist_json['entries'][0]['premium'] == 'true':
+            raise Ex.MediaNotAuthorized
+        else:
+            releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL']
+            return releaseURL
+
     raise Ex.MediaNotAvailable
 
 ####################################################################################################
