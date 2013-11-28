@@ -455,7 +455,7 @@ def VideoObjectsForURL(url):
 
 ####################################################################################################
 
-def PlayVideo(url, resolution):
+def PlayVideo(url, resolution='720', **kwargs):
     resolution = int(resolution)
     
     xml_url = FileListURL(url)
