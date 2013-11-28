@@ -82,15 +82,20 @@ def MediaObjectsForURL(url):
 	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
 
-	if url.split('/')[3] in (
-		'2020',
-		'good-morning-america',
-		'nightline',
-		'this-week',
-		'what-would-you-do',
-		'world-news-with-diane-sawyer',
-		'world-news-with-david-muir'
-	): storage_id = 1841
+	strings = (
+		'/2020/',
+		'/good-morning-america/',
+		'/nightline/',
+		'/this-week/',
+		'/what-would-you-do/',
+		'/world-news-with-diane-sawyer/',
+		'/world-news-with-david-muir/'
+	)
+
+	for s in strings:
+		if s in url:
+			storage_id = 1841
+			break
 
 	if 'watchabcfamily' in url:
 		storage_id = 1571
