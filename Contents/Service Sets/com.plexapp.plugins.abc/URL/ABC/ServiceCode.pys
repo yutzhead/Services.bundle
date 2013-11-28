@@ -20,7 +20,7 @@ def MetadataObjectForURL(url):
 	if 'Error' in html.xpath('//title/text()')[0]:
 		raise Ex.MediaNotAvailable
 
-	episode_title = html.xpath('//div[@class="video_title"]/text()|//h1/text()[last()]')
+	episode_title = html.xpath('//div[@class="video_title"]/text()|//h1/text()[last()]|//h2[@id="video_title"]/text()') # Xpath queries for: ABC|ABC Family|ABC News
 
 	if len(episode_title) < 1:
 		raise Ex.MediaExpired
@@ -77,7 +77,7 @@ def MediaObjectsForURL(url):
 		url = FixURL(url)
 
 	if not url:
-		raise Ex.MediaNotAvailable
+		return None
 
 	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
