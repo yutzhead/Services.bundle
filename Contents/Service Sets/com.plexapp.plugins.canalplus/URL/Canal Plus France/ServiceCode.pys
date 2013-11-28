@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
 	data = GetXML(url)
 
 	if not data:
-		return None
+		raise Ex.MediaNotAvailable
 
 	title = data.xpath('//TITRE')[0].text
 	summary = data.xpath('//DESCRIPTION')[0].text
@@ -95,7 +95,14 @@ def GetXML(url):
 	id = RE_VIDEO_ID.search(url)
 
 	if id:
-		return XML.ElementFromURL(XML_URL % id.group(1)).xpath('//VIDEO/ID[text()="%s"]/parent::VIDEO' % id.group(1))[0]
+		xml = XML.ElementFromURL(XML_URL % id.group(1))
+		xml = xml.xpath('//VIDEO/ID[text()="%s"]/parent::VIDEO' % id.group(1))
+
+		if len(xml) < 1:
+			return None
+
+		return xml[0]
+
 	else:
 		return None
 
