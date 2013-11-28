@@ -4,12 +4,6 @@ RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 ####################################################################################################
 def NormalizeURL(url):
 
-	if not '/VDKA' in url:
-		try:
-			url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//meta[@property="og:url"]/@content')[0]
-		except:
-			raise Ex.MediaNotAvailable
-
 	url = url.split('?')[0].replace(' ', '%20')
 	url = url.replace('http://abc.go.com/watch/', 'http://watchabc.go.com/')
 
@@ -26,24 +20,24 @@ def MetadataObjectForURL(url):
 	if 'Error' in html.xpath('//title/text()')[0]:
 		raise Ex.MediaNotAvailable
 
-	episode_title = html.xpath('//div[@class="video_title"]/text()|//h2[@id="video_title"]/text()')
+	episode_title = html.xpath('//div[@class="video_title"]/text()|//h1/text()[last()]')
 
 	if len(episode_title) < 1:
 		raise Ex.MediaExpired
 
-	episode_title = episode_title[0]
-	show_title = html.xpath('//meta[@name="title"]/@content')[0].split('  ')[0]
+	episode_title = episode_title[0].strip()
+	show_title = html.xpath('//meta[@name="title"]/@content|//h2/a/text()')[0].split('  ')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 
 	try:
-		sxx_exx = html.xpath('//meta[@name="title"]/@content')[0]
+		sxx_exx = html.xpath('//meta[@name="title"]/@content|//title/text()')[0]
 		(season, index) = RE_SXX_EXX.search(sxx_exx).groups()
 	except:
 		season = None
 		index = None
 
 	try:
-		duration = html.xpath('//span[contains(@class, "video_duration")]/text()')[0]
+		duration = html.xpath('//span[contains(@class, "duration")]/text()')[0]
 		duration = Datetime.MillisecondsFromString(duration)
 	except:
 		duration = None
@@ -55,7 +49,7 @@ def MetadataObjectForURL(url):
 		airdate = None
 
 	try:
-		rating = html.xpath('//span[contains(@class, "video_rating")]/text()')[0].split(' ')[0]
+		rating = html.xpath('//span[contains(@class, "rating")]/text()')[0].split(' ')[0]
 	except:
 		rating = None
 
@@ -78,6 +72,12 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
+	if not '/VDKA' in url:
+		url = FixURL(url)
+
+	if not url:
+		raise Ex.MediaNotAvailable
 
 	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
@@ -129,12 +129,25 @@ def PlayVideo(f4m_url=None, **kwargs):
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
+def FixURL(url):
+
+	try:
+		url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//meta[@property="og:url"]/@content')[0]
+
+		if not '/VDKA' in url:
+			raise
+	except:
+		return None
+
+####################################################################################################
 def TestURLs():
 
 	test_urls = []
 	html = HTML.ElementFromURL('http://abc.go.com/', headers=HTTP_HEADERS)
 
 	for url in html.xpath('//a[contains(@href, "/SH") and contains(@href, "/VDKA")]/@href'):
+		url = url.split('?')[0]
+
 		if url not in test_urls:
 			test_urls.append(url)
 
