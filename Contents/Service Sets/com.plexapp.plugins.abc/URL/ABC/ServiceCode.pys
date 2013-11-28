@@ -135,7 +135,9 @@ def FixURL(url):
 		url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//meta[@property="og:url"]/@content')[0]
 
 		if not '/VDKA' in url:
-			raise
+			return None
+
+		return url
 	except:
 		return None
 
