@@ -19,6 +19,7 @@
 				5575052:  Primetime: Family Secrets
 				5582037:  Rising Up: Five Years Since Katrine
 				-->
+				<string>^http://abcfamily\.go\.com/shows/[^/]+/episode\-guide/season-\d+/\d+\-.+</string>
 			</array>
 		</dict>
 	</dict>
