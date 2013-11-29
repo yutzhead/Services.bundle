@@ -33,7 +33,7 @@ def MetadataObjectForURL(url):
 
     if 'parent' in programme:
         parent_programme = programme['parent']['programme']
-        if parent_programme['type'] == 'series':
+        if parent_programme['type'] in ('series', 'episode'):
             # Create an EpisodeObject...
             show_title = parent_programme['parent']['programme']['title'] if 'parent' in parent_programme else parent_programme['title']
             episode_title = programme['display_title']['subtitle']
