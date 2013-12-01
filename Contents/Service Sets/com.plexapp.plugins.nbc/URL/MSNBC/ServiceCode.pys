@@ -1,7 +1,7 @@
 META_URL = 'http://www.nbcnews.com/id/%s/displaymode/1219'
 VIDEO_URL = 'http://msnbc.vo.llnwd.net/l1/video/ipad/wifi/%s.mov'
 RE_VIDEO_ID = Regex('(\d{8})')
-RE_VIDEO_XML = Regex('<video.+</video>')
+RE_VIDEO_XML = Regex('<video.+?</video>')
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -24,6 +24,9 @@ def MetadataObjectForURL(url):
 	xml = RE_VIDEO_XML.findall(data)
 
 	if xml:
+		Log("=================")
+		Log(xml[0])
+		Log("=================")
 		xml = XML.ElementFromString(xml[0])
 	else:
 		raise Ex.MediaNotAvailable
