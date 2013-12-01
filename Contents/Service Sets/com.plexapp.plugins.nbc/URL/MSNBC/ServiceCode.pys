@@ -24,9 +24,6 @@ def MetadataObjectForURL(url):
 	xml = RE_VIDEO_XML.findall(data)
 
 	if xml:
-		Log("=================")
-		Log(xml[0])
-		Log("=================")
 		xml = XML.ElementFromString(xml[0])
 	else:
 		raise Ex.MediaNotAvailable
