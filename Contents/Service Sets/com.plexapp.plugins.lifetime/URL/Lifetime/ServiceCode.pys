@@ -1,8 +1,7 @@
 from hashlib import sha1
 import binascii, hmac
 
-RE_PLAYLIST = Regex('"videos":\[(.+?)\]},"cdn_path"', Regex.DOTALL)
-RE_PLAYLIST2 = Regex('"videos":\[(.+?)\]},"better_exposed_filters"', Regex.DOTALL)
+RE_PLAYLIST = Regex('"videos":\[(.+?)"}\]},"', Regex.DOTALL)
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
@@ -136,31 +135,29 @@ def GetJSON(url):
   except:
     raise Ex.MediaExpired
 
-  # Movies and TV have different JSON data, so have to check for both
+  # Movies and TV have different JSON data, so code for premium may vary
   try:
     playlist = RE_PLAYLIST.search(content).group(1)
   except:
-    playlist = RE_PLAYLIST2.search(content).group(1)
+    raise Ex.MediaNotAvailable
 
+  playlist = playlist + '"}'
   playlist = "{'entries':[%s]}" % playlist
   playlist_json = JSON.ObjectFromString(playlist)
 
-  video =  playlist_json['entries'][0]
-
-  try:
-    premium = video['is_premium']
-  except:
-    try:
-      premium = video['video_behind_wall']
-    except:
-      premium = '0'
-
-  if premium == '1':
-    raise Ex.MediaNotAuthorized
-  else:
-    return video
-
-  raise Ex.MediaNotAvailable
+  for video in playlist_json['entries']:
+    if video['path'] in url:
+      try:
+        premium = video['is_premium']
+      except:
+        try:
+          premium = video['video_behind_wall']
+        except:
+          premium = '0'
+      if premium == '1':
+        raise Ex.MediaNotAvailable
+      else:
+        return video
 
 ####################################################################################################
 def sign_url(url):
