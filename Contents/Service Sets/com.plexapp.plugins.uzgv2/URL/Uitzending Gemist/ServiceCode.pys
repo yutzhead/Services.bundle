@@ -1,7 +1,7 @@
-#METADATA_URL = 'http://e.omroep.nl/metadata/aflevering/%s'
 TOKEN_URL = 'http://ida.omroep.nl/npoplayer/i.js'
 STREAM_URL = 'http://ida.omroep.nl/odiplus/?prid=%s&puboptions=adaptive&adaptive=yes&part=1&token=%s'
 RE_TOKEN = Regex('token = "([^"]+)"')
+RE_EPISODE_ID = Regex('/afleveringen/(\d{7})')
 
 HEADERS = {
 	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25',
@@ -11,7 +11,12 @@ HEADERS = {
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	episode_id = RE_EPISODE_ID.search(url)
+
+	if episode_id:
+		url = 'http://www.uitzendinggemist.nl/afleveringen/%s' % episode_id.group(1)
+
+	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
