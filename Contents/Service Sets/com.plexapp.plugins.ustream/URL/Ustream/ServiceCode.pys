@@ -153,11 +153,14 @@ def StreamIsReady(video_id, i=0, progressed=0):
 
 	url = USTREAM_IPHONE_URL % video_id
 
-	Log(' -->      url: %s' % url)
-	Log(' -->        i: %d' % i)
+	Log(' --> url: %s' % url)
+	Log(' -->   i: %d' % i)
 
 	if i < 20:
-		playlist = HTTP.Request(url, cacheTime=0, sleep=1.0).content
+		try:
+			playlist = HTTP.Request(url, cacheTime=0, sleep=1.0).content
+		except:
+			return False
 
 		if '#PROGRESSED' in playlist:
 			progress = int(RE_PROGRESSED.search(playlist).group(1))
