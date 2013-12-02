@@ -110,7 +110,11 @@ def PlayVideo(url, bitrate='1700', index=0, fmt=None):
 ####################################################################################################
 def GetURI(url):
 
-	data = HTML.ElementFromURL(url)
+	try:
+		data = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	uri = data.xpath('//div[@id="video-player"]')
 
 	if len(uri) < 1:
