@@ -23,7 +23,10 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaGeoblocked
 
 	title = xml.xpath('//a:switch[1]/a:ref/@title', namespaces=SMIL_NS)[0]
-	summary = xml.xpath('//a:switch[1]/a:ref/@abstract', namespaces=SMIL_NS)[0]
+
+	try: summary = xml.xpath('//a:switch[1]/a:ref/@abstract', namespaces=SMIL_NS)[0]
+	except: summary = None
+
 	duration = xml.xpath('//a:switch[1]/a:ref/@dur', namespaces=SMIL_NS)[0].strip('ms')
 
 	html = HTML.ElementFromString(page)
