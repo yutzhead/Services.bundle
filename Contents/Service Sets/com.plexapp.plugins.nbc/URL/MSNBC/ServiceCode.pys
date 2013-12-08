@@ -31,11 +31,17 @@ def MetadataObjectForURL(url):
 	title = xml.xpath('//video/headline/text()')[0]
 	summary = xml.xpath('//video/caption/text()')[0]
 
-	# Datetime format is in 'ticks'
-	# http://kramerc.com/2010/11/30/converting-datetime-ticks-into-a-unix-timestamp-in-php/
-	ticks = xml.xpath('//video/date/text()')[0]
-	timestamp = int(ticks[:-7]) - 62135596800
-	originally_available_at = Datetime.FromTimestamp(timestamp).date()
+	date = xml.xpath('//video/date/text()')
+
+	if len(date) > 0:
+		# Datetime format is in 'ticks'
+		# http://kramerc.com/2010/11/30/converting-datetime-ticks-into-a-unix-timestamp-in-php/
+
+		ticks = date[0]
+		timestamp = int(ticks[:-7]) - 62135596800
+		originally_available_at = Datetime.FromTimestamp(timestamp).date()
+	else:
+		originally_available_at = None
 
 	thumb = xml.xpath('//video/media[@type="thumbnail"]/text()')[0].replace('.vmod.', '.ss_full.')
 
