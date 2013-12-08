@@ -8,8 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.mylifetime.com/shows/.+/video/.+</string>
-				<string>^http://www.mylifetime.com/movies/.+/video/.+</string>
+				<string>^(?!.*full-episodes)http://www.mylifetime.com/(shows|movies)/.+/video/.+</string>
 			</array>
 		</dict>
 	</dict>
