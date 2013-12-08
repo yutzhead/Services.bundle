@@ -1,7 +1,7 @@
 from hashlib import sha1
 import binascii, hmac
 
-RE_PLAYLIST = Regex("_videoPlayer.play\('(.+?)', 'video'")
+RE_PLAYLIST = Regex("_videoPlayer.play\('(.+?)', '(video|locked)'")
 RE_PLAYLIST2 = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
 RE_VIDEO_ID = Regex('\-(\d+)(#\d+)?$')
 RE_BASE = Regex('meta base="(rtmp.+)"')
@@ -103,11 +103,17 @@ def GetSMILURL(url):
     except:
         raise Ex.MediaExpired
     # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
-    #  immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
+    # immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
     try:
-        smil_url = RE_PLAYLIST.search(content).group(1)
-        return smil_url
+        (smil_url, status) = RE_PLAYLIST.search(content).groups()
     except:
+        status = None
+
+    if status == 'locked':
+        raise Ex.MediaNotAvailable
+    elif status == 'video':
+        return smil_url
+    else:
         playlist = RE_PLAYLIST2.search(content).group(1)
         playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
         playlist_json = JSON.ObjectFromString(playlist)
