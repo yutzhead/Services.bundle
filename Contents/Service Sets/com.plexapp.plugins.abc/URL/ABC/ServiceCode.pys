@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 
 	episode_title = html.xpath('//div[@class="video_title"]/text()|//h1/text()[last()]|//h2[@id="video_title"]/text()') # Xpath queries for: ABC|ABC Family|ABC News
 
-	if len(episode_title) < 1:
+	if len(episode_title) < 1 or episode_title[0] == 'abcfamily.com':
 		raise Ex.MediaExpired
 
 	episode_title = episode_title[0].strip()
