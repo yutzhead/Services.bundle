@@ -1,13 +1,14 @@
 BASE_URL = 'http://www.svtplay.se'
 BASE_OA_URL = 'http://www.oppetarkiv.se'
-import re
 
 ####################################################################################################
 def NormalizeURL(url):
+
     return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
     try:
         page = HTML.ElementFromURL(url)
     except:
@@ -57,37 +58,39 @@ def MetadataObjectForURL(url):
 
     if show:
         return EpisodeObject(
-                show = show,
-                title = title,
-                summary = summary,
-                duration = duration,
-                thumb = thumb,
-                originally_available_at = air_date
-                )
+                   show = show,
+                   title = title,
+                   summary = summary,
+                   duration = duration,
+                   thumb = thumb,
+                   originally_available_at = air_date
+               )
     else:
         return VideoClipObject(
-                title = title,
-                summary = summary,
-                duration = duration,
-                thumb = thumb,
-                originally_available_at = air_date
-                )
+                   title = title,
+                   summary = summary,
+                   duration = duration,
+                   thumb = thumb,
+                   originally_available_at = air_date
+               )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-            MediaObject(
-                parts = [
-                    PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
-                    ],
-                audio_channels = 2,
-                optimized_for_streaming = True
-                )
-            ]
+        MediaObject(
+            parts = [
+                PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+            ],
+            video_resolution = 'sd',
+            audio_channels = 2,
+            optimized_for_streaming = True
+        )
+    ]
 
 ####################################################################################################
-
 def getVideoUrls(url):
+
     try:
         page = HTML.ElementFromURL(url)
     except:
@@ -114,17 +117,23 @@ def getVideoUrls(url):
 
     if not ios_url and not flash_url:
         raise Ex.MediaNotAvailable
+
     urls = {}
+
     if ios_url:
         urls['ios'] = ios_url
     if flash_url:
         urls['flash'] = flash_url
+
     return urls
 
+####################################################################################################
+@indirect
 def PlayVideo(url, bitrate=None):
-    urls = getVideoUrls(url)
-    if 'ios' in urls:
-        return Redirect(HTTPLiveStreamURL(urls['ios']))
-    if 'flash' in urls:
-        pass
 
+    urls = getVideoUrls(url)
+
+    if 'ios' in urls:
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(urls['ios']))
+    if 'flash' in urls:
+        raise Ex.MediaNotAvailable
