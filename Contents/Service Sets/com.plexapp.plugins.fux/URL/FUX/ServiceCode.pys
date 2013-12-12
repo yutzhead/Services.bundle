@@ -1,6 +1,7 @@
 BASE_URL = 'http://www.fux.com'
-RE_PLAYLIST = Regex('playlist: \[(.+)\],', Regex.DOTALL)
-RE_SOURCES = Regex('playerPlaylistSources = (\[.+\]);')
+VIDEOS_URL = 'http://tkn.fux.com/%s/desktop/%s'
+RE_PLAYLIST = Regex('playlist: \[(.+?)\],', Regex.DOTALL)
+RE_MEDIA_ID = Regex('\}\)\((\d+), \d+, \[(.+?)\]\);')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -13,7 +14,7 @@ def MetadataObjectForURL(url):
 	json_obj = GetJSON(url)
 
 	return VideoClipObject(
-		title = json_obj['title'],
+		title = json_obj['title'].replace('&amp;', '&'),
 		thumb = json_obj['image'],
 		genres = ['XXX','Adult','18+'],
 		content_rating = 'X'
@@ -56,23 +57,21 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res=1080):
 
-	json_obj = GetJSON(url)
-	available_versions = []
+	data = HTTP.Request(url).content
+	(media_id, qualities) = RE_MEDIA_ID.search(data).groups()
 
-	for source in json_obj['sources']:
-		label = int(source['label'].strip('p'))
-		available_versions.append(label)
+	videos_url = VIDEOS_URL % (media_id, '+'.join(qualities.split(',')))
+
+	json_obj = JSON.ObjectFromURL(videos_url, values={'':''}, headers={'Origin': 'http://www.fux.com'})
+	available_versions = json_obj.keys()
 
 	if len(available_versions) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(res - i), i) for i in available_versions)[1]
+	closest = min((abs(res - int(i)), int(i)) for i in available_versions)[1]
+	video_url = json_obj[str(closest)]['token']
 
-	for source in json_obj['sources']:
-		if source['label'] == '%dp' % closest:
-			return IndirectResponse(VideoClipObject, key=source['file'])
-
-	raise Ex.MediaNotAvailable
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetJSON(url):
@@ -83,12 +82,7 @@ def GetJSON(url):
 	if not json:
 		raise Ex.MediaNotAvailable
 
-	json_sources = RE_SOURCES.search(data)
-
-	if not json_sources:
-		raise Ex.MediaNotAvailable
-
-	json = json.group(1).replace('playerPlaylistSources', json_sources.group(1))
+	json = json.group(1).replace('streamsConfig', '""')
 
 	return JSON.ObjectFromString(json)
 
