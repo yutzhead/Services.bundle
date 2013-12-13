@@ -1,6 +1,7 @@
+BASE_URL = 'http://www.4tube.com'
+VIDEOS_URL = 'http://tkn.4tube.com/%s/desktop/%s'
 RE_DATA = Regex("Published Date: (.+) Rating: (\d+).+Views:.+Length: (\d+m\d+)s  Watch (.+) and other p")
-RE_VIDEO_ID = Regex("videoconfig(?:\?v=|%3Fv%3D)([\d\-]+)")
-XML_URL = 'http://www.4tube.com/player/videoconfig?v=%s'
+RE_MEDIA_ID = Regex('image:.+?"([^"]+)",.+idMedia:.+?(\d+),.+sources:.+?\[(.+?)\]', Regex.DOTALL)
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -13,22 +14,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	try:
-		data = HTTP.Request(url).content
-		video_id = RE_VIDEO_ID.search(data).group(1)
-		html = HTML.ElementFromString(data)
-	except:
-		raise Ex.MediaNotAvailable
+	data = HTTP.Request(url).content
+	html = HTML.ElementFromString(data)
 
 	description = html.xpath('//meta[@name="description"]/@content')[0].replace('\n', '')
 	(date, rating, duration, title) = RE_DATA.findall(description)[0]
 
 	originally_available_at = Datetime.ParseDate(date).date()
 	rating = float(rating)/10
-	duration = TimeToMs(duration.replace('m', ':'))
+	duration = Datetime.MillisecondsFromString(duration.replace('m', ':'))
 
-	xml = XML.ElementFromURL(XML_URL % video_id)
-	thumb = xml.xpath('//image/text()')[0]
+	(thumb, media_id, qualities) = RE_MEDIA_ID.search(data).groups()
 
 	return VideoClipObject(
 		title = title,
@@ -77,20 +73,19 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res=1080):
 
-	try:
-		data = HTTP.Request(url).content
-		video_id = RE_VIDEO_ID.search(data).group(1)
-		xml = XML.ElementFromURL(XML_URL % video_id)
-	except:
-		raise Ex.MediaNotAvailable
+	data = HTTP.Request(url).content
+	(thumb, media_id, qualities) = RE_MEDIA_ID.search(data).groups()
 
-	available_versions = xml.xpath('//stream[@label]/@label')
+	videos_url = VIDEOS_URL % (media_id, '+'.join(qualities.split(',')))
+
+	json_obj = JSON.ObjectFromURL(videos_url, values={'':''}, headers={'Origin': 'http://www.4tube.com'})
+	available_versions = json_obj.keys()
 
 	if len(available_versions) < 1:
 		raise Ex.MediaNotAvailable
 
-	closest = min((abs(res - int(i.split('p')[0])), i.split(' ')[0]) for i in available_versions)[1]
-	video_url = xml.xpath('//stream[starts-with(@label, "%s")]/file/text()' % closest)[0]
+	closest = min((abs(res - int(i)), int(i)) for i in available_versions)[1]
+	video_url = json_obj[str(closest)]['token']
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
@@ -101,6 +96,9 @@ def TestURLs():
 	urls = HTML.ElementFromURL('http://www.4tube.com/').xpath('//a[contains(@href, "/videos/")]/@href')
 
 	for url in urls:
+		if not url.startswith('http://'):
+			url = '%s%s' % (BASE_URL, url)
+
 		if url not in test_urls:
 			test_urls.append(url)
 
@@ -108,15 +106,3 @@ def TestURLs():
 			break
 
 	return test_urls
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
