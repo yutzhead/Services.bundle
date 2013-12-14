@@ -1,8 +1,7 @@
 from hashlib import sha1
 import binascii, hmac
 
-RE_PLAYLIST = Regex('var playlist = \[(.+?)\]', Regex.DOTALL)
-RE_VIDEO_ID = Regex('\-(\d+)(#\d+)?$')
+RE_PLAYLIST = Regex('aetv_video":(.+?)\}', Regex.DOTALL)
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
@@ -13,15 +12,17 @@ AudioStreamObject.language_code = Locale.Language.English
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url.split('?')[0].rstrip('#')
+  return url.split('?')[0]
 
 ####################################################################################################
 def TestURLs():
 
   test_urls = []
-  data = HTML.ElementFromURL('http://www.aetv.com/videos/display.jsp')
+  data = HTML.ElementFromURL('http://www.aetv.com/video')
 
-  for url in data.xpath('//div[@class="video-frame"]//a[starts-with(@href, "http")]/@href'):
+  for url in data.xpath('//ul[contains(@class,"full-episode-ul")]/li//a/@href'):
+    if not url.startswith('http:'):
+      url = 'http://www.aetv.com' + url
     test_urls.append(url)
 
     if len(test_urls) > 2:
@@ -32,8 +33,7 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  video = GetJSON(url)
-  releaseURL = '%s&format=script' % video['videoURLs']['releaseURL']
+  releaseURL = '%s&format=script' %GetSMIL(url)
   data = JSON.ObjectFromURL(releaseURL)
 
   thumb = data['defaultThumbnailUrl']
@@ -104,8 +104,7 @@ def PlayVideo(url, res):
   url = url.split('?')[0] # Should not be necessary, but apparently some clients use cached XML data
                           # from when we did not do this split in NormalizeURL
 
-  video = GetJSON(url)
-  smil_url = video['videoURLs']['releaseURL']
+  smil_url = GetSMIL(url)
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
   smil_url += '&sig='+sig
@@ -149,9 +148,8 @@ def PlayVideo(url, res):
     raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def GetJSON(url):
+def GetSMIL(url):
 
-  video_id = RE_VIDEO_ID.search(url).group(1)
 
   try:
     content = HTTP.Request(url).content.decode('utf8','replace')
@@ -159,15 +157,19 @@ def GetJSON(url):
     raise Ex.MediaExpired
 
   playlist = RE_PLAYLIST.search(content).group(1)
-  playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
+  playlist = playlist + '}'
+  playlist = "[%s]" % playlist.strip().replace('\n', '')
   playlist_json = JSON.ObjectFromString(playlist)
 
-  for video in playlist_json['entries']:
-    if int(video['mpxid']) == int(video_id):
-      if video['isBehindWall'] == 'true':
-        raise Ex.MediaNotAuthorized
-      else:
-        return video
+  #Log('the value of playlist_json is %s' %playlist_json)
+  SMIL_URL = '%s?%s' %(playlist_json[0]['releaseURL'], playlist_json[0]['flashReleaseUrlParams'])
+  info_url = SMIL_URL + '&format=script'
+  data = JSON.ObjectFromURL(info_url)
+  blocked = data['AETN$isBehindWall']
+  if blocked == True:
+    raise Ex.MediaNotAuthorized
+  else:
+    return SMIL_URL
 
   raise Ex.MediaNotAvailable
 
