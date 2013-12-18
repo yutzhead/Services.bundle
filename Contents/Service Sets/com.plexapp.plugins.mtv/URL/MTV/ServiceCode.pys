@@ -72,7 +72,6 @@ def MediaObjectsForURL(url):
                     ) for i in range(num_parts)
             ],
             bitrate = bitrate,
-            container = Container.MP4,
             video_resolution = resolution,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
@@ -156,7 +155,6 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         else:
             raise Ex.MediaNotAvailable
 
-        #return Redirect(mp4_url)
         return IndirectResponse(VideoClipObject, key=mp4_url)
 
 ####################################################################################################
@@ -205,3 +203,17 @@ def GetVevoURL(url, vevo_id):
     vevo_url = VEVO_URL % (artist, title, vevo_id)
 
     return vevo_url
+####################################################################################################
+def TestURLs():
+
+  test_urls = []
+  data = HTML.ElementFromURL('http://www.mtv.com/most-popular/videos/?metric=numberOfViews&range=today&order=desc')
+
+  for url in data.xpath('//li[@itemtype="http://schema.org/VideoObject"]//a/@href'):
+    url = 'http://www.mtv.com' + url
+    test_urls.append(url)
+
+    if len(test_urls) > 2:
+      break
+
+  return test_urls
