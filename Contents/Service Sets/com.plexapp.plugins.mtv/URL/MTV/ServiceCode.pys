@@ -6,7 +6,7 @@ RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 # rss needs video and videolist option based on clips or full episodes
 MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
+MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 # A FEW VIDEOS ONLY HAVE FOUR DIGITS BUT HAVING THE REGEX ACCEPT FOUR DIGITS INTERFERES WITH ANY URL THAT HAS A YEAR IN THE NAME.
 # EXAMPLE OF FOUR DIGIT URL IS http://www.mtv.com/videos/?vid=9479
@@ -69,20 +69,19 @@ def MediaObjectsForURL(url):
             parts = [
                 PartObject(
                     key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-                    ) for i in range(num_parts)
+                ) for i in range(num_parts)
             ],
             bitrate = bitrate,
+            container = Container.MP4,
             video_resolution = resolution,
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             audio_channels = 2,
             optimized_for_streaming = True
-	    # Resolutions for old videos are different. And include 1200/360, 1800/432, 600/240  
-	    # But they are handled with the closest command in the PlayVideo function
         ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
     ]
+
 ####################################################################################################
-@indirect
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
     # this part is only for music videos
@@ -131,31 +130,17 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
 
         # Split reflects the rtmp address for MTV, VH1, and CMT videos.
-        if '/gsp.originmusicstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.originmusicstor/')[1]
-            mp4_url = MP4_URL % ('gsp.originmusicstor', stream_url)
-        elif '/gsp.egvrenditions/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.egvrenditions/')[1]
-            mp4_url = MP4_URL % ('gsp.egvrenditions', stream_url)
-        elif '/gsp.mtvcomstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.mtvcomstor/')[1]
-            mp4_url = MP4_URL % ('gsp.mtvcomstor', stream_url)
-        elif '/gsp.vhonecomstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.vhonecomstor/')[1]
-            mp4_url = MP4_URL % ('gsp.vhonecomstor', stream_url)
-        elif '/gsp.cmtstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.cmtstor/')[1]
-            mp4_url = MP4_URL % ('gsp.cmtstor', stream_url)
-        elif '/gsp.mtvnshrdstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.mtvnshrdstor/')[1]
-            mp4_url = MP4_URL % ('gsp.mtvnshrdstor', stream_url)
-        elif '/gsp.ctnstor/' in rtmp_url:
-            stream_url = rtmp_url.split('/gsp.ctnstor/')[1]
-            mp4_url = MP4_URL % ('gsp.ctnstor', stream_url)
+        # CHANGED THIS BECAUSE OTHER LIST WAS GROWING SO LARGE AND THIS METHOD ONLY HAS TWO FOR ALL VIDEOS
+        if '/viacommtvstrm/' in rtmp_url:
+            stream_url = rtmp_url.split('/viacommtvstrm/')[1]
+        elif '/mtvnorigin/' in rtmp_url:
+            stream_url = rtmp_url.split('/mtvnorigin/')[1]
         else:
             raise Ex.MediaNotAvailable
 
-        return IndirectResponse(VideoClipObject, key=mp4_url)
+        mp4_url = MP4_URL % stream_url
+        
+        return Redirect(mp4_url)
 
 ####################################################################################################
 # Using regex to pull mgid from url. Added id option to regex for CMT videos. 
@@ -206,14 +191,14 @@ def GetVevoURL(url, vevo_id):
 ####################################################################################################
 def TestURLs():
 
-  test_urls = []
-  data = HTML.ElementFromURL('http://www.mtv.com/most-popular/videos/?metric=numberOfViews&range=today&order=desc')
+    test_urls = []
+    data = HTML.ElementFromURL('http://www.mtv.com/most-popular/videos/?metric=numberOfViews&range=today&order=desc')
 
-  for url in data.xpath('//li[@itemtype="http://schema.org/VideoObject"]//a/@href'):
-    url = 'http://www.mtv.com' + url
-    test_urls.append(url)
+    for url in data.xpath('//li[@itemtype="http://schema.org/VideoObject"]//a/@href'):
+        url = 'http://www.mtv.com' + url
+        test_urls.append(url)
 
-    if len(test_urls) > 2:
-      break
+        if len(test_urls) > 2:
+            break
 
-  return test_urls
+    return test_urls
