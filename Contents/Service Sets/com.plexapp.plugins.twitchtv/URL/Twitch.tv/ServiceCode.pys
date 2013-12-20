@@ -1,6 +1,3 @@
-import urllib
-
-CLIP_DATA = 'http://api.justin.tv/api/clip/show/%s.json'
 STREAM_DATA = 'http://api.justin.tv/api/stream/list.json?channel=%s'
 
 HLS_TOKEN_URL = 'http://api.twitch.tv/api/channels/%s/access_token'
@@ -58,11 +55,10 @@ def PlayVideo(url):
 
 	user_id = GetUserId(url)
 	token = JSON.ObjectFromURL(HLS_TOKEN_URL % user_id, cacheTime=0)
-	video_url = HLS_PLAYLIST_URL % (user_id, urllib.quote(token['token']), urllib.quote(token['sig']))
+	video_url = HLS_PLAYLIST_URL % (user_id, String.Quote(token['token']), String.Quote(token['sig']))
 	Log(' --> Final video_url: %s' % video_url)
 
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(video_url))
-
 
 ####################################################################################################
 def GetUserId(url):
