@@ -105,9 +105,16 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	available_bitrates = []
 	available_resolutions = []
 
+	# Bitrate or resolution info is missing sometimes. We try to find the best match based on
+	# bitrate first (if we have this info for all available versions). If bitrate info is missing
+	# for one or more versions of a video, we try to find the best match based on resolution.
 	for video in streams.keys():
-		available_bitrates.append(streams[video]['bitrate'])
-		available_resolutions.append(streams[video]['height'])
+		bitrate = streams[video]['bitrate']
+
+		if bitrate and bitrate not in available_bitrates:
+			available_bitrates.append(bitrate)
+
+		if streams[video]['height']: available_resolutions.append(streams[video]['height'])
 
 	if len(set(available_bitrates)) == len(set(available_resolutions)):
 		closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
