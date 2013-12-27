@@ -145,8 +145,8 @@ def GetJSON(url):
   except:
     raise Ex.MediaNotAvailable
 
-  playlist = playlist + '"}'
-  playlist = "{'entries':[%s]}" % playlist
+  playlist = '%s"}' % playlist
+  playlist = '{"entries":[%s]}' % playlist
   playlist_json = JSON.ObjectFromString(playlist)
 
   for video in playlist_json['entries']:
