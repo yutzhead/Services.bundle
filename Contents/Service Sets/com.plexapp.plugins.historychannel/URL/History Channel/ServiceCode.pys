@@ -114,15 +114,18 @@ def GetSMILURL(url):
     elif status == 'video':
         return smil_url
     else:
-        playlist = RE_PLAYLIST2.search(content).group(1)
-        playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
-        playlist_json = JSON.ObjectFromString(playlist)
+        try:
+            playlist = RE_PLAYLIST2.search(content).group(1)
+            playlist = "{'entries':[%s]}" % playlist.strip().replace('\n', '')
+            playlist_json = JSON.ObjectFromString(playlist)
 
-        if playlist_json['entries'][0]['premium'] == 'true':
-            raise Ex.MediaNotAuthorized
-        else:
-            releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL']
-            return releaseURL
+            if playlist_json['entries'][0]['premium'] == 'true':
+                raise Ex.MediaNotAuthorized
+            else:
+                releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL']
+                return releaseURL
+        except:
+           raise Ex.MediaNotAvailable 
 
     raise Ex.MediaNotAvailable
 
