@@ -3,7 +3,8 @@ RE_MEDIA_ID = Regex('http://api.radio-canada.ca/.+"idMedia":"(.+?)"')
 RE_BANDWIDTH = Regex('BANDWIDTH=([0-9]+),')
 
 NAMESPACES = {"a":"http://www.w3.org/2001/SMIL20/Language"}
-SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+#SMIL_URL = "http://release.theplatform.com/content.select?format=SMIL&pid=%s&Embedded=True&Tracking=True"
+EMISSION_URL = "http://api.tou.tv/v1/toutvapiservice.svc/json/GetPageEmission?emissionId="
 
 MEDIA_URL = "http://api.radio-canada.ca/validationMedia/v1/Validation.html?appCode=thePlatform&deviceType=%s&connectionType=wifi&idMedia=%s&output=json"
 
@@ -17,68 +18,64 @@ def NormalizeURL(url):
     return url
 
 ####################################################################################################
+
 def MetadataObjectForURL(url):
-    smil = GetSMIL(url)
-    details = GetSRC(smil)
 
-    title = details.get('title')
-    summary = details.get('abstract')
-
-    try:
-        runtime = details.get('dur')
-        duration = int(runtime.strip('ms'))
-    except:
-        duration = 0
-
-    thumb = details.get('imagePlayerLargeA')
-    if thumb is None:
-        thumb = ""
-
-    try:
-        show_title = details.get('Show')
-        season = int(details.get('SeasonNumber'))
-        episode = int(details.get('EpisodeNumber'))
-        date = Datetime.ParseDate(details.get('OriginalAirDate')).date()
-
-        try:
-            directors = details.get('PeopleDirector')
-            if directors:
-                directors = directors.split(', ')
-            else:
-                directors = []
-        except:
-            directors = []
-
-        try:
-            writers = details.get('PeopleWriter')
-            if writers:
-                writers = writers.split(', ')
-            else:
-                writers = []
-        except:
-            writers = []
-
-        return EpisodeObject(
-            title = title,
-            summary = summary,
-            duration = duration,
-            show = show_title,
-            season = season, 
-            index = episode,
-            originally_available_at = date,
-            #directors = directors,
-            #writers = writers,
-            thumb = Resource.ContentsOfURLWithFallback(url=thumb)
-            )
-    except:
-        pass
-
-    return VideoClipObject(
-        title = title,
-        summary = summary,
-        duration = duration,
-        thumb = Resource.ContentsOfURLWithFallback(url=thumb)
-    )
+	emissionID = GetEmissionID(url)
+	jsonMetadata = JSON.ObjectFromURL(EMISSION_URL + str(emissionID))
+	allEpisodes = jsonMetadata["d"]["Episodes"]
+	episodePid = GetPID(url)
+	for oneEpisode in allEpisodes :
+		if oneEpisode["PID"] == episodePid :
+			title = oneEpisode["Title"]
+			summary = oneEpisode["Description"]
+			duration = int(oneEpisode["Length"])
+			thumb = oneEpisode["ImagePlayerLargeA"]
+			if thumb is None:
+				thumb = ""
+			try:
+				show_title = oneEpisode["Show"]
+				season = int(oneEpisode["SeasonNumber"])
+				episode = int(oneEpisode["EpisodeNumber"])
+				#date = Datetime.ParseDate(details.get('OriginalAirDate')).date()
+				try:
+					directors = oneEpisode["PeopleDirector"]
+					if directors:
+						directors = directors.split(', ')
+					else:
+						directors = []
+				except:
+					directors = []
+				try:
+					writers = oneEpisode["PeopleWriter"]
+					if writers:
+						writers = writers.split(', ')
+					else:
+						writers = []
+				except:
+					writers = []
+		
+				return EpisodeObject(
+					title = title,
+					summary = summary,
+					duration = duration,
+					show = show_title,
+					season = season, 
+					index = episode,
+					#originally_available_at = date,
+					directors = directors,
+					writers = writers,
+					thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+					)
+			except:
+				pass
+				
+			return VideoClipObject(
+				title = title,
+				summary = summary,
+				duration = duration,
+				thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+				)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -137,12 +134,11 @@ def GetPID(url):
     return pID
 
 ####################################################################################################
-def GetSMIL(url):
-    pID = GetPID(url)
-    content = (HTTP.Request(SMIL_URL % pID).content).replace(" tp:", " ")
-    smil = XML.ElementFromString(content)
-
-    return smil
+def GetEmissionID(url):
+	dataHtml = HTML.ElementFromURL(url)
+	
+	showId = dataHtml.xpath('//meta[@name="ProfilingEmisodeToken"]')[0].get('content').split('.')[0]
+	return showId
 
 ####################################################################################################
 def GetPlaylist(url, device):
@@ -176,26 +172,3 @@ def GetPlaylist(url, device):
     '''
 
 ####################################################################################################
-def GetSRC(smil):
-    src_list = smil.xpath('//a:ref', namespaces=NAMESPACES)
-    if len(src_list) == 1:
-        if 'Unavailable.flv' in src_list[0].get('src'):
-            if src_list[0].get('abstract') == "You are not in a geographic region that has access to this content.":
-                # content is geo blocked
-                raise Ex.MediaGeoblocked
-            else:
-                # just a general failure of the media not being available
-                raise Ex.MediaNotAvailable
-
-        else:
-            return src_list[0]
-
-    else:
-        for ref in src_list:
-            if "raca.tou.tv" in ref.get('src'):
-                continue
-            elif ref.get('src').startswith('rtmp'):
-                return ref
-
-    return None
-
