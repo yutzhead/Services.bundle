@@ -76,7 +76,7 @@ def PlayVideo(url, bitrate=2500):
 
 	player_id = video[0].split('playerid=')[-1].split('&')[0]
 	published_id = video[0].split('publishedid=')[-1].split('&')[0]
-	json_obj = JSON.ObjectFromURL(JSON_URL % (published_id, player_id, bitrate, bitrate))
+	json_obj = JSON.ObjectFromURL(JSON_URL % (published_id, player_id, int(bitrate), int(bitrate)))
 
 	if not 'file' in json_obj:
 		raise Ex.MediaNotAvailable
