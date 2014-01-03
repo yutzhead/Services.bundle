@@ -14,17 +14,15 @@ def MetadataObjectForURL(url):
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 	thumb = '%s/%s' % (thumb.split('/1x1')[0], '16x9/640.jpg')
 
-	try:
-		duration = html.xpath('//h1/following-sibling::span[@class="duration"]/text()')[0]
-		duration = TimeToMs(duration)
-	except:
-		duration = None
+	duration = html.xpath('//h1/following-sibling::span[@class="duration"]/text()')[0]
+	duration = Datetime.MillisecondsFromString(duration)
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
 		originally_available_at = originally_available_at,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		duration = duration
 	)
 
 ####################################################################################################
@@ -52,15 +50,3 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=video_url[0])
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds  = 0
-	duration = timecode.split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
