@@ -28,7 +28,12 @@ def MetadataObjectForURL(url):
 	else:
 		raise Ex.MediaNotAvailable
 
-	title = xml.xpath('//video/headline/text()')[0]
+	title = xml.xpath('//video/headline/text()')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
+
+	title = title[0]
 	summary = xml.xpath('//video/caption/text()')[0]
 
 	date = xml.xpath('//video/date/text()')
