@@ -60,7 +60,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
 
     id = url.split('#!/video/')[-1].split('/')[0]
-    streams = JSON.ObjectFromURL(VIDEO_STATUS % id)['formats']['http']['mp4']
+    json_obj = JSON.ObjectFromURL(VIDEO_STATUS % id)['formats']
+
+    if not 'http' in json_obj or not 'mp4' in json_obj['http']:
+        raise Ex.MediaNotAvailable
+
+    streams = json_obj['http']['mp4']
     available_bitrates = []
 
     for video in streams:
