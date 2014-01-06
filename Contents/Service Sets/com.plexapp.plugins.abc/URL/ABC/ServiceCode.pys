@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
 
-	if 'Error' in html.xpath('//title/text()')[0]:
+	if 'Error' in html.xpath('//title/text()[1]|//h1/text()[last()]')[0]:
 		raise Ex.MediaNotAvailable
 
 	episode_title = html.xpath('//div[@class="video_title"]/text()|//h1/text()[last()]|//h2[@id="video_title"]/text()') # Xpath queries for: ABC|ABC Family|ABC News
