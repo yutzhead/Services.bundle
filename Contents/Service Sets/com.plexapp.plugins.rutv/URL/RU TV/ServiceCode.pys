@@ -1,4 +1,4 @@
-RE_VID_ID = Regex('vid=([0-9]+)')
+RE_VID_ID = Regex('(?:vid=|id/)([0-9]+)')
 DETAIL_URL = 'http://player.rutv.ru/index/play/vid/%s'
 BASE_URL = 'http://rutv.ru'
 
