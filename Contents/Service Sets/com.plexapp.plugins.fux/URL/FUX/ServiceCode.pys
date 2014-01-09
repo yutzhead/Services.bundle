@@ -2,6 +2,7 @@ BASE_URL = 'http://www.fux.com'
 VIDEOS_URL = 'http://tkn.fux.com/%s/desktop/%s'
 RE_PLAYLIST = Regex('playlist: \[(.+?)\],', Regex.DOTALL)
 RE_MEDIA_ID = Regex('\}\)\((\d+), \d+, \[(.+?)\]\);')
+RE_AVAILABILITY = Regex('no longer available')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -59,6 +60,10 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res=1080):
 
 	data = HTTP.Request(url).content
+
+	if RE_AVAILABILITY.search(data):
+		raise Ex.MediaExpired
+
 	(media_id, qualities) = RE_MEDIA_ID.search(data).groups()
 
 	videos_url = VIDEOS_URL % (media_id, '+'.join(qualities.split(',')))
