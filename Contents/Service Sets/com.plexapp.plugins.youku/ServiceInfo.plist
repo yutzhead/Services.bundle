@@ -10,6 +10,10 @@
 			<array>
 				<string>^http://v.youku.com/v_show/id_[^.]+\.html</string>
 			</array>
+			<key>TestURLs</key>
+			<array>
+				<string>http://v.youku.com/v_show/id_XMjU3NjI0MTI4.html</string>
+			</array>
 		</dict>
 	</dict>
 </dict>

@@ -1,9 +1,12 @@
 PLAYLIST_URL = 'http://v.youku.com/player/getPlayList/VideoIDS/%s'
-M3U8_URL = 'http://v.youku.com/player/getM3U8/vid/%s/type/flv/ts/%d/v.m3u8'
+M3U8_URL = 'http://pl.youku.com/playlist/m3u8?vid=%s&type=%s&ts=%d'
+YOUKU_STREAM_TYPES =	['flv',	'mp4',	'hd2',	'hd3']
+YOUKU_VIDEO_WIDTHS =	[512,	672,	1104,	1920]
+YOUKU_VIDEO_HEIGHTS =	[288,	378,	622,	1080]
+
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
 
 RE_VIDEO_ID_URL = Regex('v_show/id_(?P<video_id>[^.]+)\.html')
-RE_VIDEO_ID_HTML = Regex("var videoId = '(?P<video_id>[0-9]+)'")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -21,56 +24,84 @@ def MetadataObjectForURL(url):
 		video_id = video_id.group('video_id')
 
 	try:
-		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
 	except:
 		raise Ex.MediaNotAvailable
-
-	title = html.xpath('//meta[@name="title"]/@content')[0]
-	summary = html.xpath('//meta[@name="description"]/@content')[0]
 
 	try:
-		playlist = JSON.ObjectFromURL(PLAYLIST_URL % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY)
+		playlist = JSON.ObjectFromURL(PLAYLIST_URL % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
 	except:
 		raise Ex.MediaNotAvailable
 
-	thumb = playlist['data'][0]['logo']
+	data = playlist['data'][0]
 
 	return VideoClipObject(
-		title = title,
-		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(thumb)
+		title = data['title'],
+		summary = html.xpath('//meta[@name="description"]/@content')[0],
+		thumb = Resource.ContentsOfURLWithFallback(data['logo']),
+		duration = int(float(data['seconds']) * 1000)
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	return [
-		MediaObject(
-			parts = [
-				PartObject(
-					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
-				)
-			],
-			video_resolution = 'sd',
-			audio_channels = 2
+	ret = []
+
+	for i, st in reversed(list(enumerate(YOUKU_STREAM_TYPES))):
+		ret.append(
+			MediaObject(
+				parts = [PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url=url, target_stream_type=st)))],
+				width = YOUKU_VIDEO_WIDTHS[i],
+				height = YOUKU_VIDEO_HEIGHTS[i],
+				audio_channels = 2
+			)
 		)
-	]
+
+	return ret
 
 ####################################################################################################
-def PlayVideo(url):
+def GetStreamType(stream_types, target_stream_type):
 
-	try:
-		page = HTTP.Request(url, headers=HTTP_HEADERS, cacheTime=CACHE_1DAY).content
-	except:
-		raise Ex.MediaExpired
+	Log.Debug("GetStreamType: looking for '%s' in %s", target_stream_type, stream_types)
 
-	video_id = RE_VIDEO_ID_HTML.search(page)
+	stream_type = None
+	index = YOUKU_STREAM_TYPES.index(target_stream_type)
+
+	for i in reversed(range(index + 1)):
+		st = YOUKU_STREAM_TYPES[i]
+		if st in stream_types:
+			stream_type = st
+			break
+
+	Log.Debug("GetStreamType: returning '%s'", stream_type)
+
+	return stream_type
+
+####################################################################################################
+@indirect
+def PlayVideo(url, target_stream_type):
+
+	Log.Debug("PlayVideo: url='%s', target_stream_type='%s'", url, target_stream_type)
+
+	video_id = RE_VIDEO_ID_URL.search(url)
 
 	if not video_id:
 		raise Ex.MediaNotAvailable
 	else:
 		video_id = video_id.group('video_id')
 
-	video_url = M3U8_URL % (video_id, Datetime.TimestampFromDatetime(Datetime.Now()))
+	try:
+		playlist = JSON.ObjectFromURL(PLAYLIST_URL % video_id, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaExpired
 
-	return Redirect(video_url)
+	stream_type = GetStreamType(playlist['data'][0]['streamtypes'], target_stream_type)
+	if not stream_type:
+		raise Ex.MediaNotAvailable
+
+	video_url = M3U8_URL % (video_id, stream_type, Datetime.TimestampFromDatetime(Datetime.Now()))
+
+	Log.Debug("PlayVideo: returning '%s'", video_url)
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
