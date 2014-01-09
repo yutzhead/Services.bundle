@@ -23,6 +23,11 @@ def MetadataObjectForURL(url):
     
     details = XML.ElementFromURL(ZDF_BEITRAG_DETAILS % assetId, cacheTime=CACHE_1HOUR)
     
+    status = details.xpath('/response/status/statuscode/text()')[0]
+    if(status != 'ok'):
+        Log('Status: %s' % status)
+        raise Ex.MediaNotAvailable
+    
     if(type == 'video'):
         title = details.xpath('//video/information/title')[0].text
         summary = details.xpath('//video/information/detail')[0].text
@@ -89,6 +94,11 @@ def PlayVideo(url=None):
         details = XML.ElementFromURL(ZDF_BEITRAG_DETAILS % assetId, cacheTime=CACHE_1HOUR)
     except:
         raise Ex.MediaNotAuthorized
+    
+    status = details.xpath('/response/status/statuscode/text()')[0]
+    if(status != 'ok'):
+        Log('Status: %s' % status)
+        raise Ex.MediaNotAvailable
     
     type = details.xpath('//video/type')[0].text
     if(type == 'video'):
@@ -159,3 +169,19 @@ def GetTypeAssetIdFromURL(url):
     return [ d.group(1), d.group(2) ]
   else:
     return [ None, None ]
+	
+####################################################################################################
+def TestURLs():
+  test_urls = []
+
+  data = XML.ElementFromURL('http://www.zdf.de/ZDFmediathek/xmlservice/web/meistGesehen?id=_GLOBAL&maxLength=10&offset=0')
+
+  for link in data.xpath('//teaser[type="video"]/details/vcmsUrl/text()'):
+    if len(test_urls) < 3:
+      if link not in test_urls:
+        test_urls.append(link)
+    else:
+      break
+
+  return test_urls
+  
