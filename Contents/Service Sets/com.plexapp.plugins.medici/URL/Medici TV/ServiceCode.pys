@@ -14,7 +14,10 @@ def MetadataObjectForURL(url):
 
   data = GetJSON(url)
   title = data['nom']
-  summary = String.StripTags(data['infos']['subtitle'])
+  summary = ''
+
+  if 'subtitle' in data['infos']:
+    summary = String.StripTags(data['infos']['subtitle'])
 
   try:
     for chapter in data['chapters']:
