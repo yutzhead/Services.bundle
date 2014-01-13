@@ -1,25 +1,25 @@
 HTTP.CacheTime = CACHE_1DAY
-httpHeaders = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
 
-VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?&width=1000&height=512&playerID=%s&@videoPlayer=%s'
+VIDEO_DETAILS_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?playerID=%s&@videoPlayer=%s'
 
-RE_PLAYER_ID = Regex('param name="playerID" value="([0-9]+)"')
-RE_VIDEOPLAYER = Regex('param name="@videoPlayer" value="([0-9]+)"')
-RE_JSON = Regex('var experienceJSON = (.+)};')
+RE_PLAYER_ID = Regex('param name="playerID" value="(\d+)"')
+RE_VIDEOPLAYER = Regex('param name="@videoPlayer" value="(\d+)"')
+RE_JSON = Regex('var experienceJSON = (\{.+\});')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url, headers=httpHeaders)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
 	# Extract the details available directly form the page.
-	title = page.xpath("//meta[@property='og:title']")[0].get('content')
-	thumb = page.xpath("//meta[@property='og:image']")[0].get('content')
-	description = page.xpath("//meta[@property='og:description']")[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
 	return VideoClipObject(
 		title = title,
-		summary = description,
+		summary = summary,
 		thumb = thumb
 	)
 
@@ -28,10 +28,13 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
+			video_resolution = 'sd',
 			audio_codec = AudioCodec.AAC,
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
 			audio_channels = 2
 		)
 	]
@@ -40,12 +43,12 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	content = HTTP.Request(url, headers=httpHeaders).content
-	playerId = RE_PLAYER_ID.search(content).group(1)
-	videoId = RE_VIDEOPLAYER.search(content).group(1)
+	content = HTTP.Request(url, headers=HTTP_HEADERS).content
+	player_id = RE_PLAYER_ID.search(content).group(1)
+	video_id = RE_VIDEOPLAYER.search(content).group(1)
 
-	video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (playerId, videoId), headers=httpHeaders).content
-	experience = RE_JSON.search(video_details_page).group(1) + '}'
+	video_details_page = HTTP.Request(VIDEO_DETAILS_URL % (player_id, video_id), headers=HTTP_HEADERS).content
+	experience = RE_JSON.search(video_details_page).group(1)
 	details = JSON.ObjectFromString(experience)
 
 	video_url = details['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
