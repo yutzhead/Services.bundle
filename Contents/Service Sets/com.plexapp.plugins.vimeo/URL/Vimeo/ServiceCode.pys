@@ -20,8 +20,12 @@ def MetadataObjectForURL(url):
 	try:
 		json_obj = JSON.ObjectFromURL(API_URL % url.split('/')[-1], cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)[0]
 	except Ex.HTTPError, e:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = json_obj['title']
 	summary = String.StripTags(json_obj['description'])
