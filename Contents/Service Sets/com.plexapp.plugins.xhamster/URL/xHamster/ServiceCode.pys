@@ -13,7 +13,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	html = HTML.ElementFromString(page)
 
 	title = html.xpath('//title/text()')[0].rsplit(' - ', 1)[0].strip()
@@ -58,7 +62,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	mp4_url = html.xpath('//div[@class="mp4"]/a/@href')
 
 	if len(mp4_url) < 1:
