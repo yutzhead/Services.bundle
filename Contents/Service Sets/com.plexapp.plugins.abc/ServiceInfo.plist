@@ -20,6 +20,7 @@
 				5582037:  Rising Up: Five Years Since Katrine
 				-->
 				<string>^http://abc(family)?\.go\.com/shows/[^/]+/episode\-guide/season-\d+/\d+\-.+</string>
+				<string>^http://abc(family)?\.go\.com/shows/[^/]+/listing/episode\-\d+</string>
 			</array>
 		</dict>
 	</dict>
