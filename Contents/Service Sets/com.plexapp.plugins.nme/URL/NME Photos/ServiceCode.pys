@@ -36,6 +36,7 @@ def GetPhotos(url):
 
   page_contents = HTTP.Request(url).content
   files = ListFromArray(REGEX_FILENAMES.findall(page_contents)[0])
+  Log(files)
 
   for i in range(len(files)):
     url = BASE_URL + files[i]
