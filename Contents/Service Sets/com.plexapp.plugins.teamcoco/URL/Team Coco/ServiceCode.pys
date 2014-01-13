@@ -92,7 +92,13 @@ def PlayEpisode(url, res):
 	src = xml.xpath('//files/file[@bitrate="ipad"]/text()|//files/file[contains(text(), "ipad")]/text()')[0]
 	m3u8_url = 'http://ht.cdn.turner.com/tbs/big/teamcoco/%s' % src.lstrip('/')
 	base_url = m3u8_url.rsplit('/',1)[0]
-	playlist = HTTP.Request(m3u8_url).content
+
+	try:
+		playlist = HTTP.Request(m3u8_url).content
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	new_playlist = '#EXTM3U'
 	streams = []
 	bandwidth = None
