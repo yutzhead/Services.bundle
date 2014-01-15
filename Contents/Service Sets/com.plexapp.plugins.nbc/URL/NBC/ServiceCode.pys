@@ -102,10 +102,26 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id.group('id'), headers=HTTP_HEADERS, cacheTime=10)
-	m3u8_url = json_obj['tokenizedURL']
 
+	m3u8_url = json_obj['tokenizedURL']
 	playlist = HTTP.Request(m3u8_url, cacheTime=10)
-	content = playlist.content
+
+	try:
+		content = playlist.content
+	except Ex.HTTPError, e:
+		if e.code == 404 and '/nbcu/' in m3u8_url:
+			m3u8_url = m3u8_url.replace('/nbcu/', '/')
+			playlist = HTTP.Request(m3u8_url, cacheTime=10)
+
+			try:
+				content = playlist.content
+			except:
+				raise Ex.MediaNotAvailable
+		else:
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
+
 	cookie = playlist.headers['set-cookie']
 
 	return IndirectResponse(VideoClipObject,
