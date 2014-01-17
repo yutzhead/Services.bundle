@@ -208,7 +208,7 @@ def MediaObjectsForURL(url):
 				bitrate = fmt['bitrate'],
 				audio_channels = 2,
 				optimized_for_streaming = True
-			) for fmt in SOHU_TV_FORMATS
+			) for fmt in reversed(SOHU_TV_FORMATS)
 		]
 
 	return objs
