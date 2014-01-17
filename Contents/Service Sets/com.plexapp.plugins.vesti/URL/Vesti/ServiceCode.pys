@@ -23,9 +23,9 @@ def MetadataObjectForURL(url):
 def VideoURLFromDocumentURL(url):
 
 	page = HTML.ElementFromURL(url)
-	video_id = page.xpath("//div[@class='doc_photo_block ']//a[@class='video_ico']")[0].get('data-vid')
+	video_id = page.xpath("//div[@class='doc_photo_block ']//a[contains(@class, 'video_ico')]/@data-vid")[0]
 
-	return "http://www.vesti.ru/only_video.html?vid=" + video_id
+	return "http://www.vesti.ru/only_video.html?vid=%s" % video_id
 
 ####################################################################################################
 @deferred
