@@ -1,21 +1,24 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:22.0) Gecko/20100101 Firefox/22.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.77 Safari/537.36'}
 RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 
 ####################################################################################################
 def NormalizeURL(url):
 
 	url = url.split('?')[0].replace(' ', '%20')
-	url = url.replace('http://abc.go.com/watch/', 'http://watchabc.go.com/')
-
-	if 'this-week' in url:
-		url = url.replace('http://watchabc.go.com/', 'http://abcnews.go.com/watch/')
 
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+
+	# Expired and unavailable media redirects to the home page. Instead of catching (multiple)
+	# redirects we check if there is a 'og:url' HTML element.
+	og_url = html.xpath('//meta[@property="og:url"]')
+
+	if len(og_url) < 1:
+		raise Ex.MediaNotAvailable
 
 	if 'Error' in html.xpath('//title/text()[1]|//h1/text()[last()]')[0]:
 		raise Ex.MediaNotAvailable
@@ -55,7 +58,7 @@ def MetadataObjectForURL(url):
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
-	source_title = 'ABC Family' if 'watchabcfamily' in url else 'ABC'
+	source_title = 'ABC Family' if 'abcfamily' in url else 'ABC'
 
 	return EpisodeObject(
 		title = episode_title,
@@ -137,7 +140,7 @@ def PlayVideo(f4m_url=None, **kwargs):
 def FixURL(url):
 
 	try:
-		url = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK).xpath('//meta[@property="og:url"]/@content')[0]
+		url = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//meta[@property="og:url"]/@content')[0]
 
 		if not '/VDKA' in url:
 			return None
@@ -145,20 +148,3 @@ def FixURL(url):
 		return url
 	except:
 		return None
-
-####################################################################################################
-def TestURLs():
-
-	test_urls = []
-	html = HTML.ElementFromURL('http://abc.go.com/', headers=HTTP_HEADERS)
-
-	for url in html.xpath('//a[contains(@href, "/SH") and contains(@href, "/VDKA")]/@href'):
-		url = url.split('?')[0]
-
-		if url not in test_urls:
-			test_urls.append(url)
-
-		if len(test_urls) > 2:
-			break
-
-	return test_urls
