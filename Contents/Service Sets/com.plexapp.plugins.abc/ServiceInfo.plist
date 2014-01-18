@@ -8,19 +8,9 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*SH(559036|5570013|55216454|5580331|55131205|5575052|5582037))http://(watch)?abc(family|news)?\.go\.com/.+/SH\d+/VD(KA\d_[^/]+|\d+)</string>
-				<!--
-				Excluded Shows:
-				559036:   ABC News Specials
-				5570013:  Boston Med
-				55216454: Good Afternoon America
-				5580331:  Nightline Prime: Secrets of Your Mind
-				55131205: Primetime Nightline: Beyond Belief
-				5575052:  Primetime: Family Secrets
-				5582037:  Rising Up: Five Years Since Katrine
-				-->
-				<string>^http://abc(family)?\.go\.com/shows/[^/]+/episode\-guide/season-\d+/\d+\-.+</string>
-				<string>^http://abc(family)?\.go\.com/shows/[^/]+/listing/episode\-\d+</string>
+				<string>^http://(watch)?abc\.go\.com/.+/SH\d+/VD(KA\d_[^/]+|\d+)</string>
+				<string>^http://abc\.go\.com/shows/[^/]+/episode\-guide/season-\d+/\d+\-.+</string>
+				<string>^http://abc\.go\.com/shows/[^/]+/listing/episode\-\d+</string>
 			</array>
 		</dict>
 	</dict>
