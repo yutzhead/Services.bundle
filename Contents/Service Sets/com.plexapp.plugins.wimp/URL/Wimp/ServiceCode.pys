@@ -1,3 +1,8 @@
+HTTP_HEADERS = {
+	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'
+}
+
+####################################################################################################
 def NormalizeURL(url):
 
 	return url
@@ -5,11 +10,18 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url)
-	title = data.xpath('//title')[0].text.strip(' [VIDEO]')
+	url = url.replace('http://www.', 'http://m.')
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+
+	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed")]')
+
+	if len(yt_iframe) > 0:
+		return URLService.MetadataObjectForURL(yt_iframe[0].get('src'))
 
 	return VideoClipObject(
-		title = title
+		title = html.xpath('//meta[@property="og:title"]/@content')[0],
+		summary = html.xpath('//meta[@property="og:description"]/@content')[0],
+		thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 	)
 
 ####################################################################################################
@@ -32,12 +44,8 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	url = url.replace('http://www.', 'http://m.')
+	video = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//video/@src')
 
-	headers = {
-		'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'
-	}
-
-	video = HTML.ElementFromURL(url, cacheTime=0, headers=headers).xpath('//video/@src')
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
 
