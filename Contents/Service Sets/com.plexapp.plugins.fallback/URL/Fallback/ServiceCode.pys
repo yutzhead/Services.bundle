@@ -140,6 +140,9 @@ def MetadataObjectForURL(url):
 
 		try:
 			req.headers
+		except Ex.HTTPError, e:
+			if e.code == 405:
+				req.content
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
 				if '://' not in e.headers['Location']:
