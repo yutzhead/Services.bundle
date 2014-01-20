@@ -2,6 +2,8 @@ CM_URL = 'http://%s/cm/%s'
 CM_JSON_URL = '%s?mode=json'
 CM_ID = Regex('1\.\d+')
 
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:26.0) Gecko/20100101 Firefox/26.0'}
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -18,7 +20,7 @@ def MetadataObjectForURL(url):
 	id = CM_ID.findall(url)
 
 	if len(id) < 1:
-		permalink = HTML.ElementFromURL(url).xpath('//a[@title="Permalink"]/@data-popup-text')
+		permalink = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//a[@title="Permalink"]/@data-popup-text')
 
 		if len(permalink) < 1:
 			raise Ex.MediaNotAvailable
@@ -28,10 +30,15 @@ def MetadataObjectForURL(url):
 	cm_url_html = CM_URL % (GetHost(url), id[0])
 	cm_url_json = CM_JSON_URL % cm_url_html
 
-	html = HTML.ElementFromString(HTTP.Request(cm_url_html).content.replace('&ndash;', '-'))
+	html = HTML.ElementFromString(HTTP.Request(cm_url_html, headers=HTTP_HEADERS).content.replace('&ndash;', '-'))
+
+	# If we have a YouTube video, hand it over to the YouTube URL Service
+	yt_src = html.xpath('//div[contains(@data-video-src, "youtube.com/")]/@data-video-src')
+	if len(yt_src) > 0:
+		return URLService.MetadataObjectForURL(yt_src[0])
 
 	try:
-		json = JSON.ObjectFromURL(cm_url_json)
+		json = JSON.ObjectFromURL(cm_url_json, headers=HTTP_HEADERS)
 	except:
 		raise Ex.MediaNotAvailable
 
@@ -75,7 +82,7 @@ def PlayVideo(url):
 
 	if len(id) < 1:
 		try:
-			permalink = HTML.ElementFromURL(url).xpath('//a[@title="Permalink"]/@data-popup-text')
+			permalink = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//a[@title="Permalink"]/@data-popup-text')
 		except:
 			raise Ex.MediaExpired
 
@@ -88,7 +95,7 @@ def PlayVideo(url):
 	cm_url_json = CM_JSON_URL % cm_url_html
 
 	try:
-		json = JSON.ObjectFromURL(cm_url_json)
+		json = JSON.ObjectFromURL(cm_url_json, headers=HTTP_HEADERS)
 	except:
 		raise Ex.MediaExpired
 

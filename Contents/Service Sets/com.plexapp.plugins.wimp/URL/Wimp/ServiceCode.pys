@@ -13,10 +13,10 @@ def MetadataObjectForURL(url):
 	url = url.replace('http://www.', 'http://m.')
 	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
 
-	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed")]')
+	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed")]/@src')
 
 	if len(yt_iframe) > 0:
-		return URLService.MetadataObjectForURL(yt_iframe[0].get('src'))
+		return URLService.MetadataObjectForURL(yt_iframe[0])
 
 	return VideoClipObject(
 		title = html.xpath('//meta[@property="og:title"]/@content')[0],
