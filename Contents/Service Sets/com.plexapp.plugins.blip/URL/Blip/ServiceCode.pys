@@ -1,4 +1,4 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_7; en-us) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.4 Safari/533.20.27'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.73.11 (KHTML, like Gecko) Version/6.1.1 Safari/537.73.11'}
 
 RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 RE_FILE_ID = Regex('blip\.tv/file/([0-9]{6,7})')
@@ -118,6 +118,8 @@ def GetJsonURL(url):
 		file_id = RE_FILE_ID.search(url).group(1)
 		url = 'http://blip.tv/file/%s' % file_id
 	elif url.find('/play/') != -1:
+		url = url.split('.html')[0]
+
 		try:
 			page = HTTP.Request(url, follow_redirects=False).headers
 		except Ex.RedirectError, e:
