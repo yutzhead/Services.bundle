@@ -6,9 +6,13 @@
 	<dict>
 		<key>Youku</key>
 		<dict>
+			<key>TestURLs</key>
+			<array>
+				<string>http://v.youku.com/v_show/id_XMjU3NjI0MTI4.html</string>
+			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://v.youku.com/v_show/id_[^.]+\.html</string>
+				<string>^http://v\.youku\.com/v_show/id_[^.]+\.html</string>
 			</array>
 		</dict>
 	</dict>
