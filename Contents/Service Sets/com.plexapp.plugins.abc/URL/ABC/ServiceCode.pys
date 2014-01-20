@@ -100,7 +100,7 @@ def MediaObjectsForURL(url):
 			storage_id = 1841
 			break
 
-	if 'watchabcfamily' in url:
+	if 'abcfamily' in url:
 		storage_id = 1571
 
 	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/%d/uiConfId/8628152/tags/uplynk/a/a.f4m?playbackContext=ct%%3Da%%26brand%%3D001%%26device%%3D001' % (video_id, storage_id)
