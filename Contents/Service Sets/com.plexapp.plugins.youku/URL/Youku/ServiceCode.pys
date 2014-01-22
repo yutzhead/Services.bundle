@@ -31,6 +31,9 @@ def GetVideoData(url):
 	except:
 		raise Ex.MediaNotAvailable
 
+	if 'data' not in playlist or len(playlist['data']) < 1:
+		raise Ex.MediaNotAvailable
+
 	return playlist['data'][0]
 
 ####################################################################################################
