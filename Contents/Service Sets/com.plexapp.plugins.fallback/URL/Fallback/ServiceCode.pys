@@ -101,7 +101,7 @@ def FindExternalSource(req):
 	for select in EMBEDDED_VIDEO:
 		for node_url in doc.xpath(select):
 			try:
-				if isinstance(node_url, basestring) and (node_url.startswith('http://') or node_url.startswith('https://')):
+				if isinstance(node_url, basestring) and (node_url.startswith('http://') or node_url.startswith('https://') or node_url.startswith('//')):
 					for sources_check in URLService.AllPatterns:
 						try:
 							if len(Regex(sources_check).findall(node_url)) > 0:
@@ -140,6 +140,9 @@ def MetadataObjectForURL(url):
 
 		try:
 			req.headers
+		except Ex.HTTPError, e:
+			if e.code == 405:
+				req.content
 		except Ex.RedirectError, e:
 			if 'Location' in e.headers:
 				if '://' not in e.headers['Location']:
@@ -161,7 +164,7 @@ def MetadataObjectForURL(url):
 
 			# Embedded Video
 			source_url = FindExternalSource(req)
-			if source_url is not None and source_url.split('://',1)[1] != url.split('://',1)[1]:
+			if source_url is not None and source_url.split('://',1)[-1] != url.split('://',1)[-1]:
 				Log.Debug(' --> [Metadata] Found an embedded video: %s' % source_url)
 				return URLService.MetadataObjectForURL(source_url)
 

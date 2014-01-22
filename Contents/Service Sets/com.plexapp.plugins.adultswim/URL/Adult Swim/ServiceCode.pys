@@ -11,9 +11,6 @@ def MetadataObjectForURL(url):
 
 	details = GetDetails(url)
 
-	if not details:
-		raise Ex.MediaNotAvailable
-
 	episode = details.xpath('//episode')[0]
 	title = episode.get('title')
 	show = episode.get('collectionTitle')
@@ -91,10 +88,6 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, index=0):
 
 	details = GetDetails(url)
-
-	if not details:
-		raise Ex.MediaNotAvailable
-
 	stream_ids = details.xpath('//item[@name="segIds"]/value')[0].text.split('#')
 
 	if index not in range(len(stream_ids)):
@@ -126,7 +119,11 @@ def PlayVideo(url, index=0):
 ####################################################################################################
 def GetDetails(url):
 
-	data = HTML.ElementFromURL(url)
+	try:
+		data = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
+
 	title = data.xpath('//title')[0].text
 	video_src = data.xpath('//link[@rel="video_src"]')
 
@@ -140,7 +137,7 @@ def GetDetails(url):
 	details = XML.ElementFromURL(DETAIL_URL % id)
 
 	if details.xpath('//episodes[@totalItems]')[0].get('totalItems') == '0':
-		return None
+		raise Ex.MediaNotAvailable
 
 	return details
 
