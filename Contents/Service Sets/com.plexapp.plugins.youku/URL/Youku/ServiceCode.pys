@@ -66,8 +66,6 @@ def MediaObjectsForURL(url):
 		) for fmt in reversed(YOUKU_FORMATS)
 	]
 
-
-
 ####################################################################################################
 def GetStreamType(stream_types, target_stream_type):
 
@@ -101,7 +99,7 @@ def GetStreamType(stream_types, target_stream_type):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, target_stream_type):
+def PlayVideo(url, target_stream_type='hd3'):
 
 	Log.Debug("PlayVideo: url='%s', target_stream_type='%s'", url, target_stream_type)
 
