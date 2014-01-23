@@ -8,12 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://5by5.tv/brieflyawesome/21</string>
-				<string>http://5by5.tv/b2w/29</string>
+				<string>http://5by5.tv/eastwing/81</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://5by5.tv/.+/[0-9]+</string>
+				<string>^http://5by5.tv/[^/]+/\d+</string>
 			</array>
 		</dict>
 	</dict>

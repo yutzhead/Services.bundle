@@ -1,92 +1,56 @@
-RE_DURATION = Regex("addVariable\('duration','([^']*)'\);")
-RE_DURATION_PARTS = Regex("(?P<mins>[0-9]+):(?P<secs>[0-9]+)")
-RE_EP_INDEX = Regex("Episode #(?P<ep_index>[0-9]+)")
+RE_DURATION = Regex('(?:(\d+) hour )?(\d+) minute')
 
 ####################################################################################################
-
 def NormalizeURL(url):
-    return url
+
+    return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    page_content = HTTP.Request(url).content
-    page = HTML.ElementFromString(page_content)
+    html = HTML.ElementFromURL(url)
 
-    # Extract the information from the page...
-    show = page.xpath("//div[@id='masthead']//h2//text()")[0]
-    title = page.xpath("//div[@id='content']//h2//text()")[0]
-    thumb = page.xpath("//div[@id='masthead']//img")[0].get('src')
+    show = html.xpath('//title/text()')[0].split(' | ', 1)[-1].split(' #', 1)[0]
+    title = html.xpath('//h2/text()')[0].strip()
+    summary = html.xpath('//meta[@name="description"]/@content')[0]
+    thumb = html.xpath('//div[@id="masthead"]//img/@src')[0]
 
-    # The duration of the podcast will be in the form MINS:SECS. We need to use a regular expression
-    # to try and obtain it, before then converting it into milliseconds.
-    duration = None
-    duration_text = RE_DURATION.search(page_content).group(1)
-    try: 
-        duration_dict = RE_DURATION_PARTS.match(duration_text).groupdict()
-        mins = int(duration_dict['mins'])
-        secs = int(duration_dict['secs'])
-        duration = ((mins * 60) + secs) * 1000
-    except: pass
+    (date, duration) = html.xpath('//h5/text()')[0].strip().split('\n', 2)
+    originally_available_at = Datetime.ParseDate(date.split(' at')[0])
 
-    # The episode details are in the form "Episode #NUM - DATE"
-    episode_details = page.xpath("//div[@id='content']//legend/text()")[0].strip()
+    (hours, minutes) = RE_DURATION.search(duration).groups()
+    hours = '0' if hours is None else hours
+    minutes = '00' if minutes is None else minutes
+    duration = Datetime.MillisecondsFromString('%s:%s:00' % (hours, minutes))
 
-    # Extract the episode's index
-    try: episode_index = int(RE_EP_INDEX.match(episode_details).groupdict()['ep_index'])
-    except: episode_index = None
+    index = url.split('/')[-1]
 
-    # The channel has not requested information about a video, therefore we can simply return the track
-    # information.
-    if url.find('#video') == -1:
-        return TrackObject(
-            title = title,
-            artist = show,
-            index = episode_index,
-            thumb = thumb,
-            duration = duration)
-
-    summary = ''.join(page.xpath("//div[contains(@class, 'broadcast')]/p/text()")).strip()
-    return EpisodeObject(
+    return TrackObject(
         title = title,
-        show = show,
-        index = episode_index,
-        season = 1,
-        summary = summary,
-        thumb = thumb,
-        duration = duration)
+        artist = show,
+        thumb = Resource.ContentsOfURLWithFallback(thumb),
+        originally_available_at = originally_available_at,
+        duration = duration,
+        index = int(index)
+    )
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
 
-    # We need to detect if the actual channel has requested the video. If this is the case, we can
-    # return the appropriate MediaObject.
-    if url.find('#video') != -1:
-        return [
-            MediaObject(
-                container = Container.MP4,
-                video_codec = VideoCodec.H264,
-                audio_codec = AudioCodec.AAC,
-                audio_channels = 2,
-                parts = [PartObject(key=Callback(PlayMedia, url = url.strip('#video'), media = "MP4"))]
-            )
-        ]
-
     return [
-      MediaObject(
-        audio_codec = AudioCodec.MP3,
-        parts = [PartObject(key=Callback(PlayMedia, ext = 'mp3', url = url, media = "MP3"))]
-      )
+        MediaObject(
+            audio_codec = AudioCodec.MP3,
+            parts = [
+                PartObject(key=Callback(PlayMedia, url=url, ext='mp3'))
+            ]
+        )
     ]
 
 ####################################################################################################
+def PlayMedia(url, **kwargs):
 
-def PlayMedia(url, media):
-
-    page = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url)
 
     # Redirect to the available media
-    track_url = page.xpath("//a[contains(text(), '%s')]" % media)[0].get('href')
+    track_url = html.xpath('//a[contains(text(), "MP3")]/@href')[0]
     return Redirect(track_url)
