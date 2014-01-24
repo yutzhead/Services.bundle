@@ -1,5 +1,4 @@
 RE_AMPERSAND = Regex('&(?!amp;)')
-RE_VIDEO_ID = Regex('/(\d{5,6})\.html')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -11,17 +10,15 @@ def MetadataObjectForURL(url):
 
 	xml = GetXML(url)
 
-	title = xml.xpath("//clipName")[0].text
-	show = xml.xpath("//showName")[0].text
-	duration = Datetime.MillisecondsFromString(xml.xpath("//length")[0].text)
-	summary = xml.xpath("//abstract")[0].text
-	thumb = xml.xpath("//thumbnailUrl")[0].text.replace('_92x69.jpg', '_480x360.jpg')
+	title = xml.xpath('//clipName/text()')[0]
+	summary = xml.xpath('//abstract/text()')[0]
+	duration = Datetime.MillisecondsFromString(xml.xpath('//length/text()')[0])
+	thumb = xml.xpath('//thumbnailUrl/text()')[0].replace('_92x69.jpg', '_480x360.jpg')
 
-	return EpisodeObject(
+	return VideoClipObject(
 		title = title,
 		summary = summary,
 		duration = duration,
-		show = show,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
@@ -29,26 +26,25 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	xml = GetXML(url)
-	url = xml.xpath("//videoUrl")[0].text.replace('http://wms','rtmp://flash').replace('.wmv','').replace('scrippsnetworks.com/','scrippsnetworks.com/ondemand/&').split('&')
+	url = xml.xpath('//videoUrl/text()')[0].replace('http://wms','rtmp://flash').replace('.wmv','').replace('scrippsnetworks.com/','scrippsnetworks.com/ondemand/&').split('&')
 
 	return [
 		MediaObject(
-			video_resolution = "480",
+			video_resolution = '480',
 			audio_channels = 2,
-			parts = [PartObject(key=RTMPVideoURL(url=url[0], clip=url[1]))]
+			parts = [
+				PartObject(key=RTMPVideoURL(url=url[0], clip=url[1]))
+			]
 		)
 	]
 
 ####################################################################################################
 def GetXML(url):
 
-	video_id = RE_VIDEO_ID.search(url)
-
-	if not video_id:
-		raise Ex.MediaNotAvailable
+	id = url.split('/')[-1].split('.')[0]
 
 	# NB: must do it this way as the first line of their xml is a carriage return (which makes it invalid)
-	xml = HTTP.Request('http://www.foodnetwork.com/food/channel/xml/0,,%s-VIDEO,00.xml' % video_id.group(1)).content.strip()
+	xml = HTTP.Request('http://www.foodnetwork.com/content/food/videos/%s.videoplayer.xml' % id).content.strip()
 	xml = RE_AMPERSAND.sub('&amp;', xml)
 
 	return XML.ElementFromString(xml)
