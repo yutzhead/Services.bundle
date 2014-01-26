@@ -23,8 +23,6 @@ def MetadataObjectForURL(url):
  		summary = page.xpath("//div[contains(@class,'panel-col-last')]//div[contains(@class,'field-item even')]/text()")[0]
  	except: 
  		summary = None
-
-
 	
 
 	return VideoClipObject(
