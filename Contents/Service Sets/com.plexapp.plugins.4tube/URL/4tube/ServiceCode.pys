@@ -14,7 +14,14 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTTP.Request(url).content
+	try:
+		data = HTTP.Request(url, follow_redirects=False).content
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+	except Ex.RedirectError, e:
+		raise Ex.MediaExpired
+
 	html = HTML.ElementFromString(data)
 
 	description = html.xpath('//meta[@name="description"]/@content')[0].replace('\n', '')
@@ -73,7 +80,14 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res=1080):
 
-	data = HTTP.Request(url).content
+	try:
+		data = HTTP.Request(url, follow_redirects=False).content
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+	except Ex.RedirectError, e:
+		raise Ex.MediaExpired
+
 	(thumb, media_id, qualities) = RE_MEDIA_ID.search(data).groups()
 
 	videos_url = VIDEOS_URL % (media_id, '+'.join(qualities.split(',')))
