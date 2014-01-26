@@ -12,7 +12,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.foodnetwork\.com/videos/.+\-\d{7,}.html</string>
+				<string>^http://www\.foodnetwork\.com/videos/.+\-\d{5,7}.html</string>
 			</array>
 		</dict>
 	</dict>
