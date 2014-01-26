@@ -11,7 +11,12 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	try:
+		data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
 
 	if len(videos) < 1:
@@ -79,7 +84,12 @@ def PlayVideo(url, fmt):
 	if fmt == '480p': fmt = 'large'
 	elif fmt == 'SD': fmt = 'small'
 
-	data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	try:
+		data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
 	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
 
 	if len(videos) < 1:
