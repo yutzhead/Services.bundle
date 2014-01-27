@@ -73,9 +73,12 @@ def PlayVideo(url):
 	smil = XML.ElementFromURL(VIDEO_XML % pid)
 	
 	try:
-		video_url = smil.xpath('//a:switch[1]/a:ref/@src', namespaces=SMIL_NS)[0]
+		video_url = smil.xpath('//a:switch[1]/a:video/@src', namespaces=SMIL_NS)[0]
 	except:
-		raise Ex.MediaNotAvailable
+		try:
+			video_url = smil.xpath('//a:switch[1]/a:ref/@src', namespaces=SMIL_NS)[0]
+		except:
+			raise Ex.MediaNotAvailable
 
 	if video_url.startswith("http://"):
 		# this is a direct MP4 video
