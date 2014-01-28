@@ -198,7 +198,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	try:
+		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaNotAvailable
+
 	video_player_box = html.xpath('//div[@id="video_player_box"]')
 
 	if len(video_player_box) < 1:
