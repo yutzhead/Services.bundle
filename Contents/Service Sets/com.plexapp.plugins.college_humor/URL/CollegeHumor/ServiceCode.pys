@@ -15,6 +15,9 @@ def MetadataObjectForURL(url):
 	if not 'video' in json_obj:
 		raise Ex.MediaNotAvailable
 
+	if 'youtubeId' in json_obj['video']:
+		return URLService.MetadataObjectForURL('http://www.youtube.com/watch?v=%s' % json_obj['video']['youtubeId'])
+
 	return VideoClipObject(
 		title = json_obj['video']['title'],
 		summary = json_obj['video']['description'],
