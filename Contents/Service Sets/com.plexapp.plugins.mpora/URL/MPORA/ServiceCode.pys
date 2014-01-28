@@ -60,18 +60,23 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
 	if res == "hd":
 		url = url + "?hd=1"
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaExpired
 
 	player_config_src = RE_PLAYER_CONFIG.findall(page)[0]
 	player_config = JSON.ObjectFromString(player_config_src)
 	videos = player_config['video']['encodings']
 
 	if res == "hd" and 'hd' in videos and len(videos['hd']['sources']) > 0:
-		return Redirect(videos['hd']['sources'][0]['src'])
+		return IndirectResponse(VideoClipObject, key=videos['hd']['sources'][0]['src'])
 	else:
-		return Redirect(videos['sd']['sources'][0]['src'])
+		return IndirectResponse(VideoClipObject, key=videos['sd']['sources'][0]['src'])
