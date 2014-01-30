@@ -14,16 +14,19 @@ def MetadataObjectForURL(url):
 		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 	except Ex.HTTPError, e:
 		if e.code == 404:
+			Log('HTTP 404 Not Found for URL: %s' % url)
 			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	page_title = html.xpath('//title')[0].text
 
-	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 	
 	try:
-		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
 	except:
 		video_player_box = html.xpath('//div[@id="video_player_box"]')
 
