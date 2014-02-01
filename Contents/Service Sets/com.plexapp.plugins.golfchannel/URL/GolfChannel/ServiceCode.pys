@@ -49,12 +49,13 @@ def MediaObjectsForURL(url):
 	# the SMIL which we don't want to do here ... so we have to be a bit vague
 	return [
 		MediaObject(
+			parts = [PartObject(key = Callback(PlayVideo, url=url))],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			parts = [
-				PartObject(
-					key = Callback(PlayVideo, url=url)
-				)
-			]
+			optimized_for_streaming = True	
+
 		)
 	]
 
