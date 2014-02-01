@@ -164,7 +164,7 @@ def DetermineAvailableVideo(url, height):
         media_selector_url = pid_details['my_mediaselector_xml_url']
             
     except:
-        media_selector_url = 'http://www.bbc.co.uk/mediaselector/4/mtis/all/%s' % pid
+        media_selector_url = 'http://www.bbc.co.uk/mediaselector/4/mtis/stream/%s' % pid
     
     return IndirectResponse(
         VideoClipObject,
