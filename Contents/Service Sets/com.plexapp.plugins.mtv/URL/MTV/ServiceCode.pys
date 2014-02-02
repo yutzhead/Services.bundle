@@ -63,6 +63,7 @@ def MediaObjectsForURL(url):
 
     if 'full-episode' in url or 'playlist' in url:
         num_parts = 11
+    # This allows you to pass the number of parts to the URL service as an attribut of the URL, but it should be used sparingly
     elif '#parts=' in url:
         num_parts = int(url.split('#parts=')[1])
     else:
