@@ -1,5 +1,5 @@
-XL_URL = 'http://www.rtl.nl/xl/#/u/%s'
-XL_DATA_URL = 'http://www.rtl.nl/system/s4m/xldata/uuid/%s?version=2.0'
+XL_URL = 'http://www.rtlxl.nl/#!/u/%s'
+XL_DATA_URL = 'http://www.rtl.nl/system/s4m/xldata/uuid/%s'
 FEED_URL = '/s%=ka/s%=tmf/dapi=d/dfdapi/m4s/metsys/ln.ltr.www//:ptth'[::-1]
 THUMB_URL = 'http://data.rtl.nl/system/img//%s.jpg'
 
@@ -9,7 +9,6 @@ CLIENT_COMPAT_ADAPTIVE_HLS = ['iOS', 'Android', 'Roku', 'Safari']
 
 HTTP_HEAD_DESKTOP = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
 HTTP_HEAD_TABLET = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
-HTTP.CacheTime = CACHE_1DAY
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -25,7 +24,7 @@ def MetadataObjectForURL(url):
 
 	uuid = RE_UUID.search(url)
 	if not uuid:
-		return None
+		raise Ex.MediaNotAvailable
 
 	data_url = XL_DATA_URL % uuid.group('uuid')
 	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP, encoding='iso-8859-1').xpath('//material[@key="%s"]' % uuid.group('uuid'))
@@ -35,13 +34,13 @@ def MetadataObjectForURL(url):
 	else:
 		data = material_node[0]
 
-	try: title = data.xpath('./title')[0].text
+	try: title = data.xpath('./title/text()')[0]
 	except: raise Ex.MediaNotAvailable
 
-	studio = data.xpath('./broadcast_station_display')[0].text
+	studio = data.xpath('./broadcast_station_display/text()')[0]
 
 	try:
-		summary = data.xpath('./synopsis')[0].text
+		summary = data.xpath('./synopsis/text()')[0]
 	except:
 		try:
 			episode_key = data.get('episode_key')
@@ -49,14 +48,17 @@ def MetadataObjectForURL(url):
 		except:
 			summary = None
 
-	broadcast = data.xpath('./broadcast_date_display')[0].text
+	broadcast = data.xpath('./broadcast_date_display/text()')[0]
 	broadcast = Datetime.FromTimestamp(float(broadcast))
 	originally_available_at = Datetime.ParseDate(str(broadcast)).date()
 
-	try: duration = TimeToMs(data.xpath('./length')[0].text)
-	except: duration = None
+	try:
+		duration = data.xpath('./length/text()')[0]
+		duration = Datetime.MillisecondsFromString(duration.split('.')[0])
+	except:
+		duration = None
 
-	thumb_id = data.xpath('./thumbnail_id')[0].text
+	thumb_id = data.xpath('./thumbnail_id/text()')[0]
 	thumb = THUMB_URL % thumb_id
 
 	return VideoClipObject(
@@ -97,11 +99,12 @@ def MediaObjectsForURL(url):
 		]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, type):
 
 	uuid = RE_UUID.search(url)
 	if not uuid:
-		return None
+		raise Ex.MediaNotAvailable
 
 	data_url = XL_DATA_URL % uuid.group('uuid')
 
@@ -124,39 +127,6 @@ def PlayVideo(url, type):
 	else:
 		try:
 			test = HTTP.Request(video_url[0], timeout=5).headers
-			return Redirect(video_url[0])
+			return IndirectResponse(VideoClipObject, key=video_url[0])
 		except:
 			raise Ex.MediaNotAvailable
-
-####################################################################################################
-def TimeToMs(timecode):
-
-	seconds = 0
-	duration = timecode.split('.')[0].split(':')
-	duration.reverse()
-
-	for i in range(0, len(duration)):
-		seconds += int(duration[i]) * (60**i)
-
-	return seconds * 1000
-
-####################################################################################################
-def TestURLs():
-
-	test_urls = []
-	page = XML.ElementFromURL('http://www.rtl.nl/system/s4m/xldata/home.xml?version=2.0', encoding='iso-8859-1')
-	results = page.xpath("//material")
-
-	for item in results:
-		video_id = item.get('key')
-
-		if len(video_id) < 2:
-			continue
-
-		url = XL_URL % video_id
-		test_urls.append(url)
-
-		if len(test_urls) >= 2:
-			break
-
-	return test_urls
