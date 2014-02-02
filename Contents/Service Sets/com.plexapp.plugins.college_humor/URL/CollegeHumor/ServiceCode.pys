@@ -52,4 +52,9 @@ def PlayVideo(url):
 	if not 'video' in json_obj:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=json_obj['video']['mp4']['high_quality'])
+	if 'high_quality' in json_obj['video']['mp4']:
+		video_url = json_obj['video']['mp4']['high_quality']
+	else:
+		video_url = json_obj['video']['mp4']['low_quality']
+
+	return IndirectResponse(VideoClipObject, key=video_url)
