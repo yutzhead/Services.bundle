@@ -15,10 +15,11 @@ MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtv
 RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
 
 ####################################################################################################
-# added normalize to separate
 def NormalizeURL(url):
+
     if '#parts=' not in url:
-        url.split('#')[0]
+        url = url.split('#')[0]
+
     return url
 
 ####################################################################################################
@@ -61,11 +62,11 @@ def MetadataObjectForURL(url):
 # But now some of the hour long shows have 11 parts
 def MediaObjectsForURL(url):
 
-    if 'full-episode' in url or 'playlist' in url:
+    if '#parts=' in url: # This allows you to pass the number of parts to the URL service as an attribut of the URL
+        (url, num_parts) = url.split('#parts=', 1)
+        num_parts = int(num_parts)
+    elif 'full-episode' in url or 'playlist' in url:
         num_parts = 11
-    # This allows you to pass the number of parts to the URL service as an attribut of the URL, but it should be used sparingly
-    elif '#parts=' in url:
-        num_parts = int(url.split('#parts=')[1])
     else:
         num_parts = 1
 
@@ -193,6 +194,7 @@ def GetVevoURL(url, vevo_id):
     vevo_url = VEVO_URL % (artist, title, vevo_id)
 
     return vevo_url
+
 ####################################################################################################
 def TestURLs():
 
