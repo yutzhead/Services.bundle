@@ -17,7 +17,9 @@ RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
 ####################################################################################################
 # added normalize to separate
 def NormalizeURL(url):
-    return url.split('#')[0]
+    if '#parts=' not in url:
+        url.split('#')[0]
+    return url
 
 ####################################################################################################
 # Took out thumb and separate check for title in episodes since all mgid return as video or playlist
@@ -61,6 +63,9 @@ def MediaObjectsForURL(url):
 
     if 'full-episode' in url or 'playlist' in url:
         num_parts = 11
+    # This allows you to pass the number of parts to the URL service as an attribut of the URL, but it should be used sparingly
+    elif '#parts=' in url:
+        num_parts = int(url.split('#parts=')[1])
     else:
         num_parts = 1
 
