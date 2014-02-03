@@ -92,7 +92,7 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 		raise Ex.MediaNotAvailable
 
 	try:
-		jsob_obj = JSON.ObjectFromURL(config_url, cacheTime=0, headers=HTTP_HEADERS)
+		json_obj = JSON.ObjectFromURL(config_url, cacheTime=0, headers=HTTP_HEADERS)
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
@@ -101,10 +101,10 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	except:
 		raise Ex.MediaNotAvailable
 
-	if not 'h264' in jsob_obj['request']['files']:
+	if not 'h264' in json_obj['request']['files']:
 		raise Ex.MediaNotAvailable
 	else:
-		streams = jsob_obj['request']['files']['h264']
+		streams = json_obj['request']['files']['h264']
 
 	available_bitrates = []
 	available_resolutions = []
