@@ -49,7 +49,7 @@ def PlayVideo(url):
 	video_id = url.split('/')[4]
 	json_obj = JSON.ObjectFromURL(MOOGALOOP_JSON % video_id)
 
-	if not 'video' in json_obj:
+	if not 'video' in json_obj or not 'mp4' in json_obj['video']:
 		raise Ex.MediaNotAvailable
 
 	if 'high_quality' in json_obj['video']['mp4']:
