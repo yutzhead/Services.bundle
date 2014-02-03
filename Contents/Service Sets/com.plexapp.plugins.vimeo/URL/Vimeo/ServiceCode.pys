@@ -17,6 +17,8 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
+	json_obj = None
+
 	try:
 		json_obj = JSON.ObjectFromURL(API_URL % url.split('/')[-1], cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)[0]
 	except Ex.HTTPError, e:
@@ -25,6 +27,9 @@ def MetadataObjectForURL(url):
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
 	except:
+		raise Ex.MediaNotAvailable
+
+	if not json_obj:
 		raise Ex.MediaNotAvailable
 
 	title = json_obj['title']
