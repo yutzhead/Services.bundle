@@ -1,5 +1,5 @@
 TOKEN_URL = 'http://ida.omroep.nl/npoplayer/i.js'
-STREAM_URL = 'http://ida.omroep.nl/odiplus/?prid=%s&puboptions=adaptive&adaptive=yes&part=1&token=%s'
+STREAM_URL = 'http://ida.omroep.nl/odi/?prid=%s&puboptions=adaptive&adaptive=yes&part=1&token=%s'
 RE_TOKEN = Regex('token = "([^"]+)"')
 RE_EPISODE_ID = Regex('/afleveringen/(\d{7})')
 
