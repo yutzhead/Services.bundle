@@ -1,7 +1,6 @@
 TOKEN_URL = 'http://ida.omroep.nl/npoplayer/i.js'
-STREAM_URL = 'http://ida.omroep.nl/odiplus/?prid=%s&puboptions=adaptive&adaptive=yes&part=1&token=%s'
+STREAM_URL = 'http://ida.omroep.nl/odi/?prid=%s&puboptions=adaptive&adaptive=yes&part=1&token=%s'
 RE_TOKEN = Regex('token = "([^"]+)"')
-RE_EPISODE_ID = Regex('/afleveringen/(\d{7})')
 
 HEADERS = {
 	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25',
@@ -11,12 +10,7 @@ HEADERS = {
 ####################################################################################################
 def NormalizeURL(url):
 
-	episode_id = RE_EPISODE_ID.search(url)
-
-	if episode_id:
-		url = 'http://www.uitzendinggemist.nl/afleveringen/%s' % episode_id.group(1)
-
-	return url
+	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -27,15 +21,15 @@ def MetadataObjectForURL(url):
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
 
-	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
+	player_id = GetPlayerId(url)
 
-	if len(player_id) < 0:
+	if not player_id:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]/@content')[0]
-	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	title = html.xpath('//meta[@property="og:title"]/@content|//meta[@name="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content|//meta[@name="og:description"]/@content')[0]
 	if summary.startswith('Geen omschrijving'): summary = None
-	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content|//meta[@name="og:image"]/@content')[0].split('?')[0]
 
 	try:
 		date = html.xpath('//table[@class="information"]//td[1]/text()')[0]
@@ -75,11 +69,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	html = HTML.ElementFromURL(url, headers=HEADERS, cacheTime=CACHE_1WEEK)
-	player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
+	player_id = GetPlayerId(url)
 
-	if len(player_id) < 0:
-		raise Ex.MediaExpired
+	if not player_id:
+		raise Ex.MediaNotAvailable
 
 	token_data = HTTP.Request(TOKEN_URL, headers=HEADERS, cacheTime=0).content
 	token = RE_TOKEN.search(token_data)
@@ -87,7 +80,7 @@ def PlayVideo(url):
 	if not token:
 		raise Ex.MediaNotAvailable
 
-	json = JSON.ObjectFromURL(STREAM_URL % (player_id[0], token.group(1)), cacheTime=0)
+	json = JSON.ObjectFromURL(STREAM_URL % (player_id, token.group(1)), cacheTime=0)
 	stream = '%s?extension=m3u8&type=json' % json['streams'][0].split('?')[0]
 
 	try:
@@ -98,3 +91,20 @@ def PlayVideo(url):
 			raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(stream))
+
+####################################################################################################
+def GetPlayerId(url):
+
+	if 'uitzendinggemist.nl' in url:
+		html = HTML.ElementFromURL(url, headers=HEADERS, cacheTime=CACHE_1WEEK)
+		player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
+
+		if len(player_id) < 0:
+			return None
+
+		return player_id[0]
+
+	elif 'npo.nl' in url:
+		return url.split('/')[-1]
+
+	return None

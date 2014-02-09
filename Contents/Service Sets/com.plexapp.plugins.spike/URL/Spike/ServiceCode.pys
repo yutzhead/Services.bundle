@@ -243,7 +243,13 @@ def PlayVideo(url, bitrate='1700', index=0):
 	if rtmp_url == '':
 		raise Ex.MediaGeoblocked
 
-	stream_url = rtmp_url.split('/mtvnorigin/')[1]
+	if '/mtvnorigin/' in rtmp_url:
+		stream_url = rtmp_url.split('/mtvnorigin/')[1]
+	elif '/viacomspikestrm/' in rtmp_url:
+		stream_url = rtmp_url.split('/viacomspikestrm/')[1]
+	else:
+		raise Ex.MediaNotAvailable
+	
 	mp4_url = MP4_URL % stream_url
 
 	return Redirect(mp4_url)
