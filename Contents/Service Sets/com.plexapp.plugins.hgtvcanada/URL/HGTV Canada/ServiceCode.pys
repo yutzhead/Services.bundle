@@ -9,19 +9,21 @@ def NormalizeURL(url):
 #########################################################################################
 def MetadataObjectForURL(url):
 	smil = GetSMIL(url)
-	details = GetSRC(smil)
+		
+	# find our proper ref node, first one that doesn't have pfadx will work every time
+	details = smil.xpath('//a:ref[not(contains(@src,"pfadx"))]', namespaces=NAMESPACES)[0]	
+	title = details.xpath('./@title', namespaces=NAMESPACES)[0]
+	summary = details.xpath('./@abstract', namespaces=NAMESPACES)[0]	
 	
-	title = details.get('title')
-	summary = details.get('abstract')
 	try:
-		duration = int(details.get('dur').strip('ms'))
+		duration = int(details.xpath('./@dur', namespaces=NAMESPACES))[0].strip('ms')
 	except:
 		duration = 0
 
 	try:
-		show_title = details.get('tp:Show', namespaces=NAMESPACES)
-		season = int(details.get('tp:Season', namespaces=NAMESPACES))
-		episode = int(details.get('tp:Episode', namespaces=NAMESPACES))
+		show_title = details.xpath('./@tp:Show', namespaces=NAMESPACES)[0]
+		season = int(details.xpath('./@tp:Season', namespaces=NAMESPACES))[0]
+		episode = int(details.xpath('./@tp:Episode', namespaces=NAMESPACES))[0]
 
 		return EpisodeObject(
 			title = title,
@@ -53,7 +55,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 	smil = GetSMIL(url)
 	
-	source = GetSRC(smil).get('src')
+	source = GetSRC(smil)
 	
 	try:
 		clip = source.split("<break>")[1]
@@ -87,17 +89,25 @@ def GetSRC(smil):
 			# just a general failure of the media not being available
 			raise Ex.MediaNotAvailable
 
+	if smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base').startswith('rtmp://'):
+		# this is a new format of RTMP for them, return it back separated by <break> to
+		# keep our legacy functionality
+		return "%s<break>%s" % (smil.xpath('//a:meta', namespaces=NAMESPACES)[0].get('base'), src_list[0].get('src'))		
 
-	if len(src_list) == 1:
-		return src_list[0]
+	elif len(src_list) == 1:
+		# this is the oldest format, we just get a single src= in our SMIL
+		return src_list[0].get('src')
+	
 	else:
+		# this is yet another format where we get a bunch of @src, all but one has pfadx///video
+		# (assuming this is commercial locations, etc)
 		for ref in src_list:
 			if "pfadx///video" in ref.get('src'):
 				pass
 			elif ref.get('src').startswith('rtmp'):
-				return ref
+				return ref.get('src')
 			else:
-				return ref
+				return ref.get('src')
 	return None
 
 #########################################################################################
