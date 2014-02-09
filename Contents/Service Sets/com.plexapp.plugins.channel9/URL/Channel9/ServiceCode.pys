@@ -8,7 +8,8 @@ def MetadataObjectForURL(url):
     # Extract the information from the page...
     title = page.xpath("//meta[@name='title']")[0].get('content')
     description = page.xpath("//meta[@name='description']")[0].get('content')
-    rating = float(page.xpath("//p[@class='avg-rating']/span/text()")[0]) * 2
+    try: rating = float(page.xpath("//p[@class='avg-rating']/span/text()")[0]) * 2
+    except: rating = None
 
     try:
         thumb = page.xpath("//link[@rel='image_src']")[0].get('href')
@@ -39,29 +40,30 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
     return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        video_resolution = '480',
-        bitrate = 3000,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'hd'))]
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 2,
+            video_resolution = '480',
+            bitrate = 3000,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
       ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 1,
-        video_resolution = 'sd',
-        bitrate = 750,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, res = 'sd'))]
-      )
+          MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            audio_channels = 1,
+            video_resolution = 'sd',
+            bitrate = 750,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
+        )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
     page = HTML.ElementFromURL(url)
@@ -77,8 +79,8 @@ def PlayVideo(url, res):
         hd_video_url = None
 
     if res == 'hd' and hd_video_url:
-        return Redirect(hd_video_url)
+        IndirectResponse(VideoClipObject, key=hd_video_url)
     elif sd_video_url:
-        return Redirect(sd_video_url)
+        IndirectResponse(VideoClipObject, key=sd_video_url)
     else:
         raise Ex.MediaNotAvailable
