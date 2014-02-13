@@ -6,18 +6,19 @@ AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
 	data = GetRSS(url)
-	title = data.xpath('//title')[0].text
-	summary = data.xpath('//description')[0].text
-	thumb = data.xpath('//image/url')[0].text
+	title = data.xpath('//title/text()')[0]
+	summary = data.xpath('//description/text()')[0]
+	thumb = data.xpath('//image/url/text()')[0]
 
 	try:
-		date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+		date = Datetime.ParseDate(data.xpath('//pubDate/text()')[0]).date()
 	except:
 		date = None
 
@@ -53,7 +54,7 @@ def MediaObjectsForURL(url):
 			parts = [
 				PartObject(
 					key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-					) for i in range(num_parts)
+				) for i in range(num_parts)
 			],
 			bitrate = bitrate,
 			container = Container.MP4,
@@ -74,7 +75,7 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 	if index < len(media_url):
 		player_url = media_url[index].get('url')
 	else:
-		# Return small filler movie for desktop clients
+		# Return small filler movie
 		return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
 	try:
@@ -102,6 +103,7 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
 ####################################################################################################
 def GetRSS(url):
+
 	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 	video_player_box = html.xpath('//div[@id="video_player_box"]')
 
@@ -110,5 +112,9 @@ def GetRSS(url):
 
 	uri = video_player_box[0].get('data-mgid')
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	try:
+		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	except:
+		raise Ex.MediaNotAvailable
+
 	return mrss_data
