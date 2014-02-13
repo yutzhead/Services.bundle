@@ -33,9 +33,14 @@ def MetadataObjectForURL(url):
         return URLService.MetadataObjectForURL(vevo_url)
 
     data = GetRSS(url)
-    title = data.xpath('//title')[0].text
+    title = data.xpath('//title')
 
-    try: summary = data.xpath('//description')[0].text
+    if len(title) < 1:
+        raise Ex.MediaNotAvailable
+
+    title = title[0]
+
+    try: summary = data.xpath('//description/text()')[0]
     except: summary = None
 
     # The thumb is in item vs the main content in the MTV/VH1/CMT xml files
@@ -45,7 +50,7 @@ def MetadataObjectForURL(url):
         thumb = ''
 
     try:
-        date = Datetime.ParseDate(data.xpath('//pubDate')[0].text).date()
+        date = Datetime.ParseDate(data.xpath('//pubDate/text()')[0]).date()
     except:
         date = None
 
@@ -92,24 +97,30 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 
     # this part is only for music videos
     vevo_id = VevoID(url)
+
     if vevo_id:
         vevo_url = GetVevoURL(url, vevo_id)
         vevo_media = URLService.MediaObjectsForURL(vevo_url)
+
         if not vevo_media:
             raise Ex.MediaNotAvailable
+
         vevo_video = 'None'
+
         for video in vevo_media:
-            #Since Vevo videos only come in two resolutions similar to the Viacom vidoes, if not 720, then 420
-            if bitrate=='3500':
-                video_res='720'
+            # Since Vevo videos only come in two resolutions similar to the Viacom vidoes, if not 720, then 420
+            if bitrate == '3500':
+                video_res = '720'
             else:
-                video_res='360'
+                video_res = '360'
             if str(video.video_resolution) == video_res:
                 vevo_video = video.parts[0].key
             else:
                 pass
+
         if vevo_video is 'None':
             vevo_video= vevo_media[-1].parts[0].key
+
         return Redirect(vevo_video)
     
     else:
@@ -144,14 +155,13 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
         else:
             raise Ex.MediaNotAvailable
 
-        mp4_url = MP4_URL % stream_url
-        
-        return Redirect(mp4_url)
+        return Redirect(MP4_URL % stream_url)
 
 ####################################################################################################
 # Using regex to pull mgid from url. Added id option to regex for CMT videos. 
 # Also full episodes use videolist while clips and music videos use video in rss url
 def GetRSS(url):
+
     try:
         mgid = RE_MGID.search(url).group(1)
     except:
@@ -171,6 +181,7 @@ def GetRSS(url):
         mrss_data = XML.ElementFromURL(MRSS_URL %('video', mgid))
 
     return mrss_data
+
 ##################################################################################################
 # This is a function to check for Vevo video IDs
 def VevoID(url):
