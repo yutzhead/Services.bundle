@@ -14,7 +14,7 @@ VIDEO_INC_ALT = '%s/includes/%s/large.html'
 # 'h640w' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
 QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
 
-RE_URL_INFO = Regex('^http://(?:trailers|www)\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
+RE_URL_INFO = Regex('^https?://(?:trailers|www)\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
 RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 ####################################################################################################
