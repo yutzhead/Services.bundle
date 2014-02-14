@@ -50,6 +50,8 @@ def MediaObjectsForURL(url):
 	if details['vhid'] != None:
 		media = []
 		further_details = JSON.ObjectFromURL(VH_URL % details['vhid'])
+		if not further_details:
+			raise Ex.MediaNotAvailable
 
 		for quality in further_details['path']['quality']:
 			media.append(MediaObject(
