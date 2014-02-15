@@ -33,7 +33,7 @@ def MetadataObjectForURL(url):
         return URLService.MetadataObjectForURL(vevo_url)
 
     data = GetRSS(url)
-    title = data.xpath('//title')
+    title = data.xpath('//title/text()')
 
     if len(title) < 1:
         raise Ex.MediaNotAvailable
