@@ -9,6 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://www\.nbc\.com/(classic-tv/)?([^/]+/)?video/[^/]+/n\d+</string>
+				<string>^http://www\.nbc\.com/[^/]+/video/[^/]+/\d+</string>
 				<string>^http://www\.latenightwithjimmyfallon\.com/video/[^/]+/n\d+</string>
 				<string>^http://www\.jaylenosgarage\.com/video/[^/]+/n\d+</string>
 			</array>
