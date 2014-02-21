@@ -67,12 +67,13 @@ def PlayVideo(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	mp4_url = html.xpath('//div[@class="mp4"]/a/@href')
+	#mp4_url = html.xpath('//div[@class="mp4"]/a/@href')
+        mp4_url = html.xpath('//div[@class="noFlash"]/a/@href')
 
 	if len(mp4_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	mp4_url = mp4_url[0].split('?mp4File=')[-1]
-	mp4_url = String.Unquote(mp4_url)
+	#mp4_url = mp4_url[0].split('?mp4File=')[-1]
+	mp4_url = String.Unquote(mp4_url[0])
 
 	return IndirectResponse(VideoClipObject, key=mp4_url)
