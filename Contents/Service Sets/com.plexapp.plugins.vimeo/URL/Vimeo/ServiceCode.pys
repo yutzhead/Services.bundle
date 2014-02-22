@@ -24,7 +24,9 @@ def MetadataObjectForURL(url):
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
-		if e.code == 404:
+		elif e.code == 404:
+			raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
@@ -91,7 +93,9 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
-		if e.code == 404:
+		elif e.code == 404:
+			raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
@@ -101,7 +105,9 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
-		if e.code == 404:
+		elif e.code == 404:
+			raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
