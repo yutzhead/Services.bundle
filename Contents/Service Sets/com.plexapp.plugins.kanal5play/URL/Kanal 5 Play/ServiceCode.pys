@@ -1,11 +1,10 @@
 RE_CHANNEL    = Regex('http://www\.kanal([5,9])play\.se')
-RE_CACHETOKEN = Regex('cacheToken: "(.+?)",')
 RE_VIDEO_ID   = Regex('/video/([0-9]+)')
 RE_EP_INDEX   = Regex('Avsnitt ([0-9]+)')
 RE_SE_INDEX   = Regex('song ([0-9]+)')
 RE_PATH       = Regex('mp4:(.*)_[0-9]+')
 
-API_URL  = 'http://www.kanal%splay.se/api/getVideoCached?cacheToken=%s&format=%s&videoId=%s&withTheme=true'
+API_URL  = 'http://www.kanal%splay.se/api/getVideo?format=%s&videoId=%s&withTheme=true'
 RSS_URLS = ['http://www.kanal%splay.se/rss?type=CLIP', 'http://www.kanal%splay.se/rss?type=PROGRAM']
 
 PLATFORMS_WITH_REAL_RTMP_SUPPORT = [
@@ -185,7 +184,6 @@ def PlayRTMP(url):
 def GetDetails(url, format):
 	channel    = RE_CHANNEL.search(url).groups()[0]
 	content    = HTTP.Request(url).content
-	cacheToken = RE_CACHETOKEN.search(content).group(1)
 	
 	try:
 		vid_id = RE_VIDEO_ID.search(url).group(1)
@@ -194,7 +192,7 @@ def GetDetails(url, format):
 		og_url = data.xpath('//meta[@property="og:url"]')[0].get('content')
 		vid_id = RE_VIDEO_ID.search(url).group(1)
 
-	details = JSON.ObjectFromURL(API_URL % (channel, cacheToken, format, vid_id))
+	details = JSON.ObjectFromURL(API_URL % (channel, format, vid_id))
 
 	return details
 
