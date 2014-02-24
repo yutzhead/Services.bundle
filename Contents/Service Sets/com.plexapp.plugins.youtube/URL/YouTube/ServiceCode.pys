@@ -316,7 +316,7 @@ def decrypt_signature(s):
   elif len(s) == 87:
     return s[40]+s[82:53:-1]+s[3]+s[52:40:-1]+s[85]+s[39:10:-1]+s[0]+s[9:5:-1]+s[2:0:-1]+s[53]
   elif len(s) == 86:
-    return s[4:31] + s[3] + s[32:85]
+    return s[45] + s[1:36] + s[0] + s[37:45] + s[36] + s[46:84]
   elif len(s) == 85:
     return s[5] + s[1:5] + s[61] + s[6:13] + s[82] + s[14:61] + s[0] + s[62:81]
   elif len(s) == 84:
