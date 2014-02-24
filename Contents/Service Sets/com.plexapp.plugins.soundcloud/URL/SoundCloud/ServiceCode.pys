@@ -32,8 +32,8 @@ def MetadataObjectForURL(url):
 	return TrackObject(
 		title = track['title'],
 		thumb = Resource.ContentsOfURLWithFallback(url=thumbs),
-		duration = int(track['duration']
-	))
+		duration = int(track['duration'])
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -44,12 +44,13 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.MP3,
 			container = 'mp3',
 			parts = [
-				PartObject(key = Callback(PlayTrack, url=url, ext='.mp3'))
+				PartObject(key = Callback(PlayTrack, url=url, ext='mp3'))
 			]
 		)
 	]
 
 ####################################################################################################
+@indirect
 def PlayTrack(url):
 
 	api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
@@ -59,4 +60,4 @@ def PlayTrack(url):
 
 	track_id = RE_TRACK_ID.search(api_url['location']).group('id')
 
-	return Redirect(MP3_URL % track_id)
+	return IndirectResponse(VideoClipObject, key=MP3_URL % track_id)
