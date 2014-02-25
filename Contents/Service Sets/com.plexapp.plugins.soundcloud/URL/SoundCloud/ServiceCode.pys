@@ -13,12 +13,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
-
-	if not 'location' in api_url:
-		raise Ex.MediaNotAvailable
-
-	track_id = RE_TRACK_ID.search(api_url['location']).group('id')
+	track_id = GetTrackId(url)
 	track = JSON.ObjectFromURL(TRACK_DETAILS_URL % track_id)[0]
 
 	# Construct a list of thumbnails, in expected size order, largest first
@@ -50,14 +45,22 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
-@indirect
+def GetTrackId(url):
+
+	if 'api.soundcloud.com' in url:
+		track_id = RE_TRACK_ID.search(url).group('id')
+	else:
+		api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
+
+		if not 'location' in api_url:
+			raise Ex.MediaNotAvailable
+
+		track_id = RE_TRACK_ID.search(api_url['location']).group('id')
+
+	return track_id
+
+####################################################################################################
 def PlayTrack(url):
 
-	api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
-
-	if not 'location' in api_url:
-		raise Ex.MediaNotAvailable
-
-	track_id = RE_TRACK_ID.search(api_url['location']).group('id')
-
-	return IndirectResponse(VideoClipObject, key=MP3_URL % track_id)
+	track_id = GetTrackId(url)
+	return Redirect(MP3_URL % track_id)
