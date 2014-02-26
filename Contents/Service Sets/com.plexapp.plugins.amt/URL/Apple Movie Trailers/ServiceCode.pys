@@ -73,20 +73,22 @@ def MediaObjectsForURL(url):
 		return [
 			MediaObject(
 				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
+				bitrate = bitrate,
 				video_resolution = resolution
-			) for resolution in ['1080', '720', '480']
+			) for resolution, bitrate in [('1080', 10000), ('720', 5000), ('480', 1500)]
 		]
 	else:
 		return [
 			MediaObject(
 				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
-				video_resolution = resolution,
+				bitrate = bitrate,
 				container = Container.MOV,
 				video_codec = VideoCodec.H264,
+				video_resolution = resolution,
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
-			) for resolution in ['1080', '720', '480']
+			) for resolution, bitrate in [('1080', 10000), ('720', 5000), ('480', 1500)]
 		]
 
 ####################################################################################################
