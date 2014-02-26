@@ -144,7 +144,7 @@ def PlayVideo(url):
 	video_id = video_id.group('id')
 
 	if video_id.startswith('n'):
-		json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id.group('id'), cacheTime=10)
+		json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id, cacheTime=10)
 		m3u8_url = json_obj['tokenizedURL']
 		playlist = HTTP.Request(m3u8_url, cacheTime=10)
 
