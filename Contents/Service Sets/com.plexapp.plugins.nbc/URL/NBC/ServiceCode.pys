@@ -30,7 +30,7 @@ def MetadataObjectForURL(url):
 
 	if video_id.startswith('n'):
 		try:
-			json_obj = JSON.ObjectFromURL(METADATA_URL % video_id.group('id'), cacheTime=CACHE_1WEEK)
+			json_obj = JSON.ObjectFromURL(METADATA_URL % video_id, cacheTime=CACHE_1WEEK)
 			json_obj = json_obj[0]
 		except:
 			raise Ex.MediaExpired
