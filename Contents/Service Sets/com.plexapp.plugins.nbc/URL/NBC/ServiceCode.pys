@@ -16,6 +16,9 @@ AudioStreamObject.language_code = Locale.Language.English
 ####################################################################################################
 def NormalizeURL(url):
 
+	if '#' in url and '|' in url:
+		return url
+
 	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
@@ -47,22 +50,25 @@ def MetadataObjectForURL(url):
 			index = json_obj['episode_number'].split(' ')[-1]
 
 	else:
-		# Get the show name
-		html = HTML.ElementFromURL(url)
-		show_name = html.xpath('//title/text()')[0].split(' | ')[2]
-		asset_id = None
+		if '#' in url:
+			(show_id, video_id) = url.split('#')[-1].split('|')
+		else:
+			# Get the show name
+			html = HTML.ElementFromURL(url)
+			show_name = html.xpath('//title/text()')[0].split(' | ')[2]
+			show_id = None
 
-		for show in JSON.ObjectFromURL(SHOWS_URL):
-			if show['title'].lower() == show_name.lower():
-				asset_id = show['assetID']
-				break
+			for show in JSON.ObjectFromURL(SHOWS_URL):
+				if show['title'].lower() == show_name.lower():
+					show_id = show['assetID']
+					break
 
-		if not asset_id:
+		if not show_id:
 			raise Ex.MediaNotAvailable
 
 		found_episode = False
 
-		for episode in JSON.ObjectFromURL(EPISODES_URL % asset_id)['assetsX']:
+		for episode in JSON.ObjectFromURL(EPISODES_URL % show_id)['assetsX']:
 			if episode['assetID'].endswith(video_id):
 				show = episode['parentContainerTitle']
 				season = episode['seasonNumber']
@@ -172,22 +178,25 @@ def PlayVideo(url):
 		)
 
 	else:
-		# Get the show name
-		html = HTML.ElementFromURL(url)
-		show_name = html.xpath('//title/text()')[0].split(' | ')[2]
-		asset_id = None
+		if '#' in url:
+			(show_id, video_id) = url.split('#')[-1].split('|')
+		else:
+			# Get the show name
+			html = HTML.ElementFromURL(url)
+			show_name = html.xpath('//title/text()')[0].split(' | ')[2]
+			show_id = None
 
-		for show in JSON.ObjectFromURL(SHOWS_URL):
-			if show['title'].lower() == show_name.lower():
-				asset_id = show['assetID']
-				break
+			for show in JSON.ObjectFromURL(SHOWS_URL):
+				if show['title'].lower() == show_name.lower():
+					show_id = show['assetID']
+					break
 
-		if not asset_id:
+		if not show_id:
 			raise Ex.MediaNotAvailable
 
 		found_episode = False
 
-		for episode in JSON.ObjectFromURL(EPISODES_URL % asset_id)['assetsX']:
+		for episode in JSON.ObjectFromURL(EPISODES_URL % show_id)['assetsX']:
 			if episode['assetID'].endswith(video_id):
 				m3u8_url = episode['videoURL']
 
