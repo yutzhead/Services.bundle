@@ -214,7 +214,9 @@ def PlayVideo(url):
 		except Ex.HTTPError, e:
 			if e.code == 403:
 				raise Ex.MediaGeoblocked
-			if e.code == 404:
+			elif e.code == 404:
+				raise Ex.MediaNotAvailable
+			else:
 				raise Ex.MediaNotAvailable
 		except:
 			raise Ex.MediaNotAvailable
