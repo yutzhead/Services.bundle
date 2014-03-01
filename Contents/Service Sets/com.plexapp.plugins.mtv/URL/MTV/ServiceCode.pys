@@ -175,7 +175,8 @@ def GetRSS(url):
 
     # There are a few errors popping up because MTV is using videolist instead of video for some of their misc videos now
     # So changing this line to length will fix the issue, since all mgids with 7 digits use videolist, while mgids with 6 or less digits use video
-    if len(mgid) > 6:
+    # A few of the misc videos now have a 7 digit number but will not produce rss feed with videolist
+    if len(mgid) > 6 and '/video/misc/' not in url:
         mrss_data = XML.ElementFromURL(MRSS_URL %('videolist', mgid))
     else:
         mrss_data = XML.ElementFromURL(MRSS_URL %('video', mgid))
