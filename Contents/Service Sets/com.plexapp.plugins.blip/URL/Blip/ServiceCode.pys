@@ -16,8 +16,8 @@ def NormalizeURL(url):
 
 	url = url.split('?')[0]
 
-	if url.endswith('.x'):
-		url = url.split('.x')[0]
+	if url.endswith('.x') or url.endswith('.s'):
+		url = url.rsplit('.', 1)[0]
 
 	return String.StripDiacritics(url)
 
