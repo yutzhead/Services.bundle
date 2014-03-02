@@ -13,39 +13,15 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	show = page.xpath('//meta[@property="og:title"]')[0].get('content').split(' | ')[0].rsplit(' ',1)[0]
-	absolute_index = int( page.xpath('//meta[@property="og:title"]')[0].get('content').split(' | ')[0].rsplit(' ',1)[1] )
+	show = page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].rsplit(' ',1)[0]
+	absolute_index = int( page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].rsplit(' ',1)[1] )
 
 	try:
 		title = page.xpath('//h3[@class="field-content"]/text()')[0].strip()
 	except:
 		title = '%s %d' % (show, absolute_index)
 
-	try:
-		summary.xpath('//meta[@property="description"]')[0].get('content')
-	except:
-		try:
-			# Get the paragraph following the paragraph listing the show's host(s)
-			summary = page.xpath('//p[starts-with(text(),"Host:") or starts-with(text(),"Hosts:")]/following-sibling::p[1]')[0].text.strip()
-		except:
-			try:
-				# If there's just one text element in this div, then that's the summary (used for older episodes mostly)
-				if len( page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()') ) == 1:
-					summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]/div/text()')[0].strip()
-				else:
-					summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]//p[1]/text()')[0].strip()
-			except:
-				try:
-					# Use the first paragraph as summary
-					summary = page.xpath('//div[@class="views-field views-field-field-summary-value"]//p[1]/text()')[0].strip()
-				except:
-					summary = None
-
-	try:
-		duration = page.xpath('//p[contains(., "Running time:")]')[0].text_content().split(': ',1)[1]
-		duration = Datetime.MillisecondsFromString(duration)
-	except:
-		duration = None
+	summary = page.xpath('//meta[@property="og:description"]/@content')[0]
 
 	try:
 		originally_available_at = page.xpath('//div[@class="views-field views-field-created"]/*/text()')[0]
@@ -55,25 +31,22 @@ def MetadataObjectForURL(url):
 
 	thumbs = []
 
-	video = page.xpath('//video[@poster]')
-	if video:
-		thumbs.append(video[0].get('poster'))
+	poster = page.xpath('//video[@poster]/@poster')
+	if len(poster) > 0:
+		thumbs.append(poster[0])
 
-	image = page.xpath('//meta[@property="og:image" and @content]')
-	if image:
-		thumbs.append(image[0].get('content'))
+	image = page.xpath('//meta[@property="og:image" and @content]/@content')
+	if len(image) > 0:
+		thumbs.append(image[0])
 
-	video = EpisodeObject(
+	return EpisodeObject(
 		show = show,
 		title = title,
 		absolute_index = absolute_index,
 		summary = summary,
 		originally_available_at = originally_available_at,
-		duration = duration,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumbs)
 	)
-
-	return video
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -112,15 +85,16 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayMedia(url, fmt):
 
 	page = HTML.ElementFromURL(url, cacheTime=CACHE_1DAY)
 
 	resolutions = ['720p','480p','sd']
 	video_path = {
-		'720p' : '//a[@class="hd download"]',
-		'480p' : '//a[@class="sd download"]',
-		'sd'   : '//a[@class="sd-low download"]'
+		'720p' : '//a[@class="hd download"]/@href',
+		'480p' : '//a[@class="sd download"]/@href',
+		'sd'   : '//a[@class="sd-low download"]/@href'
 	}
 
 	index = resolutions.index(fmt)
@@ -128,7 +102,7 @@ def PlayMedia(url, fmt):
 	for resolution_index in range(index, len(resolutions)):
 		current_resolution = resolutions[resolution_index]
 		try:
-			url = page.xpath(video_path[current_resolution])[0].get('href')
+			url = page.xpath(video_path[current_resolution])[0]
 			break
 		except:
 			# if this didn't work fall back to next resolution
@@ -144,7 +118,7 @@ def PlayMedia(url, fmt):
 	if ' ' in url:
 		url = url.split(' ')[0]
 
-	return Redirect(url)
+	return IndirectResponse(VideoClipObject, key=url)
 
 ####################################################################################################
 def TestURLs():
