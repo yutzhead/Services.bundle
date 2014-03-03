@@ -1,0 +1,76 @@
+RE_JSON = Regex("_main\('[^']+', ({.+})\);")
+
+####################################################################################################
+def NormalizeURL(url):
+
+	url = url.split('/preview')[0]
+	url = url.split('/edit')[0]
+	return url
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	json_obj = GetJSON(url)
+
+	title = json_obj[0]['title']
+	summary = json_obj[0]['description']
+	duration = json_obj[1]['videodetails']['duration']
+
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		duration = duration
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url, post_url=url, res=resolution))
+			],
+			video_resolution = resolution,
+			bitrate = bitrate,
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		) for resolution, bitrate in [('1080', 3000), ('720', 1500), ('360', 750)]
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url, res):
+
+	json_obj = GetJSON(url)
+	fmts = json_obj[1]['videoplay']['flashVars']['fmt_stream_map'].split(',')
+
+	for fmt in fmts:
+		if fmt.startswith('37|') and res == '1080':
+			return IndirectResponse(VideoClipObject, key=fmt.split('|')[1])
+
+	for fmt in fmts:
+		if fmt.startswith('22|') and res in ('1080', '720'):
+			return IndirectResponse(VideoClipObject, key=fmt.split('|')[1])
+
+	for fmt in fmts:
+		if fmt.startswith('18|'):
+			return IndirectResponse(VideoClipObject, key=fmt.split('|')[1])
+
+####################################################################################################
+def GetJSON(url):
+
+	data = HTTP.Request(url).content
+	json = RE_JSON.search(data)
+
+	if not json:
+		raise Ex.MediaNotAvailable
+
+	json_obj = JSON.ObjectFromString('[%s]' % json.group(1).replace("'", '"'))
+
+	if json_obj[0]['mediaType'] != 'video':
+		raise Ex.MediaNotAvailable
+
+	return json_obj
