@@ -45,6 +45,10 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, res):
 
 	json_obj = GetJSON(url)
+
+	if json_obj[1]['videoplay']['status'] != 'AVAILABLE':
+		raise Ex.MediaNotAvailable
+
 	fmts = json_obj[1]['videoplay']['flashVars']['fmt_stream_map'].split(',')
 
 	for fmt in fmts:
@@ -68,7 +72,7 @@ def GetJSON(url):
 	if not json:
 		raise Ex.MediaNotAvailable
 
-	json_obj = JSON.ObjectFromString('[%s]' % json.group(1).replace("'", '"'))
+	json_obj = JSON.ObjectFromString('[%s]' % json.group(1).replace("'", '"').replace('\\x3d', '='))
 
 	if json_obj[0]['mediaType'] != 'video':
 		raise Ex.MediaNotAvailable
