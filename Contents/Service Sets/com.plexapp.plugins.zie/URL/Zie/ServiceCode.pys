@@ -44,7 +44,7 @@ def PlayVideo(url):
 ####################################################################################################
 def GetXml(url):
 
-	id = url.rsplit('/',1)[1]
-	track = XML.ElementFromURL(XML_URL % id).xpath('//track')[0]
+	id = url.split('/')[-1]
+	track = XML.ElementFromURL(XML_URL % id, cacheTime=0).xpath('//track')[0]
 
 	return track
