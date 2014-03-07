@@ -2,6 +2,8 @@ HTTP_HEADERS = {
 	'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'
 }
 
+RE_YT_ID = Regex("onYouTubePlayerAPIReady.+videoId: '([^']+)'", Regex.DOTALL)
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -11,12 +13,15 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	url = url.replace('http://www.', 'http://m.')
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+	data = HTTP.Request(url, headers=HTTP_HEADERS).content
+	html = HTML.ElementFromString(data)
 
 	yt_iframe = html.xpath('//iframe[contains(@src, "youtube.com/embed")]/@src')
 
 	if len(yt_iframe) > 0:
 		return URLService.MetadataObjectForURL(yt_iframe[0])
+	elif RE_YT_ID.search(data):
+		return URLService.MetadataObjectForURL('http://www.youtube.com/watch?v=%s' % RE_YT_ID.search(data).group(1))
 
 	return VideoClipObject(
 		title = html.xpath('//meta[@property="og:title"]/@content')[0],
