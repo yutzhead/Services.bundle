@@ -182,7 +182,6 @@ def PlayRTMP(url):
 
 ####################################################################################################
 def GetDetails(url, format):
-	Log(url)
 	channel    = RE_CHANNEL.search(url).groups()[0]
 	content    = HTTP.Request(url).content
 	
