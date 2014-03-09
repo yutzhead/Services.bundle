@@ -1,4 +1,4 @@
-RE_CHANNEL    = Regex('http://www\.kanal([5,9])play\.se')
+RE_CHANNEL    = Regex('http://www\.kanal([0-9]+)play\.se')
 RE_VIDEO_ID   = Regex('/video/([0-9]+)')
 RE_EP_INDEX   = Regex('Avsnitt ([0-9]+)')
 RE_SE_INDEX   = Regex('song ([0-9]+)')
@@ -182,6 +182,7 @@ def PlayRTMP(url):
 
 ####################################################################################################
 def GetDetails(url, format):
+	Log(url)
 	channel    = RE_CHANNEL.search(url).groups()[0]
 	content    = HTTP.Request(url).content
 	
@@ -231,7 +232,7 @@ def TestURLs():
 
 	test_urls = []
 
-	for channel in ["5", "9"]:
+	for channel in ["5", "9", "11"]:
 		for url in RSS_URLS % channel:
 			data  = XML.ElementFromURL(url)
 			count = 0
