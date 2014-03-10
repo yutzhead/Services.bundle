@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.kanal(5|9)play\.se/.+?/?video/.+</string>
+				<string>^http://www\.kanal(5|9|11)play\.se/.+?/?video/.+</string>
 			</array>
 		</dict>
 	</dict>
