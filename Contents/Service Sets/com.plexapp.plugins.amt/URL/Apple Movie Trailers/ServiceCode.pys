@@ -57,13 +57,14 @@ def MetadataObjectForURL(url):
 
 	thumb = amt_html.xpath('//meta[@property="og:image"]/@content|//img[contains(@src, "poster.jpg")]/@src')[0]
 	thumb = '%s/poster-xlarge.jpg' % thumb.rsplit('/', 1)[0]
+	thumb = thumb.replace('https://', 'http://').replace('trailers.apple.com', 'movietrailers.apple.com')
 
 	return VideoClipObject(
 		title = '%s (%s)' % (movie_title, title),
 		summary = summary,
 		duration = duration,
 		originally_available_at = originally_available_at,
-		thumb = Callback(GetThumb, thumb=thumb, client=Client.Product)
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -167,17 +168,3 @@ def FindVideoId(url):
 				video = title[0].get('href').split('/')[1]
 
 	return video
-
-####################################################################################################
-def GetThumb(thumb, client='', **kwargs):
-
-	if client == 'PlexConnect':
-		thumb = thumb.replace('http://trailers.apple.com/', 'http://www.apple.com/')
-
-	try:
-		data = HTTP.Request(thumb, cacheTime=CACHE_1MONTH, headers=HTTP_HEADERS).content
-		return DataObject(data, 'image/jpeg')
-	except:
-		pass
-
-	return Redirect('http://resources-cdn.plexapp.com/image/source/com.plexapp.plugins.amt.jpg')
