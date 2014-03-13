@@ -68,6 +68,12 @@ def PlayVideo(url, res):
   #Log('the value of smil_url is %s' %smil_url)
 
   smil = XML.ElementFromURL(smil_url)
+
+  # Check for expired
+  expired = smil.xpath('//*[@*[contains(., "Expired") or contains(., "expired")]]')
+  if len(expired) > 0:
+    raise Ex.MediaExpired
+
   available_res = smil.xpath("//a:video//@height", namespaces=SMIL_NS)
   if len(available_res) < 1:
     raise Ex.MediaNotAvailable
