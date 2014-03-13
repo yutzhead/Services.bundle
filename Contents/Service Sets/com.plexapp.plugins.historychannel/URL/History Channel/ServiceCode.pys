@@ -31,11 +31,9 @@ def MetadataObjectForURL(url):
   content_rating = data['ratings'][0]['rating'] if len(data['ratings']) > 0 else None
   title = data['title']
 
-  show = data['history$seriesName']
   return VideoClipObject(
     title = title,
     summary = summary,
-    source_title = show,
     duration = duration,
     originally_available_at = date,
     content_rating = content_rating,
@@ -102,6 +100,7 @@ def GetSMILURL(url):
         content = HTTP.Request(url).content.decode('utf8','replace')
     except:
         raise Ex.MediaExpired
+
     # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
     # immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
     try:
@@ -122,7 +121,9 @@ def GetSMILURL(url):
             if playlist_json['entries'][0]['premium'] == 'true':
                 raise Ex.MediaNotAuthorized
             else:
-                releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL']
+                releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL'].split('?')[0]
+                releaseURL = '%s?switch=hds&mbr=true' % releaseURL
+
                 return releaseURL
         except:
            raise Ex.MediaNotAvailable 
