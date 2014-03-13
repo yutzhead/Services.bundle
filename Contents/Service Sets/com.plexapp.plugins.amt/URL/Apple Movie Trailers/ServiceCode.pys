@@ -168,3 +168,8 @@ def FindVideoId(url):
 				video = title[0].get('href').split('/')[1]
 
 	return video
+
+####################################################################################################
+def GetThumb(**kwargs):
+
+	return Redirect('http://resources-cdn.plexapp.com/image/source/com.plexapp.plugins.amt.jpg')
