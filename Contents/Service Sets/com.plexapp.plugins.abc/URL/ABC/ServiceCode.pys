@@ -74,13 +74,14 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if not '/VDKA' in url:
-		url = FixURL(url)
+	if '/VDKA' in url:
+		video_id = url.split('/VDKA')[-1].split('/')[0]
+	else:
+		video_id = GetVideoId(url)
 
-	if not url:
+	if not video_id:
 		raise Ex.MediaNotAvailable
 
-	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
 
 	strings = (
@@ -135,13 +136,13 @@ def PlayVideo(f4m_url=None, **kwargs):
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def FixURL(url):
+def GetVideoId(url):
 
 	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 
 	# Loop over attribute values, because we can't grab the right one directly because of a missing namespace declaration(?)
 	for value in html.xpath('//div[@id="vp2k_container"]/@*'):
 		if value.startswith('VDKA'):
-			return 'abc://%s' % value
+			return value.split('VDKA')[-1]
 
 	return None
