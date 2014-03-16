@@ -1,12 +1,10 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.77 Safari/537.36'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36'}
 RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split('?')[0].replace(' ', '%20')
-
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -80,7 +78,7 @@ def MediaObjectsForURL(url):
 		url = FixURL(url)
 
 	if not url:
-		return None
+		raise Ex.MediaNotAvailable
 
 	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
@@ -139,12 +137,11 @@ def PlayVideo(f4m_url=None, **kwargs):
 ####################################################################################################
 def FixURL(url):
 
-	try:
-		url = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//meta[@property="og:url"]/@content')[0]
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 
-		if not '/VDKA' in url:
-			return None
+	# Loop over attribute values, because we can't grab the right one directly because of a missing namespace declaration(?)
+	for value in html.xpath('//div[@id="vp2k_container"]/@*'):
+		if value.startswith('VDKA'):
+			return 'abc://%s' % value
 
-		return url
-	except:
-		return None
+	return None

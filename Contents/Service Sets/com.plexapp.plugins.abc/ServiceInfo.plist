@@ -11,6 +11,7 @@
 				<string>^http://(watch)?abc\.go\.com/.+/SH\d+/VD(KA\d_[^/]+|\d+)</string>
 				<string>^http://abc\.go\.com/shows/[^/]+/episode\-guide/season-\d+/\d+\-.+</string>
 				<string>^http://abc\.go\.com/shows/[^/]+/listing/episode\-\d+</string>
+				<string>^abc://VDKA\d+_\w{8}$</string>
 			</array>
 		</dict>
 	</dict>
