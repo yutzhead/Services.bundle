@@ -4,6 +4,10 @@ MOOGALOOP_JSON = 'http://www.collegehumor.com/moogaloop/video/%s.json'
 ####################################################################################################
 def NormalizeURL(url):
 
+	if 'moogaloop' in url and 'clip_id' in url:
+		clip_id = url.split('clip_id=')[-1].split('&')[0]
+		return 'http://www.collegehumor.com/video/%s/' % clip_id
+
 	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
