@@ -155,14 +155,15 @@ def GetHLSStreams(url):
                 stream["resolution"] = 0
 
         elif ".m3u8" in line:
-            if not line.startswith("http://"):
-                path          = url[ : url.rfind('/') + 1]
-                stream["url"] = path + line
+            path = ''
+            
+            if not line.startswith("http"):
+                path = url[ : url.rfind('/') + 1]
+                
+            stream["url"] = path + line
                     
             streams.append(stream)
                 
     sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)        
 
     return sorted_streams
-
-
