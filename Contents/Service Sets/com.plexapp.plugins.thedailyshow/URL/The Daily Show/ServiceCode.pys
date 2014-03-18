@@ -1,4 +1,4 @@
-MRSS_URL = 'http://www.thedailyshow.com/feeds/video_player/mrss/?uri=%s'
+MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s&device=Other'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
@@ -28,12 +28,12 @@ def MetadataObjectForURL(url):
 	try:
 		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
 	except:
-		video_player_box = html.xpath('//div[@id="video_player_box"]')
+		video_player = html.xpath('//div[@id="video_player"]')
 
-		if len(video_player_box) < 1:
+		if len(video_player) < 1:
 			raise Ex.MediaExpired
 
-		uri = video_player_box[0].get('data-mgid')
+		uri = video_player[0].get('data-mgid')
 
 		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
 		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
@@ -206,12 +206,12 @@ def PlayVideo(url, bitrate='3500', index=0, **kwargs):
 	except:
 		raise Ex.MediaNotAvailable
 
-	video_player_box = html.xpath('//div[@id="video_player_box"]')
+	video_player = html.xpath('//div[@id="video_player"]')
 
-	if len(video_player_box) < 1:
+	if len(video_player) < 1:
 		raise Ex.MediaExpired
 
-	uri = video_player_box[0].get('data-mgid')
+	uri = video_player[0].get('data-mgid')
 
 	try:
 		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
