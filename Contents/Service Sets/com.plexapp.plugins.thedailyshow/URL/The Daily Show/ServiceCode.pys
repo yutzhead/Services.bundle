@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
-	
+
 	try:
 		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
 	except:
@@ -41,13 +41,16 @@ def MetadataObjectForURL(url):
 
 		for segment in media_urls:
 			if segment.get('duration') != "":
-				duration += Datetime.MillisecondsFromString(segment.get('duration'))
+				if ':' in segment.get('duration'):
+					duration += Datetime.MillisecondsFromString(segment.get('duration'))
+				else:
+					duration += int(float(segment.get('duration'))*1000)
 
 	if 'full episode' in page_title.lower():
 
 		try:
 			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip(' ')
-			originally_available_at = Datetime.ParseDate(air_date).date()
+			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
 
@@ -64,7 +67,7 @@ def MetadataObjectForURL(url):
 
 		try:
 			air_date = html.xpath('//div[@class="air_date"]//a/text()')[0]
-			originally_available_at = Datetime.ParseDate(air_date).date()
+			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
 
