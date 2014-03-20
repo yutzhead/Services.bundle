@@ -30,6 +30,9 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	video_id = video_id.group('id')
+	show = None
+	season = None
+	index = None
 
 	if video_id.startswith('n'):
 		try:
