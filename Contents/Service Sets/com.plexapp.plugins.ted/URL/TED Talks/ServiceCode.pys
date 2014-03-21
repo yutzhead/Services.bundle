@@ -1,268 +1,66 @@
-TED_BASE = 'http://www.ted.com'
-SLUG_URL = 'http://www.ted.com/download/links/slug/%s/type/talks/ext/mp4'
-
-RE_EVENT = Regex(';event=(.+?);')
-RE_SLUG = Regex('"mediaSlug":"([^"]+)')
-RE_DOWNLOAD = Regex('(http://download.ted.com/talks/.+{quality}{lang}\.mp4)')
-RE_XML = Regex('file=([^&]*)')
+RE_JSON = Regex('<script>q\("talkPage.init",({.+})\)</script>')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url.split('?')[0]
-
-####################################################################################################
-def TestURLs():
-
-  test_urls = []
-
-  page = HTML.ElementFromURL(TED_BASE + '/talks', cacheTime = CACHE_1HOUR)
-  videos = page.xpath('//div[@id="content"]//div[@class="col clearfix"]/a')
-
-  for url in videos:
-    url = TED_BASE + url.get('href')
-    test_urls.append(url)
-
-    if len(test_urls) > 5:
-      break
-
-  return test_urls
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  if url.endswith('...'): # I have no idea where those URLs come from, but we can't do anything useful with them
-    raise Ex.MediaNotAvailable
+	if url.endswith('...'): # I have no idea where those URLs come from, but we can't do anything useful with them
+		raise Ex.MediaNotAvailable
 
-  data = HTTP.Request(url, cacheTime=CACHE_1WEEK).content
-  html = HTML.ElementFromString(data)
+	json_obj = GetJSON(url)
+	html = HTML.ElementFromURL(url)
 
-  title = html.xpath('//meta[@name="title"]')[0].get('content').split(' | ')[0]
-  summary = html.xpath('//meta[@name="description"]')[0].get('content')
+	title = json_obj['title']
+	speaker = json_obj['speaker']
+	summary = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = json_obj['thumb']
+	published = Datetime.FromTimestamp(json_obj['published'])
+	duration = int(float(json_obj['duration'])*1000)
 
-  try:
-    date = html.xpath('//div[@class="talk-meta"]/span[1]/text()')[-1]
-    date = '1 %s' % date
-    date = Datetime.ParseDate(date).date()
-  except:
-    date = None
-
-  try:
-    event = html.xpath('//div[@class="talk-meta"]/span[@class="event-name"]')[0].text
-  except:
-    try:
-      event = String.Unquote(RE_EVENT.search(data).group(1), usePlus=True)
-    except:
-      event = None
-
-  thumbUrl = html.xpath('//link[@rel="image_src"]')[0].get('href')
-
-  # Construct a metadata item
-  vc = VideoClipObject(
-    title = title,
-    tagline = event,
-    originally_available_at = date,
-    summary = summary,
-    thumb = thumbUrl
-  )
-
-  return vc
+	return VideoClipObject(
+		title = '%s: %s' % (speaker, title),
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
+		originally_available_at = published,
+		duration = duration
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-  return [
-    # YouTube
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "1080",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "1080"))]
-    ),
-    # YouTube, Vimeo
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "720",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "720"))]
-    ),
-    # TED, YouTube, Vimeo
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = '480',
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res ="480"))]
-    ),
-    # TED, YouTube
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = 'sd',
-      bitrate = '400',
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd", bitrate = 400))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = 'sd',
-      bitrate = '40',
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url = url, res = "sd", bitrate = 40))]
-    )
-  ]
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key=HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			],
+			video_resolution = '480',
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res, bitrate = None):
+def PlayVideo(url, *kwargs):
 
-  # Obtain the collection of MediaObjects which are actually availalbe.
-  media = GetAvailableMediaObjectsForURL(url)
+	json_obj = GetJSON(url)
+	hls_url = json_obj['resources']['hls']['stream']
 
-  if not media:
-    raise Ex.MediaNotAvailable
-
-  # Iterate through the collection of known offered video resolutions. We will start at the desired
-  # and progress to lower qualities.
-  most_appropriate = None
-  resolutions = ["1080", "720", "480", "sd"]
-  index = resolutions.index(res)
-
-  for resolution_index in range(index, len(resolutions)):
-    current_resolution = resolutions[resolution_index]
-
-    for video in media:
-      if str(video.video_resolution) == current_resolution:
-        if bitrate is None:
-          most_appropriate = video.parts[0].key
-          break
-        else:
-          available_bitrate = video.bitrate
-          if available_bitrate is None or available_bitrate >= bitrate:
-            most_appropriate = video.parts[0].key
-            break
-
-    # We have found a video at this resolution, therefore we will stop.
-    if most_appropriate is not None:
-      break
-
-  # If no video was found, we will simply use the lowest quality available.
-  if most_appropriate is None:
-    most_appropriate = media[-1].parts[0].key
-
-  if 'download.ted.com' in most_appropriate:
-    try:
-      headers = HTTP.Request(most_appropriate, follow_redirects=False).headers
-    except Ex.RedirectError, e:
-      if 'Location' in e.headers:
-        most_appropriate = e.headers['Location'].replace('/Impossible/', '/None/')
-
-  # Construct the ObjectContainer to return the details of the located media
-  c = ObjectContainer()
-  c.add(VideoClipObject(
-    key = URLService.LookupURLForMediaURL(url),
-    items = [
-      MediaObject(
-        parts = [
-          PartObject(key = most_appropriate)
-        ]
-      )
-    ]
-  ))
-
-  return c
+	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(hls_url))
 
 ####################################################################################################
-def GetAvailableMediaObjectsForURL(url):
+def GetJSON(url):
 
-  page_content = HTTP.Request(url, cacheTime = CACHE_1WEEK).content
-  page = HTML.ElementFromString(page_content)
-  slug = RE_SLUG.findall(page_content)
+	data = HTTP.Request(url).content
+	json = RE_JSON.search(data)
 
-  if slug:
-    try:
-      download_info = HTTP.Request(SLUG_URL % slug[0], cacheTime=CACHE_1WEEK).content
-      download_url = RE_DOWNLOAD.findall(download_info)
-    except:
-      download_url = None
+	if not json:
+		raise Ex.MediaNotAvailable
 
-    if download_url:
-      download_url = download_url[0].replace('{lang}', '')
-
-      # Return the MediaObjects which are known to be available from TED. We could populate
-      # it with more metadata, but this isn't required. The video_resolution and bitrate 
-      # should be sufficient for the called to select the appropriate one.
-      return [
-        MediaObject(
-          video_resolution = '480',
-          bitrate = '800',
-          parts = [PartObject(key = download_url.replace('{quality}', '-480p'))]
-        ),
-        MediaObject(
-          video_resolution = 'sd',
-          bitrate = '400',
-          parts = [PartObject(key = download_url.replace('{quality}', ''))],
-        ),
-        MediaObject(
-          video_resolution = 'sd',
-          bitrate = '40',
-          parts = [PartObject(key = download_url.replace('{quality}', '-light'))],
-        )
-      ]
-
-  external_sources = [
-    ('//embed[contains(@src, "youtube.com")]',	'src',	None),
-    ('//iframe[contains(@src, "youtube.com")]',	'src',	None),
-    ('//embed[contains(@src, "vimeo.com")]',		'src',	None),
-    ('//iframe[contains(@src, "vimeo.com")]',		'src',	None),
-    ('//object[contains(@data, "blip.tv")]',		'data',	FindBlip),
-    ('//a[@class="external" and @target="_blank" and contains(text(), "Watch")]', 'href', None)
-  ]
-
-  for (select, node, find_url) in external_sources:
-    try:
-      external = page.xpath(select)
-
-      if len(external) > 0:
-        external_url = external[0].get(node)
-
-        if find_url != None:
-          external_url = find_url(external_url)
-
-        return URLService.MediaObjectsForURL(external_url)
-    except: pass
-
-  # If we've got to here without finding any movie, we will make one last attempt from the original
-  # page.
-  direct_links = page.xpath("//meta[@property = 'og:video']")
-
-  if len(direct_links) > 0:
-    return [
-      MediaObject(
-        video_resolution = 'sd',
-        parts = [PartObject(key = direct_links[0].get('content'))]
-      )
-    ]
-
-  return None
-
-####################################################################################################
-def FindBlip(url):
-
-  xml_url = RE_XML.findall(url)[0]
-  xml_details = XML.ElementFromURL(String.Unquote(xml_url))
-  external_url = xml_details.xpath("//item/link/text()")[0]
-  return external_url
+	return JSON.ObjectFromString(json.group(1))['talks'][0]
