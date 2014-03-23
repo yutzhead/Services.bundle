@@ -18,7 +18,10 @@ def MetadataObjectForURL(url):
 	summary = html.xpath('//meta[@name="description"]/@content')[0].strip()
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
-	published = html.xpath('//span[@class="time"]/text()')[0]
+	published = html.xpath('//span[@class="time"]/text()')[0].strip()
+	if 'Published time: ' in published:
+		published = published.split(': ', 1)[-1]
+
 	originally_available_at = Datetime.ParseDate(published)
 
 	return VideoClipObject(
