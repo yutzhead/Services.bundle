@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
 	track = JSON.ObjectFromURL(TRACK_DETAILS_URL % track_id)[0]
 
 	# Construct a list of thumbnails, in expected size order, largest first
-	thumb = track['artwork_url']
+	thumb = track['artwork_url'] if track['artwork_url'] is not None else ''
 	thumbs = [
 		thumb.replace('large', 'original'),
 		thumb.replace('large', 't500x500'),
