@@ -9,11 +9,11 @@
 			<key>TestURLs</key>
 			<array>
 				<string>http://thedailyshow.cc.com/full-episodes/</string>
-				<string>http://thedailyshow.cc.com/watch/tue-july-26-2011/armadebtdon-2011---call-congress</string>
+				<string>http://thedailyshow.cc.com/videos/65jewx/armadebtdon-2011---call-congress</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://thedailyshow.cc.com/(full-episodes|videos)/</string>
+				<string>^http://thedailyshow\.cc\.com/(full-episodes|videos)/</string>
 			</array>
 		</dict>
 	</dict>
