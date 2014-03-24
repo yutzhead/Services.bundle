@@ -47,7 +47,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, *kwargs):
+def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
 	hls_url = json_obj['resources']['hls']['stream']
