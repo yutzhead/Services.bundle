@@ -18,11 +18,11 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
 	try:
-		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
 	except:
 		video_player_box = html.xpath('//div[@id="video_player_box"]')
 		if len(video_player_box) < 1:
@@ -46,7 +46,7 @@ def MetadataObjectForURL(url):
 		show_title = html.xpath('//title')[0].text.split(' | ')[0]
 
 		try:
-			air_date = html.xpath('//meta[@itemprop="datePublished"]')[0].get('content')
+			air_date = html.xpath('//meta[@itemprop="datePublished"]/@content')[0]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
@@ -55,8 +55,8 @@ def MetadataObjectForURL(url):
 			show = show_title,
 			title = title,
 			summary = summary,
-			duration=duration,
-			thumb = thumb,
+			duration = duration,
+			thumb = Resource.ContentsOfURLWithFallback(thumb),
 			originally_available_at = originally_available_at
 		)
 
@@ -65,8 +65,8 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			duration=duration,
-			thumb = thumb
+			duration = duration,
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 	else:
@@ -202,7 +202,7 @@ def PlayVideo(url, bitrate='1700', index=0):
 	except:
 		raise Ex.MediaNotAvailable
 
-	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+	uri = data.xpath('//div[@id="video_player_box"]/@data-mgid')[0]
 
 	mrss_data = HTTP.Request(MRSS_URL % uri).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
@@ -222,7 +222,7 @@ def PlayVideo(url, bitrate='1700', index=0):
 		post_data = post_data % (ad_segment_uri, ad_segment_uri, ad_segment_uri)
 		ad_data = HTTP.Request('http://140cc.v.fwmrm.net/ad/p/1?', headers = headers, data = post_data).content
 		ad_xml = XML.ElementFromString(ad_data)
-		ad_url = ad_xml.xpath('//asset[@mimeType="video/mp4"]')[0].get('url')
+		ad_url = ad_xml.xpath('//asset[@mimeType="video/mp4"]/@url')[0]
 		return Redirect(ad_url)
 
 	segment_uri = mrss_data.xpath('//guid')[index].text
@@ -260,9 +260,9 @@ def TestURLs():
 	test_urls = []
 
 	data1 = HTML.ElementFromURL('http://www.spike.com/video-clips/')
-	test_urls.append(data1.xpath('//div[@class="block b_video_orange"]//h3/a')[0].get('href'))
+	test_urls.append(data1.xpath('//div[@class="block b_video_orange"]//h3/a/@href')[0])
 
 	data2 = HTML.ElementFromURL('http://www.spike.com/full-episodes/')
-	test_urls.append(data2.xpath('//div[@class="module latest_full_episodes"]//h3/a')[0].get('href'))
+	test_urls.append(data2.xpath('//div[@class="module latest_full_episodes"]//h3/a/@href')[0])
 
 	return test_urls
