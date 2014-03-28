@@ -36,10 +36,13 @@ def MediaObjectsForURL(url):
 		MediaObject(
 			parts = [
 				PartObject(
-					key=HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+					key=Callback(PlayVideo, url=url)
 				)
 			],
+			container = Container.MP4,
 			video_resolution = '480',
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
@@ -50,9 +53,21 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
-	hls_url = json_obj['resources']['hls']['stream']
 
-	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(hls_url))
+	if 'nativeDownloads' in json_obj:
+		if 'high' in json_obj['nativeDownloads']:
+			video_url = json_obj['nativeDownloads']['high']
+		elif 'medium' in json_obj['nativeDownloads']:
+			video_url = json_obj['nativeDownloads']['medium']
+		elif 'low' in json_obj['nativeDownloads']:
+			video_url = json_obj['nativeDownloads']['low']
+		else:
+			video_url = None
+
+		if video_url:
+			return IndirectResponse(VideoClipObject, key=video_url)
+
+	raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetJSON(url):
