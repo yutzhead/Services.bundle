@@ -39,7 +39,7 @@ def MediaObjectsForURL(url):
 
     mgid = RE_MGID.search(url).group(1)
 
-    if len(mgid) > 6:
+    if len(mgid) > 6 and '/misc/' not in url:
         # This is for full episodes and can vary from 4 to 8 parts
         if '/season-' in url or 'episode-' in url or '/operation-vacation-' in url or '/off-pitch-' in url:
             num_parts = 8
@@ -108,10 +108,9 @@ def GetRSS(url):
     mgid = RE_MGID.search(url).group(1)
     content = HTTP.Request(url).content
 
-    if len(mgid) > 6:
-        uri = RE_EPISODE_URI.search(content).group(1)
-    else:
-        uri = RE_CLIP_URI.search(content).group(1)
+    # Put in try/except since digits length of mgid no longer defines whether playlist or clip and try episode first since 7 digits could be either
+    try: uri = RE_EPISODE_URI.search(content).group(1)
+    except: uri = RE_CLIP_URI.search(content).group(1)
 
     # This in case the regex field for the uri on the page is blank
     if not uri:
