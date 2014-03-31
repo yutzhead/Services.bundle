@@ -129,7 +129,6 @@ def MediaObjectsForURL(url):
 	# check that we're getting an MP4 rather than the occassional FLV
 	headers = HTTP.Request(available_streams[unicode(bitrate)][unicode(0)]["mp4_url"]).headers
 	contentType = headers['content-type']
-	Log(contentType)
 	
 	if "mp4" in contentType.lower():
 		MediaObject.container = Container.MP4
