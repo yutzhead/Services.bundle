@@ -109,7 +109,6 @@ def MediaObjectsForURL(url):
 		player_url = media_urls[index].get('url')
 		try:
 			player_data = XML.ElementFromURL(player_url)
-			Log(HTTP.Request(player_url).content)
 		except:	
 			raise Ex.MediaNotAvailable
 		for rendition in player_data.xpath('//rendition'):
