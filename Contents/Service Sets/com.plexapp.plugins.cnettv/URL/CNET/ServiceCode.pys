@@ -1,139 +1,63 @@
-CNET_NAMESPACE = {'l':'http://api.cnet.com/rest/v1.0/ns'}
-API_URL = "http://api.cnet.com/restApi/v1.0/video?videoId=%s&orderBy=productionDate~desc,createDate~desc&iod=images,videoMedia,relatedLink,breadcrumb,relatedAssets,&partTag=cntv&showBroadcast=true"
-
 ####################################################################################################
 def NormalizeURL(url):
-  return url.split('#')[0].split('?')[0]
+
+	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-  video_id = GetVideoIdFromUrl(url)
 
-  if not video_id:
-    return None
+	html = HTML.ElementFromURL(url)
+	json = html.xpath('//div[@data-cnet-video-options]/@data-cnet-video-options')
 
-  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200)
+	if len(json) < 1:
+		raise Ex.MediaNotAvailable
 
-  episode_title = data.xpath("//l:Title", namespaces=CNET_NAMESPACE)[0].text
-  summary = data.xpath("//l:Description", namespaces=CNET_NAMESPACE)[0].text
-  date = Datetime.ParseDate(data.xpath("//l:CreateDate", namespaces=CNET_NAMESPACE)[0].text).date()
-  duration = int(data.xpath("//l:LengthSecs", namespaces=CNET_NAMESPACE)[0].text) * 1000
-  show_title = data.xpath("//l:Category/l:Title", namespaces=CNET_NAMESPACE)[0].text
+	json_obj = JSON.ObjectFromString(json[0])['video']
 
-  try: 
-    thumb_dict_169 = {}
-    thumb_dict_43 = {}
-
-    for thumb in data.xpath("//l:Images/l:Image", namespaces=CNET_NAMESPACE):
-      res = int(thumb.get('width'))
-      url = thumb.xpath('l:ImageURL', namespaces=CNET_NAMESPACE)[0].text
-
-      if thumb.get('aspectRatio') == '16:9':
-        thumb_dict_169[res] = url
-      else:
-        thumb_dict_43[res] = url
-
-    thumb_dict = thumb_dict_43  
-    if len(thumb_dict_169) > 0:
-      thumb_dict = thumb_dict_169
-
-    keys = thumb_dict.keys()
-    keys.sort()
-    keys.reverse()
-
-    thumbUrl = thumb_dict[keys[0]]
-  except:
-    thumbUrl = None
-
-  # Construct a metadata item
-  return EpisodeObject(
-    title = episode_title,
-    show = show_title,
-    duration = duration,
-    originally_available_at = date,
-    summary = summary,
-    thumb = thumbUrl
-  )
+	return VideoClipObject(
+		title = json_obj['headline'],
+		summary = json_obj['dek'],
+		duration = json_obj['duration'] * 1000,
+		thumb = Resource.ContentsOfURLWithFallback(json_obj['image']['path']),
+		originally_available_at = Datetime.ParseDate(json_obj['datePublished']['date'])
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-  return [
-    MediaObject(
-      container = Container.MP4,
-      video_resolution = '720',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url=url, res=720))],
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_resolution = '480',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url=url, res=480))],
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_resolution = 'sd',
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      audio_channels = 2,
-      optimized_for_streaming = True,
-      parts = [PartObject(key=Callback(PlayVideo, url=url, res=360))],
-    )
-  ]
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key=HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			],
+			video_resolution = '720',
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
-def PlayVideo(url, res):
-  video_id = GetVideoIdFromUrl(url)
+@indirect
+def PlayVideo(url, **kwargs):
 
-  if not video_id:
-    return None
+	html = HTML.ElementFromURL(url)
+	json = html.xpath('//div[@data-cnet-video-options]/@data-cnet-video-options')
 
-  data = XML.ElementFromURL(API_URL % video_id, cacheTime=7200)
-  videos = data.xpath("//l:VideoMedia", namespaces=CNET_NAMESPACE)
+	if len(json) < 1:
+		raise Ex.MediaNotAvailable
 
-  video_dict = {}
-  for video in videos:
-    available_res = int(video.xpath("l:Height", namespaces=CNET_NAMESPACE)[0].text)
-    url = video.xpath("l:DeliveryUrl", namespaces=CNET_NAMESPACE)[0].text
-    video_dict[available_res] = url
+	json_obj = JSON.ObjectFromString(json[0])['video']['files']['data']
 
-  resolutions = video_dict.keys()
-  resolutions.sort()
-  resolutions.reverse()
+	for video in json_obj:
+		if video['format'] == 'tv':
+			hls_url = video['uri']
+			return IndirectResponse(VideoClipObject, key=hls_url)
 
-  # Find the best match.
-  for resolution in resolutions:
-    if resolution <= res:
-      return Redirect(video_dict[resolution])
+	for video in json_obj:
+		if video['type'] == 'HLS_VARIANT_TABLET':
+			hls_url = video['uri']
+			return IndirectResponse(VideoClipObject, key=hls_url)
 
-  # Return the first match.
-  keys = video_dict.keys()
-  if len(keys) < 1:
-    raise Ex.MediaNotAvailable
-
-  return Redirect(video_dict[keys[0]])
-
-####################################################################################################
-def GetVideoIdFromUrl(url):
-
-  if 'cnettv' in url and '.html' in url:
-    video_id = url.split('-')[-1].strip('.html')
-  elif 'cbsnews.com' in url and '?id=' in url:
-    video_id = url.split('?id=')[1].strip('n')
-  else:
-    data = HTML.ElementFromURL(url, cacheTime=7200)
-    try:
-      video_id = data.xpath('//div[@id="universalVideo"]')[0].get('videoid')
-    except:
-      try:
-        video_id = data.xpath('//div[@class="playButton"]')[0].get("data-vid")
-      except:
-        video_id = None
-
-  return video_id
+	raise Ex.MediaNotAvailable
