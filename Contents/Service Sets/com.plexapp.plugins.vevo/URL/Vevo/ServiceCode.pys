@@ -3,99 +3,78 @@ DETAILS_URL  = 'http://api.vevo.com/mobile/v1/video/%s.json'
 AUTH_URL     = 'http://videoplayer.vevo.com/VideoService/AuthenticateVideo?isrc=%s'
 VIDEO_URL    = 'http://www.vevo.com/watch/%s/%s/%s'
 
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:22.0) Gecko/20100101 Firefox/22.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'}
 
 ####################################################################################################
 def NormalizeURL(url):
 
-    return url.split('?')[0].strip('#')
+	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    # Obtain the id of the title, and request the associated details page.
-    id = url.split('/')[-1].strip()
-    details = JSON.ObjectFromURL(DETAILS_URL % id, headers=HTTP_HEADERS)['result']
+	id = url.split('/')[-1].strip()
+	json_obj = JSON.ObjectFromURL(DETAILS_URL % id, headers=HTTP_HEADERS)
 
-    return VideoClipObject(
-        title = '%s - %s' % (details['artists_main'][0]['name'], details['title']),
-        summary = details['description'],
-        duration = int(details['duration_in_seconds']) * 1000,
-        originally_available_at = Datetime.ParseDate(details['created_at'].split('T')[0]),
-        genres = details['genres'],
-        thumb = Resource.ContentsOfURLWithFallback(details['image_url'])
-    )
+	if not json_obj['success']:
+		raise Ex.MediaNotAvailable
+
+	details = json_obj['result']
+
+	return VideoClipObject(
+		title = '%s - %s' % (details['artists_main'][0]['name'], details['title']),
+		summary = details['description'],
+		duration = int(details['duration_in_seconds']) * 1000,
+		originally_available_at = Datetime.ParseDate(details['created_at'].split('T')[0]),
+		genres = details['genres'],
+		thumb = Resource.ContentsOfURLWithFallback(url=details['image_url']),
+		art = Resource.ContentsOfURLWithFallback(url=details['artists_main'][0]['image_url'], fallback='http://resources-cdn.plexapp.com/image/art/com.plexapp.plugins.vevo.jpg')
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-    return [
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, res='1080'))],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            video_resolution = '1080',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-        ),
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, res='720'))],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            video_resolution = '720',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-        ),
-        MediaObject(
-            parts = [PartObject(key=Callback(PlayVideo, url=url, res='360'))],
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            video_resolution = '360',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-        )
-    ]
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key=HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			],
+			video_resolution = '1080',
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res='1080', **kwargs):
+def PlayVideo(url, **kwargs):
 
-    id = url.split('/')[-1]
-    json_obj = JSON.ObjectFromURL(AUTH_URL % id, headers=HTTP_HEADERS)
-    yt_id = None
+	id = url.split('/')[-1]
+	json_obj = JSON.ObjectFromURL(AUTH_URL % id, headers=HTTP_HEADERS)
 
-    if 'video' not in json_obj or not json_obj['video']:
-        if 'statusMessage' in json_obj and 'where you live' in json_obj['statusMessage']:
-            raise Ex.MediaGeoblocked
+	if 'video' not in json_obj or not json_obj['video']:
 
-        raise Ex.MediaNotAvailable
+		if 'statusMessage' in json_obj and 'where you live' in json_obj['statusMessage']:
+			raise Ex.MediaGeoblocked
 
-    for version in json_obj['video']['videoVersions']:
-        if 'sourceType' in version and version['sourceType'] == 0:
-            yt_id = version['id']
-            break
+		raise Ex.MediaNotAvailable
 
-    if not yt_id:
-        raise Ex.MediaNotAvailable
+	hls_url = None
 
-    media = URLService.MediaObjectsForURL(YOUTUBE_BASE % yt_id)
-    resolutions = ['1080', '720', '360']
-    index = resolutions.index(res)
+	for version in json_obj['video']['videoVersions']:
 
-    for resolution_index in range(index, len(resolutions)):
-        current_resolution = resolutions[resolution_index]
+		if 'sourceType' in version and version['sourceType'] == 4:
 
-        for video in media:
-            if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
-                continue
+			data = version['data']
+			xml = XML.ElementFromString(data)
+			hls_url = xml.xpath('//rendition/@url')[0]
 
-            if str(video.video_resolution) == current_resolution:
-                return Redirect(video.parts[0].key)
+	if not hls_url:
+		raise Ex.MediaNotAvailable
 
-    return Redirect(media[-1].parts[0].key)
+	return IndirectResponse(VideoClipObject, key=hls_url)
 
 ####################################################################################################
 def TestURLs():
