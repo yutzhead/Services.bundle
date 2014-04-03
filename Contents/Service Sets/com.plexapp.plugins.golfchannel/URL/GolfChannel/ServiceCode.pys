@@ -30,7 +30,11 @@ def MetadataObjectForURL(url):
 		
  	try: 
  		summary = page.xpath("//div[contains(@class,'panel-col-last')]//div[contains(@class,'field-item even')]/text()")[0]
- 	except: 
+ 	except:
+ 		pass
+ 	
+ 	# sometimes the above gives us either "" or "  " instead of failing
+ 	if summary.strip() == "":
  		try: 
  			summary = page.xpath("//div[contains(@class,'panel-col-last')]//div[contains(@class,'field-item even')]//p/text()")[0]
  		except:
