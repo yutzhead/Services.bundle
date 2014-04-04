@@ -13,11 +13,14 @@ HTTP_HEADERS = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
 RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
 RE_URL_MAP_ALT = Regex('&amp;url_encoded_fmt_stream_map=(.+?)&amp;')
+RE_URL_MAP_AGE_GATE = Regex('&url_encoded_fmt_stream_map=(.+?)&')
 RE_PATH_1 = Regex('^/(watch|details)(_popup)?')
 RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
 RE_VID_PID = Regex('pid=(.{11})')
 RE_VIDEO_ID = Regex('"video_id":\s"([^"]+)')
+
+RE_AGE_GATE = Regex('(player-age-gate-content">)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -215,27 +218,46 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   # Check for geoblocks and unavailable videos
   video_id = url[url.find('?v=')+3:].split('&')[0]
 
-  try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS)['data']
-  except:
-    raise Ex.MediaNotAuthorized
+  # Check for age-gate
+  if RE_AGE_GATE.search(yt_page) is not None:
+    age_gate = True
+    data = {
+      'video_id': video_id,
+      'el': 'player_embedded',
+      'gl': 'US',
+      'hl': 'en',
+      'eurl': 'https://youtube.googleapis.com/v/' + video_id,
+      'asv': 3,
+      'sts':'1588',
+    }
+    video_info_url = 'http://www.youtube.com/get_video_info'
+    yt_page = HTTP.Request(video_info_url, values=data, headers=HTTP_HEADERS).content
+  else:
+    age_gate = False
+    try:
+      details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS)['data']
+    except:
+      raise Ex.MediaNotAuthorized
 
-  if 'status' in details:
-    if 'value' in details['status'] and details['status']['value'] == 'restricted':
-      if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
-        raise Ex.MediaGeoblocked
+    if 'status' in details:
+      if 'value' in details['status'] and details['status']['value'] == 'restricted':
+        if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
+          raise Ex.MediaGeoblocked
 
   # Build up the format map.
-  fmt_url_map = RE_URL_MAP.findall(yt_page)
-
-  if not fmt_url_map:
-    fmt_url_map = RE_URL_MAP_ALT.findall(yt_page)
-
+  if age_gate:
+    fmt_url_map = RE_URL_MAP_AGE_GATE.findall(yt_page)
+    fmt_url_map = String.Unquote(fmt_url_map[0]).replace('\/', '/').split(',')
+  else:
+    fmt_url_map = RE_URL_MAP.findall(yt_page)
+  
     if not fmt_url_map:
-      raise Ex.MediaNotAvailable
+      fmt_url_map = RE_URL_MAP_ALT.findall(yt_page)
 
-  fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
-
+      if not fmt_url_map:
+        raise Ex.MediaNotAvailable
+    fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
+  
   fmts = []
   fmts_info = {}
 
@@ -246,10 +268,12 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
       params = f.split('\u0026')
     elif '&' in f:
       params = f.split('&')
+      Log(params)
     else:
       continue
 
     for p in params:
+      Log(p)
       if '=' in p:
         (name, value) = p.split('=', 1)
         map[name] = value
@@ -263,7 +287,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
         if not 'signature' in video_url and 'sig' in map:
           video_url = video_url + '&signature=' + map['sig']
         elif not 'signature' in video_url and 's' in map:
-          video_url = video_url + '&signature=' + decrypt_signature(map['s'])
+          video_url = video_url + '&signature=' + decrypt_signature(map['s'], age_gate=age_gate)
 
         if 'signature' in video_url:
           if 'ratebypass' not in video_url:
@@ -299,10 +323,14 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
 ####################################################################################################
 # Source: https://github.com/rg3/youtube-dl/blob/master/youtube_dl/extractor/youtube.py
-def decrypt_signature(s):
-
-  Log('Sig length is: %s' % len(s))
-
+def decrypt_signature(s, age_gate=False):
+  Log(len(s))
+  if age_gate:
+  # The videos with age protection use another player, so the
+  # algorithms can be different.
+    if len(s) == 86:
+      return s[2:63] + s[82] + s[64:82] + s[63]
+  
   if len(s) == 92:
     return s[25] + s[3:25] + s[0] + s[26:42] + s[79] + s[43:79] + s[91] + s[80:83]
   elif len(s) == 91:
