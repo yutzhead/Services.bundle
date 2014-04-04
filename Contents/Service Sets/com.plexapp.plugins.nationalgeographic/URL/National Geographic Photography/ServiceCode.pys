@@ -31,4 +31,8 @@ def GetPhoto(url):
 
     # Find the url to the original image
     photo_url = page.xpath("//div[@class = 'primary_photo']//img")[0].get('src')
+    
+    if photo_url.startswith("//"):
+        photo_url = "http:%s" % (photo_url) # for some reason images urls al incomplete on national Geographic
+    
     return Redirect(photo_url)
