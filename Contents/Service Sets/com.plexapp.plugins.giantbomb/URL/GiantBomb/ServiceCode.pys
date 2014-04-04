@@ -1,5 +1,5 @@
 API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
-API_PATH = 'http://api.giantbomb.com'
+API_PATH = 'http://www.giantbomb.com/api'
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:18.0) Gecko/20100101 Firefox/18.0'}
 
 MediaObject.container = 'mp4'
