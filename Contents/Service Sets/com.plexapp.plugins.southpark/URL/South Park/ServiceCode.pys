@@ -128,7 +128,7 @@ def MediaObjectsForURL(url):
 		media_objects.append(
 			MediaObject(
 				parts=parts,
-				bitrate = int(available_streams[unicode(height)][unicode(0)]["bitrate"])*1000,
+				bitrate = int(available_streams[unicode(height)][unicode(0)]["bitrate"]),
 				video_resolution = int(height)
 			)
 		)
