@@ -3,22 +3,23 @@ VEVO_URL = 'http://www.vevo.com/watch/%s/%s/%s'
 RE_VEVO_URL_PATH = Regex('http://www\.(?:mtv|vh1|cmt)\.com/videos?/([^/]+)/\d+/(.+?)\.jhtml')
 RE_VEVO_ID = Regex('MTVN.Player.vevoVideoId = "(.+?)";')
 
-# rss needs video and videolist option based on clips or full episodes
-MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=mgid:uma:%s:mtv.com:%s'
+# Broke this into two parts in case we pull a full uri from the website code
+MRSS_URL = 'http://www.mtv.com/player/embed/AS3/rss/?uri=%s'
+URI = 'mgid:uma:%s:mtv.com:%s'
+# THIS PULLS THE MGID NUMBER FROM ALL URLS (4 DIGIT NUMBERS GO TO VEVO)
+RE_MGID_NUM = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
+
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
+RE_RES_BIT = Regex('.+_\d{3,4}x(\d{3,4})_(\d{3,4})_(?:h|m)\d{2}.mp4$')
 
-# A FEW VIDEOS ONLY HAVE FOUR DIGITS BUT HAVING THE REGEX ACCEPT FOUR DIGITS INTERFERES WITH ANY URL THAT HAS A YEAR IN THE NAME.
 # EXAMPLE OF FOUR DIGIT URL IS http://www.mtv.com/videos/?vid=9479
-# ADDED FOUR DIGIT TO RANGE OF SERVICEINFO.PLIST AND KEPT REGEX RANGE 5 TO 7 SINCE MUSIC VIDEOS GO TO VEVO AND DON'T USE REGEX
-# OTHER ODD URL EXAMPLE IN MUSIC VIDEOS http://www.mtv.com/videos/tye-james/975425/zombie-remix.jhtml
-RE_MGID = Regex('(?:\/|vid=|id=)(\d{5,7})\/?')
+# IF URL CONTAINS "playlist" OR "/videos/?id=" THEN IT IS VIDEOLIST MGID
 
 ####################################################################################################
 def NormalizeURL(url):
 
-    if '#parts=' not in url:
-        url = url.split('#')[0]
+    url = url.split('#')[0]
 
     return url
 
@@ -27,12 +28,11 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
     # this part is only for music videos
-    vevo_id = VevoID(url)
-    if vevo_id:
-        vevo_url = GetVevoURL(url, vevo_id)
+    vevo_url = VevoURL(url)
+    if vevo_url:
         return URLService.MetadataObjectForURL(vevo_url)
 
-    data = GetRSS(url)
+    data = GetURI(url)
     title = data.xpath('//title/text()')
 
     if len(title) < 1:
@@ -62,150 +62,174 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
-# Found that the number of parts for shows varies widely from 4 to 11. 
-# CMT full episodes end with full-episode.jhtml in name instead of playlist.jhtml and did have 4-6 parts.
-# But now some of the hour long shows have 11 parts
+@deferred
 def MediaObjectsForURL(url):
 
-    if '#parts=' in url: # This allows you to pass the number of parts to the URL service as an attribut of the URL
-        (url, num_parts) = url.split('#parts=', 1)
-        num_parts = int(num_parts)
-    elif 'full-episode' in url or 'playlist' in url:
-        num_parts = 11
-    else:
-        num_parts = 1
-
-    return [
-        MediaObject(
-            parts = [
-                PartObject(
-                    key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-                ) for i in range(num_parts)
-            ],
-            bitrate = bitrate,
-            container = Container.MP4,
-            video_resolution = resolution,
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360')]
-    ]
-
-####################################################################################################
-def PlayVideo(url, bitrate='3500', index=0, **kwargs):
+    # Get vevo url
+    vevo_url = VevoURL(url)
 
     # this part is only for music videos
-    vevo_id = VevoID(url)
-
-    if vevo_id:
-        vevo_url = GetVevoURL(url, vevo_id)
-        vevo_media = URLService.MediaObjectsForURL(vevo_url)
-
-        if not vevo_media:
-            raise Ex.MediaNotAvailable
-
-        vevo_video = 'None'
-
-        for video in vevo_media:
-            # Since Vevo videos only come in two resolutions similar to the Viacom vidoes, if not 720, then 420
-            if bitrate == '3500':
-                video_res = '720'
-            else:
-                video_res = '360'
-            if str(video.video_resolution) == video_res:
-                vevo_video = video.parts[0].key
-            else:
-                pass
-
-        if vevo_video is 'None':
-            vevo_video= vevo_media[-1].parts[0].key
-
-        return Redirect(vevo_video)
-    
+    if vevo_url:
+        return URLService.MediaObjectsForURL(vevo_url)
+            
+    # For show videos
     else:
-        mrss_data = GetRSS(url)
+        mrss_data = GetURI(url)
         media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-
-        if index < len(media_url):
+        available_streams = {}
+        bitrates = []
+        index = 0
+        
+        while index < len(media_url):
             player_url = media_url[index].get('url')
             player_url = player_url.replace('{device}', 'Other')
-        else:
-            # Return small filler movie for desktop clients
-            return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
-        try:
-            player_data = XML.ElementFromURL(player_url)
-        except:
-            raise Ex.MediaNotAvailable
+            try:
+                player_data = XML.ElementFromURL(player_url)
+            except:
+                raise Ex.MediaNotAvailable
 
-        available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
-        if len(available_bitrates) < 1:
-            raise Ex.MediaNotAvailable
+            for rendition in player_data.xpath('//rendition'):
+                duration = rendition.get('duration')
+                rtmp_url = rendition.xpath('./src')[0].text
+                # Try getting bitrate and resolution from video url
+                try:
+                    height = RE_RES_BIT.search(rtmp_url).group(1)
+                    bitrate = RE_RES_BIT.search(rtmp_url).group(2)
+                # Just in case there is an issue with the url get bitrate and hieght from xml
+                except:
+                    bitrate = rendition.get('bitrate')
+                    height = rendition.get('height')
 
-        closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-        rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
+                if '/viacommtvstrm/' in rtmp_url:
+                    stream_url = rtmp_url.split('/viacommtvstrm/')[1]
+                elif '/mtvnorigin/' in rtmp_url:
+                    stream_url = rtmp_url.split('/mtvnorigin/')[1]
+                else:
+                    raise Ex.MediaNotAvailable
+            
+                mp4_url = MP4_URL % stream_url
+                if unicode(bitrate) in available_streams.keys():
+                    available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                else:
+                    available_streams[unicode(bitrate)] = {}
+                    available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                if int(bitrate) not in bitrates:
+                    bitrates.append(int(bitrate))
 
-        # Split reflects the rtmp address for MTV, VH1, and CMT videos.
-        # CHANGED THIS BECAUSE OTHER LIST WAS GROWING SO LARGE AND THIS METHOD ONLY HAS TWO FOR ALL VIDEOS
-        if '/viacommtvstrm/' in rtmp_url:
-            stream_url = rtmp_url.split('/viacommtvstrm/')[1]
-        elif '/mtvnorigin/' in rtmp_url:
-            stream_url = rtmp_url.split('/mtvnorigin/')[1]
-        else:
-            raise Ex.MediaNotAvailable
+            index += 1
 
-        return Redirect(MP4_URL % stream_url)
+        bitrates.sort()
+        bitrates.reverse()
+        #Log('the value of available_streams is %s' %available_streams)        
 
-####################################################################################################
-# Using regex to pull mgid from url. Added id option to regex for CMT videos. 
-# Also full episodes use videolist while clips and music videos use video in rss url
-def GetRSS(url):
+        media_objects = []
 
-    try:
-        mgid = RE_MGID.search(url).group(1)
-    except:
-        raise Ex.MediaNotAvailable
-    # The new regex is still not deleting slashes from music videos so need this line to pull them out
-    if '/' in mgid:
-        mgid = mgid.replace('/', '')
-
-    if not mgid:
-        raise Ex.MediaExpired
-
-    # There are a few errors popping up because MTV is using videolist instead of video for some of their misc videos now
-    # So changing this line to length will fix the issue, since all mgids with 7 digits use videolist, while mgids with 6 or less digits use video
-    # A few of the misc videos (with /misc/ or /interview/ in url) now have a 7 digit number but will not produce rss feed with videolist
-    if len(mgid) > 6 and '/misc/' not in url and '/interview/' not in url:
-        mrss_data = XML.ElementFromURL(MRSS_URL %('videolist', mgid))
-    else:
-        mrss_data = XML.ElementFromURL(MRSS_URL %('video', mgid))
-
-    return mrss_data
+        for bitrate in bitrates:
+            # Pulling video resolution here instead of in media object to prevent errors if first part is empty
+            try: vid_res = int(available_streams[unicode(bitrate)][unicode(0)]["height"])
+            except: vid_res = int(available_streams[unicode(bitrate)][unicode(1)]["height"])
+            # HERE WE WOULD FIX ANY WITH MISSING PARTS
+            if len(available_streams[unicode(bitrate)]) < len(media_url):
+                Log('the length of media_url is %s and the length of available_streams is %s' %(len(media_url), len(available_streams[unicode(bitrate)])))
+                closest = FindClosest(bitrates, bitrate)
+            i = 0
+            parts = []
+            while i < len(media_url):
+                # Put data pull in a try in case a part is missing for the available_streams for the bitrate 
+                try:
+                    parts.append(
+                        PartObject(key=available_streams[unicode(bitrate)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(bitrate)][unicode(i)]["duration"])*1000)
+                    )
+                except:
+                    parts.append(
+                        PartObject(key=available_streams[unicode(closest)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(closest)][unicode(i)]["duration"])*1000)
+                    )
+                    
+                i += 1
+            media_objects.append(
+                MediaObject(
+                    parts=parts,
+                    bitrate = int(bitrate),
+                    video_resolution = vid_res
+                )
+            )
+            
+    return media_objects
 
 ##################################################################################################
-# This is a function to check for Vevo video IDs
-def VevoID(url):
+# This is a function to find the adjacent bitrate in the bitrates list to use when an available_streams list is missing parts
+def FindClosest(bitrates, bitrate):
 
-    id = ''
-    content = HTTP.Request(url).content
+    x=0
+    for bitrate_value in bitrates:
+        x=x+1
+        if bitrate_value==bitrate:
+            break
+    if x < len(bitrates):
+        closest = bitrates[x]
+    else:
+        alt_x = len(bitrates) - 2
+        closest = bitrates[alt_x]
+        
+    #Log(' the value of closest is %s' %closest)
+    return closest
+
+##################################################################################################
+# This is a function to check for Vevo video IDs and build the Vevo url
+def VevoURL(url):
 
     try:
-        id = RE_VEVO_ID.search(content).group(1)
+        content = HTTP.Request(url).content
+        html = HTML.ElementFromString(content)
     except:
-        pass
+        raise Ex.MediaNotAvailable
 
-    return id
+    # First check the web page to see if it has a Vevo id and is a Vevo video
+    try:
+        id = RE_VEVO_ID.search(content).group(1)
+        local_url = html.xpath('//meta[@property="og:url"]/@content')[0]
+        (artist, title) = RE_VEVO_URL_PATH.search(local_url).groups()
+        vevo_url = VEVO_URL % (artist, title, id)
+    # otherwise get the id number and build the mgid
+    except:
+        vevo_url = None
 
-####################################################################################################
-def GetVevoURL(url, vevo_id):
-
-    html = HTML.ElementFromURL(url)
-    local_url = html.xpath('//meta[@property="og:url"]')[0].get('content')
-    (artist, title) = RE_VEVO_URL_PATH.search(local_url).groups()
-    vevo_url = VEVO_URL % (artist, title, vevo_id)
-
+    #Log(' the value of vevo_url is %s' %vevo_url)
     return vevo_url
+
+##################################################################################################
+# This is a function builds the video uri and pull the MRSS xml page
+def GetURI(url):
+            
+    try:
+        id_num = RE_MGID_NUM.search(url).group(1)
+    except:
+        Log('no id in url')
+        raise Ex.MediaNotAvailable
+    # Usually a seven digit number is a video playlist but some video clips now have 7 digits
+    # So we first need to check the pattern of the URL before building the uri
+    if len(id_num) == 7:
+        if '/misc/' in url or '/interview/' in url or '/promo/' in url:
+            id = URI %('video', id_num)
+        else:
+            id = URI %('videolist', id_num)
+    else:
+        id = URI %('video', id_num)
+
+    mrss_data = XML.ElementFromURL(MRSS_URL %id)
+    
+    # Test to make sure there are items in the MRSS to make sure it is a video list
+    item_list = mrss_data.xpath('//item')
+    if len(item_list) < 1:
+        if 'videolist' in id:
+            id = URI %('video', id_num)
+        else:
+            id = URI %('videolist', id_num)
+        mrss_data = XML.ElementFromURL(MRSS_URL %id)
+    
+    #Log(' the value of id is %s' %id)
+    return mrss_data
 
 ####################################################################################################
 def TestURLs():
