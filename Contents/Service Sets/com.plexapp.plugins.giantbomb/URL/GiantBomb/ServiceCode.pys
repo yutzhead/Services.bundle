@@ -1,5 +1,5 @@
 API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
-API_PATH = 'http://api.giantbomb.com'
+API_PATH = 'http://www.giantbomb.com/api'
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:18.0) Gecko/20100101 Firefox/18.0'}
 
 MediaObject.container = 'mp4'
@@ -12,7 +12,7 @@ MediaObject.audio_channels = 2
 def NormalizeURL(url):
 
 	if not url.endswith('/'):
-		url = url +'/'
+		url += '/'
 
 	return url
 
@@ -82,16 +82,16 @@ def PlayVideo(url, fmt='high'):
 
 	if not video_url:
 		raise Ex.MediaNotAvailable
-	
+
 	Log(video_url)
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetClip(url):
-
-	video_id = url.split('/')[-2]
-	clip_detail_url = API_PATH + '/video/%s/?api_key=%s&format=json&limit=1' % (video_id, ApiKey())
+	api_key = url.split('/')[-2]
+	video_id = url.split('/')[-3]
+	clip_detail_url = API_PATH + '/video/%s/%s&format=json&limit=1' % (video_id, api_key)
 
 	try:
 		data = JSON.ObjectFromURL(clip_detail_url)
@@ -104,15 +104,9 @@ def GetClip(url):
 	if 'status_code' not in data or data['status_code'] != 1:
 		raise Ex.MediaNotAvailable
 
+
 	return(data['results'])
 
 ####################################################################################################
 def ApiKey():
-	link_code = Prefs['link_code']
-
-	if link_code and len(link_code) == 6:
-		response = JSON.ObjectFromURL(API_PATH + '/validate?link_code=' + link_code.upper() + '&format=json')
-		if 'api_key' in response:
-			return response['api_key']
-
 	return API_KEY
