@@ -1,52 +1,26 @@
-import urllib2
-
-API_URL = 'http://www.metacafe.com/api/item/%s/'
-API_NS = {'media':'http://search.yahoo.com/mrss/'}
-VIDEO_URL = '%s?__gda__=%s'
-RE_ITEM_ID = Regex('/watch/(?P<id>\d+)')
 RE_MEDIA = Regex('mediaData=(?P<media>[^&]+)')
-HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:15.0) Gecko/20100101 Firefox/15.0.1'}
+HTTP_HEADERS = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36'}
+
+####################################################################################################
+def NormalizeURL(url):
+
+	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = GetXml(url)
+	html = HTML.ElementFromURL(url)
 
-	if not data:
-		raise Ex.MediaNotAvailable
-
-	title = data.xpath('./media:title', namespaces=API_NS)[0].text
-	summary = data.xpath('./media:description', namespaces=API_NS)[0].text
-	thumb = data.xpath('./media:thumbnail', namespaces=API_NS)[0].get('url')
-
-	try:
-		date = data.xpath('./pubDate')[0].text.split(' ')[0]
-		date = Datetime.ParseDate(date)
-	except:
-		date = None
-
-	duration = data.xpath('./media:content', namespaces=API_NS)[0].get('duration')
-	duration = int(duration) * 1000
-
-	try:
-		rating = data.xpath('./rank')[0].text
-		rating = float(rating) * 2
-	except:
-		rating = None
-
-	try:
-		tags = data.xpath('./media:keywords', namespaces=API_NS)[0].text.split(',')
-	except:
-		tags = []
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+	duration = int(html.xpath('//meta[@property="video:duration"]/@content')[0]) * 1000
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = thumb,
-		originally_available_at = date,
-		duration = duration,
-		rating = rating,
-		tags = tags
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		duration = duration
 	)
 
 ####################################################################################################
@@ -54,80 +28,38 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
+			container = Container.MP4,
 			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			container = 'mp4',
 			video_resolution = '720',
-			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res='hd'))]
-		),
-		MediaObject(
-			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
-			container = 'mp4',
-			video_resolution = 'sd',
 			optimized_for_streaming = True,
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))]
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			]
 		)
 	]
 
 ####################################################################################################
-def GetXml(url):
-
-	item_id = RE_ITEM_ID.search(url)
-
-	if item_id is None:
-		return None
-
-	video_id = item_id.group('id')
-	data = XML.ElementFromURL(API_URL % video_id, cacheTime=CACHE_1DAY).xpath('//item/id[text()="'+video_id+'"]/parent::item')
-
-	if len(data) < 1:
-		return None
-	else:
-		return data[0]
-
-####################################################################################################
 @indirect
-def PlayVideo(url, res):
+def PlayVideo(url, **kwargs):
 
-	data = GetXml(url)
+	html = HTML.ElementFromURL(url)
+	flash_vars = html.xpath('//object/param[@id="flashVars"]/@value')
 
-	if not data:
+	if len(flash_vars) < 1:
 		raise Ex.MediaNotAvailable
 
-	player_url = data.xpath('./media:content', namespaces=API_NS)[0].get('url')
+	json = flash_vars[0].split('mediaData=')[-1].split('&postRollContentURL')[0]
+	json = String.Unquote(json)
+	json_obj = JSON.ObjectFromString(json)
 
-	if player_url == '':
-		raise Ex.MediaNotAvailable
+	video_url = json_obj['MP4']['mediaURL']
 
-	request = urllib2.Request(player_url, None, HTTP_HEADERS)
-	opener = urllib2.build_opener(SmartRedirectHandler)
-	f = opener.open(request)
+	try:
+		headers = HTTP.Request(video_url, follow_redirects=False).headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			video_url = e.headers['Location']
+			return IndirectResponse(VideoClipObject, key=video_url)
 
-	if f.status == 303:
-		data = String.Unquote(f.url)
-		media = JSON.ObjectFromString(RE_MEDIA.search(data).group('media'))
-
-		if res == 'hd' and 'highDefinitionMP4' in media:
-			video_url = media['highDefinitionMP4']['mediaURL']
-			key = media['highDefinitionMP4']['access'][0]['value']
-		elif 'MP4' in media:
-			video_url = media['MP4']['mediaURL']
-			key = media['MP4']['access'][0]['value']
-		else:
-			video_url = media['flv']['mediaURL']
-			key = media['flv']['access'][0]['value']
-
-		return IndirectResponse(VideoClipObject, key=VIDEO_URL % (video_url.replace(' ', '%20'), key))
-
-	else:
-		raise Ex.MediaNotAvailable
-
-####################################################################################################
-class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
-
-	def http_error_303(self, req, fp, code, msg, headers):
-		result = urllib2.HTTPRedirectHandler.http_error_303(self, req, fp, code, msg, headers)
-		result.status = code
-		return result
+	raise Ex.MediaNotAvailable
