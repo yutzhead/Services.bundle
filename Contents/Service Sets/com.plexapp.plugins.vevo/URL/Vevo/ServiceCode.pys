@@ -33,7 +33,7 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if Client.Product == "Web Client":
+	if Client.Product in ('Web Client', 'Plex Web'):
 
 		return [
 			MediaObject(
