@@ -199,7 +199,12 @@ def PlayVideo(url):
 
 		found_episode = False
 
-		for episode in JSON.ObjectFromURL(EPISODES_URL % show_id)['assetsX']:
+		try:
+			json_obj = JSON.ObjectFromURL(EPISODES_URL % show_id)['assetsX']
+		except:
+			raise Ex.MediaNotAvailable
+
+		for episode in json_obj:
 			if episode['assetID'].endswith(video_id):
 				m3u8_url = episode['videoURL']
 
