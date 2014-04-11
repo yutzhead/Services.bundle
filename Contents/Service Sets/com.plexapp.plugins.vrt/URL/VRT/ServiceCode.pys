@@ -20,7 +20,12 @@ def MetadataObjectForURL(url):
 	id = CM_ID.findall(url)
 
 	if len(id) < 1:
-		permalink = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//a[@title="Permalink"]/@data-popup-text')
+		try:
+			html = HTML.ElementFromURL(url, headers=HTTP_HEADERS)
+		except Ex.HTTPError, e:
+			raise Ex.MediaNotAvailable
+
+		permalink = html.xpath('//a[@title="Permalink"]/@data-popup-text')
 
 		if len(permalink) < 1:
 			raise Ex.MediaNotAvailable
