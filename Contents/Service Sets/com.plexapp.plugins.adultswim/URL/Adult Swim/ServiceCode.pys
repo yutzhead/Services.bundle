@@ -134,7 +134,11 @@ def GetDetails(url):
 			raise Ex.MediaNotAvailable
 
 	id = video_src[0].get('href').split('id=')[1]
-	details = XML.ElementFromURL(DETAIL_URL % id)
+
+	try:
+		details = XML.ElementFromURL(DETAIL_URL % id)
+	except Ex.HTTPError, e:
+		raise Ex.MediaNotAvailable
 
 	if details.xpath('//episodes[@totalItems]')[0].get('totalItems') == '0':
 		raise Ex.MediaNotAvailable
