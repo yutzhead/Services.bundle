@@ -1,5 +1,4 @@
 VIDEO_URL = 'http://xhamster.com/movies/%s/.html'
-RE_THUMB = Regex("'image':'([^']+)'")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -14,27 +13,24 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		page = HTTP.Request(url).content
+		html = HTML.ElementFromURL(url)
 	except:
 		raise Ex.MediaNotAvailable
-
-	html = HTML.ElementFromString(page)
 
 	title = html.xpath('//title/text()')[0].rsplit(' - ', 1)[0].strip()
 
 	# A missing description tag means we don't have a video
-	try:
-		summary = html.xpath('//meta[@name="description"]/@content')[0].split('xHamster.com! ', 1)[-1].strip()
-	except:
+	summary = html.xpath('//meta[@name="description"]/@content')
+
+	if len(summary) < 1:
 		raise Ex.MediaNotAvailable
+
+	summary = summary[0].split('xHamster.com! ', 1)[-1].strip()
 
 	if summary.startswith('xHamster'):
 		summary = None
 
-	try:
-		thumb = RE_THUMB.search(page).group(1)
-	except:
-		thumb = ''
+	thumb = html.xpath('//object//img/@src')[0]
 
 	return VideoClipObject(
 		title = title,
@@ -72,6 +68,4 @@ def PlayVideo(url):
 	if len(mp4_url) < 1:
 		raise Ex.MediaNotAvailable
 
-	mp4_url = String.Unquote(mp4_url[0])
-
-	return IndirectResponse(VideoClipObject, key=mp4_url)
+	return IndirectResponse(VideoClipObject, key=mp4_url[0])
