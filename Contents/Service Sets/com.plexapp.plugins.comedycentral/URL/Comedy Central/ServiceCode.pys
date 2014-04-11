@@ -12,7 +12,10 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	xml = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR)
+	try:
+		xml = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR)
+	except Ex.HTTPError, e:
+		raise Ex.MediaNotAvailable
 
 	title = xml.xpath('//channel/title/text()')[0]
 	summary = xml.xpath('//channel/description/text()')[0]
