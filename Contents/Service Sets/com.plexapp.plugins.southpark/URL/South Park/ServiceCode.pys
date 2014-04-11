@@ -52,34 +52,9 @@ def MetadataObjectForURL(url):
 		)
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-
-	if 'clips' in url:
-		num_parts = 1
-	else:
-		num_parts = 4
-
-	return [
-		MediaObject(
-			parts = [
-				PartObject(
-					key=Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-					) for i in range(num_parts)
-			],
-			bitrate = bitrate,
-			video_resolution = resolution,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		) for bitrate,resolution in [(1200, '720'), (1000, '540'), (800, '480'), (700, '432'), (450, '288')]
-	]
-
-####################################################################################################
-def PlayVideo(url, bitrate='1200', index=0):
-
-	rtmp_url = None
-
+	
 	content = HTTP.Request(url).content
 	uri = RE_URI.search(content)
 
@@ -92,44 +67,69 @@ def PlayVideo(url, bitrate='1200', index=0):
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
-	if len(mrss_data.xpath('//item')) < 1:
+	guids = mrss_data.xpath('//guid')
+	if len(guids) < 1:
 		raise Ex.MediaNotAvailable
-
-	# Some feeds have an 'intro' item. If this is the case, up the index by 1
-	title = mrss_data.xpath('//item/title')[0].text
-	if title.startswith('South Park Intro'):
-		index = index + 1
-
+	
+	available_streams = {}
+	heights = []
+	index = 0
+	
 	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-	if index < len(media_url):
+	
+	while index < len(guids):
 		player_url = media_url[index].get('url')
-	else:
-		# Return small filler movie for desktop clients
-		return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
-
-	try:
 		player_data = XML.ElementFromURL(player_url)
-	except:
-		raise Ex.MediaNotAvailable
+		for rendition in player_data.xpath('//rendition'):
+			bitrate = rendition.get('bitrate')
+			height = rendition.get('height')
+			duration = rendition.get('duration')
+			rtmp_url = rendition.xpath('./src')[0].text
+			if '/viacomspstrm/' in rtmp_url:
+				stream_url = rtmp_url.split('/viacomspstrm/')[1]
+			elif '/mtvnorigin/' in rtmp_url:
+				stream_url = rtmp_url.split('/mtvnorigin/')[1]
+			else:
+				raise Ex.MediaNotAvailable
+			mp4_url = MP4_URL % stream_url
+			if unicode(height) in available_streams.keys():
+				available_streams[unicode(height)][unicode(index)] = {"bitrate":bitrate,"mp4_url":mp4_url,"duration":duration}
+			else:
+				available_streams[unicode(height)] = {}
+				available_streams[unicode(height)][unicode(index)] = {"bitrate":bitrate,"mp4_url":mp4_url,"duration":duration}
+			if height not in heights:
+				heights.append(height)
 
-	available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
-	if len(available_bitrates) < 1:
-		raise Ex.MediaNotAvailable
+		index += 1
 
-	closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-	rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
-    
+	heights.reverse()
 
-	if rtmp_url:
-		if '/viacomspstrm/' in rtmp_url:
-			stream_url = rtmp_url.split('/viacomspstrm/')[1]
-		elif '/mtvnorigin/' in rtmp_url:
-			stream_url = rtmp_url.split('/mtvnorigin/')[1]
-		else:
-			raise Ex.MediaNotAvailable
+	media_objects = []
 
-		mp4_url = MP4_URL % stream_url
+	# check that we're getting an MP4 rather than the occassional FLV
+	headers = HTTP.Request(available_streams[unicode(height)][unicode(0)]["mp4_url"]).headers
+	contentType = headers['content-type']
 
-		return Redirect(mp4_url)
+	if "mp4" in contentType.lower():
+		MediaObject.container = Container.MP4
+		MediaObject.video_codec = VideoCodec.H264
+		MediaObject.audio_codec = AudioCodec.AAC
 	else:
-		raise Ex.MediaNotAvailable
+		pass
+
+	for height in heights:
+		i = 0
+		parts = []
+		while i < len(guids):
+			parts.append(
+				PartObject(key=available_streams[unicode(height)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(height)][unicode(i)]["duration"])*1000)
+			)
+			i += 1
+		media_objects.append(
+			MediaObject(
+				parts=parts,
+				bitrate = int(available_streams[unicode(height)][unicode(0)]["bitrate"]),
+				video_resolution = int(height)
+			)
+		)
+	return media_objects
