@@ -106,24 +106,28 @@ def Thumb(url=None):
   if url[-4:] == ".jpg":
     thumb_url = url
   else:
-    page = HTML.ElementFromURL(url)  
     try:
-      thumb_url = METADATA_BASE_URL + page.xpath('.//table[@class="fileFormats"]//a[contains(@href, ".jpg")]')
-    except:
+      page = HTML.ElementFromURL(url)
+
       try:
-        thumb_url = page.xpath('//img[@title="[item image]"]')[0].get('src')
-        if thumb_url[-4:] != ".jpg":
-          raise ThumbError('Not a jpg')
-        else:
-          pass
+        thumb_url = METADATA_BASE_URL + page.xpath('.//table[@class="fileFormats"]//a[contains(@href, ".jpg")]')
       except:
         try:
-          '''grab the list of files to find an appropriate thumbnail'''
-          files = XML.ElementFromURL(FileListURL(url))
-          '''take the first available jpeg thumbnail'''
-          thumb_url = DownloadURL(url) + files.xpath('//file[contains(@name, ".jpg")]')[0].get('name')
+          thumb_url = page.xpath('//img[@title="[item image]"]')[0].get('src')
+          if thumb_url[-4:] != ".jpg":
+            raise ThumbError('Not a jpg')
+          else:
+            pass
         except:
-          thumb_url = INTERNET_ARCHIVE_LOGO
+          try:
+            '''grab the list of files to find an appropriate thumbnail'''
+            files = XML.ElementFromURL(FileListURL(url))
+            '''take the first available jpeg thumbnail'''
+            thumb_url = DownloadURL(url) + files.xpath('//file[contains(@name, ".jpg")]')[0].get('name')
+          except:
+            thumb_url = INTERNET_ARCHIVE_LOGO
+    except:
+      thumb_url = INTERNET_ARCHIVE_LOGO
 
   data = HTTP.Request(thumb_url, cacheTime=CACHE_1DAY).content
   return DataObject(data, 'image/jpeg')
