@@ -75,7 +75,17 @@ def PlayVideo(url, fmt='high'):
 			video_url = clip['%s_url' % fmts[index]]
 
 			if fmt == 'hd':
-				video_url = '%s&api_key=%s' % (video_url, ApiKey())
+				try:
+					# Just get the key here, the tag will be re-added later.
+					api_key = url.split('/')[-2][9:]
+				except:
+					api_key = None
+
+				if not api_key:
+					api_key = ApiKey()
+
+				video_url = '%s&api_key=%s' % (video_url, api_key)
+
 			break
 		else:
 			index = index - 1
