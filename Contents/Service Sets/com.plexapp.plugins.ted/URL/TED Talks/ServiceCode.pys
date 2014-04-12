@@ -17,7 +17,7 @@ def MetadataObjectForURL(url):
 	title = json_obj['title']
 	speaker = json_obj['speaker']
 	summary = html.xpath('//meta[@name="description"]/@content')[0]
-	thumb = json_obj['thumb']
+	thumb = 'http://%s' % json_obj['thumb'] if not json_obj['thumb'].startswith('http://') else json_obj['thumb']
 	published = Datetime.FromTimestamp(json_obj['published'])
 	duration = int(float(json_obj['duration'])*1000)
 
