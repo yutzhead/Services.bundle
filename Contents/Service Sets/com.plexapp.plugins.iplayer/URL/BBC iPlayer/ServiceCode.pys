@@ -12,8 +12,12 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
     pid       = RE_PID.findall(url)[0]
-    thumb     = 'http://node2.bbcimg.co.uk/iplayer/images/episode/%s_640_360.jpg' % pid
     programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=HTTP_HEADERS)['programme']
+
+    try:
+        thumb = 'http://ichef.bbci.co.uk/programmeimages/%s/%s_640_360.jpg' % (programme['image']['pid'], pid)
+    except:
+        thumb = 'http://node2.bbcimg.co.uk/iplayer/images/episode/%s_640_360.jpg' % pid
 
     if programme['long_synopsis']:
         summary = programme['long_synopsis']
