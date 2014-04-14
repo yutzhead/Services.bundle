@@ -6,13 +6,7 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
-	json = html.xpath('//div[@data-cnet-video-options]/@data-cnet-video-options')
-
-	if len(json) < 1:
-		raise Ex.MediaNotAvailable
-
-	json_obj = JSON.ObjectFromString(json[0])['video']
+	json_obj = GetJSON(url)
 
 	return VideoClipObject(
 		title = json_obj['headline'],
@@ -42,22 +36,48 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, **kwargs):
 
+	json_obj = GetJSON(url)
+
+	for video in json_obj['files']['data']:
+		if video['format'] == 'tv' and 'uri' in video:
+			hls_url = video['uri']
+			return IndirectResponse(VideoClipObject, key=hls_url)
+
+	for video in json_obj['files']['data']:
+		if video['type'] == 'HLS_VARIANT_TABLET' and 'uri' in video:
+			hls_url = video['uri']
+			return IndirectResponse(VideoClipObject, key=hls_url)
+
+	for video in json_obj['files']['data']:
+		if video['type'] == 'HLS_VARIANT_TABLET' and video['format'] == 'M3U' and 'mpxPublicId' in video:
+			hls_url = 'http://link.theplatform.com/s/kYEXFC/%s?&mbr=true' % video['mpxPublicId']
+
+			try:
+				m3u8 = HTTP.Request(hls_url, follow_redirects=False).content
+			except Ex.RedirectError, e:
+				if 'Location' in e.headers:
+					hls_url = e.headers['Location']
+
+			return IndirectResponse(VideoClipObject, key=hls_url)
+
+	raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetJSON(url):
+
 	html = HTML.ElementFromURL(url)
 	json = html.xpath('//div[@data-cnet-video-options]/@data-cnet-video-options')
 
 	if len(json) < 1:
 		raise Ex.MediaNotAvailable
 
-	json_obj = JSON.ObjectFromString(json[0])['video']['files']['data']
+	json_obj = JSON.ObjectFromString(json[0])
 
-	for video in json_obj:
-		if video['format'] == 'tv':
-			hls_url = video['uri']
-			return IndirectResponse(VideoClipObject, key=hls_url)
+	if 'video' in json_obj and json_obj['video'] is not None:
+		json_obj = json_obj['video']
+	elif 'videos' in json_obj and json_obj['videos'] is not None:
+		json_obj = json_obj['videos'][0]
+	else:
+		raise Ex.MediaNotAvailable
 
-	for video in json_obj:
-		if video['type'] == 'HLS_VARIANT_TABLET':
-			hls_url = video['uri']
-			return IndirectResponse(VideoClipObject, key=hls_url)
-
-	raise Ex.MediaNotAvailable
+	return json_obj
