@@ -320,45 +320,30 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
   return IndirectResponse(VideoClipObject, key=final_url)
 
-
 ####################################################################################################
-# Source: https://github.com/rg3/youtube-dl/blob/master/youtube_dl/extractor/youtube.py
 def decrypt_signature(s, age_gate=False):
+
   Log(len(s))
-  if age_gate:
-  # The videos with age protection use another player, so the
-  # algorithms can be different.
-    if len(s) == 86:
-      return s[2:63] + s[82] + s[64:82] + s[63]
-  
-  if len(s) == 92:
-    return s[25] + s[3:25] + s[0] + s[26:42] + s[79] + s[43:79] + s[91] + s[80:83]
-  elif len(s) == 91:
-    return s[84:27:-1] + s[86] + s[26:5:-1]
-  elif len(s) == 90:
-    return s[25] + s[3:25] + s[2] + s[26:40] + s[77] + s[41:77] + s[89] + s[78:81]
-  elif len(s) == 89:
-    return s[2:30] + s[78] + s[31:49] + s[30] + s[50:68] + s[87] + s[69:78] + s[68] + s[79:85]
-  elif len(s) == 88:
-    return s[43] + s[3:15] + s[51] + s[16:23] + s[1] + s[24:43] + s[2] + s[87] + s[45:51] + s[0] + s[52:87] + s[44]
-  elif len(s) == 87:
-    return s[43] + s[3:15] + s[51] + s[16:23] + s[1] + s[24:43] + s[86] + s[44:51] + s[0] + s[52:86] + s[2]
-  elif len(s) == 86:
-    return s[43] + s[3:15] + s[51] + s[16:23] + s[1] + s[24:42] + s[85] + s[2] + s[44:51] + s[0] + s[52:85] + s[42]
-  elif len(s) == 85:
-    return s[73] + s[80:73:-1] + s[81] + s[72:26:-1] + s[0] + s[25:15:-1] + s[1] + s[14:1:-1] + s[15]
-  elif len(s) == 84:
-    return s[72] + s[79:72:-1] + s[80] + s[71:26:-1] + s[0] + s[25:15:-1] + s[1] + s[14:1:-1] + s[15]
-  elif len(s) == 83:
-    return s[39] + s[81:43:-1] + s[82] + s[42:39:-1] + s[43] + s[38:1:-1]
-  elif len(s) == 82:
-    return s[38] + s[80:42:-1] + s[81] + s[41:38:-1] + s[42] + s[37:1:-1]
-  elif len(s) == 81:
-    return s[43] + s[3:15] + s[51] + s[16:23] + s[1] + s[24:37] + s[80] + s[38:43] + s[2] + s[44:51] + s[0] + s[52:80] + s[37]
-  elif len(s) == 80:
-    return s[1:19] + s[0] + s[20:68] + s[19] + s[69:80]
-  elif len(s) == 79:
-    return s[54] + s[77:54:-1] + s[39] + s[53:39:-1] + s[78] + s[38:34:-1] + s[0] + s[33:29:-1] + s[34] + s[28:9:-1] + s[29] + s[8:0:-1] + s[9]
-  else:
-    Log('Unable to decrypt signature, key length %d not supported; retrying might work' % (len(s)))
-    raise Ex.MediaNotAvailable
+
+#  if age_gate:
+#  # The videos with age protection use another player, so the
+#  # algorithms can be different.
+#    if len(s) == 86:
+#      return s[2:63] + s[82] + s[64:82] + s[63]
+
+  key = str(len(s))
+  json_obj = JSON.ObjectFromURL('https://dl.dropboxusercontent.com/u/2974527/Plex/y.json', cacheTime=300)
+
+  if not key in json_obj:
+    Log('Unable to decrypt signature, key length %d not available' % (len(s)))
+
+  d = ''
+
+  for p in json_obj[key]:
+    if ':' in p:
+      (b, l) = p.split(':')
+      d = '%s%s' % (d, s[int(b):int(l)])
+    else:
+      d = '%s%s' % (d, s[int(p)])
+
+  return d
