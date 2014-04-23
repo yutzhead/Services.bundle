@@ -1,14 +1,13 @@
 XL_URL = 'http://www.rtlxl.nl/#!/u/%s'
 XL_DATA_URL = 'http://www.rtl.nl/system/s4m/xldata/uuid/%s'
-FEED_URL = '/s%=ka/s%=tmf/dapi=d/dfdapi/m4s/metsys/ln.ltr.www//:ptth'[::-1]
+FEED_URL = 'http://www.rtl.nl/system/s4m/ipadfd/d=ipad/fmt=adaptive/ak=%s/'
 THUMB_URL = 'http://data.rtl.nl/system/img//%s.jpg'
 
 RE_UUID = Regex('(?P<uuid>[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})')
 RE_SERIES_ID = Regex('/(?P<series_id>\d+)\.xml')
-CLIENT_COMPAT_ADAPTIVE_HLS = ['iOS', 'Android', 'Roku', 'Safari']
 
-HTTP_HEAD_DESKTOP = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
-HTTP_HEAD_TABLET = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
+HTTP_HEADERS_DESKTOP = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17'}
+HTTP_HEADERS_TABLET = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -27,7 +26,7 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	data_url = XL_DATA_URL % uuid.group('uuid')
-	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEAD_DESKTOP, encoding='iso-8859-1').xpath('//material[@key="%s"]' % uuid.group('uuid'))
+	material_node = XML.ElementFromURL(data_url, headers=HTTP_HEADERS_DESKTOP, encoding='iso-8859-1').xpath('//material[@key="%s"]' % uuid.group('uuid'))
 
 	if len(material_node) < 1:
 		raise Ex.MediaNotAvailable
@@ -73,34 +72,20 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if Client.Platform in CLIENT_COMPAT_ADAPTIVE_HLS:
-		return [
-			MediaObject(
-				parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url, type='hls')))],
-				container = 'mpegts',
-				video_codec = VideoCodec.H264,
-				video_resolution = 'sd',
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=url, type='mp4'))],
-				container = 'mp4',
-				video_codec = VideoCodec.H264,
-				video_resolution = 'sd',
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			],
+			video_resolution = 'sd'
+		)
+	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, type):
+def PlayVideo(url, **kwargs):
 
 	uuid = RE_UUID.search(url)
 	if not uuid:
@@ -109,19 +94,16 @@ def PlayVideo(url, type):
 	data_url = XL_DATA_URL % uuid.group('uuid')
 
 	try:
-		x = HTTP.Request(data_url, headers=HTTP_HEAD_DESKTOP, timeout=5, follow_redirects=False).headers
+		x = HTTP.Request(data_url, headers=HTTP_HEADERS_DESKTOP, timeout=5, follow_redirects=False).headers
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
 			series_id = RE_SERIES_ID.search(e.headers['Location']).group('series_id')
 		else:
 			raise Ex.MediaNotAvailable
 
-	if type == 'hls':
-		xml_url = FEED_URL % ('adaptive', series_id)
-	else:
-		xml_url = FEED_URL % ('progressive', series_id)
+	xml_url = FEED_URL % series_id
 
-	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEAD_TABLET).xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
+	video_url = XML.ElementFromURL(xml_url, headers=HTTP_HEADERS_TABLET).xpath('//item/contentid[text()="%s"]/parent::item/movie/text()' % uuid.group('uuid'))
 	if len(video_url) < 1:
 		raise Ex.MediaNotAvailable
 	else:
