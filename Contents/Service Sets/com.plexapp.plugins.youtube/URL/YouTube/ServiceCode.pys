@@ -332,7 +332,7 @@ def decrypt_signature(s, age_gate=False):
 #      return s[2:63] + s[82] + s[64:82] + s[63]
 
   key = str(len(s))
-  json_obj = JSON.ObjectFromURL('http://dl.dropboxusercontent.com.nyud.net/u/2974527/Plex/y.json', cacheTime=300)
+  json_obj = JSON.ObjectFromURL('http://6bcff61fb860029015c6-b0c40228a7b02641ddb14594625d1e51.r77.cf3.rackcdn.com/y.json', cacheTime=300)
 
   if not key in json_obj:
     Log('Unable to decrypt signature, key length %d not available' % (len(s)))
