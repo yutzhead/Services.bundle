@@ -2,11 +2,11 @@ NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
 
 MRSS_URL = "http://www.logotv.com/player/includes/rss.jhtml?uri=%s"
 MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
+URI_FORMAT = 'mgid:uma:%s:mtv.com:%s'
 
-RE_MGID = Regex('(?:\/|vid=|id=)(\d{4,7})\/?')
-RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
-RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
-
+RE_URI = Regex('MTVN.Player.(?:episode|video)Uri = \"(.+?)\"')
+RE_PLAYLIST = Regex('MTVN.Player.defaultPlaylistId = (\d{7})')
+RE_RES_BIT = Regex('.+_\d{3,4}x(\d{3,4})_(\d{3,4})_(?:h|m)\d{2}.mp4$')
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -33,88 +33,127 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-# It is best to determine the type by the length of the mgid number so no errors come up and all playlist have parts
-# Also movies can be much longer than episodes, so to have movies play in full, but keep parts manageable, we separate them base on url structure
-
-    mgid = RE_MGID.search(url).group(1)
-
-    if len(mgid) > 6 and '/misc/' not in url:
-        # This is for full episodes and can vary from 4 to 8 parts
-        if '/season-' in url or 'episode-' in url or '/operation-vacation-' in url or '/off-pitch-' in url:
-            num_parts = 8
-        # this is for movies that can vary from 7 to 17 parts. Most are 10 to 15 parts
-        else:
-            num_parts = 17
-    else:
-        num_parts = 1
-
-    return [
-        MediaObject(
-            parts = [
-                PartObject(
-                    key = Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-                ) for i in range(num_parts)
-            ],
-            bitrate = bitrate,
-            container = Container.MP4,
-            video_resolution = resolution,
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-	    # Any other resolutions are handled by the closest command in the PlayVideo function
-        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360'), (750, '288')]
-    ]
-
-####################################################################################################
-def PlayVideo(url, bitrate='1700', index=0):
 
     mrss_data = GetRSS(url)
     media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-
-    if index < len(media_url):
+    available_streams = {}
+    bitrates = []
+    bitrates_heights = []
+    index = 0
+        
+    while index < len(media_url):
         player_url = media_url[index].get('url')
         player_url = player_url.replace('{device}', 'Other')
-    else:
-        # Return small filler movie for desktop clients
-        return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
 
-    try:
-        player_data = XML.ElementFromURL(player_url)
-    except:
-        raise Ex.MediaNotAvailable
+        try:
+            player_data = XML.ElementFromURL(player_url)
+        except:
+            raise Ex.MediaNotAvailable
 
-    available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
-    if len(available_bitrates) < 1:
-        raise Ex.MediaNotAvailable
+        mediagen_list = player_data.xpath('//rendition')
+        if len(mediagen_list)<1:
+            raise Ex.MediaNotAvailable
+        # Make sure the value for the first rtmp url listed is not a "video unavailable" image. 
+        # If the value for the rtmp url is a png file, delete this part/media from the media_url list and continue
+        first_rend = player_data.xpath('//rendition/src//text()')[0]
+        if first_rend.endswith('.png'):
+            media_url.pop(index)
+            Log('This media is an image and the video is no longer available')
+            continue
 
-    closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-    rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
+        for rendition in mediagen_list:
+            duration = rendition.get('duration')
+            rtmp_url = rendition.xpath('./src')[0].text
+            # NOT SURE IF THIS IS NECESSARY WITH LOGO UNLIKE MTV BUT WILL PREVENT ANY ERRORS FROM WRONGLY ENTERED URLS
+            # Try getting bitrate and resolution from video url
+            try:
+                height = RE_RES_BIT.search(rtmp_url).group(1)
+                bitrate = RE_RES_BIT.search(rtmp_url).group(2)
+            # Just in case there is an issue with the url get bitrate and hieght from xml
+            except:
+                bitrate = rendition.get('bitrate')
+                height = rendition.get('height')
 
-    if not '/viacomlogostrm/' in rtmp_url:
-        raise Ex.MediaNotAvailable
+            if '/viacomlogostrm/' in rtmp_url:
+                stream_url = rtmp_url.split('/viacomlogostrm/')[1]
+            else:
+                raise Ex.MediaNotAvailable
+            
+            mp4_url = MP4_URL % stream_url
+            # Use the first video to create the bitrates and available_streams lists
+            # Otherwise if a later part has an additional or different/odd sized bitrate, it will create a separate bitrate listing
+            # in the avialable streams with only index for that one part and all other bitrates will be missing the index for that part 
+            if index == 0:
+                bitrates.append(int(bitrate))
+                # create a separate list of bitrates and heights to use if a later if a part has 
+                # an additional or different value for bitrate than those established by the first part
+                bitrates_heights.append((bitrate, height))
+                available_streams[unicode(bitrate)] = {}
+                available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+            else:
+                if unicode(bitrate) in available_streams.keys():
+                    available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                else:
+                    # Here we use the hieght of this part and the bitrates_heights lists from the first part to find the closest bitrate
+                    closest = FindClosest(bitrates_heights, bitrate, height)
+                    if closest:
+                        available_streams[unicode(closest)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
 
-    stream_url = rtmp_url.split('/viacomlogostrm/')[1]
-    mp4_url = MP4_URL % stream_url
+        index += 1
 
-    return Redirect(mp4_url)
+    bitrates.sort()
+    bitrates.reverse()
+    #Log('the value of available_streams is %s' %available_streams)        
+
+    media_objects = []
+
+    for bitrate in bitrates:
+        # Since the closest code above should resolve any issues with bitrates missing indexes in available streams
+        # below we just add a line to skip bitrate lists that are not complete to keep the parts.append from failing due to missing indexes
+        if len(available_streams[unicode(bitrate)]) < len(media_url):
+            Log('for %s bitrate, the length of media_url is %s and the length of available_streams is %s' %(bitrate, len(media_url), len(available_streams[unicode(bitrate)])))
+            continue
+        # Create the list of all video resolutions for a bitrate and then use the first video resolution here to prevent issues with missing indexes
+        vid_res_list = available_streams[unicode(bitrate)].values()
+        vid_res = int(vid_res_list[0]["height"])
+        i = 0
+        parts = []
+        while i < len(media_url):
+            parts.append(
+                PartObject(key=available_streams[unicode(bitrate)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(bitrate)][unicode(i)]["duration"])*1000)
+            )                    
+            i += 1
+        media_objects.append(
+            MediaObject(
+                parts=parts,
+                bitrate = int(bitrate),
+                video_resolution = vid_res
+            )
+        )
+            
+    return media_objects
 
 ####################################################################################################
 # Using regex to pull uri. Make it a separate function so it can be used for the metadataobject too. 
-# It is best to determine the type by the length of the mgid number so no errors come up
 def GetRSS(url):
 
-    mgid = RE_MGID.search(url).group(1)
+    # Not using number in url or its length to determine the uri since seven digit numbers can be a full episode or a video clip. 
+    # Since the uri in the content of a url maay not reflect a possible video clip playlist, we first check for a playlist id
+
+    # First check the url to see if it for a video playlist and if so build a videolist uri
     content = HTTP.Request(url).content
-
-    # Put in try/except since digits length of mgid no longer defines whether playlist or clip and try episode first since 7 digits could be either
-    try: uri = RE_EPISODE_URI.search(content).group(1)
-    except: uri = RE_CLIP_URI.search(content).group(1)
-
-    # This in case the regex field for the uri on the page is blank
-    if not uri:
-        raise Ex.MediaExpired 
+    try: mgid_num = RE_PLAYLIST.search(content).group(1)
+    except: mgid_num = None
+    if mgid_num:
+        uri = URI_FORMAT %('videolist', mgid_num)
+    # Otherwise pull the uri from the web page content
+    else:
+        # Pull the uri from the web page
+        content = HTTP.Request(url).content
+        try: uri = RE_URI.search(content).group(1)
+        except: raise Ex.MediaNotAvailable
 
     xml = XML.ElementFromURL(MRSS_URL % uri)
 
@@ -122,3 +161,18 @@ def GetRSS(url):
         raise Ex.MediaNotAvailable
     else:
         return xml
+##################################################################################################
+# This is a function to find the closest bitrate in the bitrates list for varying indexes using the height
+def FindClosest(bitrates_heights, bitrate, height):
+
+    closest = None
+    for bitrate_value,height_value in bitrates_heights:
+        if height_value==height:
+            closest = bitrate_value
+            # Since often a height or resolution may have multiple bitrates, if we use a break below, it will find the 
+            # the lowest bitrate with an equal height but if we do not put break it will find the highest bitrate with an equal height
+            break
+    #Log(' the value of closest to be returned by this function is %s' %closest)
+    return closest
+
+
