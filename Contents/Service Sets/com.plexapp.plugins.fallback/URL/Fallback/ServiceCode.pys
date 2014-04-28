@@ -63,6 +63,10 @@ def ValidURL(url):
 
 	url = urlparse.urlparse(url)
 
+	for host in ('hulu.com', 'netflix.com'):
+		if host in url.hostname:
+			return False
+
 	if url.scheme not in ('http', 'https'):
 		return False
 

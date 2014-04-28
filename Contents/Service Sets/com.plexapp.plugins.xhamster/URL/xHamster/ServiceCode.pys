@@ -17,6 +17,12 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
+	# A missing mp4 link means we don't have a video (or a low-res flv)
+	mp4_url = html.xpath('//div[@class="noFlash"]/a/@href')
+
+	if len(mp4_url) < 1:
+		raise Ex.MediaNotAvailable
+
 	title = html.xpath('//title/text()')[0].rsplit(' - ', 1)[0].strip()
 
 	# A missing description tag means we don't have a video
