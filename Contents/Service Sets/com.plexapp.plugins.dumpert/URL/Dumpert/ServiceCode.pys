@@ -3,68 +3,66 @@ THUMB_URL = 'http://static.dumpert.nl/sq_thumbs/%s_%s.jpg'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    page = HTML.ElementFromURL(url)
 
-    title = page.xpath('//meta[@name="title"]')[0].get('content')
-    summary = page.xpath('//meta[@name="description"]')[0].get('content')
-    video = page.xpath('//div[@class="video" and @data-vidurl]')
-    audio = page.xpath('//div[@class="audio" and @data-audurl]')
+	html = HTML.ElementFromURL(url)
+	video = html.xpath('//div[@class="videoplayer"]')
 
-    # Video
-    if len(video) > 0:
-        thumb = page.xpath('//link[@rel="image_src"]')[0].get('href')
+	if len(video) < 1:
+		raise Ex.MediaNotAvailable
 
-        return VideoClipObject(
-            title = title,
-            summary = summary,
-            thumb = thumb)
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//link[@rel="image_src"]/@href')[0]
 
-    # Audio
-    elif len(audio) > 0:
-
-        return TrackObject(
-            title = title,
-            thumb = DEFAULT_AUDIO_THUMB)
-
-    else:
-        Log.Exception('An error occurred while attempting to retrieve the required meta data.')
+	return VideoClipObject(
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
+	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    page = HTML.ElementFromURL(url)
 
-    video = page.xpath('//div[@class="video" and @data-vidurl]')
-    audio = page.xpath('//div[@class="audio" and @data-audurl]')
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url, res=resolution))
+			],
+			video_resolution = resolution,
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		) for resolution in (720, 360)
+	]
 
-    # Video
-    if len(video) > 0:
-        video_url = video[0].get('data-vidurl')
+####################################################################################################
+@indirect
+def PlayVideo(url, res):
 
-        if video_url.endswith('.mp4'):
-            container = Container.MP4
-            audio_codec = AudioCodec.AAC
-            video_codec = VideoCodec.H264
-        else:
-            container = 'flv'
-            audio_codec = AudioCodec.MP3
-            video_codec = VideoCodec.H263
+	html = HTML.ElementFromURL(url)
+	video = html.xpath('//div[@class="videoplayer"]/@data-files')
 
-        return [
-          MediaObject(
-            container = container,
-            audio_codec = audio_codec,
-            video_codec = video_codec,
-            parts = [PartObject(key=video_url)]
-          )
-        ]
+	if len(video) < 1:
+		raise Ex.MediaNotAvailable
 
-    # Audio
-    elif len(audio) > 0:
-        audio_url = audio[0].get('data-audurl')
+	json_obj = JSON.ObjectFromString(String.Base64Decode(video[0]))
+	video_url = None
 
-        return [
-          MediaObject(
-            audio_codec = AudioCodec.MP3,
-            parts = [PartObject(key=audio_url)]
-          )
-        ]
+	if res == 720:
+		if '720p' in json_obj:
+			video_url = json_obj['720p']
+		elif 'h264' in json_obj:
+			video_url = json_obj['h264']
+
+	if not video_url:
+		if 'tablet' in json_obj:
+			video_url = json_obj['tablet']
+		elif 'mobile' in json_obj:
+			video_url = json_obj['mobile']
+
+	if video_url:
+		return IndirectResponse(VideoClipObject, key=video_url)
+
+	raise Ex.MediaNotAvailable
