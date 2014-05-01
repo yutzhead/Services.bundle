@@ -340,10 +340,13 @@ def decrypt_signature(s, age_gate=False):
   d = ''
 
   for p in json_obj[key]:
-    if ':' in p:
-      (b, l) = p.split(':')
-      d = '%s%s' % (d, s[int(b):int(l)])
-    else:
-      d = '%s%s' % (d, s[int(p)])
+    t = p.split(':')
+
+    if len(t) == 1:
+      d = '%s%s' % (d, s[int(t[0])])
+    elif len(t) == 2:
+      d = '%s%s' % (d, s[int(t[0]):int(t[1])])
+    elif len(t) == 3:
+      d = '%s%s' % (d, s[int(t[0]):int(t[1]):int(t[2])])
 
   return d
