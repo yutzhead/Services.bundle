@@ -1,5 +1,14 @@
+from tv4play import Login
+
 RE_VIDEO_ID     = Regex('(?<=video_id=)[0-9]+')
 RE_SHOW_EPISODE = Regex('(.*) *(Del) *([0-9]+) *(.*)', Regex.IGNORECASE)
+
+API_BASE_URL  = 'http://premium.tv4play.se/api/web/asset/'
+API_VIDEO_URL = API_BASE_URL + '%s/play'
+
+SESSION_URL = 'https://www.tv4play.se/session'
+
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17"
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -14,12 +23,18 @@ def MetadataObjectForURL(url):
         raise Ex.MediaNotAvailable
 
     try:
-        xmlElement = XML.ElementFromURL("http://premium.tv4play.se/api/web/asset/" + id)
+        xmlElement = XML.ElementFromURL(API_BASE_URL + id)
     except:
         raise Ex.MediaNotAvailable
 
     try:
-        title = xmlElement.xpath("//asset//title/text()")[0]
+        if xmlElement.xpath("//asset//drmProtected/text()")[0].lower() == 'true':
+            raise Ex.MediaNotAvailable
+    except:
+        pass
+
+    try:
+        title = unicode(xmlElement.xpath("//asset//title/text()")[0])
     except:
         title = None
              
@@ -32,7 +47,7 @@ def MetadataObjectForURL(url):
         episode = None
 
     try:  
-        summary = xmlElement.xpath("//asset//description/text()")[0]
+        summary = unicode(xmlElement.xpath("//asset//description/text()")[0])
     except:
         summary = None
 
@@ -97,29 +112,76 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(id):
     xmlElement = None
+        
+    headers = {}
+    headers['User-Agent'] = USER_AGENT
+    
+    cookies = None
+    if Prefs['premium'] and Prefs['email'] and Prefs['password']:
+        cookies = Login()
+        
+    if cookies:
+        headers['Cookie'] = cookies
     
     try:
         # Try get info on HLS streams
-        xmlElement = XML.ElementFromURL(url = "http://premium.tv4play.se/api/web/asset/" + id + "/play?protocol=hls&videoFormat=MP4")
+        xmlElement = XML.ElementFromURL(
+            url = API_VIDEO_URL % id + "?protocol=hls",
+            headers = headers
+        )
     except:
         pass
 
     if xmlElement:
-        for item in xmlElement.xpath("//playback//items")[0]:
+        for item in xmlElement.xpath("//playback//items//item"):
+            url         = item.xpath(".//url/text()")[0]
+            mediaFormat = item.xpath(".//mediaFormat/text()")[0]
+            
+            if url.startswith('http') and '.m3u8' in url and mediaFormat == 'mp4':
+                    return IndirectResponse(
+                        VideoClipObject,
+                        key = HTTPLiveStreamURL(GetClientDependentURL(url))
+                    )
+    
+    # Try without specifying HLS
+    try:
+        xmlElement = XML.ElementFromURL(
+            url = API_VIDEO_URL % id,
+            headers = headers
+        )
+    except:
+        pass
+
+    if xmlElement:
+        for item in xmlElement.xpath("//playback//items//item"):
             base = item.xpath(".//base/text()")[0]
             clip = item.xpath(".//url/text()")[0]
             
-            if base.startswith('http') and base.endswith('.m3u8'):
-                    return IndirectResponse(
-                        VideoClipObject,
-                        key = HTTPLiveStreamURL(GetClientDependentURL(clip))
+            if base.startswith('rtmp'):
+                if not base.startswith('rtmpe'):
+                    base = base.replace('rtmp', 'rtmpe')
+                
+                return IndirectResponse(
+                    VideoClipObject,
+                    key = 
+                        RTMPVideoURL(
+                            url = base, 
+                            clip = clip,
+                            swf_url = 'http://www.tv4play.se/flash/tv4playflashlets.swf'
+                        )
                     )
+            
+            elif clip.startswith('http') and 'manifest.f4m' in clip:
+                return IndirectResponse(
+                    VideoClipObject,
+                    key = HTTPLiveStreamURL(GetClientDependentURL(clip.replace("hds-f", "-i").replace("/z/","/i/").replace("manifest.f4m", "master.m3u8")))
+                )
 
-    # Add Webkit playback if we couldn't find a stream.
-    return IndirectResponse(
-        VideoClipObject,
-        key = WebVideoURL("http://embed.tv4play.se/tv4play/syndication/v1/popout.html?vid=" + id)
-    )
+        if 'NOT_STARTED' in XML.StringFromElement(xmlElement):
+            raise Ex.LiveMediaNotStarted
+
+    else:
+        raise Ex.MediaNotAvailable
 
 ###########################################################
 def GetClientDependentURL(url):
