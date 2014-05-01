@@ -2,11 +2,14 @@ MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s&device=Other'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
+RE_FIX_XML = Regex('(<!--.*?-->)')
+
 MediaObject.container = Container.MP4
 MediaObject.video_codec = VideoCodec.H264
 MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
 MediaObject.optimized_for_streaming = True
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -40,7 +43,10 @@ def MetadataObjectForURL(url):
 
 		uri = video_player[0].get('data-mgid')
 
-		mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+		mrss_data = HTTP.Request(MRSS_URL % uri).content
+		mrss_data = RE_FIX_XML.sub('', mrss_data)
+		mrss_data = XML.ElementFromString(mrss_data)
+
 		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 		duration = 0
 
@@ -99,7 +105,10 @@ def MediaObjectsForURL(url):
 
 	uri = video_player[0].get('data-mgid')
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % uri)
+	mrss_data = HTTP.Request(MRSS_URL % uri).content
+	mrss_data = RE_FIX_XML.sub('', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
 	available_streams = {}
 	bitrates = []
