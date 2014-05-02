@@ -6,14 +6,18 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	json_obj = GetJSON(url)
+	html = HTML.ElementFromURL(url)
+
+	title = html.xpath('//meta[@itemprop="name"]/@content')[0]
+	summary = html.xpath('//meta[@itemprop="description"]/@content')[0]
+	duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0]) * 1000
+	thumb = html.xpath('//meta[@itemprop="thumbnailUrl"]/@content')[0]
 
 	return VideoClipObject(
-		title = json_obj['headline'],
-		summary = json_obj['dek'],
-		duration = json_obj['duration'] * 1000,
-		thumb = Resource.ContentsOfURLWithFallback(json_obj['image']['path']),
-		originally_available_at = Datetime.ParseDate(json_obj['datePublished']['date'])
+		title = title,
+		summary = summary,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -37,16 +41,6 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
-
-	for video in json_obj['files']['data']:
-		if video['format'] == 'tv' and 'uri' in video:
-			hls_url = video['uri']
-			return IndirectResponse(VideoClipObject, key=hls_url)
-
-	for video in json_obj['files']['data']:
-		if video['type'] == 'HLS_VARIANT_TABLET' and 'uri' in video:
-			hls_url = video['uri']
-			return IndirectResponse(VideoClipObject, key=hls_url)
 
 	for video in json_obj['files']['data']:
 		if video['type'] == 'HLS_VARIANT_TABLET' and video['format'] == 'M3U' and 'mpxPublicId' in video:
