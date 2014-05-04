@@ -323,7 +323,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 ####################################################################################################
 def decrypt_signature(s, age_gate=False):
 
-  Log(len(s))
+#  Log(len(s))
 
 #  if age_gate:
 #  # The videos with age protection use another player, so the
@@ -340,13 +340,16 @@ def decrypt_signature(s, age_gate=False):
   d = ''
 
   for p in json_obj[key]:
-    t = p.split(':')
+    t = []
+
+    for x in p.split(':'):
+      t.append(int(x) if x != "" else None)
 
     if len(t) == 1:
-      d = '%s%s' % (d, s[int(t[0])])
+      d = '%s%s' % (d, s[t[0]])
     elif len(t) == 2:
-      d = '%s%s' % (d, s[int(t[0]):int(t[1])])
+      d = '%s%s' % (d, s[t[0]:t[1]])
     elif len(t) == 3:
-      d = '%s%s' % (d, s[int(t[0]):int(t[1]):int(t[2])])
+      d = '%s%s' % (d, s[t[0]:t[1]:t[2]])
 
   return d
