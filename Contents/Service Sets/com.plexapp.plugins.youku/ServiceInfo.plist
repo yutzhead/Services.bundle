@@ -12,7 +12,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://v\.youku\.com/v_show/id_[^.]+\.html</string>
+				<string>^http://v\.youku\.com/v_show/id_[^.]+(\.html)?</string>
 			</array>
 		</dict>
 	</dict>
