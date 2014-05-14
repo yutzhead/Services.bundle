@@ -2,6 +2,7 @@ HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:1
 
 RE_PID     = Regex('iplayer/episode/([^/$]{8})')
 RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
+RE_VPID    = Regex('"vpid" *: *"(.+?)"')
 
 NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
 
@@ -155,20 +156,13 @@ def MediaObjectsForURL(url):
 @indirect
 def DetermineAvailableVideo(url, height):
     try:
-        pid = RE_PID.findall(url)[0]
+        content = HTTP.Request(url).content
+        vpid    = RE_VPID.search(content).groups()[0]
         
     except:
         raise Ex.MediaNotAvailable
-               
-    try:
-        page_contents      = HTTP.Request(url).content
-        details_json       = RE_DETAILS.findall(page_contents)[0]
-        details            = JSON.ObjectFromString(details_json)
-        pid_details        = details[pid]
-        media_selector_url = pid_details['my_mediaselector_xml_url']
-            
-    except:
-        media_selector_url = 'http://www.bbc.co.uk/mediaselector/4/mtis/stream/%s' % pid
+
+    media_selector_url = MediaSelectorURL(vpid)
     
     return IndirectResponse(
         VideoClipObject,
@@ -265,6 +259,11 @@ def GetStream(stream_details, type = 'video', height = 720):
         stream['swf_url'] = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
     
     return stream 
+
+####################################################################################################
+def MediaSelectorURL(vpid):
+    hash = Hash.SHA1((String.Decode('N2RmZjc2NzFkMGM2OTdmZWRiMWQ5MDVkOWExMjE3MTk5MzhiOTJiZg__') + vpid))    
+    return String.Decode('aHR0cDovL29wZW4ubGl2ZS5iYmMuY28udWsvbWVkaWFzZWxlY3Rvci81L3NlbGVjdC92ZXJzaW9uLzIuMC9tZWRpYXNldC9wYy92cGlkLyVzL2F0ay8lcy9hc24vJXMv') % (vpid, hash, '1')
 
 ####################################################################################################
 def TestURLs():
