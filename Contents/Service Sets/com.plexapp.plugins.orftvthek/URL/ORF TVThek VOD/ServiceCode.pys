@@ -32,7 +32,65 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
+    json_data = GetJSONData(url)
+
+    parts    = []
+    duration = 0
+    
+    if url == json_data['values']['episode']['url']:
+        # The whole episode was selected
+        maxPartNo = json_data['values']['episode']['number_of_segments']
+    
+        for partNo in range(0, maxPartNo): 
+            for source in json_data['values']['segments'][partNo]['playlist_item_array']['sources']:
+                if source['protocol'] == 'http' and source['src'].lower().endswith("mp4") and source['quality'] == 'Q6A':
+                    try:
+                        headers = HTTP.Request(source['src']).headers
+                    except:
+                        raise Ex.MediaGeoblocked
+                    
+                    try:
+                        segmentDuration = int(json_data['values']['segments'][partNo]['duration'])
+                        duration        = duration + segmentDuration
+                    except:
+                        segmentDuration = None
+                        
+                    parts.append(
+                        PartObject(
+                            key = source['src'],
+                            duration = segmentDuration
+                        )
+                    )
+        
+    else:
+        # A specific segment in the episode was selected
+        for source in json_data['values']['segment']['playlist_item_array']['sources']:
+            if source['protocol'] == 'http' and source['src'].lower().endswith("mp4") and source['quality'] == 'Q6A':
+                try:
+                    headers = HTTP.Request(source['src']).headers
+                except:
+                    raise Ex.MediaGeoblocked
+                
+                try:
+                    segmentDuration = int(json_data['values']['segment']['duration'])
+                except:
+                    segmentDuration = None
+                
+                parts.append(
+                    PartObject(
+                        key = source['src'],
+                        duration = segmentDuration
+                    )
+                )
+    
+    if len(parts) < 1:        
+        raise Ex.MediaNotAvailable
+    
+    if duration == 0:
+        duration = None
+    
     return [
         MediaObject(
             container               = Container.MP4,
@@ -41,47 +99,8 @@ def MediaObjectsForURL(url):
             video_resolution        = 544,
             audio_channels          = 2,
             optimized_for_streaming = True,
-            parts                   = [
-                PartObject(
-                    key = Callback(PlayVideo, url = url, partNo = partNo)
-                ) for partNo in range(MAX_PARTS)
-            ]
+            duration                = duration,
+            parts                   = parts
         )
     ]
-
-####################################################################################################
-def PlayVideo(url, partNo):
-    json_data = GetJSONData(url)
-    
-    if url == json_data['values']['episode']['url']:
-        # The whole episode was selected
-        maxPartNo = json_data['values']['episode']['number_of_segments'] - 1
-    
-        if partNo <= maxPartNo:
-            for source in json_data['values']['segments'][partNo]['playlist_item_array']['sources']:
-                if source['protocol'] == 'http' and source['src'].lower().endswith("mp4") and source['quality'] == 'Q6A':
-                    try:
-                        headers = HTTP.Request(source['src']).headers
-                        return Redirect(source['src'])
-                    except:
-                        raise Ex.MediaGeoblocked
-                    
-            raise Ex.MediaNotAvailable
-            
-        else:
-            # This video had less than maximum parts, return filler for the rest
-            return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
-
-    else:
-        # A specific segment in the episode was selected
-        for source in json_data['values']['segment']['playlist_item_array']['sources']:
-            if source['protocol'] == 'http' and source['src'].lower().endswith("mp4") and source['quality'] == 'Q6A':
-                try:
-                    headers = HTTP.Request(source['src']).headers
-                    return Redirect(source['src'])
-                except:
-                    raise Ex.MediaGeoblocked
-                
-        raise Ex.MediaNotAvailable
-
-   
+ 
