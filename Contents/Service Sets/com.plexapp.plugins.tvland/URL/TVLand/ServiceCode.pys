@@ -1,4 +1,4 @@
-MRSS_URL = 'http://www.tvland.com/feeds/video_player/mrss/?uri=%s'
+MRSS_URL = 'http://www.tvland.com/feeds/mrss/?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s/%s'
 
