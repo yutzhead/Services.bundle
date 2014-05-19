@@ -66,7 +66,7 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetJSON(url):
 
-	data = HTTP.Request(url).content
+	data = HTTP.Request(url, cacheTime=300).content
 	json = RE_JSON.search(data)
 
 	if not json:
