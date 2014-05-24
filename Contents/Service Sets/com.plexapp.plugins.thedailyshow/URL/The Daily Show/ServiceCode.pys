@@ -152,6 +152,7 @@ def MediaObjectsForURL(url):
 		media_objects.append(
 			MediaObject(
 				parts=parts,
+				audio_codec = AudioCodec.AAC,
 				bitrate = int(bitrate),
 				video_resolution = int(available_streams[unicode(bitrate)][unicode(0)]["height"])
 			)
