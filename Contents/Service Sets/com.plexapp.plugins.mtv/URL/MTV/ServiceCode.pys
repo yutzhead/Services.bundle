@@ -182,6 +182,7 @@ def MediaObjectsForURL(url):
             media_objects.append(
                 MediaObject(
                     parts=parts,
+                    audio_codec = AudioCodec.AAC,
                     bitrate = int(bitrate),
                     video_resolution = vid_res
                 )
