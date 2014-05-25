@@ -400,6 +400,15 @@ def MediaObjectsForURL(url):
 							parts = [PartObject(key=HTTPLiveStreamURL(src))]
 						)
 					]
+				elif src.split('?')[0].endswith('.mp4'):
+					return [
+						MediaObject(
+							container = Container.MP4,
+							video_codec = VideoCodec.H264,
+							audio_codec = AudioCodec.AAC,
+							parts = [PartObject(key=src)]
+						)
+					]
 				else:
 					return [
 						MediaObject(
