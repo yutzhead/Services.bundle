@@ -118,7 +118,7 @@ def PlayVideo(url, resolution, client):
             playlist_url = item['url'].replace("/z/", "/i/").replace("manifest.f4m", "master.m3u8")
 
     if playlist_url:        
-        if client in ['iOS', 'Safari', 'Plex Home Theater']:
+        if client in ['iOS', 'Safari']:
             # These clients can handle both https connections and
             # URLs which contain another URL as parameter
             #
