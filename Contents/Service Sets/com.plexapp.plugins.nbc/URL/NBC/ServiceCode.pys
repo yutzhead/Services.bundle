@@ -59,8 +59,8 @@ def MetadataObjectForURL(url):
 		for episode in JSON.ObjectFromURL(episodes_url)['assetsX']:
 			if episode['assetID'].endswith(video_id):
 				show = episode['parentContainerTitle']
-				season = episode['seasonNumber']
-				index = episode['episodeNumber']
+				season = episode['seasonNumber'] if 'seasonNumber' in episode else None
+				index = episode['episodeNumber'] if 'episodeNumber' in episode else None
 				title = episode['title']
 				summary = episode['description']
 				duration = episode['totalDuration']
