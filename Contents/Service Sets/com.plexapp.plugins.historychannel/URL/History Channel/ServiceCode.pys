@@ -60,7 +60,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-  content = HTTP.Request(url).content
+  try:
+    content = HTTP.Request(url).content
+  except:
+    raise Ex.MediaExpired
+
   smil_url = GetSMILURL(url)
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
