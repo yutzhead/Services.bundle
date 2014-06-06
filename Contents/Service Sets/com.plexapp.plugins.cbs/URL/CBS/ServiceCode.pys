@@ -17,7 +17,10 @@ def MetadataObjectForURL(url):
 	if not pid:
 		raise Ex.MediaNotAvailable
 
-	xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
+	try:
+		xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
+	except:
+		raise Ex.MediaNotAvailable
 
 	if len(xml.xpath('//a:ref[@title="Geographic Restriction"]', namespaces=SMIL_NS)) > 0:
 		raise Ex.MediaGeoblocked
