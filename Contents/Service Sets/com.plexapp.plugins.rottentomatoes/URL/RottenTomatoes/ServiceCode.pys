@@ -25,7 +25,11 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0].rsplit(' Trailer')[0]
-	summary = html.xpath('//meta[@property="og:description"]/@content')[0].split('%s: ' % title)[1]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0].rsplit(' ~ ', 1)[0]
+
+	if '%s: ' % (title) in summary:
+		summary = summary.split('%s: ' % (title))[1]
+
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
 	try:
