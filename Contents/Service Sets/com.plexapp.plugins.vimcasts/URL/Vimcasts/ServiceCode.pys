@@ -5,7 +5,7 @@ def MetadataObjectForURL(url):
 
     # Request the url and identify the episode number
     page = HTML.ElementFromURL(url)
-    episode_number = int(page.xpath("//div[@class='episode_number']/text()")[0])
+    episode_number = int(page.xpath('//*[@class="episode_number"]/text()')[-1].strip())
 
     # Now we'll request the JSON equivalent page and find the associated title.
     json_page = JSON.ObjectFromURL(JSON_PATH)
@@ -27,26 +27,30 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        container = Container.MP4,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
+        MediaObject(
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            container = Container.MP4,
+            optimized_for_streaming = True,
+            parts = [
+                PartObject(key=Callback(PlayVideo, url=url))
+            ]
+        )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
     # Request the url and identify the episode number
     page = HTML.ElementFromURL(url)
-    episode_number = int(page.xpath("//div[@class='episode_number']/text()")[0])
+    episode_number = int(page.xpath('//*[@class="episode_number"]/text()')[-1].strip())
 
     # Now we'll request the JSON equivalent page and find the associated title.
     json_page = JSON.ObjectFromURL(JSON_PATH)
     details = json_page['episodes'][episode_number - 1]
 
     video_url = details['quicktime']['url']
-    return Redirect(video_url)
+    return IndirectResponse(VideoClipObject, key=video_url)

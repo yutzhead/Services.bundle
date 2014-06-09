@@ -19,7 +19,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  content = HTTP.Request(url).content
+  try:
+    content = HTTP.Request(url).content
+  except:
+    raise Ex.MediaNotAvailable
+
   smil_url = GetSMILURL(url)
   releaseURL = '%s&format=script' % smil_url
   data = JSON.ObjectFromURL(releaseURL)
