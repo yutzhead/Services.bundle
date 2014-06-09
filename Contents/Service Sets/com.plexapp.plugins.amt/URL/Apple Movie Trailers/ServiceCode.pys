@@ -57,7 +57,7 @@ def MetadataObjectForURL(url):
 	thumb = '%s/poster-xlarge.jpg' % thumb.rsplit('/', 1)[0]
 	thumb = thumb.replace('https://', 'http://').replace('trailers.apple.com', 'movietrailers.apple.com')
 
-	return VideoClipObject(
+	return MovieObject(
 		title = '%s (%s)' % (movie_title, title),
 		summary = summary,
 		duration = duration,
