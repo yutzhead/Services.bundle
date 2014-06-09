@@ -35,7 +35,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			bitrate = '128',
+			#bitrate = '128',
 			audio_codec = AudioCodec.MP3,
 			container = 'mp3',
 			parts = [
