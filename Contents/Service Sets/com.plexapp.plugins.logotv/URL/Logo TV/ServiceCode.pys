@@ -7,6 +7,12 @@ URI_FORMAT = 'mgid:uma:%s:mtv.com:%s'
 RE_URI = Regex('MTVN.Player.(?:episode|video)Uri = \"(.+?)\"')
 RE_PLAYLIST = Regex('MTVN.Player.defaultPlaylistId = (\d{7})')
 RE_RES_BIT = Regex('.+_\d{3,4}x(\d{3,4})_(\d{3,4})_(?:h|m)\d{2}.mp4$')
+
+MediaObject.container = Container.MP4
+MediaObject.video_codec = VideoCodec.H264
+MediaObject.audio_codec = AudioCodec.AAC
+MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -128,7 +134,9 @@ def MediaObjectsForURL(url):
         media_objects.append(
             MediaObject(
                 parts=parts,
-                audio_codec = AudioCodec.AAC,
+				# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio channels to the streams. 
+				# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
+				audio_channels = 2,
                 bitrate = int(bitrate),
                 video_resolution = vid_res
             )
