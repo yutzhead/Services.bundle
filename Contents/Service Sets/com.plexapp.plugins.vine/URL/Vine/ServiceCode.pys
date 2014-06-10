@@ -12,7 +12,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
@@ -43,7 +46,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	video_url = html.xpath('//*[@itemtype="http://schema.org/VideoObject"]//meta[@itemprop="contentURL"]/@content')
 
