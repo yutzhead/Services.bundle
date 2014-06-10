@@ -34,7 +34,12 @@ def MetadataObjectForURL(url):
     else:
         originally_available_at = None
 
-    duration = programme['versions'][0]['duration']
+    duration = programme['versions'][0]['duration'] if programme['versions'][0]['duration'] is not None else 0
+
+    for version in programme['versions']:
+        if version['types'][0] == 'iPlayer version':
+            duration = version['duration'] if version['duration'] is not None else duration
+            break
 
     if 'parent' in programme:
         parent_programme = programme['parent']['programme']
