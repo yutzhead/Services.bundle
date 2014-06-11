@@ -32,7 +32,13 @@ def MetadataObjectForURL(url):
         (url, query) = url.split('?')
         files = String.ParseQueryString(query)
         files_xml = XML.ElementFromURL(FileListURL(url))
-        track_title = files_xml.xpath('//file[@name="%s"]/title/text()' % files['file'][0])[0]
+
+        try:
+            track_title = files_xml.xpath('//file[@name="%s"]/title/text()' % files['file'][0])[0]
+        except:
+            # Some derivatives are missing the <title> attribute. If this is the case, we try to find the
+            # track title by looking for the same track, but in a different format.
+            track_title = files_xml.xpath('//file[contains(@name, "%s")]/title/text()' % files['file'][0].rsplit('.', 1)[0])[0]
 
         try:
             duration = files_xml.xpath('//file[@name="%s"]/length/text()' % files['file'][0])[0]
@@ -72,19 +78,23 @@ def MetadataObjectForURL(url):
     elif meta_xml.xpath('//mediatype')[0].text == 'movies':
         '''year is about the only useful date info (usually available) that applies to the actual release of the video
         as opposed to the upload date'''
-        try:
-            year = int(meta_xml.xpath('.//year')[0].text)
-        except:
+        year = meta_xml.xpath('.//year/text()')
+        if len(year) > 0:
+            year = int(year[0])
+        else:
             year = None
 
-        try:
-            runtime = meta_xml.xpath('//runtime')[0].text
-            duration = (int(re.search('([0-9]+) minutes ', runtime).group(1))*60 + int(re.search('([0-9]+) seconds', runtime).group(1)))*1000
-        except:
+        runtime = meta_xml.xpath('//runtime/text()')
+        if len(runtime) > 0:
+            try:
+                duration = (int(re.search('([0-9]+) minutes ', runtime).group(1))*60 + int(re.search('([0-9]+) seconds', runtime[0]).group(1)))*1000
+            except:
+                duration = None
+        else:
             duration = None
 
         return VideoClipObject(
-            url = url + '#video',
+            url = '%s#video' % (url),
             title = title,
             summary = summary,
             year = year,
@@ -97,7 +107,6 @@ def MetadataObjectForURL(url):
         raise Ex.MediaNotAvailable
 
 ####################################################################################################
-
 def Thumb(url=None):
 
   if not url:
