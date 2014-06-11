@@ -41,10 +41,13 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetXML(url):
 
-	id = url.split('/')[-1].split('.')[0]
+	# some now have a /sc/ directory after /videos/ that must be included in the xml document name or it will fail
+	try: id = url.split('videos/')[1].split('.')[0]
+	except: raise Ex.MediaNotAvailable
 
 	# NB: must do it this way as the first line of their xml is a carriage return (which makes it invalid)
-	xml = HTTP.Request('http://www.foodnetwork.com/content/food/videos/%s.videoplayer.xml' % id).content.strip()
+	try: xml = HTTP.Request('http://www.foodnetwork.com/content/food/videos/%s.videoplayer.xml' % id).content.strip()
+	except: Ex.MediaNotAvailable
 	xml = RE_AMPERSAND.sub('&amp;', xml)
 
 	return XML.ElementFromString(xml)
