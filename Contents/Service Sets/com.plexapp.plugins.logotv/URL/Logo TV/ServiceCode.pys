@@ -134,9 +134,9 @@ def MediaObjectsForURL(url):
         media_objects.append(
             MediaObject(
                 parts=parts,
-                # June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio channels to the streams. 
+                # June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
                 # Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
-                audio_channels = 2,
+                audio_codec = AudioCodec.AAC,
                 bitrate = int(bitrate),
                 video_resolution = vid_res
             )
