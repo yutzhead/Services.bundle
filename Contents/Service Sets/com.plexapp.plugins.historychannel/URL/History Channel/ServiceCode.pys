@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
   releaseURL = '%s&format=script' % smil_url
   data = JSON.ObjectFromURL(releaseURL)
 
-  thumb = data['defaultThumbnailUrl']
+  thumb = data['defaultThumbnailUrl'] if 'defaultThumbnailUrl' in data else ''
   summary = data['description']
   duration = data['duration']
   date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
