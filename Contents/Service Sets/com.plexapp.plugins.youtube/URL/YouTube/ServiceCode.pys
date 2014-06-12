@@ -247,6 +247,10 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   # Build up the format map.
   if age_gate:
     fmt_url_map = RE_URL_MAP_AGE_GATE.findall(yt_page)
+
+    if len(fmt_url_map) < 1:
+      raise Ex.MediaNotAvailable
+
     fmt_url_map = String.Unquote(fmt_url_map[0]).replace('\/', '/').split(',')
   else:
     fmt_url_map = RE_URL_MAP.findall(yt_page)
