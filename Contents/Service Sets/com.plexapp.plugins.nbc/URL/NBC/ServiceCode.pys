@@ -220,7 +220,11 @@ def GetEpisodeData(url, video_id):
 
 	else:
 		# Get the show name
-		html = HTML.ElementFromURL(url)
+		try:
+			html = HTML.ElementFromURL(url)
+		except:
+			raise Ex.MediaNotAvailable
+
 		show_name = html.xpath('//title/text()')[0].split(' | ')[2]
 
 		for show in JSON.ObjectFromURL(SHOWS_URL):
