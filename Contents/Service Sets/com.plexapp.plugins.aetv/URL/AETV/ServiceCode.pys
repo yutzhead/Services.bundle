@@ -110,7 +110,11 @@ def PlayVideo(url, res):
       if video.get('height') == RESOLUTIONS[index]:
         video_url = video.get('src')
         break
+
     index += 1
+
+    if video_url:
+      break
 
   # try falling back to the default //video/@src if we have one
   # (like for older style flv based videos)
