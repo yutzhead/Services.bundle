@@ -5,7 +5,7 @@ RE_PLAYLIST = Regex('aetv_video":(.+?)\}', Regex.DOTALL)
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
 SMIL_NS = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
-RESOLUTIONS = ('540','432','404','360')
+RESOLUTIONS = ['540','432','404','360']
 
 AudioStreamObject.language_code = Locale.Language.English
 
