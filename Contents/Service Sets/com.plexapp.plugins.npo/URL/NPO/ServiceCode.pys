@@ -10,7 +10,7 @@ HEADERS = {
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('#')[0].split('?')[0].split('/popout')[0]
+	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -26,29 +26,29 @@ def MetadataObjectForURL(url):
 	if not player_id:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]/@content|//meta[@name="og:title"]/@content')[0]
-	summary = html.xpath('//meta[@property="og:description"]/@content|//meta[@name="og:description"]/@content')[0]
+	title = html.xpath('//meta[@name="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@name="og:description"]/@content')[0]
 	if summary.startswith('Geen omschrijving'): summary = None
-	thumb = html.xpath('//meta[@property="og:image"]/@content|//meta[@name="og:image"]/@content')[0].split('?')[0]
+	thumb = html.xpath('//meta[@name="og:image"]/@content')[0].split('?')[0]
 
 	try:
-		date = html.xpath('//table[@class="information"]//td[1]/text()')[0]
-		date = date.split(',')[0][3:]
-
-		# Replace name of the month (only march, may and october are required, other months have the same 3-letter abbr in English)
-		mapping = [('mrt', 'mar'), ('mei', 'may'), ('okt', 'oct')]
-		for k, v in mapping:
-			date = date.replace(k, v)
-
-		originally_available_at = Datetime.ParseDate(date).date()
+		release_date = html.xpath('//meta[@name="og:video:release_date"]/@content')[0].split(' ')[0]
+		originally_available_at = Datetime.ParseDate(release_date).date()
 	except:
 		originally_available_at = None
+
+	try:
+		duration = html.xpath('//meta[@name="og:video:duration"]/@content')[0]
+		duration = int(duration) * 1000
+	except:
+		duration = None
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
-		originally_available_at = originally_available_at
+		originally_available_at = originally_available_at,
+		duration = duration
 	)
 
 ####################################################################################################
@@ -95,16 +95,7 @@ def PlayVideo(url):
 ####################################################################################################
 def GetPlayerId(url):
 
-	if 'uitzendinggemist.nl' in url:
-		html = HTML.ElementFromURL(url, headers=HEADERS, cacheTime=CACHE_1WEEK)
-		player_id = html.xpath('//span[@id="episode-data"]/@data-player-id')
-
-		if len(player_id) < 0:
-			return None
-
-		return player_id[0]
-
-	elif 'npo.nl' in url:
+	if 'npo.nl' in url:
 		return url.split('/')[-1]
 
 	return None

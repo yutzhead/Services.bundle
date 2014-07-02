@@ -2,17 +2,16 @@ from hashlib import sha1
 import binascii, hmac
 
 RE_PLAYLIST = Regex('"videos":\[(.+?)"}\]},"', Regex.DOTALL)
-RE_BASE = Regex('meta base="(rtmp.+)"')
 
-SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
-RESOLUTIONS = ["720","540","432","404","360"]
+SMIL_NS = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
+RESOLUTIONS = ['720', '540', '432', '404', '360']
 
 AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
 
-  return url.split('?')[0].rstrip('#')
+  return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
 def TestURLs():
@@ -20,7 +19,7 @@ def TestURLs():
   test_urls = []
   data = HTML.ElementFromURL('http://www.mylifetime.com/video')
 
-  for url in data.xpath('//div[contains(@class,"video-image-wrapper")]//a[starts-with(@href, "http")]/@href'):
+  for url in data.xpath('//div[contains(@class, "video-image-wrapper")]//a[starts-with(@href, "http")]/@href'):
     test_urls.append(url)
 
     if len(test_urls) > 2:
@@ -31,20 +30,26 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  video = GetJSON(url)
-  try:
-    pdkURL = '%s&format=script' % video['pdk_flash_url']
-  except:
-    pdkURL = '%s&format=script' % video['release_url']
-  #Log('the value of pdkURL is %s' %pdkURL)
-  data = JSON.ObjectFromURL(pdkURL)
+  # Not all input URLs are full URLs, grab the full URL
+  url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
 
-  thumb = data['defaultThumbnailUrl']
+  video = GetJSON(url)
+
+  if 'pdk_flash_url' in video:
+    pdk_url = '%s&format=script' % video['pdk_flash_url']
+  elif 'release_url' in video:
+    pdk_url = '%s&format=script' % video['release_url']
+  else:
+    raise Ex.MediaNotAvailable
+
+  data = JSON.ObjectFromURL(pdk_url)
+
+  title = data['title']
   summary = data['description']
+  thumb = data['defaultThumbnailUrl'] if 'defaultThumbnailUrl' in data else ''
   duration = data['duration']
   date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
   content_rating = data['ratings'][0]['rating'] if len(data['ratings']) > 0 else None
-  title = data['title']
 
   if data['AETN$mrssLengthType'] == "Episode":
     show = data['AETN$seriesNameGlobal']
@@ -76,9 +81,11 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
   media_objects = []
 
   for res in RESOLUTIONS:
+
     media_objects.append(
       MediaObject(
         parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
@@ -88,28 +95,37 @@ def MediaObjectsForURL(url):
         audio_codec = AudioCodec.AAC
       )
     )
+
   return media_objects
 
 ####################################################################################################
 @indirect
 def PlayVideo(url, res):
 
+  # Not all input URLs are full URLs, grab the full URL
+  url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+
   video = GetJSON(url)
-  try:
-    smil_url = video['pdk_flash_url']
-    smil_url = smil_url.replace('switch=rtmp', 'format=SMIL')
-  except:
-    smil_url = video['release_url']
-    smil_url = smil_url.split('?')[0]
-    smil_url = smil_url + '?mbr=true&format=SMIL&assetTypes=medium_video_s3&metafile=true'
+
+  if 'pdk_flash_url' in video:
+    smil_url = video['pdk_flash_url'].replace('switch=rtmp', 'format=SMIL')
+  elif 'release_url' in video:
+    smil_url = video['release_url'].split('?')[0]
+    smil_url = '%s?mbr=true&format=SMIL&assetTypes=medium_video_s3&metafile=true' % smil_url
+  else:
+    raise Ex.MediaNotAvailable
+
   sig = sign_url(smil_url)
-  smil_url += '&sig='+sig
+  smil_url = '%s&sig=%s' % (smil_url, sig)
+
   #Log('the value of smil_url is %s' %smil_url)
 
   smil = XML.ElementFromURL(smil_url)
   available_res = smil.xpath("//a:video//@height", namespaces=SMIL_NS)
+
   if len(available_res) < 1:
     raise Ex.MediaNotAvailable
+
   closest = min((abs(int(res) - int(i)), i) for i in available_res)[1]
   video_url = None
 
@@ -120,7 +136,7 @@ def PlayVideo(url, res):
   # try falling back to the default //video/@src if we have one
   # (like for older style flv based videos)
   if not video_url:
-    video_url=smil.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
+    video_url = smil.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
   
   # now if we still don't have a video_url bail
   if not video_url:
@@ -128,8 +144,8 @@ def PlayVideo(url, res):
 
   if video_url.startswith('http://'):
     return IndirectResponse(VideoClipObject, key=video_url)
-  else:
-    raise Ex.MediaNotAvailable
+
+  raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetJSON(url):
@@ -150,18 +166,16 @@ def GetJSON(url):
   playlist_json = JSON.ObjectFromString(playlist)
 
   for video in playlist_json['entries']:
+
     if video['path'] in url:
-      try:
-        premium = video['is_premium']
-      except:
-        try:
-          premium = video['video_behind_wall']
-        except:
-          premium = '0'
-      if premium == '1':
+
+      blocked = video['is_premium'] if ('is_premium' in video and video['is_premium'] is not None) else '0'
+      blocked = video['video_behind_wall'] if ('video_behind_wall' in video and video['video_behind_wall'] is not None) else '0'
+
+      if blocked != '0':
         raise Ex.MediaNotAvailable
-      else:
-        return video
+
+      return video
 
 ####################################################################################################
 def sign_url(url):

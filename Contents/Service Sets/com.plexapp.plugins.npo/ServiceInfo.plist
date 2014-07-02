@@ -4,12 +4,11 @@
 <dict>
 	<key>URL</key>
 	<dict>
-		<key>Uitzending Gemist</key>
+		<key>NPO</key>
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.uitzendinggemist\.nl/afleveringen/\d{7}</string>
-				<string>^http://www\.npo\.nl/[^/]+/[0-9]{2}\-[0-9]{2}\-[0-9]{4}/[^+]+_\d{9}</string>
+				<string>^http:\/\/www\.npo\.nl\/[^/]+\/[0-9]{2}\-[0-9]{2}\-[0-9]{4}\/[^_]+_\d+</string>
 			</array>
 		</dict>
 	</dict>
