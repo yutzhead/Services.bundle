@@ -6,6 +6,8 @@ RE_EMBED_CODE = Regex('embedCode=([^&]+)')
 RE_PLAYER_ARGS = Regex('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"')
 RE_STREAM = Regex('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', Regex.DOTALL)
 
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
+
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -32,9 +34,10 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	# Extract the available information from the page
-	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
-	description = data.xpath('//meta[@name="description"]')[0].get('content')
-	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
+	title = data.xpath('//meta[@property="og:title"]/@content')[0]
+	description = data.xpath('//meta[@name="description"]/@content')[0]
+	description = RE_CONTROL_CHARS.sub('', description)
+	thumb = data.xpath('//meta[@property="og:image"]/@content')[0].replace(' ', '%20')
 
 	try:
 		show_name = title.split('|')[1].strip()
