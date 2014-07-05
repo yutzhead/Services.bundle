@@ -41,34 +41,36 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 720,
-        parts = [PartObject(key=Callback(PlayVideo, url=url, res='720'))],
-        audio_channels = 2
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 480,
-        parts = [PartObject(key=Callback(PlayVideo, url=url, res='480'))],
-        audio_channels = 2
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = 348,
-        parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))],
-        audio_channels = 2
-      )
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = 720,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res='720'))],
+            audio_channels = 2
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = 480,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res='480'))],
+            audio_channels = 2
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = 348,
+            parts = [PartObject(key=Callback(PlayVideo, url=url, res='sd'))],
+            audio_channels = 2
+        )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url, res):
 
     # Find the associated video items
@@ -88,7 +90,7 @@ def PlayVideo(url, res):
         index = 2
     index = max(0, min(index, len(video_items) - 1))
 
-    return Redirect(video_items[index].get('url'))
+    return IndirectResponse(VideoClipObject, key=video_items[index].get('url'))
 
 ####################################################################################################
 def GetDetails(url):
@@ -107,11 +109,11 @@ def GetDetails(url):
         embed_url = page.xpath('//meta[@name="embed_video_url"]/@content')
 
         if len(embed_url) < 1:
-            return None
+            raise Ex.MediaNotAvailable
 
         id = embed_url[0].split('/')[-1]
 
     if id != None:
         return XML.ElementFromURL(DETAILS_URL % id)
     else:
-        return None
+        raise Ex.MediaNotAvailable
