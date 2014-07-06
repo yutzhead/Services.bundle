@@ -8,7 +8,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
 
 	if len(html.xpath('//meta[@property="og:video"]')) < 1:
 		raise Ex.MediaNotAvailable
