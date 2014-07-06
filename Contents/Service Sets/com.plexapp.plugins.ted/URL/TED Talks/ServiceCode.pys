@@ -8,9 +8,6 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	if url.endswith('...'): # I have no idea where those URLs come from, but we can't do anything useful with them
-		raise Ex.MediaNotAvailable
-
 	json_obj = GetJSON(url)
 	html = HTML.ElementFromURL(url)
 
