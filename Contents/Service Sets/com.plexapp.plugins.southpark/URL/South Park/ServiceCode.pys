@@ -1,12 +1,17 @@
-RE_EP_DATA = Regex('\/s(?P<season>\d+)e(?P<episode>\d+)\-')
-RE_PLAYER = Regex('swfobject.embedSWF\("(http://.+?)",')
-RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
-RE_AMPERSANDS = Regex('&(?!amp;)')
-
 MRSS_URL = 'http://%s/feeds/video-player/mrss/%s'
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
-NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
+RE_EP_DATA = Regex('\/s(?P<season>\d+)e(?P<episode>\d+)\-')
+RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
+RE_AMPERSANDS = Regex('&(?!amp;)')
+RE_BITRATE = Regex('_(\d+)(?:kbps)?\.mp4')
+
+MediaObject.container = Container.MP4
+MediaObject.video_codec = VideoCodec.H264
+MediaObject.audio_codec = AudioCodec.AAC
+MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -19,11 +24,11 @@ def MetadataObjectForURL(url):
 	# Pages of older episodes sometimes redirect to the same URL, creating an endless loop. If we
 	# are redirected, first check if the destination URL isn't the same as the input URL.
 	try:
-		data = HTML.ElementFromURL(url, follow_redirects=False)
+		data = HTML.ElementFromURL(url, follow_redirects=False, cacheTime=CACHE_1HOUR)
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
 			if e.headers['Location'] != url:
-				data = HTML.ElementFromURL(e.headers['Location'])
+				data = HTML.ElementFromURL(e.headers['Location'], cacheTime=CACHE_1HOUR)
 			else:
 				raise Ex.MediaNotAvailable
 
@@ -54,8 +59,8 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
-	
-	content = HTTP.Request(url).content
+
+	content = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	uri = RE_URI.search(content)
 
 	if not uri:
@@ -63,76 +68,81 @@ def MediaObjectsForURL(url):
 
 	host = url.split('/')[2]
 
-	mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1))).content
+	mrss_data = HTTP.Request(MRSS_URL % (host, uri.group(1)), cacheTime=CACHE_1HOUR).content
 	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
-	guids = mrss_data.xpath('//guid')
-	if len(guids) < 1:
-		raise Ex.MediaNotAvailable
-	
+	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
+
 	available_streams = {}
-	heights = []
-	index = 0
-	
-	media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-	
-	while index < len(guids):
-		player_url = media_url[index].get('url')
-		player_data = XML.ElementFromURL(player_url)
-		for rendition in player_data.xpath('//rendition'):
-			bitrate = rendition.get('bitrate')
-			height = rendition.get('height')
-			duration = rendition.get('duration')
-			rtmp_url = rendition.xpath('./src')[0].text
+
+	for media_url in media_urls:
+
+		try:
+			video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
+		except:
+			raise Ex.MediaNotAvailable
+
+		renditions = video_data.xpath('//rendition[@type="video/mp4"]')
+
+		if len(renditions) < 1:
+			raise Ex.MediaNotAvailable
+
+		for rendition in renditions:
+
+			rtmp_url = rendition.xpath('./src/text()')[0]
+
+			if '/intros/' in rtmp_url:
+				continue
+
 			if '/viacomspstrm/' in rtmp_url:
-				stream_url = rtmp_url.split('/viacomspstrm/')[1]
+				mp4_url = MP4_URL % (rtmp_url.split('/viacomspstrm/')[-1])
 			elif '/mtvnorigin/' in rtmp_url:
-				stream_url = rtmp_url.split('/mtvnorigin/')[1]
+				mp4_url = MP4_URL % (rtmp_url.split('/mtvnorigin/')[-1])
 			else:
+				Log('Failed to split the rmtp_url to build the mp4_url: %s' % (rtmp_url))
 				raise Ex.MediaNotAvailable
-			mp4_url = MP4_URL % stream_url
-			if unicode(height) in available_streams.keys():
-				available_streams[unicode(height)][unicode(index)] = {"bitrate":bitrate,"mp4_url":mp4_url,"duration":duration}
-			else:
-				available_streams[unicode(height)] = {}
-				available_streams[unicode(height)][unicode(index)] = {"bitrate":bitrate,"mp4_url":mp4_url,"duration":duration}
-			if height not in heights:
-				heights.append(height)
 
-		index += 1
+			bitrate = RE_BITRATE.search(mp4_url).group(1)
 
-	heights.reverse()
+			if bitrate not in available_streams:
+				available_streams[bitrate] = []
+
+			part = {}
+			part['duration'] = rendition.get('duration')
+			part['height'] = rendition.get('height')
+			part['mp4_url'] = mp4_url
+
+			available_streams[bitrate].append(part)
 
 	media_objects = []
+	bitrates = [int(i) for i in available_streams.keys()]
+	bitrates.sort(reverse=True)
 
-	# check that we're getting an MP4 rather than the occassional FLV
-	headers = HTTP.Request(available_streams[unicode(height)][unicode(0)]["mp4_url"]).headers
-	contentType = headers['content-type']
+	for bitrate in bitrates:
 
-	if "mp4" in contentType.lower():
-		MediaObject.container = Container.MP4
-		MediaObject.video_codec = VideoCodec.H264
-		MediaObject.audio_codec = AudioCodec.AAC
-	else:
-		pass
-
-	for height in heights:
-		i = 0
 		parts = []
-		while i < len(guids):
+
+		for part in available_streams[str(bitrate)]:
+
 			parts.append(
-				PartObject(key=available_streams[unicode(height)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(height)][unicode(i)]["duration"])*1000)
+				PartObject(
+					key = part['mp4_url'],
+					duration = int(part['duration'])*1000
+				)
 			)
-			i += 1
+
+			video_resolution = int(part['height'])
+
 		media_objects.append(
 			MediaObject(
-				parts=parts,
+				parts = parts,
 				# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
 				# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
 				audio_codec = AudioCodec.AAC,
-				bitrate = int(available_streams[unicode(height)][unicode(0)]["bitrate"]),
-				video_resolution = int(height)
+				bitrate = bitrate,
+				video_resolution = video_resolution
 			)
 		)
+
 	return media_objects
