@@ -2,6 +2,7 @@ MRSS_URL = 'http://www.comedycentral.com/feeds/mrss?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
+RE_FIX_XML = Regex('(<!--.*?-->)')
 RE_BITRATE = Regex('_(\d+)_[^._]+\.mp4')
 
 MediaObject.container = Container.MP4
@@ -63,7 +64,10 @@ def MediaObjectsForURL(url):
 	except:
 		raise Ex.MediaExpired
 
-	mrss_data = XML.ElementFromURL(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR)
+	mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
+	mrss_data = RE_FIX_XML.sub('', mrss_data)
+	mrss_data = XML.ElementFromString(mrss_data)
+
 	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
 
 	available_streams = {}
