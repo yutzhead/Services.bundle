@@ -15,7 +15,7 @@ MediaObject.optimized_for_streaming = True
 def MetadataObjectForURL(url):
 
 	try:
-		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player_box")]/@data-mgid')
+		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player")]/@data-mgid')
 
 		if len(mgid) < 1:
 			raise Ex.MediaNotAvailable
@@ -57,7 +57,7 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	try:
-		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player_box")]/@data-mgid')
+		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player")]/@data-mgid')
 
 		if len(mgid) < 1:
 			raise Ex.MediaNotAvailable
