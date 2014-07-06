@@ -33,16 +33,7 @@ def MediaObjectsForURL(url):
       video_resolution = "480",
       optimized_for_streaming = True,
       audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url=url, res="480"))]
-    ),
-    MediaObject(
-      container = Container.MP4,
-      video_codec = VideoCodec.H264,
-      audio_codec = AudioCodec.AAC,
-      video_resolution = "sd",
-      optimized_for_streaming = True,
-      audio_channels = 2,
-      parts = [PartObject(key=Callback(PlayVideo, url=url, res="sd"))]
+      parts = [PartObject(key=Callback(PlayVideo, url=url, res="360"))]
     )
   ]
 
@@ -54,7 +45,7 @@ def PlayVideo(url, res):
   external_source = GetExternalSource(url)
   media = URLService.MediaObjectsForURL(external_source)
 
-  resolutions = ["1080", "720", "480", "sd"]
+  resolutions = ["1080", "720", "360"]
   index = resolutions.index(res)
 
   for resolution_index in range(index, len(resolutions)):
