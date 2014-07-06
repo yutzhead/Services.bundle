@@ -9,7 +9,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+	try:
+		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaNotAvailable
 
 	# Expired and unavailable media redirects to the home page. Instead of catching (multiple)
 	# redirects we check if there is a 'og:url' HTML element.
@@ -138,7 +141,7 @@ def PlayVideo(f4m_url=None, **kwargs):
 ####################################################################################################
 def GetVideoId(url):
 
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
 
 	# Loop over attribute values, because we can't grab the right one directly because of a missing namespace declaration(?)
 	for value in html.xpath('//div[@id="vp2k_container"]/@*'):
