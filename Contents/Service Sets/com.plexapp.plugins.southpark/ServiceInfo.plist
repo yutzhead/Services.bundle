@@ -12,8 +12,8 @@
 			</array>    
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www\.southpark(studios)?\.(com|de|dk|fi|nl|no|se)/((full-)?episodes|alle-episoden)/s\d+e\d+\-.+</string>
-				<string>^http://www\.southpark(studios)?\.(com|de|dk|fi|nl|no|se)/clips/[^/]{6}/.+</string>
+				<string>^http:\/\/www\.southpark(studios)?\.(com|de|dk|fi|nl|no|se)\/((full\-)?episodes|alle-episoden)\/s\d+e\d+\-.+</string>
+				<string>^http:\/\/www\.southpark(studios)?\.(com|de|dk|fi|nl|no|se)\/clips\/[^/]{6}\/.+</string>
 			</array>
 		</dict>
 	</dict>
