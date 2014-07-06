@@ -59,6 +59,10 @@ def MetadataObjectForURL(url):
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
+	if thumb == '':
+		video_id = GetVideoId(url)
+		thumb = 'http://static.east.abc.go.com/service/image/ratio/id/VDKA%s/dim/1200.16x9.jpg' % (video_id)
+
 	source_title = 'ABC Family' if 'abcfamily' in url else 'ABC'
 
 	return EpisodeObject(
