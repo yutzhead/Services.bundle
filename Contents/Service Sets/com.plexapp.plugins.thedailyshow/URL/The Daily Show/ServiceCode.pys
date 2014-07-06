@@ -3,6 +3,7 @@ NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 RE_FIX_XML = Regex('(<!--.*?-->)')
+RE_BITRATE = Regex('_(\d+)_[^._]+\.mp4')
 
 MediaObject.container = Container.MP4
 MediaObject.video_codec = VideoCodec.H264
@@ -93,74 +94,85 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
+
 	try:
-		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player")]/@data-mgid')
+
+		if len(mgid) < 1:
+			raise Ex.MediaNotAvailable
 	except:
-		raise Ex.MediaNotAvailable
-
-	video_player = html.xpath('//div[contains(@id,"video_player")]')
-
-	if len(video_player) < 1:
 		raise Ex.MediaExpired
 
-	uri = video_player[0].get('data-mgid')
-
-	mrss_data = HTTP.Request(MRSS_URL % uri).content
+	mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
 	mrss_data = RE_FIX_XML.sub('', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
-	media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
+
 	available_streams = {}
-	bitrates = []
-	index = 0
 
-	while index < len(media_urls):
-		player_url = media_urls[index].get('url')
+	for media_url in media_urls:
+
 		try:
-			player_data = XML.ElementFromURL(player_url)
-		except:	
+			video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
+		except:
 			raise Ex.MediaNotAvailable
-		for rendition in player_data.xpath('//rendition'):
-			bitrate = rendition.get('bitrate')
-			height = rendition.get('height')
-			duration = rendition.get('duration')
-			rtmp_url = rendition.xpath('./src')[0].text
-			stream_url = rtmp_url.split('/viacomccstrm/')[1]
-			mp4_url = MP4_URL % stream_url
-			if unicode(bitrate) in available_streams.keys():
-				available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
-			else:
-				available_streams[unicode(bitrate)] = {}
-				available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
-			if bitrate not in bitrates:
-				bitrates.append(bitrate)
-		
-		index += 1
 
-	bitrates.reverse()
+		renditions = video_data.xpath('//rendition[@type="video/mp4"]')
+
+		if len(renditions) < 1:
+			raise Ex.MediaNotAvailable
+
+		for rendition in renditions:
+
+			rtmp_url = rendition.xpath('./src/text()')[0]
+
+			if '/viacomccstrm/' in rtmp_url:
+				mp4_url = MP4_URL % (rtmp_url.split('/viacomccstrm/')[-1])
+			else:
+				Log('Failed to split the rmtp_url to build the mp4_url: %s' % (rtmp_url))
+				raise Ex.MediaNotAvailable
+
+			bitrate = RE_BITRATE.search(mp4_url).group(1)
+
+			if bitrate not in available_streams:
+				available_streams[bitrate] = []
+
+			part = {}
+			part['duration'] = rendition.get('duration')
+			part['height'] = rendition.get('height')
+			part['mp4_url'] = mp4_url
+
+			available_streams[bitrate].append(part)
 
 	media_objects = []
-	
+	bitrates = [int(i) for i in available_streams.keys()]
+	bitrates.sort(reverse=True)
+
 	for bitrate in bitrates:
-		try:
-			i = 0
-			parts = []
-			while i < len(media_urls):
-				parts.append(
-					PartObject(key=available_streams[unicode(bitrate)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(bitrate)][unicode(i)]["duration"])*1000)
-				)
-				i += 1
-			media_objects.append(
-				MediaObject(
-					parts=parts,
-					# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
-					# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
-					audio_codec = AudioCodec.AAC,
-					bitrate = int(bitrate),
-					video_resolution = int(available_streams[unicode(bitrate)][unicode(0)]["height"])
+
+		parts = []
+
+		for part in available_streams[str(bitrate)]:
+
+			parts.append(
+				PartObject(
+					key = part['mp4_url'],
+					duration = int(part['duration'])*1000
 				)
 			)
-		except:
-			pass
-		
+
+			video_resolution = int(part['height'])
+
+		media_objects.append(
+			MediaObject(
+				parts = parts,
+				# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
+				# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
+				audio_codec = AudioCodec.AAC,
+				bitrate = bitrate,
+				video_resolution = video_resolution
+			)
+		)
+
 	return media_objects
