@@ -23,10 +23,14 @@ def MetadataObjectForURL(url):
 	elif RE_YT_ID.search(data):
 		return URLService.MetadataObjectForURL('http://www.youtube.com/watch?v=%s' % RE_YT_ID.search(data).group(1))
 
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+
 	return VideoClipObject(
-		title = html.xpath('//meta[@property="og:title"]/@content')[0],
-		summary = html.xpath('//meta[@property="og:description"]/@content')[0],
-		thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+		title = title,
+		summary = summary,
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
 ####################################################################################################
@@ -49,7 +53,7 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	url = url.replace('http://www.', 'http://m.')
-	video = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//video/@src')
+	video = HTML.ElementFromURL(url, headers=HTTP_HEADERS).xpath('//video/@src|//video/source/@src')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
