@@ -79,8 +79,8 @@ def PlayVideo(url, res):
         hd_video_url = None
 
     if res == 'hd' and hd_video_url:
-        IndirectResponse(VideoClipObject, key=hd_video_url)
+        return IndirectResponse(VideoClipObject, key=hd_video_url)
     elif sd_video_url:
-        IndirectResponse(VideoClipObject, key=sd_video_url)
+        return IndirectResponse(VideoClipObject, key=sd_video_url)
     else:
         raise Ex.MediaNotAvailable
