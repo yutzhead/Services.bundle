@@ -33,7 +33,7 @@ def MetadataObjectForURL(url):
 				raise Ex.MediaNotAvailable
 
 	title = data.xpath('//meta[@property="og:title"]/@content')[0].split(' (Season')[0]
-	summary = data.xpath('//meta[@property="og:description"]/@content')[0]
+	summary = data.xpath('//meta[@property="og:description"]/@content|//meta[@name="og:description"]/@content')[0]
 	thumb = data.xpath('//meta[@property="og:image"]/@content')[0]
 
 	if '/full-episodes/' in url:
@@ -60,12 +60,19 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
 
-	page = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
-	
-	try:
-		mgid = page.xpath('//*[@id="player_page_player"]/@data-mgid')[0]
-	except:
-		raise Ex.MediaNotAvailable
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	mgid = html.xpath('//*[@id="player_page_player"]/@data-mgid')
+
+	if len(mgid) < 1:
+		page = HTML.StringFromElement(html)
+		mgid = RE_URI.search(page)
+
+		if not mgid:
+			raise Ex.MediaNotAvailable
+		else:
+			mgid = mgid.group(1)
+	else:
+		mgid = mgid[0]
 
 	host = url.split('/')[2]
 
@@ -98,10 +105,10 @@ def MediaObjectsForURL(url):
 
 			if '/viacomspstrm/' in rtmp_url:
 				mp4_url = MP4_URL % (rtmp_url.split('/viacomspstrm/')[-1])
+			elif '/viacomccstrm/' in rtmp_url:
+				mp4_url = MP4_URL % (rtmp_url.split('/viacomccstrm/')[-1])
 			elif '/mtvnorigin/' in rtmp_url:
 				mp4_url = MP4_URL % (rtmp_url.split('/mtvnorigin/')[-1])
-			elif '/gsp.comedystor/' in rtmp_url:
-				mp4_url = (MP4_URL.replace('/mtvnorigin/', '/mtvnorigin/gsp.comedystor/')) % (rtmp_url.split('/gsp.comedystor/')[-1])
 			else:
 				Log('Failed to split the rmtp_url to build the mp4_url: %s' % (rtmp_url))
 				raise Ex.MediaNotAvailable
