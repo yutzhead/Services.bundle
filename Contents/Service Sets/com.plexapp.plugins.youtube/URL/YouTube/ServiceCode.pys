@@ -2,12 +2,12 @@ import urlparse
 
 DEVELOPER_KEY = 'AI39si7PodNU93CVDU6kxh3-m2R9hkwqoVrfijDMr0L85J94ZrJFlimNxzFA9cSky9jCSHz9epJdps8yqHu1wb743d_SfSCRWA'
 YOUTUBE_VIDEO_DETAILS = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
-YOUTUBE_VIDEO_FORMATS =	['360p',	'720p'] # Disable non-functional 1080P MediaObject # ['360p',	'720p',	'1080p']
-YOUTUBE_FMT =			[18,		22] # Disable non-functional 1080P MediaObject # [18,		22,		37]
-YOUTUBE_CONTAINERS =	['mp4',		'mp4'] # Disable non-functional 1080P MediaObject # ['mp4',		'mp4',	'mp4']
-YOUTUBE_VIDEORES =		['360',		'720'] # Disable non-functional 1080P MediaObject # ['360',		'720',	'1080']
-YOUTUBE_VIDEOCODEC =	['h264',	'h264'] # Disable non-functional 1080P MediaObject # ['h264',	'h264',	'h264']
-YOUTUBE_AUDIOCODEC =	['aac',		'aac'] # Disable non-functional 1080P MediaObject # ['aac',		'aac',	'aac']
+YOUTUBE_VIDEO_FORMATS =	['360p',	'720p',	'1080p']
+YOUTUBE_FMT =			[18,		22,		37]
+YOUTUBE_CONTAINERS =	['mp4',		'mp4',	'mp4']
+YOUTUBE_VIDEORES =		['360',		'720',	'1080']
+YOUTUBE_VIDEOCODEC =	['h264',	'h264',	'h264']
+YOUTUBE_AUDIOCODEC =	['aac',		'aac',	'aac']
 
 HTTP_HEADERS = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
