@@ -6,7 +6,7 @@ BITRATES = [4000, 3000, 2000, 1500, 1000]
 RE_VIDEO_ID = Regex('\-(\d{9,})(-.+)?\.html')
 RE_JSON = Regex('YAHOO.Media.CarouselDataManager\(({.+?}), Y\.merge')
 RE_UUID = Regex('[a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12}')
-RE_UUID_HTML = Regex('"uuid":"([a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12})"')
+RE_UUID_HTML = Regex('(?:"uuid":|curVideo = \{)"([a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12})"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -107,25 +107,29 @@ def PlayVideo(url, bitrate):
 def GetJSON(url, content_id=None):
 
 	if not content_id:
-		try:
-			if 'gma.yahoo.com' in url:
-				data = HTTP.Request(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'}).content
-				content_id = RE_UUID_HTML.search(data).group(1)
+
+		html = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'})
+		content_id = html.xpath('//section[contains(@id, "mediacontentvideo")]/@data-uuid|//div[contains(@class, "video-meta")]/@data-uuid')
+
+		if len(content_id) > 0:
+			content_id = content_id[0]
+		else:
+			content_id = html.xpath('//meta[@property="og:video"]/@content')
+
+			if len(content_id) > 0 and 'uuid=' in content_id[0]:
+				content_id = content_id[0].split('uuid=')[-1].split('&')[0]
 			else:
-				html = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'})
-				content_id = html.xpath('//section[contains(@id, "mediacontentvideo")]/@data-uuid|//div[contains(@class, "video-meta")]/@data-uuid')
+				content_id = None
 
-				if len(content_id) > 0:
-					content_id = content_id[0]
-				else:
-					content_id = html.xpath('//meta[@property="og:video"]/@content')
+	if not content_id:
 
-					if len(content_id) > 0:
-						content_id = content_id[0].split('uuid=')[-1].split('&')[0]
-					else:
-						raise Ex.MediaNotAvailable
-		except:
-			raise Ex.MediaNotAvailable
+		data = HTTP.Request(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'}).content
+		content_id = RE_UUID_HTML.search(data)
+
+		if content_id:
+			content_id = content_id.group(1)
+		else:
+			content_id = None
 
 	if not content_id:
 		raise Ex.MediaNotAvailable
