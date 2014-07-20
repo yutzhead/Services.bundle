@@ -33,7 +33,7 @@ def MetadataObjectForURL(url):
 
 	meta = GetJSON(url)['meta']
 
-	title = meta['title']
+	title = meta['title'].replace('&#39;', '”')
 	summary = String.StripTags(meta['description'])
 	duration = int(meta['duration'] * 1000)
 
