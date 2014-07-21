@@ -20,7 +20,12 @@ def NormalizeURL(url):
 ####################################################################################################
 
 def MetadataObjectForURL(url):
-
+    ### TODO: Generate Metadata
+    return VideoClipObject(
+        title = "title",
+        summary = "summary"
+    )
+    '''
 	emissionID = GetEmissionID(url)
 	jsonMetadata = JSON.ObjectFromURL(EMISSION_URL + str(emissionID))
 	allEpisodes = jsonMetadata["d"]["Episodes"]
@@ -76,6 +81,7 @@ def MetadataObjectForURL(url):
 				duration = duration,
 				thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 				)
+    '''
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -110,9 +116,16 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def PlayVideo(url, stream_type):
+    # Get the cookie and movie Url
+    json = JSON.ObjectFromURL(url)
+    movieUrl = json['url']
+    HTTP.Request(url=movieUrl).load()
+
     if stream_type == 'HLS':
-        return GetPlaylist(url, 'iPad')
+        #return GetPlaylist(movieUrl, 'iPad')
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=movieUrl))
     else:
+        ### TODO: Allow non-hls to play
         playlist = GetPlaylist(url, 'flash').split('?',1)
         auth = playlist[1]
         rtmp_parts = playlist[0].split('/ondemand/',1)
