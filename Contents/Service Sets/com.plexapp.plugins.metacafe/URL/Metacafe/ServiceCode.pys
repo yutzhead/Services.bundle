@@ -6,20 +6,19 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	try:
-		html = HTML.ElementFromURL(url, follow_redirects=False)
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers and 'family_filter' in e.headers['Location']:
-			x = HTTP.Request('http://www.metacafe.com/f/index.php?inputType=filter&controllerGroup=user', values={'filters': '0'}).content
-			html = HTML.ElementFromURL(url)
+	html = HTML.ElementFromURL(url)
 
-	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	title = html.xpath('//meta[@property="og:title"]/@content')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
+
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 	duration = int(html.xpath('//meta[@property="video:duration"]/@content')[0]) * 1000
 
 	return VideoClipObject(
-		title = title,
+		title = title[0],
 		summary = summary,
 		thumb = Resource.ContentsOfURLWithFallback(thumb),
 		duration = duration
