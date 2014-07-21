@@ -1,4 +1,4 @@
-BASE_URL = "http://www.vice.com%s"
+BASE_URL = 'http://www.vice.com%s'
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js?%s'
 
@@ -17,12 +17,15 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		data = HTML.ElementFromURL(url)
+		data = HTTP.Request(url).content
 	except Ex.HTTPError, e:
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
 
-	video = data.xpath('//meta[@property="og:video"]/@content')
+	data = RE_CONTROL_CHARS.sub('', data)
+	html = HTML.ElementFromString(data)
+
+	video = html.xpath('//meta[@property="og:video"]/@content')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
@@ -34,10 +37,9 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	# Extract the available information from the page
-	title = data.xpath('//meta[@property="og:title"]/@content')[0]
-	description = data.xpath('//meta[@name="description"]/@content')[0]
-	description = RE_CONTROL_CHARS.sub('', description)
-	thumb = data.xpath('//meta[@property="og:image"]/@content')[0].replace(' ', '%20')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	description = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].replace(' ', '%20')
 
 	try:
 		show_name = title.split('|')[1].strip()
@@ -74,8 +76,16 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	data = HTML.ElementFromURL(url)
-	video = data.xpath('//meta[@property="og:video"]/@content')
+	try:
+		data = HTTP.Request(url).content
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
+
+	data = RE_CONTROL_CHARS.sub('', data)
+	html = HTML.ElementFromString(data)
+
+	video = html.xpath('//meta[@property="og:video"]/@content')
 
 	if len(video) < 1 or not 'player.ooyala.com' in video[0]:
 		raise Ex.MediaNotAvailable
