@@ -103,7 +103,7 @@ def MediaObjectsForURL(url):
     return mo
 
 ####################################################################################################
-def PlayVideo(url, resolution, client):
+def PlayVideo(url, resolution='720', client='', **kwargs):
     try:
         json_obj = JSON.ObjectFromURL(url + '?output=json')
     except:
