@@ -62,7 +62,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res):
+def PlayVideo(url, res='540'):
 
   try:
     content = HTTP.Request(url).content
