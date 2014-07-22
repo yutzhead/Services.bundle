@@ -9,19 +9,18 @@ def MetadataObjectForURL(url):
 	html = HTML.ElementFromURL(url)
 
 	title = html.xpath('//meta[@property="og:title"]/@content')
+	summary = html.xpath('//meta[@property="og:description"]/@content')
+	thumb = html.xpath('//meta[@property="og:image"]/@content')
+	duration = html.xpath('//meta[@property="video:duration"]/@content')
 
-	if len(title) < 1:
+	if len(title) < 1 or len(summary) < 1 or len(thumb) < 1 or len(duration) < 1:
 		raise Ex.MediaNotAvailable
-
-	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
-	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
-	duration = int(html.xpath('//meta[@property="video:duration"]/@content')[0]) * 1000
 
 	return VideoClipObject(
 		title = title[0],
-		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(thumb),
-		duration = duration
+		summary = summary[0],
+		thumb = Resource.ContentsOfURLWithFallback(thumb[0]),
+		duration = int(duration[0]) * 1000
 	)
 
 ####################################################################################################
@@ -44,13 +43,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, **kwargs):
 
-	try:
-		html = HTML.ElementFromURL(url, follow_redirects=False)
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers and 'family_filter' in e.headers['Location']:
-			x = HTTP.Request('http://www.metacafe.com/f/index.php?inputType=filter&controllerGroup=user', values={'filters': '0'}).content
-			html = HTML.ElementFromURL(url)
-
+	html = HTML.ElementFromURL(url)
 	flash_vars = html.xpath('//object/param[@id="flashVars"]/@value')
 
 	if len(flash_vars) < 1:
