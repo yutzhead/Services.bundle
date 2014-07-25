@@ -10,7 +10,7 @@ def MetadataObjectForURL(url):
 
 	json_obj = GetJSON(url)
 
-	if 'external' in json_obj and 'service' in json_obj['external'] and json_obj['external']['service'] == 'YouTube':
+	if 'external' in json_obj and json_obj['external'] is not None and 'service' in json_obj['external'] and json_obj['external']['service'] == 'YouTube':
 		yt_url = json_obj['external']['uri']
 		return URLService.MetadataObjectForURL(yt_url)
 
