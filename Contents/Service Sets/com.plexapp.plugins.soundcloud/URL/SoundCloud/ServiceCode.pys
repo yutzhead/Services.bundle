@@ -50,7 +50,10 @@ def GetTrackId(url):
 	if 'api.soundcloud.com' in url:
 		track_id = RE_TRACK_ID.search(url).group('id')
 	else:
-		api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
+		try:
+			api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
+		except:
+			raise Ex.MediaNotAvailable
 
 		if not 'location' in api_url:
 			raise Ex.MediaNotAvailable
