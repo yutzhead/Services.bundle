@@ -8,7 +8,7 @@ RE_TRACK_ID = Regex('/tracks/(?P<id>\d+)')
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url.split('?')[0].replace('soundcloud.com/#', 'soundcloud.com/')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
