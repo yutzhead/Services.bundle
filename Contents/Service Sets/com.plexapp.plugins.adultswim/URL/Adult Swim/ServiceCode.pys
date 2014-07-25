@@ -139,6 +139,8 @@ def GetDetails(url):
 		details = XML.ElementFromURL(DETAIL_URL % id)
 	except Ex.HTTPError, e:
 		raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	if details.xpath('//episodes[@totalItems]')[0].get('totalItems') == '0':
 		raise Ex.MediaNotAvailable
