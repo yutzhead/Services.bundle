@@ -2,7 +2,7 @@ API_URL = 'http://vimeo.com/api/v2/video/%s.json'
 RE_VIMEO_ID = Regex('(\d{6,})')
 
 HTTP_HEADERS = {
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36'
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
 }
 
 ####################################################################################################
