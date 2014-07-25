@@ -73,6 +73,8 @@ def GetJSON(url):
 			raise Ex.MediaNotAuthorized
 		else:
 			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	json = RE_JSON.search(data)
 
