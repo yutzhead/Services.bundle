@@ -8,9 +8,9 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^https?://((br|ca|de|es(\-us)?|fr|in|it|mx|uk)\.)?screen\.yahoo\.com/.+\-\d{9,}(-.+)?\.html</string>
-				<string>^https?://movies\.yahoo\.com/(movie|video)/.+</string>
-				<string>^https?://gma\.yahoo\.com/video/.+\-\d{9,}\.html</string>
+				<string>^https?:\/\/((br|ca|de|es(\-us)?|fr|in|it|mx|uk)\.)?screen\.yahoo\.com/.+\-\d{9,}(-.+)?\.html</string>
+				<string>^https?:\/\/movies\.yahoo\.com\/(movie|video)\/.+</string>
+				<string>^https?:\/\/gma\.yahoo\.com\/video\/.+\-\d{9,}\.html</string>
 				<string>^https?:\/\/www\.yahoo\.com\/movies\/film\/.+</string>
 			</array>
 			<key>TestURLs</key>
