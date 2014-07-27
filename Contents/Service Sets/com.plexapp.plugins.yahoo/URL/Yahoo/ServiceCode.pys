@@ -11,7 +11,7 @@ RE_UUID_HTML = Regex('(?:"uuid":|"videoId":|curVideo = \{)"([a-f0-9]{8}\-([a-f0-
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split(';')[0].split('?')[0]
+	url = url.split(';')[0].split('?')[0].split('\n')[0]
 
 	if 'movies.yahoo.com/movie' in url:
 		if '#' in url:
