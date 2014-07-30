@@ -1,15 +1,7 @@
-MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s&device=Other'
+MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 RE_FIX_XML = Regex('(<!--.*?-->)')
-RE_BITRATE = Regex('_(\d+)_?[^._]*\.mp4')
-
-MediaObject.container = Container.MP4
-MediaObject.video_codec = VideoCodec.H264
-MediaObject.audio_codec = AudioCodec.AAC
-MediaObject.audio_channels = 2
-MediaObject.optimized_for_streaming = True
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -28,28 +20,22 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	page_title = html.xpath('//title')[0].text
-
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
-	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
+	duration = 0
 
 	try:
-		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
-	except:
-		video_player = html.xpath('//div[@id="video_player"]')
+		mgid = html.xpath('//div[contains(@id, "video_player")]/@data-mgid')
 
-		if len(video_player) < 1:
+		if len(mgid) < 1:
 			raise Ex.MediaExpired
 
-		uri = video_player[0].get('data-mgid')
-
-		mrss_data = HTTP.Request(MRSS_URL % uri).content
+		mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
 		mrss_data = RE_FIX_XML.sub('', mrss_data)
 		mrss_data = XML.ElementFromString(mrss_data)
 
 		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-		duration = 0
 
 		for segment in media_urls:
 			if segment.get('duration') != "":
@@ -57,11 +43,13 @@ def MetadataObjectForURL(url):
 					duration += Datetime.MillisecondsFromString(segment.get('duration'))
 				else:
 					duration += int(float(segment.get('duration'))*1000)
+	except:
+		pass
 
-	if 'full episode' in page_title.lower():
+	if '/full-episodes/' in url:
 
 		try:
-			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip(' ')
+			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip()
 			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
@@ -75,10 +63,10 @@ def MetadataObjectForURL(url):
 			originally_available_at = originally_available_at
 		)
 
-	elif 'video clip' in page_title.lower():
+	elif '/videos/' in url:
 
 		try:
-			air_date = html.xpath('//div[@class="air_date"]//a/text()')[0]
+			air_date = html.xpath('//li[@class="airDate"]/text()')[0].strip()
 			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
@@ -108,71 +96,36 @@ def MediaObjectsForURL(url):
 	mrss_data = XML.ElementFromString(mrss_data)
 
 	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
-
-	available_streams = {}
+	parts = []
+	total_duration = 0
 
 	for media_url in media_urls:
 
 		try:
+			media_url = media_url.replace('{device}', 'iPad')
 			video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
 		except:
 			raise Ex.MediaNotAvailable
 
-		renditions = video_data.xpath('//rendition[@type="video/mp4"]')
+		rendition = video_data.xpath('//rendition[@type="application/x-mpegURL"]')
 
-		if len(renditions) < 1:
+		if len(rendition) < 1:
 			raise Ex.MediaNotAvailable
 
-		for rendition in renditions:
-
-			rtmp_url = rendition.xpath('./src/text()')[0]
-
-			if '/viacomccstrm/' in rtmp_url:
-				mp4_url = MP4_URL % (rtmp_url.split('/viacomccstrm/')[-1])
-			else:
-				Log('Failed to split the rmtp_url to build the mp4_url: %s' % (rtmp_url))
-				raise Ex.MediaNotAvailable
-
-			bitrate = RE_BITRATE.search(mp4_url).group(1)
-
-			if bitrate not in available_streams:
-				available_streams[bitrate] = []
-
-			part = {}
-			part['duration'] = rendition.get('duration')
-			part['height'] = rendition.get('height')
-			part['mp4_url'] = mp4_url
-
-			available_streams[bitrate].append(part)
-
-	media_objects = []
-	bitrates = [int(i) for i in available_streams.keys()]
-	bitrates.sort(reverse=True)
-
-	for bitrate in bitrates:
-
-		parts = []
-
-		for part in available_streams[str(bitrate)]:
-
-			parts.append(
-				PartObject(
-					key = part['mp4_url'],
-					duration = int(part['duration'])*1000
-				)
-			)
-
-			video_resolution = int(part['height'])
-
-		media_objects.append(
-			MediaObject(
-				parts = parts,
-				# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
-				# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
-				audio_codec = AudioCodec.AAC,
-				bitrate = bitrate,
-				video_resolution = video_resolution
+		parts.append(
+			PartObject(
+				key = HTTPLiveStreamURL(rendition[0].xpath('./src/text()')[0]),
+				duration = int(rendition[0].get('duration'))*1000
 			)
 		)
 
-	return media_objects
+	if len(parts) > 0:
+
+		return [
+			MediaObject(
+				parts = parts,
+				video_resolution = 540
+			)
+		]
+
+	raise Ex.MediaNotAvailable
