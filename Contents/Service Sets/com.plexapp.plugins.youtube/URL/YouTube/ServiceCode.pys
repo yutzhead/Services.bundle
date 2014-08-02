@@ -327,15 +327,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 ####################################################################################################
 def decrypt_signature(s, age_gate=False):
 
-#  Log(len(s))
-
-#  if age_gate:
-#  # The videos with age protection use another player, so the
-#  # algorithms can be different.
-#    if len(s) == 86:
-#      return s[2:63] + s[82] + s[64:82] + s[63]
-
-  key = str(len(s))
+  key = '-'.join([str(len(p)) for p in s.split('.')])
   json_obj = JSON.ObjectFromURL('http://6bcff61fb860029015c6-b0c40228a7b02641ddb14594625d1e51.r77.cf3.rackcdn.com/y.json', cacheTime=300)
 
   if not key in json_obj:
