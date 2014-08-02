@@ -65,7 +65,7 @@ def MediaObjectsForURL(url):
 			media_objects.append(MediaObject(
 				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 				container = Container.MP4,
-				video_resolution = video['media_height'],
+				video_resolution = int(video['media_height']),
 				bitrate = video['video_bitrate'],
 				duration = int(video['media_length']) * 1000,
 				video_codec = VideoCodec.H264,
@@ -82,7 +82,7 @@ def MediaObjectsForURL(url):
 				media_objects.append(MediaObject(
 					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 					container = 'flv',
-					video_resolution = video['media_height'],
+					video_resolution = int(video['media_height']),
 					duration = int(video['media_length']) * 1000,
 					video_codec = video['video_codec'],
 					audio_codec = video['audio_codec'],
@@ -98,7 +98,7 @@ def MediaObjectsForURL(url):
 				media_objects.append(MediaObject(
 					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 					container = 'mov',
-					video_resolution = video['media_height'],
+					video_resolution = int(video['media_height']),
 					duration = int(video['media_length']) * 1000,
 					video_codec = video['video_codec'],
 					audio_codec = video['audio_codec'],
@@ -159,15 +159,10 @@ def GetJson(url):
 @indirect
 def PlayVideo(url):
 
-	c = ObjectContainer()
+	try:
+		h = HTTP.Request(url, follow_redirects=False, headers={'Referer': 'http://web-sniffer.net/', 'User-Agent': 'Web-sniffer/1.1.0 (+http://web-sniffer.net/)', 'Range': 'bytes=0-1'}).content
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return IndirectResponse(VideoClipObject, key=e.headers['Location'])
 
-	c.add(VideoClipObject(
-		items = [
-			MediaObject(
-				parts = [PartObject(key=url)]
-			)
-		]
-	))
-
-	c.http_headers = {'User-Agent': 'Shockwave Flash'}
-	return c
+	raise Ex.MediaNotAvailable
