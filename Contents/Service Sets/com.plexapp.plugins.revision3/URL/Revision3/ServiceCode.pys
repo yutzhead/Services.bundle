@@ -1,4 +1,5 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+API_URL = 'http://revision3.com/api/getPlaylist.json?api_key=ba9c741bce1b9d8e3defcc22193f3651b8867e62&codecs=h264&video_id=%s'
+RE_VIDEO_ID = Regex("\('video_id', (\d+)\);")
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -6,42 +7,24 @@ def NormalizeURL(url):
 	if ' | ' in url:
 		url = url.split(' | ')[0]
 
-	return url
+	return url.split('?')[0].split('#')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	try:
-		data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
-	except Ex.HTTPError, e:
-		if e.code == 404:
-			raise Ex.MediaNotAvailable
+	json_obj = GetJSON(url)
 
-	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
+	title = json_obj['title']
+	summary = json_obj['summary']
+	duration = int(json_obj['duration']) * 1000
+	thumb_1 = json_obj['images']['large'] if 'large' in json_obj['images'] else ''
+	thumb_2 = json_obj['images']['medium'] if 'medium' in json_obj['images'] else ''
 
-	if len(videos) < 1:
-		raise Ex.MediaNotAvailable
-
-	show = data.xpath('//meta[@name="description"]/@content')[0].split(': ')[0]
-	title = data.xpath('//meta[@property="og:title"]/@content')[0]
-	summary = data.xpath('//meta[@property="og:description"]/@content')[0]
-
-	try: date = Datetime.ParseDate(data.xpath('//meta[@property="publish-date"]/@content')[0]).date()
-	except: date = None
-
-	try: duration = int(data.xpath('//meta[@property="video:duration"]/@content')[0])*1000
-	except: duration = None
-
-	try: thumb = data.xpath('//meta[@property="og:image"]/@content')[0].replace('--medium.thumb.jpg', '--large.thumb.jpg')
-	except: thumb = ''
-
-	return EpisodeObject(
-		show = show,
+	return VideoClipObject(
 		title = title,
 		summary = summary,
-		originally_available_at = date,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(thumb)
+		thumb = Resource.ContentsOfURLWithFallback([thumb_1, thumb_2])
 	)
 
 ####################################################################################################
@@ -49,7 +32,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='720p'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = '720',
@@ -58,16 +41,7 @@ def MediaObjectsForURL(url):
 			optimized_for_streaming = True
 		),
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='large'))],
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			video_resolution = '480',
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			optimized_for_streaming = True
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='small'))],
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='sd'))],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = 'sd',
@@ -81,23 +55,42 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt):
 
-	if fmt == '480p': fmt = 'large'
-	elif fmt == 'SD': fmt = 'small'
+	# Keep some of the old 'fmt' names for videos already queued
+	if fmt in ('hd', '720p'):
+		fmt = 'hd'
+	elif fmt in ('sd', '480p', 'SD', 'large', 'small'):
+		fmt = 'large'
+
+	json_obj = GetJSON(url)
+
+	if 'media' in json_obj and 'h264' in json_obj['media']:
+		if fmt == 'hd' and 'hd' in json_obj['media']['h264']:
+			video_url = json_obj['media']['h264']['hd']['url']
+		elif 'large' in json_obj['media']['h264']:
+			video_url = json_obj['media']['h264']['large']['url']
+
+		return IndirectResponse(VideoClipObject, key=video_url)
+
+	else:
+		raise Ex.MediaNotAvailable
+
+####################################################################################################
+def GetJSON(url):
 
 	try:
-		data = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=7200)
+		data = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	except Ex.HTTPError, e:
 		if e.code == 404:
 			raise Ex.MediaNotAvailable
 
-	videos = data.xpath('//a[contains(@href, ".mp4")]/@href')
+	video_id = RE_VIDEO_ID.search(data)
 
-	if len(videos) < 1:
+	if not video_id:
 		raise Ex.MediaNotAvailable
 
-	video_url = data.xpath('//a[contains(@href, ".mp4") and contains(@href, "%s")]/@href' % fmt)
+	json_obj = JSON.ObjectFromURL(API_URL % (video_id.group(1)))
 
-	if len(video_url) < 1:
-		video_url = data.xpath('//a[contains(@href, ".mp4")]/@href')
+	if 'items' not in json_obj or json_obj['items'] < 1:
+		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video_url[0])
+	return json_obj['items'][0]
