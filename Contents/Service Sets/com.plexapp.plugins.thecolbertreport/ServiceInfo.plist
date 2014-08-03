@@ -13,9 +13,13 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http:\/\/thecolbertreport\.cc\.com\/(full-episodes|videos)\/[^/]{6}\/.+</string>
+				<string>^http:\/\/thecolbertreport\.cc\.com\/(full\-episodes|videos)\/[^/]{6}\/.+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>
