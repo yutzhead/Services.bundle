@@ -1,4 +1,4 @@
-MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s&device=Other'
+MRSS_URL = 'http://thedailyshow.cc.com/feeds/mrss?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 
 RE_FIX_XML = Regex('(<!--.*?-->)')
@@ -24,28 +24,22 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	page_title = html.xpath('//title')[0].text
-
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
-	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
+	duration = 0
 
 	try:
-		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
-	except:
-		video_player = html.xpath('//div[@id="video_player"]')
+		mgid = html.xpath('//div[contains(@id, "video_player")]/@data-mgid')
 
-		if len(video_player) < 1:
+		if len(mgid) < 1:
 			raise Ex.MediaExpired
 
-		uri = video_player[0].get('data-mgid')
-
-		mrss_data = HTTP.Request(MRSS_URL % uri).content
+		mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
 		mrss_data = RE_FIX_XML.sub('', mrss_data)
 		mrss_data = XML.ElementFromString(mrss_data)
 
 		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
-		duration = 0
 
 		for segment in media_urls:
 			if segment.get('duration') != "":
@@ -53,11 +47,13 @@ def MetadataObjectForURL(url):
 					duration += Datetime.MillisecondsFromString(segment.get('duration'))
 				else:
 					duration += int(float(segment.get('duration'))*1000)
+	except:
+		pass
 
-	if 'full episode' in page_title.lower():
+	if '/full-episodes/' in url or '/special-editions/' in url:
 
 		try:
-			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip(' ')
+			air_date = html.xpath('//title')[0].text.split(' - ')[0].strip()
 			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
@@ -71,10 +67,10 @@ def MetadataObjectForURL(url):
 			originally_available_at = originally_available_at
 		)
 
-	elif 'video clip' in page_title.lower():
+	elif '/videos/' in url:
 
 		try:
-			air_date = html.xpath('//div[@class="air_date"]//a/text()')[0]
+			air_date = html.xpath('//li[@class="airDate"]/text()')[0].strip()
 			originally_available_at = Datetime.ParseDate(air_date)
 		except:
 			originally_available_at = None
