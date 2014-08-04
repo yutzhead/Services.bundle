@@ -1,15 +1,11 @@
 MRSS_URL = 'http://%s/feeds/video-player/mrss/%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 RE_EP_DATA = Regex('\/s(?P<season>\d+)e(?P<episode>\d+)\-')
 RE_URI = Regex('swfobject.embedSWF\("http://.+?/(mgid.+?)",')
 RE_AMPERSANDS = Regex('&(?!amp;)')
 RE_BITRATE = Regex('_(\d+)(?:kbps)?\.mp4')
 
-MediaObject.container = Container.MP4
-MediaObject.video_codec = VideoCodec.H264
-MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
 MediaObject.optimized_for_streaming = True
 
@@ -21,20 +17,18 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	# Pages of older episodes sometimes redirect to the same URL, creating an endless loop. If we
-	# are redirected, first check if the destination URL isn't the same as the input URL.
 	try:
-		data = HTML.ElementFromURL(url, follow_redirects=False, cacheTime=CACHE_1HOUR)
-	except Ex.RedirectError, e:
-		if 'Location' in e.headers:
-			if e.headers['Location'] != url:
-				data = HTML.ElementFromURL(e.headers['Location'], cacheTime=CACHE_1HOUR)
-			else:
-				raise Ex.MediaNotAvailable
+		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			Log('HTTP 404 Not Found for URL: %s' % url)
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
-	title = data.xpath('//meta[@property="og:title"]/@content')[0].split(' (Season')[0]
-	summary = data.xpath('//meta[@property="og:description"]/@content|//meta[@name="og:description"]/@content')[0]
-	thumb = data.xpath('//meta[@property="og:image"]/@content')[0]
+	title = html.xpath('//meta[@property="og:title"]/@content')[0].split(' (Season')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content|//meta[@name="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
 
 	if '/full-episodes/' in url:
 		ep_data = RE_EP_DATA.search(url).groupdict()
@@ -47,13 +41,13 @@ def MetadataObjectForURL(url):
 			season = int(season),
 			index = int(index),
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(thumb)
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 		)
 	else:
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(thumb)
+			thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 		)
 
 ####################################################################################################
@@ -103,17 +97,17 @@ def MediaObjectsForURL(url):
 			if '/intros/' in rtmp_url:
 				continue
 
-			if '/viacomspstrm/' in rtmp_url:
-				mp4_url = MP4_URL % (rtmp_url.split('/viacomspstrm/')[-1])
-			elif '/viacomccstrm/' in rtmp_url:
-				mp4_url = MP4_URL % (rtmp_url.split('/viacomccstrm/')[-1])
+			if '/viacomccstrm/' in rtmp_url:
+				clip = rtmp_url.split('/viacomccstrm/')[-1]
+			elif '/viacomspstrm/' in rtmp_url:
+				clip = rtmp_url.split('/viacomspstrm/')[-1]
 			elif '/mtvnorigin/' in rtmp_url:
-				mp4_url = MP4_URL % (rtmp_url.split('/mtvnorigin/')[-1])
+				clip = rtmp_url.split('/mtvnorigin/')[-1]
 			else:
-				Log('Failed to split the rmtp_url to build the mp4_url: %s' % (rtmp_url))
+				Log('Failed to split the rmtp_url to find clip: %s' % (rtmp_url))
 				raise Ex.MediaNotAvailable
 
-			bitrate = RE_BITRATE.search(mp4_url).group(1)
+			bitrate = RE_BITRATE.search(clip).group(1)
 
 			if bitrate not in available_streams:
 				available_streams[bitrate] = []
@@ -121,7 +115,7 @@ def MediaObjectsForURL(url):
 			part = {}
 			part['duration'] = rendition.get('duration')
 			part['height'] = rendition.get('height')
-			part['mp4_url'] = mp4_url
+			part['clip'] = clip
 
 			available_streams[bitrate].append(part)
 
@@ -137,7 +131,10 @@ def MediaObjectsForURL(url):
 
 			parts.append(
 				PartObject(
-					key = part['mp4_url'],
+					key = RTMPVideoURL(
+						url='rtmpe://viacommtvstrmfs.fplive.net:1935/viacommtvstrm',
+						clip='mp4:%s' % (part['clip'])
+					),
 					duration = int(part['duration'])*1000
 				)
 			)
@@ -147,9 +144,6 @@ def MediaObjectsForURL(url):
 		media_objects.append(
 			MediaObject(
 				parts = parts,
-				# June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams. 
-				# Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
-				audio_codec = AudioCodec.AAC,
 				bitrate = bitrate,
 				video_resolution = video_resolution
 			)
