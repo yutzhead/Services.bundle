@@ -4,7 +4,10 @@ RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	if not '/redirect/fep?videoid=VDKA' in url:
+		return url.split('?')[0]
+	else:
+		return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -83,6 +86,8 @@ def MediaObjectsForURL(url):
 
 	if '/VDKA' in url:
 		video_id = url.split('/VDKA')[-1].split('/')[0]
+	elif '/redirect/fep?videoid=VDKA' in url:
+		video_id = url.split('videoid=VDKA')[-1]
 	else:
 		video_id = GetVideoId(url)
 
