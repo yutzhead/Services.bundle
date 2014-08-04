@@ -17,13 +17,9 @@ RE_URI = Regex('MTVN.Player.(?:episode|video)Uri = \"(.+?)\"')
 RE_URI2 = Regex("VIDEO.contentUri = \'(.+?)\'")
 
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 RE_RES_BIT = Regex('.+_\d{3,4}x(\d{3,4})_(\d{3,4})_(?:h|m)\d{2}.mp4$')
 UNAVAIL = 'Sorry, this playlist is not found or no longer available due to date or rights restrictions.'
 
-MediaObject.container = Container.MP4
-MediaObject.video_codec = VideoCodec.H264
-MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
 MediaObject.optimized_for_streaming = True
 
@@ -141,7 +137,6 @@ def MediaObjectsForURL(url):
                     Log('failed to split the rmtp_url to build the stream url. Its value is %s' %rtmp_url)
                     raise Ex.MediaNotAvailable
             
-                mp4_url = MP4_URL % stream_url
                 # Use the first video to create the bitrates and available_streams lists
                 # Otherwise if a later part has an additional or different/odd sized bitrate, it will create a separate bitrate listing
                 # in the avialable streams with only index for that one part and all other bitrates will be missing the index for that part 
@@ -151,15 +146,15 @@ def MediaObjectsForURL(url):
                     # an additional or different value for bitrate than those established by the first part
                     bitrates_heights.append((bitrate, height))
                     available_streams[unicode(bitrate)] = {}
-                    available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                    available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"stream_url":stream_url,"duration":duration}
                 else:
                     if unicode(bitrate) in available_streams.keys():
-                        available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                        available_streams[unicode(bitrate)][unicode(index)] = {"height":height,"stream_url":stream_url,"duration":duration}
                     else:
                         # Here we use the hieght of this part and the bitrates_heights lists from the first part to find the closest bitrate
                         closest = FindClosest(bitrates_heights, bitrate, height)
                         if closest:
-                            available_streams[unicode(closest)][unicode(index)] = {"height":height,"mp4_url":mp4_url,"duration":duration}
+                            available_streams[unicode(closest)][unicode(index)] = {"height":height,"stream_url":stream_url,"duration":duration}
 
             index += 1
 
@@ -182,15 +177,12 @@ def MediaObjectsForURL(url):
             parts = []
             while i < len(media_url):
                 parts.append(
-                    PartObject(key=available_streams[unicode(bitrate)][unicode(i)]["mp4_url"], duration=int(available_streams[unicode(bitrate)][unicode(i)]["duration"])*1000)
+                    PartObject(key=RTMPVideoURL(url='rtmpe://viacommtvstrmfs.fplive.net:1935/viacommtvstrm', clip='mp4:%s' % (available_streams[unicode(bitrate)][unicode(i)]["stream_url"])))
                 )
                 i += 1
             media_objects.append(
                 MediaObject(
                     parts=parts,
-                    # June 9, 2014 - The line below is necessary due to an issue with some clients not copying the media attributes for audio to the streams.
-                    # Not including this line causes the Roku to transcode videos. This issue should be fixed in future versions of the client and/or framework.
-                    audio_codec = AudioCodec.AAC,
                     bitrate = int(bitrate),
                     video_resolution = vid_res
                 )
