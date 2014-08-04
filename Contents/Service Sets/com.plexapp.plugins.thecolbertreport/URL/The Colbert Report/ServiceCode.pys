@@ -1,4 +1,4 @@
-MRSS_URL = 'http://thecolbertreport.cc.com/feeds/mrss?uri=%s&device=Other'
+MRSS_URL = 'http://thecolbertreport.cc.com/feeds/mrss?uri=%s'
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 
 RE_FIX_XML = Regex('(<!--.*?-->)')
