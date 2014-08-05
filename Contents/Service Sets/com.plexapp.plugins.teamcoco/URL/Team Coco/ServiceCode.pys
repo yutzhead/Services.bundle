@@ -1,6 +1,4 @@
 VIDEO_INFO = 'http://teamcoco.com/cvp/2.0/%s.xml'
-RE_VIDEO_ID = Regex('\'video\': {.+?"id":(?P<id>[0-9]+)')
-YT_SEARCH_URL = 'http://gdata.youtube.com/feeds/api/videos?q=%s&author=teamcoco&orderby=relevance&start-index=1&max-results=1&v=2&alt=json'
 RE_CLEANUP = Regex('[^-a-z0-9 ]')
 RE_BANDWIDTH = Regex('BANDWIDTH=(\d+)')
 FULL_EP_RES = [480]
@@ -23,10 +21,10 @@ def MetadataObjectForURL(url):
 	duration = Datetime.MillisecondsFromString(duration[0]) if len(duration) > 0 and duration[0] != "" else None
 
 	try:
-		thumb = xml.xpath('//image[@width="640"]')[0].text
+		thumb = xml.xpath('//image[@width="640"]/text()')[0]
 	except:
 		try:
-			thumb = xml.xpath('//image')[-1].text
+			thumb = xml.xpath('//image/text()')[-1]
 		except:
 			thumb = ''
 
@@ -49,7 +47,7 @@ def MediaObjectsForURL(url):
 					parts = [
 						PartObject(key=HTTPLiveStreamURL(Callback(PlayEpisode, url=url, res=res)))
 					],
-					video_resolution = str(res),
+					video_resolution = res,
 					audio_channels = 2,
 					optimized_for_streaming = True
 				)
@@ -63,7 +61,7 @@ def MediaObjectsForURL(url):
 					],
 					container = Container.MP4,
 					video_codec = VideoCodec.H264,
-					video_resolution = str(res),
+					video_resolution = res,
 					audio_codec = AudioCodec.AAC,
 					audio_channels = 2,
 					optimized_for_streaming = True
@@ -144,74 +142,24 @@ def PlayVideo(url, res=720):
 	if len(xml.xpath('//files/file')) < 1:
 		raise Ex.MediaNotAvailable
 
-	if res not in VIDEO_RES:
-		res = VIDEO_RES[-1]
+	hd = video_url = xml.xpath('//file[@bitrate="hd"]/text()') # 1080p (there is no 720p)
+	sd = video_url = xml.xpath('//file[@bitrate="embed"]/text()') # 360p
 
-	title = xml.xpath('//headline')[0].text.strip().lower()
-	title = String.StripDiacritics(title)
-	title = RE_CLEANUP.sub('', title).strip()
-
-	json_obj = JSON.ObjectFromURL(YT_SEARCH_URL % String.Quote(title))
-
-	if 'entry' in json_obj['feed']:
-		yt_title = json_obj['feed']['entry'][0]['title']['$t'].strip().lower()
-		yt_title = String.StripDiacritics(yt_title)
-		yt_title = RE_CLEANUP.sub('', yt_title).strip()
-
-		if yt_title.startswith(title):
-			yt_url = json_obj['feed']['entry'][0]['media$group']['media$player']['url']
-			media = URLService.MediaObjectsForURL(yt_url)
-
-			for i in range(VIDEO_RES.index(res), len(VIDEO_RES)):
-				for video in media:
-					if video.container != Container.MP4 or video.video_codec != VideoCodec.H264:
-						continue
-
-					if str(video.video_resolution) == str(VIDEO_RES[i]):
-						return Redirect(video.parts[0].key)
-
-	try:
-		video_url = xml.xpath('//file[@bitrate="embed"]')[0].text
-	except:
-		try:
-			video_url = xml.xpath('//file[@type="standard"]')[0].text
-		except:
-			raise Ex.MediaNotAvailable
+	if res == 1080 and len(hd) > 0:
+		video_url = hd[0]
+	elif len(sd) > 0:
+		video_url = sd[0]
+	else:
+		raise Ex.MediaNotAvailable
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetVideoId(url):
 
-	if '/deoncolesblackbox/' in url:
-		return None
+	video_id = HTML.ElementFromURL(url).xpath('//div[@class="player" and @data-id]/@data-id')
 
-	part = url.split('/')
-
-	if len(part) > 4 and part[4].isdigit():
-		return part[4]
+	if len(video_id) > 0:
+		return video_id[0]
 	else:
-		try:
-			page = HTTP.Request(url).content
-		except:
-			raise Ex.MediaNotAvailable
-
-		try:
-			video_id = HTML.ElementFromString(page).xpath('//article[@data-id]')[0].get('data-id')
-			return video_id
-		except:
-			try:
-				video_id = RE_VIDEO_ID.search(page).group('id')
-				return video_id
-			except:
-				return None
-
-####################################################################################################
-def TestURLs():
-
-	test_urls = []
-
-	for url in HTML.ElementFromURL('http://teamcoco.com/video').xpath('//ul[contains(@class,"videos")]/li[position() < 4]/a'):
-		test_urls.append(url.get('href'))
-
-	return test_urls
+		raise Ex.MediaNotAvailable
