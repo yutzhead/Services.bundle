@@ -61,6 +61,9 @@ def MediaObjectsForURL(url):
 
 	for video in data['additionalMedia']:
 
+		if 'role' in video and video['role'] == 'Source':
+			continue
+
 		if video['archive_type'] == 'MPEG4':
 			media_objects.append(MediaObject(
 				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
