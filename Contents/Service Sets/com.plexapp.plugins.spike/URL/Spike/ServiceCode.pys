@@ -1,8 +1,5 @@
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-
 MRSS_URL = 'http://www.spike.com/feeds/mrss/?uri=%s&ref=www.spike.com'
-#FEED_URL = 'http://www.spike.com/feeds/mediagen/?uri=%s'
-#MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
 
 RE_AMPERSANDS = Regex('&(?!amp;)')
 RE_RES_BIT = Regex('x(\d+)_(\d+)_?[^._]*\.(mp4|flv)')
@@ -85,9 +82,6 @@ def MediaObjectsForURL(url):
     except:
         raise Ex.MediaNotAvailable
 
-    #uri = data.xpath('//div[@id="video_player_box"]/@data-mgid')[0]
-
-    #mrss_data = HTTP.Request(MRSS_URL % uri).content
     mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
     mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
     mrss_data = XML.ElementFromString(mrss_data)
@@ -108,8 +102,7 @@ def MediaObjectsForURL(url):
 
         for rendition in renditions:
             rtmp_url = rendition.xpath('./src/text()')[0]
-            # For video with incorrect fields, try to get the bitrate and height from the rtmp url first
-            # Found one that was different, adjusted regex, but still best to put in a try/except
+            # try to get the bitrate and height from the rtmp url first
             try: bitrate = RE_RES_BIT.search(rtmp_url).group(2)
             except: bitrate = rendition.get('bitrate')
             try: height = RE_RES_BIT.search(rtmp_url).group(1)
@@ -132,7 +125,7 @@ def MediaObjectsForURL(url):
                 available_streams[bitrate] = []
             available_streams[bitrate].append(part)
 
-    Log('the value of available_streams is %s' %available_streams)
+    #Log('the value of available_streams is %s' %available_streams)
     media_objects = []
     bitrates = [int(i) for i in available_streams.keys()]
     bitrates.sort(reverse=True)
