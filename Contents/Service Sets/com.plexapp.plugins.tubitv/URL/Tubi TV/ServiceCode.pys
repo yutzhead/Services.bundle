@@ -69,7 +69,6 @@ def MediaObjectsForURL(url):
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
-@indirect
 def PlayVideo(url):
 
 	try:
