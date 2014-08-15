@@ -1,13 +1,12 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:21.0) Gecko/20100101 Firefox/21.0'}
-JSON_URL = 'http://video.disney.com/_grill/json/watch/%s'
-STREAM_BASE = 'http://cdn.videos.dolimg.com/%s'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36'}
+JSON_URL = 'http://%s/_grill/json/watch/%s'
 
 AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0].split('#')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -43,70 +42,49 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	resolutions = ["1080", "720", "480"]
-	bitrates = {
-		"1080":["8000","6000","4300"],
-		"720":["3000","2200","1500"],
-		"480":["1000","600"]
-	}
-
-	media_objects = []
-
-	for res in resolutions:
-		for bitrate in bitrates[res]:
-			media_objects.append(
-				MediaObject(
-					parts = [
-						PartObject(
-							key = Callback(PlayVideo, url=url, bitrate=bitrate)
-						)
-					],
-					bitrate = int(bitrate),
-					container = Container.MP4,
-					video_resolution = res,
-					video_codec = VideoCodec.H264,
-					audio_codec = AudioCodec.AAC,
-					audio_channels = 2,
-					optimized_for_streaming = True
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
 				)
-			)
-
-	return media_objects
+			],
+			video_resolution = 'sd',
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, bitrate):
+def PlayVideo(url, **kwargs):
 
-	bitrates = ["600","1000","1500","2200","3000","4300","6000","8000"]
-	index = bitrates.index(bitrate)
 	json_obj = GetJSON(url)
 
 	if not json_obj or not 'flavors' in json_obj:
 		raise Ex.MediaExpired
 
-	videos = sorted(json_obj['flavors'], key=lambda k: k['bitrate'], reverse=True)
+	for flavor in json_obj['flavors']:
 
-	while index > -1:
-		for video in videos:
-			if video['format'] == 'mp4' and video['bitrate'] <= int(bitrates[index]):
-					video_url = video['url']
+		if flavor['format'] == 'applehttp' and '/master/' in flavor['url']:
 
-					if video_url.startswith('mp4:'):
-						video_url = STREAM_BASE % video_url.split('mp4:',1)[-1]
+			if not flavor['url'].startswith('http://'):
 
-					return IndirectResponse(VideoClipObject, key=video_url)
+				host = url.split('/')[2]
+				flavor['url'] = 'http://%s%s' % (host, flavor['url'])
 
-		index = index - 1
+			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(flavor['url']))
 
 	raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetJSON(url):
 
-	path = url.split('/watch/',1)[1]
+	host = url.split('/')[2]
+	path = url.split('/watch/')[-1]
 
 	try:
-		json = JSON.ObjectFromURL(JSON_URL % path)
+		json = JSON.ObjectFromURL(JSON_URL % (host, path))
 		return json['stack'][0]['data'][0]
 	except:
 		return None
