@@ -54,7 +54,6 @@ def PlayVideo(url, res):
 		raise Ex.MediaNotAvailable
 
 	fmts = RE_FMT_MAP.search(data).group(1).decode('unicode_escape').split(',')
-	Log(fmts)
 
 	for fmt in fmts:
 		if fmt.startswith('37|') and res == '1080':
