@@ -1,4 +1,7 @@
-RE_JSON = Regex("_main\('[^']+', ({.+})\);")
+RE_STATUS = Regex('"status","ok"')
+RE_TITLE = Regex("'title': '([^']+)'")
+RE_DURATION = Regex('"length_seconds","(\d+)"')
+RE_FMT_MAP = Regex('"fmt_stream_map","([^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -10,16 +13,17 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	json_obj = GetJSON(url)
+	data = HTTP.Request(url, cacheTime=300).content
 
-	title = json_obj[0]['title']
-	summary = json_obj[0]['description']
-	duration = json_obj[1]['videodetails']['duration']
+	if not RE_STATUS.search(data):
+		raise Ex.MediaNotAvailable
+
+	title = RE_TITLE.search(data).group(1)
+	duration = RE_DURATION.search(data).group(1)
 
 	return VideoClipObject(
 		title = title,
-		summary = summary,
-		duration = duration
+		duration = int(duration)*1000
 	)
 
 ####################################################################################################
@@ -44,12 +48,13 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-	json_obj = GetJSON(url)
+	data = HTTP.Request(url, cacheTime=300).content
 
-	if json_obj[1]['videoplay']['status'] != 'AVAILABLE':
+	if not RE_STATUS.search(data):
 		raise Ex.MediaNotAvailable
 
-	fmts = json_obj[1]['videoplay']['flashVars']['fmt_stream_map'].split(',')
+	fmts = RE_FMT_MAP.search(data).group(1).decode('unicode_escape').split(',')
+	Log(fmts)
 
 	for fmt in fmts:
 		if fmt.startswith('37|') and res == '1080':
@@ -62,28 +67,3 @@ def PlayVideo(url, res):
 	for fmt in fmts:
 		if fmt.startswith('18|'):
 			return IndirectResponse(VideoClipObject, key=fmt.split('|')[1])
-
-####################################################################################################
-def GetJSON(url):
-
-	try:
-		data = HTTP.Request(url, cacheTime=300).content
-	except Ex.HTTPError, e:
-		if e.code == 403:
-			raise Ex.MediaNotAuthorized
-		else:
-			raise Ex.MediaNotAvailable
-	except:
-		raise Ex.MediaNotAvailable
-
-	json = RE_JSON.search(data)
-
-	if not json:
-		raise Ex.MediaNotAvailable
-
-	json_obj = JSON.ObjectFromString('[%s]' % json.group(1).replace("'", '"').replace('\\x3d', '='))
-
-	if json_obj[0]['mediaType'] != 'video':
-		raise Ex.MediaNotAvailable
-
-	return json_obj
