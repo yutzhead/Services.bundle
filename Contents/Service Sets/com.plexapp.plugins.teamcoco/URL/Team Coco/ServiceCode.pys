@@ -14,7 +14,7 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	xml = XML.ElementFromURL(VIDEO_INFO % (video_id), cacheTime=CACHE_1HOUR)
-	title = xml.xpath('//headline/text()')[0].strip()
+	title = xml.xpath('//headline/text()')[0].replace('.', '').strip() # replace('.', '') is to make sure PHT does not cut off the title
 	summary = String.StripTags(xml.xpath('//description/text()')[0]).strip()
 
 	duration = xml.xpath('//video/@duration')
