@@ -102,8 +102,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-  # Not all input URLs are full URLs, grab the full URL
-  url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+  try:
+    # Not all input URLs are full URLs, grab the full URL
+    url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+  except:
+    raise Ex.MediaNotAvailable
 
   video = GetJSON(url)
 
