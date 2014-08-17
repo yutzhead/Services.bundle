@@ -9,7 +9,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	try:
+		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
@@ -27,7 +30,11 @@ def MetadataObjectForURL(url):
 @deferred
 def MediaObjectsForURL(url):
 
-	data = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
+	try:
+		data = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	video_url = RE_APU.search(data)
 
 	if not video_url:
@@ -101,8 +108,7 @@ def PlayVideo(url):
 
 	sorted_streams = sorted(streams, key=lambda stream: stream['bandwidth'])
 
-	# Throw away the audio-only stream
-	for stream in sorted_streams[1:]:
+	for stream in sorted_streams:
 		new_playlist += '\n%s' % stream['stream']
 
 	return new_playlist
