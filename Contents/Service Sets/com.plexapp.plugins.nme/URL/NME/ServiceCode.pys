@@ -25,3 +25,10 @@ def GetBrightCoveURL(url):
 	video_id = brightcove_url.split('videoId=')[-1].split('&')[0]
 
 	return BC_URL % (player_id, video_id)
+
+####################################################################################################
+def PlayVideo(url):
+
+	media = URLService.MediaObjectsForURL(url)
+
+	return Redirect(media[0].parts[0].key)
