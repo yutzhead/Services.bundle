@@ -167,5 +167,5 @@ def PlayVideo(url):
 	except Ex.RedirectError, e:
 		if 'Location' in e.headers:
 			return IndirectResponse(VideoClipObject, key=e.headers['Location'])
-
-	raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
