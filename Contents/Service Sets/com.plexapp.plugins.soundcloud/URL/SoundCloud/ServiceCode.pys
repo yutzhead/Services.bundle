@@ -1,7 +1,7 @@
 CLIENT_ID = '4f6c5882fe9cfc80ebf7ff815cd8b383'
 FIND_API_URL = 'https://api.soundcloud.com/resolve?url=%%s&_status_code_map[302]=200&_status_format=json&client_id=%s' % CLIENT_ID
 TRACK_DETAILS_URL = 'https://api.soundcloud.com/tracks.json?client_id=%s&ids=%%s' % CLIENT_ID
-MP3_URL = 'http://api.soundcloud.com/tracks/%%s/stream?client_id=%s' % CLIENT_ID
+MP3_URL = 'https://api.soundcloud.com/tracks/%%s/stream?client_id=%s' % CLIENT_ID
 
 RE_TRACK_ID = Regex('/tracks/(?P<id>\d+)')
 
