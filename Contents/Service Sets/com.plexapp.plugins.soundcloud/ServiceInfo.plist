@@ -8,12 +8,12 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*(/explore/|/sets/|/messages/))https://soundcloud\.com/[^/]+/[^/]+$</string>
-				<string>^http://api\.soundcloud\.com/tracks/\d+/stream</string>
+				<string>^(?!.*(/explore/|/sets/|/messages/))https?://soundcloud\.com/[^/]+/[^/]+$</string>
+				<string>^https?://api\.soundcloud\.com/tracks/\d+/stream</string>
 			</array>
 			<key>TestURLs</key>
 			<array>
-				<string>https://soundcloud.com/patrickkelly39/cole-swindell-chillin-it</string>
+				<string>https://soundcloud.com/soundcloud/new-soundcloud-stats</string>
 			</array>
 		</dict>
 	</dict>
