@@ -86,7 +86,7 @@ def MediaObjectsForURL(url):
     # this part is only for music videos
     if vevo_url:
         return URLService.MediaObjectsForURL(vevo_url)
-            
+
     # For show videos
     else:
         mrss_data = GetURI(url)
@@ -95,7 +95,7 @@ def MediaObjectsForURL(url):
         bitrates = []
         bitrates_heights = []
         index = 0
-        
+
         while index < len(media_url):
             player_url = media_url[index].get('url')
             player_url = player_url.replace('{device}', 'Other')
@@ -136,7 +136,7 @@ def MediaObjectsForURL(url):
                     # This means one of the parts failed. Could be a url format that is not mentioned above or could be a not avail url
                     Log('failed to split the rmtp_url to build the stream url. Its value is %s' %rtmp_url)
                     raise Ex.MediaNotAvailable
-            
+
                 # Use the first video to create the bitrates and available_streams lists
                 # Otherwise if a later part has an additional or different/odd sized bitrate, it will create a separate bitrate listing
                 # in the avialable streams with only index for that one part and all other bitrates will be missing the index for that part 
@@ -187,7 +187,7 @@ def MediaObjectsForURL(url):
                     video_resolution = vid_res
                 )
             )
-            
+
     return media_objects
 
 ##################################################################################################
@@ -231,9 +231,12 @@ def VevoURL(url):
 # This is a function determines if it is a video or videolist uri and then builds the video uri and pulls the MRSS xml page
 # Not using number in url or its length to determine the uri since seven digit numbers can be a full episode or a video clip. 
 def GetURI(url):
-            
-    content = HTTP.Request(url).content
-    
+
+    try:
+        content = HTTP.Request(url).content
+    except:
+        raise Ex.MediaNotAvailable
+
     # Some music videos in the MTV channel(music videos only) that are NOT sent to Vevo may be part of an old playlists. 
     # To avoid these in our playlist code search, we use regex to limit the scope of that search to only look in pages for video clips for shows
     try: MGID = RE_MGID_PL.search(url).group(1)
@@ -244,7 +247,7 @@ def GetURI(url):
         # The MTV new video format does not seem to have video clip playlists so not looking for that now
         try: playlist = RE_PLAYLIST.search(content).group(1)
         except: playlist = None
-        
+
     if playlist:
         uri = URI_FORMAT %('videolist', playlist)
     # Otherwise pull the uri from the web page content
