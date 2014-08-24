@@ -187,7 +187,7 @@ def PlayVideo(url, media_selector_url, height):
     try:
         stream_details = XML.ElementFromURL(media_selector_url, cacheTime = 0)
     except:
-        raise Ex.MediaGeoBlocked
+        raise Ex.MediaGeoblocked
 
     # Try to get a video stream
     stream = GetStream(stream_details = stream_details, type = 'video', height = height)
