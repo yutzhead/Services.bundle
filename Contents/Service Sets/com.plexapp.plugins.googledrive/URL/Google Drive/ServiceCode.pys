@@ -13,7 +13,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	data = HTTP.Request(url, cacheTime=300).content
+	try:
+		data = HTTP.Request(url, cacheTime=300).content
+	except:
+		raise Ex.MediaNotAvailable
 
 	if not RE_STATUS.search(data):
 		raise Ex.MediaNotAvailable
