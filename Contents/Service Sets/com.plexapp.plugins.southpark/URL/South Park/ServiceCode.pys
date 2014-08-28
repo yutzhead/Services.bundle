@@ -18,10 +18,21 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+		html = HTML.ElementFromURL(url, follow_redirects=False, cacheTime=CACHE_1HOUR)
 	except Ex.HTTPError, e:
 		if e.code == 404:
 			Log('HTTP 404 Not Found for URL: %s' % url)
+			raise Ex.MediaNotAvailable
+		else:
+			raise Ex.MediaNotAvailable
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			if e.headers['Location'] == url:
+				Log('Redirect loop for URL: %s' % url)
+				raise Ex.MediaNotAvailable
+			else:
+				return URLService.MetadataObjectForURL(e.headers['Location'])
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
