@@ -48,13 +48,13 @@ def MetadataObjectForURL(url):
 			title = ep_name,
 			show = show_name,
 			summary = description,
-			thumb = thumb
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 	except:
 		return VideoClipObject(
 			title = title,
 			summary = description,
-			thumb = thumb
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 ####################################################################################################
