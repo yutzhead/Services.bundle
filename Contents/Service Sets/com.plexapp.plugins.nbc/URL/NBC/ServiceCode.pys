@@ -10,6 +10,7 @@ EPISODES_URL = 'http://tve-atcnbc.nbcuni.com/ep-live/2/nbce/container/x/iPad/%s'
 ###
 
 RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n?\d{4,})')
+RE_CLEANUP_TITLE = Regex('[^a-z0-9]+')
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -225,10 +226,13 @@ def GetEpisodeData(url, video_id):
 		except:
 			raise Ex.MediaNotAvailable
 
-		show_name = html.xpath('//title/text()')[0].split(' | ')[2]
+		show_name = html.xpath('//title/text()')[0].split(' | ')[2].lower()
+		show_name = RE_CLEANUP_TITLE.sub('', show_name)
 
 		for show in JSON.ObjectFromURL(SHOWS_URL):
-			if show['title'].lower() == show_name.lower():
+			show_title = RE_CLEANUP_TITLE.sub('', show['title'].lower())
+
+			if show_title == show_name:
 				show_id = show['assetID']
 				return (EPISODES_URL % (show_id), video_id)
 
