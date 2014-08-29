@@ -67,7 +67,7 @@ def MetadataObjectForURL(url):
 		Log('%s is currently offline.' % title)
 		raise Ex.LiveMediaNotStarted
 
-	summary = String.StripTags(video['description'])
+	summary = String.StripTags(video['description']) if 'description' in video and video['description'] else None
 
 	try:
 		thumb = video['imageUrl']['medium']
