@@ -8,7 +8,7 @@ NO_THUMB_AVAILABLE = 'http://www.traileraddict.com/images/noembed.png'
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 
 	video_id = html.xpath('//meta[@name="twitter:player"]/@content')
 
@@ -16,9 +16,18 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	try:
-		summary = html.xpath('//div[@class="synopsis"]/div[last()]/p//text()')
-		summary = ''.join(summary).strip()
-		Log(summary)
+		summary = html.xpath('//div[@class="synopsis"]/div[last()]//*')
+		summary_parts = []
+
+		for s in summary:
+			if s.tag == 'p':
+				summary_parts.append(s.text_content().strip())
+			elif s.tag == 'span':
+				break
+			else:
+				continue
+
+		summary = ''.join(summary_parts)
 	except:
 		summary = None
 
@@ -70,7 +79,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-	html = HTML.ElementFromURL(url)
+	html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
 	video_id = html.xpath('//meta[@name="twitter:player"]/@content')
 
 	if len(video_id) < 1:
