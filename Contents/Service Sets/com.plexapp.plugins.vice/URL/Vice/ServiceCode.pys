@@ -18,9 +18,8 @@ def MetadataObjectForURL(url):
 
 	try:
 		data = HTTP.Request(url).content
-	except Ex.HTTPError, e:
-		if e.code == 404:
-			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
@@ -78,9 +77,8 @@ def PlayVideo(url):
 
 	try:
 		data = HTTP.Request(url).content
-	except Ex.HTTPError, e:
-		if e.code == 404:
-			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
