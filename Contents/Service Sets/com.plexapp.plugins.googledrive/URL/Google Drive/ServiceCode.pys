@@ -1,6 +1,6 @@
 RE_STATUS = Regex('"status","ok"')
-RE_TITLE = Regex("'title': '([^']+)'")
 RE_DURATION = Regex('"length_seconds","(\d+)"')
+RE_TITLE = Regex("'title': '([^']+)'")
 RE_FMT_MAP = Regex('"fmt_stream_map","([^"]+)"')
 
 ####################################################################################################
@@ -18,7 +18,7 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	if not RE_STATUS.search(data):
+	if not RE_STATUS.search(data) or not RE_DURATION.search(data):
 		raise Ex.MediaNotAvailable
 
 	title = RE_TITLE.search(data).group(1)
