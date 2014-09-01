@@ -1,0 +1,48 @@
+BASE_URL = "http://www.dr.dk/tv"
+API_URL = "http://www.dr.dk/mu-online/api/1.0/"
+
+def MetadataObjectForURL(url):
+	slug = url.rsplit('/',1)[1]
+	
+	programcard = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
+	title = programcard['Title']
+	summary = programcard['Description']
+	source_title = "Danmarks Radio"
+	year = programcard['PrimaryBroadcast']['ProductionYear']
+	originally_available_at = Datetime.ParseDate(programcard['PrimaryBroadcastStartTime'])
+	tagline = programcard['Subtitle']
+	countries = [programcard['PrimaryBroadcast']['ProductionCountry']]
+	thumb = programcard['PrimaryImageUri']
+	art = programcard['PrimaryImageUri']
+	return VideoClipObject(title = title, 
+						summary = summary, 
+						source_title = source_title,
+						year = year,
+						originally_available_at = originally_available_at,
+						tagline = tagline,
+						countries = countries,
+						thumb = thumb,
+						art = art
+						)
+
+def MediaObjectsForURL(url):
+	slug = url.rsplit('/',1)[1]
+	return [MediaObject(container = Container.MP4, parts = [PartObject(key = Callback(PlayMedia, slug = slug))])]
+	#return MediaObject(duration = programcard['PrimaryAsset']['DurationInMilliseconds'], k)
+
+@indirect
+def PlayMedia(slug):
+	client = 'plexapp.' + Client.Product.replace(' ', '') + '.' + Client.Version
+	ProgramCard = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
+	PrimaryAsset = JSON.ObjectFromURL(ProgramCard['PrimaryAsset']['Uri'])
+	for Links in PrimaryAsset['Links']:
+		if Links['Target'] == 'HLS':
+			url = Links['Uri']
+	#HTTP.Request('http://www.dr.dk/mu-online/api/1.0/reporting/viewed', values = {'Id':slug, 'Client':client})
+	return IndirectResponse(VideoClipObject, key=url)
+
+def TestURLs():
+	pass
+
+def NormalizeURL(url):
+	return url.rsplit('!#',1)[0]
