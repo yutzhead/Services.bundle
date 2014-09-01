@@ -17,13 +17,17 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	title = html.xpath('//meta[@property="og:title"]/@content')
+
+	if len(title) < 1:
+		raise Ex.MediaNotAvailable
+
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 	date = html.xpath('//meta[@itemprop="uploadDate"]/@content')[0].split('T')[0]
 	originally_available_at = Datetime.ParseDate(date).date()
 
 	return VideoClipObject(
-		title = title,
+		title = title[0],
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 		originally_available_at = originally_available_at
 	)
