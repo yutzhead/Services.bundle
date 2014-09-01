@@ -7,7 +7,7 @@ MediaObject.optimized_for_streaming = True
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url.split('?')[0]
+	return url.split('?')[0].split('/embed')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
