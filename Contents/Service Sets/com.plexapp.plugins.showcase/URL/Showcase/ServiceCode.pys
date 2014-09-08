@@ -70,8 +70,12 @@ def PlayVideo(url):
 ####################################################################################################
 def GetSMIL(url):
 	page = HTTP.Request(url).content
-	pID = RE_PID.search(page).group(1)
-	smil = XML.ElementFromURL(SMIL_URL % pID)
+	pID = RE_PID.search(page)
+
+	if not pID:
+		raise Ex.MediaNotAvailable
+
+	smil = XML.ElementFromURL(SMIL_URL % (pID.group(1)))
 	return smil
 
 ####################################################################################################
