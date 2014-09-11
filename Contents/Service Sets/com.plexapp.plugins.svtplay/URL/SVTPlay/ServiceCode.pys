@@ -166,7 +166,10 @@ def GetHLSStreams(url):
 
     streams = []
 
-    playlist = HTTP.Request(url, headers = headers, cacheTime = 0).content
+    try:
+        playlist = HTTP.Request(url, headers = headers, cacheTime = 0).content
+    except:
+        raise Ex.MediaNotAvailable
 
     # Parse the m3u8 file to get:
     # - URL
