@@ -53,7 +53,12 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	user_id = GetUserId(url)
-	token = JSON.ObjectFromURL(HLS_TOKEN_URL % user_id, cacheTime=0)
+
+	try:
+		token = JSON.ObjectFromURL(HLS_TOKEN_URL % user_id, cacheTime=0)
+	except:
+		raise Ex.MediaNotAvailable
+
 	video_url = HLS_PLAYLIST_URL % (user_id, String.Quote(token['token']), String.Quote(token['sig']))
 	Log(' --> Final video_url: %s' % video_url)
 
