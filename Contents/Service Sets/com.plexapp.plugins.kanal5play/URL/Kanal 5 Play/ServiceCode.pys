@@ -160,6 +160,12 @@ def PlayHLS(url):
 def PlayRTMP(url):
 	details = GetDetails(url, 'FLASH')
 
+	if not 'streams' in details:
+		if 'reasonsForNoStreams' in details and 'region' in details['reasonsForNoStreams'][0]:
+			raise Ex.MediaGeoblocked
+		else:
+			raise Ex.MediaNotAvailable
+
 	maxBitrateFound = 0
 	for stream in details['streams']:
 		if stream['bitrate'] > maxBitrateFound:
