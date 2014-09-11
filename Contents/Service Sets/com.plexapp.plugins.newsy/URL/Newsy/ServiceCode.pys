@@ -1,13 +1,7 @@
 RE_EMBED_CODE = Regex(".*embedCode=(?P<embed>[^&]*)&.*")
-RE_MOBILE_ARGS = Regex('.*var mobile_player_url="http://player.ooyala.com/mobile_player.js?(?P<args>[^"]*)".*', Regex.DOTALL)
-RE_STREAM_JSON = Regex('.*var streams=window.oo_testEnv\?\[\]:eval\((?P<json>[^}]+)}].*', Regex.DOTALL)
-
 BASE_URL = 'http://www.newsy.com/'
-PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
-MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js%s'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
     # Request the page.
@@ -29,41 +23,26 @@ def MetadataObjectForURL(url):
         tags = tags)
 
 ####################################################################################################
-
 def MediaObjectsForURL(url):
     return [
       MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        optimized_for_streaming = True,
+        video_resolution = 720,
         audio_channels = 2,
-        parts = [PartObject(key = Callback(PlayVideo, url = url))]
+        parts = [PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url = url)))]
       )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
-
     # Request the page.
     page = HTML.ElementFromURL(url)
 
     # Determine the embed_code of the associated video
-    video_src = page.xpath("//link[@rel='video_src']")[0].get('href')
+    video_src = page.xpath("//meta[@property='og:video']/@content")[0]
     embed_code = RE_EMBED_CODE.match(video_src).groupdict()['embed']
 
-    # Once we've got this, we can then request the main JS page to do with the actual player. Since it
-    # only actually contains JS source, we simply obtain the content.
-    player_page = HTTP.Request(PLAYER_URL % embed_code, cacheTime = 0).content
-    
-    # The player page will contain a reference to the mobile JS page (including all required parameters).
-    # We therefore search for the known url.
-    mobile_player_page_args = RE_MOBILE_ARGS.match(player_page).groupdict()['args'] + 'ipad'
-    mobile_player_page = HTTP.Request(MOBILE_PLAYER_URL % mobile_player_page_args, cacheTime = 0).content
-
-    # We now have the mobile JS player page. 
-    stream_json = RE_STREAM_JSON.match(mobile_player_page).groupdict()['json'] + "}]"
-    stream_json = stream_json.decode('unicode_escape')[2:]
-    stream_details = JSON.ObjectFromString(stream_json)
-
-    return Redirect(stream_details[0]['ipad_url'])
+    return IndirectResponse(
+    	VideoClipObject,
+    	key = HTTPLiveStreamURL(String.Decode('aHR0cDovL3BsYXllci5vb3lhbGEuY29tL3BsYXllci9pcGFkLyVzLm0zdTg@anM9MQ__') % embed_code)
+    )
