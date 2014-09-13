@@ -16,7 +16,7 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		html = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR)
+		html = HTML.ElementFromURL(url)
 	except Ex.HTTPError, e:
 		if e.code == 404:
 			Log('HTTP 404 Not Found for URL: %s' % url)
@@ -37,7 +37,7 @@ def MetadataObjectForURL(url):
 		if len(mgid) < 1:
 			raise Ex.MediaExpired
 
-		mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
+		mrss_data = HTTP.Request(MRSS_URL % mgid[0]).content
 		mrss_data = RE_FIX_XML.sub('', mrss_data)
 		mrss_data = XML.ElementFromString(mrss_data)
 
@@ -90,14 +90,14 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
 	try:
-		mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[contains(@id, "video_player")]/@data-mgid')
+		mgid = HTML.ElementFromURL(url).xpath('//div[contains(@id, "video_player")]/@data-mgid')
 
 		if len(mgid) < 1:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaExpired
 
-	mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
+	mrss_data = HTTP.Request(MRSS_URL % mgid[0]).content
 	mrss_data = RE_FIX_XML.sub('', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
@@ -108,7 +108,7 @@ def MediaObjectsForURL(url):
 	for media_url in media_urls:
 
 		try:
-			video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
+			video_data = XML.ElementFromURL(media_url)
 		except:
 			raise Ex.MediaNotAvailable
 
