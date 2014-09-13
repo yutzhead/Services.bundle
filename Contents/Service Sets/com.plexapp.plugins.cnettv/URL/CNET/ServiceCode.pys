@@ -18,7 +18,6 @@ def MetadataObjectForURL(url):
 	else:
 		duration = int(duration) * 1000
 
-
 	return VideoClipObject(
 		title = title,
 		summary = summary,
@@ -48,19 +47,19 @@ def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
 
-	for video in json_obj['files']['data']:
-		if video['type'] == 'HLS_VARIANT_TABLET' and video['format'] == 'M3U' and 'mpxPublicId' in video:
-			hls_url = 'http://link.theplatform.com/s/kYEXFC/%s?&mbr=true' % video['mpxPublicId']
+	if not 'files' in json_obj or not 'hls_tablet' in json_obj['files']:
+		raise Ex.MediaNotAvailable
 
-			try:
-				m3u8 = HTTP.Request(hls_url, follow_redirects=False).content
-			except Ex.RedirectError, e:
-				if 'Location' in e.headers:
-					hls_url = e.headers['Location']
+	video_id = json_obj['files']['hls_tablet']
+	video_url = 'http://link.theplatform.com/s/kYEXFC/%s' % (video_id)
 
-			return IndirectResponse(VideoClipObject, key=hls_url)
+	try:
+		headers = HTTP.Request(video_url, follow_redirects=False).headers
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			video_url = e.headers['Location']
 
-	raise Ex.MediaNotAvailable
+	return IndirectResponse(VideoClipObject, key=video_url)
 
 ####################################################################################################
 def GetJSON(url):
