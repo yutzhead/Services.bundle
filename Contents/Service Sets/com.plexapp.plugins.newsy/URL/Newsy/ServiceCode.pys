@@ -1,46 +1,51 @@
-RE_EMBED_CODE = Regex(".*embedCode=(?P<embed>[^&]*)&.*")
+RE_EMBED_CODE = Regex("embedCode=(?P<embed>[^&]*)&")
 BASE_URL = 'http://www.newsy.com/'
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-    # Request the page.
     page = HTML.ElementFromURL(url)
 
-    title = page.xpath('//meta[@property="og:title"]')[0].get('content')
-    description = page.xpath('//meta[@property="og:description"]')[0].get('content')
-    tags = page.xpath("//meta[@name='keywords']")[0].get('content').split(',')
+    title = page.xpath('//meta[@property="og:title"]/@content')[0]
+    description = page.xpath('//meta[@property="og:description"]/@content')[0]
+    tags = page.xpath('//meta[@name="keywords"]/@content')[0].split(',')
     tags = [ tag.strip() for tag in tags ]
 
-    thumb = page.xpath('//meta[@property="og:image"]')[0].get('content')
-    if thumb.startswith("/") == True:
+    thumb = page.xpath('//meta[@property="og:image"]/@content')[0]
+    if thumb.startswith("/"):
         thumb = BASE_URL + thumb
 
     return VideoClipObject(
         title = title,
         summary = description,
-        thumb = thumb,
-        tags = tags)
+        thumb = Resource.ContentsOfURLWithFallback(thumb),
+        tags = tags
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
-      MediaObject(
-        video_resolution = 720,
-        audio_channels = 2,
-        parts = [PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url = url)))]
-      )
+        MediaObject(
+            video_resolution = 720,
+            audio_channels = 2,
+            parts = [
+                PartObject(
+                    key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+                )
+            ]
+        )
     ]
 
 ####################################################################################################
 @indirect
 def PlayVideo(url):
-    # Request the page.
+
     page = HTML.ElementFromURL(url)
 
     # Determine the embed_code of the associated video
-    video_src = page.xpath("//meta[@property='og:video']/@content")[0]
-    embed_code = RE_EMBED_CODE.match(video_src).groupdict()['embed']
+    video_src = page.xpath('//meta[@property="og:video"]/@content')[0]
+    embed_code = RE_EMBED_CODE.search(video_src).group('embed')
 
     return IndirectResponse(
     	VideoClipObject,
