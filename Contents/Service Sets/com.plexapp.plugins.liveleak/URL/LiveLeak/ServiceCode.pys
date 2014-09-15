@@ -1,5 +1,6 @@
 RE_FILE_URL = Regex('file: "([^"]+)"')
 RE_ITEM_TOKEN = Regex('item_token=([^&"]+)')
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -16,7 +17,9 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	data = HTTP.Request(url).content
+	data = RE_CONTROL_CHARS.sub('', data)
+	html = HTML.ElementFromString(data)
 
 	# Check script tag for video and iframes for YouTube embeds
 	script = html.xpath('//script[contains(text(), "file:")]/text()')
