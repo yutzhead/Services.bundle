@@ -33,8 +33,8 @@ def MetadataObjectForURL(url):
 
 	meta = GetJSON(url)['meta']
 
-	title = meta['title'].replace('&#39;', '”')
-	summary = String.StripTags(meta['description'])
+	title = String.DecodeHTMLEntities(meta['title'])
+	summary = String.DecodeHTMLEntities(String.StripTags(meta['description']))
 	duration = int(meta['duration'] * 1000)
 
 	if 'thumbnail' in meta:
