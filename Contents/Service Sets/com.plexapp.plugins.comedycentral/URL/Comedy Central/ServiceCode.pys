@@ -21,6 +21,8 @@ def MetadataObjectForURL(url):
 		if e.code == 404:
 			Log('HTTP 404 Not Found for URL: %s' % url)
 			raise Ex.MediaNotAvailable
+		else:
+			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
 
