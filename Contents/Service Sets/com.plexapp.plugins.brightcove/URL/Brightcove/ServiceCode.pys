@@ -98,22 +98,29 @@ def MediaObjectsForURL(url):
 	if len(media_objects) < 1 and 'FLVFullLengthURL' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']:
 
 		url = json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
-		bitrate = int(float(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['encodingRate'])/1000)
 
-		media_objects.append(
-			MediaObject(
-				parts = [PartObject(key=url)],
-				container = Container.MP4,
-				video_codec = VideoCodec.H264,
-				video_resolution = 360,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				bitrate = bitrate,
-				optimized_for_streaming = True
+		if not '.f4m' in url:
+
+			bitrate = int(float(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['encodingRate'])/1000)
+
+			media_objects.append(
+				MediaObject(
+					parts = [PartObject(key=url)],
+					container = Container.MP4,
+					video_codec = VideoCodec.H264,
+					video_resolution = 360,
+					audio_codec = AudioCodec.AAC,
+					audio_channels = 2,
+					bitrate = bitrate,
+					optimized_for_streaming = True
+				)
 			)
-		)
 
 	media_objects.sort(key=lambda obj: obj.video_resolution, reverse=True)
+
+	if len(media_objects) < 1:
+		raise Ex.MediaNotAvailable
+
 	return media_objects
 
 ####################################################################################################
