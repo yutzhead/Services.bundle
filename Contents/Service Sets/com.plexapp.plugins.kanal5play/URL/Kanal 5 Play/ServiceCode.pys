@@ -46,7 +46,7 @@ def MetadataObjectForURL(url):
 	episode_title = details['title']
 	show_title = details['program']['name']
 	episode_summary = details['description']
-	episode_duration = int(details['length'])
+	episode_duration = int(details['length']) if 'length' in details else None
 	episode_thumb = details['posterUrl']
 
 	try: season_index = int(details['seasonNumber'])
