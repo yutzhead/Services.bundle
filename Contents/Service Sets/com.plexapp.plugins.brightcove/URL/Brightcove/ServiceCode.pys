@@ -36,9 +36,41 @@ def MediaObjectsForURL(url):
 	media_objects = []
 	json_obj = GetJSON(url)
 
-	if 'renditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']) > 0:
+	if 'IOSRenditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['IOSRenditions']) > 0:
+
+		for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['IOSRenditions']:
+
+			if rendition['audioOnly']:
+				continue
+
+			resolution = rendition['frameHeight']
+			url = rendition['defaultURL']
+
+			if resolution < 360 or not '.m3u8' in url:
+				continue
+
+			bitrate = int(float(rendition['encodingRate'])/1000)
+			width = rendition['frameWidth']
+
+			media_objects.append(
+				MediaObject(
+					parts = [
+						PartObject(key=HTTPLiveStreamURL(url))
+					],
+					video_resolution = resolution,
+					audio_channels = 2,
+					bitrate = bitrate,
+					optimized_for_streaming = True
+				)
+			)
+
+	if len(media_objects) < 1 and 'renditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']) > 0:
 
 		for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']:
+
+			if rendition['audioOnly']:
+				continue
+
 			resolution = rendition['frameHeight']
 			url = rendition['defaultURL']
 
@@ -50,7 +82,9 @@ def MediaObjectsForURL(url):
 
 			media_objects.append(
 				MediaObject(
-					parts = [PartObject(key=url)],
+					parts = [
+						PartObject(key=url)
+					],
 					container = Container.MP4,
 					video_codec = VideoCodec.H264,
 					video_resolution = resolution,
