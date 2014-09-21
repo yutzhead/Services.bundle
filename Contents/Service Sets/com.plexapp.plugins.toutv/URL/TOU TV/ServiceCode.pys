@@ -118,7 +118,13 @@ def PlayVideo(url, stream_type):
     # Get the cookie and movie Url
     json = JSON.ObjectFromURL(url)
     movieUrl = json['url']
-    HTTP.Request(url=movieUrl).load()
+    #HTTP.Request(url=movieUrl).load()
+
+    if not movieUrl:
+        if 'message' in json and "n'est pas disponible dans votre pays" in json['message']:
+            raise Ex.MediaGeoblocked
+        else:
+            raise Ex.MediaNotAvailable
 
     if stream_type == 'HLS':
         #return GetPlaylist(movieUrl, 'iPad')
