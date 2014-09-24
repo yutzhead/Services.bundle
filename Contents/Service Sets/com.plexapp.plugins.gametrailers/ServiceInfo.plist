@@ -8,9 +8,13 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.gametrailers.com/.+</string>
+				<string>^http://www\.gametrailers\.com/videos/.+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>

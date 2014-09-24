@@ -1,123 +1,149 @@
-NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 MRSS_URL = 'http://www.gametrailers.com/feeds/mrss?uri=%s'
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
-RE_AMPERSANDS = Regex('&(?!amp;)')
+NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
 
-MediaObject.container = Container.MP4
-MediaObject.video_codec = VideoCodec.H264
-MediaObject.audio_codec = AudioCodec.AAC
+RE_FIX_XML = Regex('(<!--.*?-->)')
+RE_BITRATE = Regex('_(\d+)_?[^._]*\.mp4')
+
 MediaObject.audio_channels = 2
 MediaObject.optimized_for_streaming = True
-AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	uri = GetURI(url)
-	feed = RSS.FeedFromURL(MRSS_URL % uri)
+	try:
+		html = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			Log('HTTP 404 Not Found for URL: %s' % url)
+			raise Ex.MediaNotAvailable
+		else:
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
-	video = feed.entries[0]
-	title = video.title
-	description = video.summary
-	duration = int(float(video.media_content[0]['duration'])*1000)
-	thumb = video.media_thumbnail[0]['url']
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
+	duration = 0
 
 	try:
-		originally_available_at = Datetime.ParseDate(video.updated).date()
+		mgid = html.xpath('//div[contains(@id, "video_player")]/@data-mgid')
+
+		if len(mgid) < 1:
+			raise Ex.MediaExpired
+
+		mrss_data = HTTP.Request(MRSS_URL % mgid[0]).content
+		mrss_data = RE_FIX_XML.sub('', mrss_data)
+		mrss_data = XML.ElementFromString(mrss_data)
+
+		media_urls = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+
+		for segment in media_urls:
+			if segment.get('duration') != "":
+				if ':' in segment.get('duration'):
+					duration += Datetime.MillisecondsFromString(segment.get('duration'))
+				else:
+					duration += int(float(segment.get('duration'))*1000)
+	except:
+		pass
+
+	try:
+		upload_date = html.xpath('//meta[@itemprop="uploadDate"]/@content')[0]
+		originally_available_at = Datetime.ParseDate(upload_date)
 	except:
 		originally_available_at = None
 
 	return VideoClipObject(
 		title = title,
-		summary = description,
+		summary = summary,
 		duration = duration,
-		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 		originally_available_at = originally_available_at
 	)
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
 
-	bitrates = ['3500','2200','1700','1200']
-	resolutions = ['720','540','432','360']
-	media_objects = []
+	try:
+		mgid = HTML.ElementFromURL(url).xpath('//div[contains(@id, "video-player")]/@data-mgid')
 
-	for i, bitrate in enumerate(bitrates):
-		if 'bonus-round' in url:
-			media_objects.append(
-				MediaObject(
-					parts = [
-						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=0)),
-						PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=1))
-						],
-					bitrate = bitrate,
-					video_resolution = resolutions[i]
-				)
-			)
-		else:
-			media_objects.append(
-				MediaObject(
-					parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=bitrate, index=0))],
-					bitrate = bitrate,
-					video_resolution = resolutions[i]
-				)
-			)
+		if len(mgid) < 1:
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaExpired
 
-	return media_objects
-
-####################################################################################################
-@indirect
-def PlayVideo(url, bitrate='1700', index=0, fmt=None):
-
-	BITRATES = ['1200', '1700', '2200', '3500']
-
-	uri = GetURI(url)
-	mrss_data = HTTP.Request(MRSS_URL % uri).content
-	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+	mrss_data = HTTP.Request(MRSS_URL % mgid[0]).content
+	mrss_data = RE_FIX_XML.sub('', mrss_data)
 	mrss_data = XML.ElementFromString(mrss_data)
 
-	try:
-		player_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)[index].get('url')
-	except:
-		raise Ex.MediaNotAvailable
+	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
 
-	player_data = XML.ElementFromURL(player_url)
-	try:
-		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
-	except:
-		rtmp_url = ''
-		index = BITRATES.index(bitrate)
-		while index > -1:
-			try:
-				rtmp_url = player_data.xpath('//rendition/src')[index].text
-				break
-			except:
-				index = index - 1
+	available_streams = {}
 
-	if not '/mtvnorigin/' in rtmp_url:
-		raise Ex.MediaNotAvailable
+	for media_url in media_urls:
 
-	stream_url = rtmp_url.split('/mtvnorigin/')[1]
-	mp4_url = MP4_URL % stream_url
+		try:
+			video_data = XML.ElementFromURL(media_url)
+		except:
+			raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=mp4_url)
+		renditions = video_data.xpath('//rendition[@type="video/mp4"]')
 
-####################################################################################################
-def GetURI(url):
+		if len(renditions) < 1:
+			raise Ex.MediaNotAvailable
 
-	try:
-		data = HTML.ElementFromURL(url)
-	except:
-		raise Ex.MediaNotAvailable
+		for rendition in renditions:
 
-	uri = data.xpath('//div[@id="video-player"]')
+			if int(rendition.get('height')) < 360:
+				continue
 
-	if len(uri) < 1:
-		raise Ex.MediaNotAvailable
-	else:
-		return uri[0].get('data-mgid')
+			rtmp_url = rendition.xpath('./src/text()')[0]
+			bitrate = RE_BITRATE.search(rtmp_url).group(1)
+
+			if bitrate not in available_streams:
+				available_streams[bitrate] = []
+
+			part = {}
+			part['duration'] = rendition.get('duration')
+			part['height'] = rendition.get('height')
+			part['rtmp_url'] = rtmp_url
+
+			available_streams[bitrate].append(part)
+
+	media_objects = []
+	bitrates = [int(i) for i in available_streams.keys()]
+	bitrates.sort(reverse=True)
+
+	for bitrate in bitrates:
+
+		parts = []
+
+		for part in available_streams[str(bitrate)]:
+
+			parts.append(
+				PartObject(
+					key = RTMPVideoURL(
+						url='rtmpe://viacommtvstrmfs.fplive.net:1935/viacommtvstrm',
+						clip=part['rtmp_url'].split('/mtvnorigin/')[-1]
+					),
+					duration = int(part['duration'])*1000
+				)
+			)
+
+			video_resolution = int(part['height'])
+
+		media_objects.append(
+			MediaObject(
+				parts = parts,
+				bitrate = bitrate,
+				video_resolution = video_resolution
+			)
+		)
+
+	return media_objects
