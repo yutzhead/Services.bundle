@@ -103,6 +103,9 @@ def MediaObjectsForURL(url):
 
 		for rendition in renditions:
 
+			if int(rendition.get('height')) < 360:
+				continue
+
 			rtmp_url = rendition.xpath('./src/text()')[0]
 
 			if '/intros/' in rtmp_url:
