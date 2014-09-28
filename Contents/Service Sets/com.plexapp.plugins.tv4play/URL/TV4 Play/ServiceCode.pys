@@ -3,16 +3,11 @@ from tv4play import Login
 RE_VIDEO_ID     = Regex('(?<=video_id=)[0-9]+')
 RE_SHOW_EPISODE = Regex('(.*) *(Del) *([0-9]+) *(.*)', Regex.IGNORECASE)
 
-API_BASE_URL  = 'http://premium.tv4play.se/api/web/asset/'
-API_VIDEO_URL = API_BASE_URL + '%s/play'
-
-SESSION_URL = 'https://www.tv4play.se/session'
+API_BASE_URL  = 'https://prima.tv4play.se'
+API_VIDEO_URL = API_BASE_URL + '%s/play%s'
+PROXY_URL     = 'http://papi.tv4play.se/playback/hls/hlsproxy.m3u8?hlsurl=%s&subsurl=%s'
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17"
-
-####################################################################################################
-def NormalizeURL(url):
-    return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -23,7 +18,7 @@ def MetadataObjectForURL(url):
         raise Ex.MediaNotAvailable
 
     try:
-        xmlElement = XML.ElementFromURL(API_BASE_URL + id)
+        xmlElement = XML.ElementFromURL(API_BASE_URL + '/api/web/asset/' + str(id))
     except:
         raise Ex.MediaNotAvailable
 
@@ -123,65 +118,57 @@ def PlayVideo(id):
     if cookies:
         headers['Cookie'] = cookies
     
-    try:
-        # Try get info on HLS streams
-        xmlElement = XML.ElementFromURL(
-            url = API_VIDEO_URL % id + "?protocol=hls",
-            headers = headers
-        )
-    except:
-        pass
+    is_live = IsLive(id)
+    
+    if not is_live:
+        try:
+            xmlElement = XML.ElementFromURL(
+                url = API_VIDEO_URL % ('/api/web/asset/' + str(id), '?protocol=hls&videoFormat=MP4+WEBVTTS'),
+                headers = headers
+            )
+        except:
+            pass
+    else:
+        try:
+            xmlElement = XML.ElementFromURL(
+                url = API_VIDEO_URL % ('/api/html5/asset/' + str(id), '?videoFormat=livehls'),
+                headers = headers
+            ) 
+        except: 
+            pass   
 
     if xmlElement:
+        hls_url  = None
+        subs_url = None
+
         for item in xmlElement.xpath("//playback//items//item"):
             url         = item.xpath(".//url/text()")[0]
             mediaFormat = item.xpath(".//mediaFormat/text()")[0]
             
-            if url.startswith('http') and '.m3u8' in url and mediaFormat == 'mp4':
-                    return IndirectResponse(
-                        VideoClipObject,
-                        key = HTTPLiveStreamURL(GetClientDependentURL(url))
-                    )
-    
-    # Try without specifying HLS
-    try:
-        xmlElement = XML.ElementFromURL(
-            url = API_VIDEO_URL % id,
-            headers = headers
-        )
-    except:
-        pass
-
-    if xmlElement:
-        for item in xmlElement.xpath("//playback//items//item"):
-            base = item.xpath(".//base/text()")[0]
-            clip = item.xpath(".//url/text()")[0]
-            
-            if base.startswith('rtmp'):
-                if not base.startswith('rtmpe'):
-                    base = base.replace('rtmp', 'rtmpe')
+            if url.startswith('http') and '.m3u8' in url:
+                if mediaFormat == 'mp4' or mediaFormat == 'livehls':
+                    hls_url = GetClientDependentURL(url)
+                    
+                elif mediaFormat == 'webvtts':
+                    subs_url = url
                 
+            if hls_url and subs_url:
                 return IndirectResponse(
                     VideoClipObject,
-                    key = 
-                        RTMPVideoURL(
-                            url = base, 
-                            clip = clip,
-                            swf_url = 'http://www.tv4play.se/flash/tv4playflashlets.swf'
-                        )
-                    )
-            
-            elif clip.startswith('http') and 'manifest.f4m' in clip:
-                return IndirectResponse(
-                    VideoClipObject,
-                    key = HTTPLiveStreamURL(GetClientDependentURL(clip.replace("hds-f", "-i").replace("/z/","/i/").replace("manifest.f4m", "master.m3u8")))
+                    key = HTTPLiveStreamURL(url = PROXY_URL % (hls_url, subs_url))
                 )
-
-        if 'NOT_STARTED' in XML.StringFromElement(xmlElement):
+        
+        if hls_url:
+            # No subs were found(probably a live stream)
+            return IndirectResponse(
+                VideoClipObject,
+                key = HTTPLiveStreamURL(url = hls_url)
+            ) 
+    
+        if is_live and xmlElement.xpath("//playback//playbackStatus/text()")[0] == 'NOT_STARTED':
             raise Ex.LiveMediaNotStarted
 
-    else:
-        raise Ex.MediaNotAvailable
+    raise Ex.MediaNotAvailable
 
 ###########################################################
 def GetClientDependentURL(url):
@@ -236,3 +223,11 @@ def GetHLSStreams(url):
     sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)        
 
     return sorted_streams
+
+###########################################################
+def IsLive(id):
+    try:
+        data = JSON.ObjectFromURL('http://webapi.tv4play.se/play/video_assets?id=%s' % id)
+        return data['results'][0]['is_live']
+    except:
+        return False  
