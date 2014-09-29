@@ -1,21 +1,22 @@
 VIDEO_STREAM_URL  = 'http://viastream.viasat.tv/MobileStream/%s'
 VIDEO_DETAILS_URL = '/mobileapi/detailed?videoid=%s'
 
-RE_ID = Regex('(?<=play/)[0-9]+')
+RE_ID = Regex('\d+')
 
 ####################################################################################################
 def MetadataObjectForURL(url): 
     # Determine id of episode
-    try:
-        id  = RE_ID.search(url).group(0)
-    except:
-        raise Ex.MediaNotAvailable
-
-    baseurl = url[ : url.rfind('/') + 1].replace("/play/", "")
+    [baseurl, id] = FindVideoID(url)
 
     try: 
         videos = JSON.ObjectFromURL(baseurl + VIDEO_DETAILS_URL % id)
+    except:
+        raise Ex.MediaNotAvailable
 
+    if not videos['videos']['video_program'] and not videos['videos']['video_clip']:
+        raise Ex.MediaGeoblocked
+    
+    try:  
         for video in videos['videos']['video_program']:
             if id == video['id']:
                 return EpisodeObject(
@@ -40,6 +41,9 @@ def MetadataObjectForURL(url):
                     originally_available_at = Datetime.FromTimestamp(int(clip['created'])),
                     duration = int(clip['length']) * 1000
                 )
+                
+        raise Ex.MediaNotAvailable
+        
     except:
         raise Ex.MediaNotAvailable
 
@@ -62,12 +66,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
     # Determine id of episode
-    try:
-        id  = RE_ID.search(url).group(0)
-    except:
-        raise Ex.MediaNotAvailable
-
-    baseurl = url[ : url.rfind('/') + 1].replace("/play/", "")
+    [baseurl, id] = FindVideoID(url)
 
     try: 
         videos = JSON.ObjectFromURL(baseurl + VIDEO_DETAILS_URL % id)
@@ -150,5 +149,18 @@ def GetHLSStreams(url):
 
 ####################################################################################################
 def GetImgUrl(url):
-    return "http://play.pdl.viaplay.com/imagecache/497x280/" + url.replace('\\', '') 
+    return "http://play.pdl.viaplay.com/imagecache/497x280/" + url.replace('\\', '')
+
+####################################################################################################
+def FindVideoID(url):
+    try:
+        split = url.split('/')
+        baseurl = 'http://' + split[2]
+        id  = RE_ID.findall(split[-1])[0]
+    except:
+        raise Ex.MediaNotAvailable
+
+    return [baseurl, id]
+    
+ 
 
