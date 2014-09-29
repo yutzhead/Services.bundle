@@ -183,7 +183,11 @@ def DetermineAvailableVideo(url, height):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, media_selector_url, height):
+def PlayVideo(url='', media_selector_url='', height='720'):
+
+    if url == '' or media_selector_url == '':
+        raise Ex.MediaNotAvailable
+
     try:
         stream_details = XML.ElementFromURL(media_selector_url, cacheTime = 0)
     except:
