@@ -35,7 +35,7 @@ def PlayVideo(url):
 	id = ID_REGEX.findall(url)[0]
 	details = GetDetails(id)
 
-	playlists = details["playlists"]["playlist"]
+	playlists = details["playlists"]["playlist"] if 'playlist' in details["playlists"] else []
 	if len(playlists) == 0:
 		if 'geoblock' in details['flags']:
 			raise Ex.MediaGeoblocked
