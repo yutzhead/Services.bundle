@@ -1,48 +1,89 @@
 BASE_URL = "http://www.dr.dk/tv"
-API_URL = "http://www.dr.dk/mu-online/api/1.0/"
+API_URL = "http://www.dr.dk/mu-online/api/1.1/"
+RE_DRTV = Regex('(.+)dr.dk/tv/se/(.*)/(.*)')
+RE_DRWEB = Regex('(.+)dr.dk/(?!tv)|(?!radio)')
 
 def MetadataObjectForURL(url):
-	slug = url.rsplit('/',1)[1]
 	
-	programcard = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
-	title = programcard['Title']
-	summary = programcard['Description']
-	source_title = "Danmarks Radio"
-	year = programcard['PrimaryBroadcast']['ProductionYear']
-	originally_available_at = Datetime.ParseDate(programcard['PrimaryBroadcastStartTime'])
-	tagline = programcard['Subtitle']
-	countries = [programcard['PrimaryBroadcast']['ProductionCountry']]
-	thumb = programcard['PrimaryImageUri']
-	art = programcard['PrimaryImageUri']
-	return VideoClipObject(title = title, 
-						summary = summary, 
-						source_title = source_title,
-						year = year,
-						originally_available_at = originally_available_at,
-						tagline = tagline,
-						countries = countries,
-						thumb = thumb,
-						art = art
-						)
+	
+	if RE_DRTV.match(url):
+		slug = url.rsplit('/',1)[1]
+		json = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
+		mo = EpisodeObject()
+		mo.title = unicode( json['Title'])
+		mo.summary = json['Description']
+		mo.originally_available_at = Datetime.ParseDate(json['PrimaryBroadcastStartTime'])
+		mo.show = json['SeriesTitle']
+		mo.thumb = json['PrimaryImageUri'] + '?width=512&height=512'
+		mo.art = json['PrimaryImageUri']
+		mo.source_title = 'DR'
+		mo.duration = json['PrimaryAsset']['DurationInMilliseconds']
+	elif RE_DRWEB.match(url):
+		mo = EpisodeObject()
+		page = HTML.ElementFromURL(url)
+		dataRosurce = page.xpath("//div/@data-resource")[0]
+		title = page.xpath('//title')[0].text
+		json = JSON.ObjectFromURL(dataRosurce)['Data'][0]
+		mo.title = unicode(title)
+		mo.thumb = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Slug'] + '?height=512&width=512'
+		mo.art = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Slug']
+		mo.duration = json['Assets'][0]['DurationInMilliseconds']
+		
+		
+	else:
+		raise Ex.MediaNotAvailable	
+	
+	return mo
+		
+	
 
 def MediaObjectsForURL(url):
-	slug = url.rsplit('/',1)[1]
-	return [MediaObject(container = Container.MP4, parts = [PartObject(key = Callback(PlayMedia, slug = slug))])]
-	#return MediaObject(duration = programcard['PrimaryAsset']['DurationInMilliseconds'], k)
+	if RE_DRTV.match(url):
+		slug = url.rsplit('/',1)[1]
+		return [MediaObject(container = Container.MP4,
+						protocol = 'hls',
+						video_codec = VideoCodec.H264,
+						audio_codec = AudioCodec.AAC,
+						audio_channels = 2,
+						optimized_for_streaming = True,
+						 
+						parts = [PartObject(key = Callback(PlayMedia, slug = slug))])]
+	elif RE_DRWEB.match(url):
+		page = HTML.ElementFromURL(url)
+		dataRosurce = page.xpath("//div/@data-resource")[0]
+		mo = MediaObject()
+		json = JSON.ObjectFromURL(dataRosurce)['Data'][0]['Assets'][0]
+		for links in json['Links']:
+			if 'HLS' in links['Target'] :
+				mo.container = Container.MP4
+				mo.protocol = 'hls'
+				mo.video_codec = VideoCodec.H264
+				mo.audio_codec = AudioCodec.AAC
+				mo.audio_channels = 2
+				mo.optimized_for_streaming = True
+				mo.parts = [PartObject(key = Callback(PlayOldMedia, url = links['Uri']))]
+				return [mo]
+				break
+				
 
 @indirect
 def PlayMedia(slug):
+	
 	client = 'plexapp.' + Client.Product.replace(' ', '') + '.' + Client.Version
 	ProgramCard = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
 	PrimaryAsset = JSON.ObjectFromURL(ProgramCard['PrimaryAsset']['Uri'])
 	for Links in PrimaryAsset['Links']:
 		if Links['Target'] == 'HLS':
 			url = Links['Uri']
-	#HTTP.Request('http://www.dr.dk/mu-online/api/1.0/reporting/viewed', values = {'Id':slug, 'Client':client})
-	return IndirectResponse(VideoClipObject, key=url)
 
+	return IndirectResponse(EpisodeObject, key=url)
+
+@indirect
+def PlayOldMedia(url):
+	return IndirectResponse(EpisodeObject, key = url)
+	
 def TestURLs():
 	pass
 
 def NormalizeURL(url):
-	return url.rsplit('!#',1)[0]
+	return url.rsplit('!#',1)[0].lower()
