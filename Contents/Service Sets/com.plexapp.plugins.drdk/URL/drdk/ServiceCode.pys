@@ -9,15 +9,18 @@ def MetadataObjectForURL(url):
 	if RE_DRTV.match(url):
 		slug = url.rsplit('/',1)[1]
 		json = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
-		mo = EpisodeObject()
-		mo.title = unicode( json['Title'])
-		mo.summary = json['Description']
-		mo.originally_available_at = Datetime.ParseDate(json['PrimaryBroadcastStartTime'])
-		mo.show = json['SeriesTitle']
-		mo.thumb = json['PrimaryImageUri'] + '?width=512&height=512'
-		mo.art = json['PrimaryImageUri']
-		mo.source_title = 'DR'
-		mo.duration = json['PrimaryAsset']['DurationInMilliseconds']
+		if Datetime.TimestampFromDatetime(Datetime.ParseDate(json['PrimaryAsset']['EndPublish'])) < Datetime.TimestampFromDatetime(Datetime.Now()):
+			raise Ex.MediaExpired
+		else:
+			mo = EpisodeObject()
+			mo.title = unicode( json['Title'])
+			mo.summary = json['Description']
+			mo.originally_available_at = Datetime.ParseDate(json['PrimaryBroadcastStartTime'])
+			mo.show = json['SeriesTitle']
+			mo.thumb = json['PrimaryImageUri'] + '?width=512&height=512'
+			mo.art = json['PrimaryImageUri']
+			mo.source_title = 'DR'
+			mo.duration = json['PrimaryAsset']['DurationInMilliseconds']
 	elif RE_DRWEB.match(url):
 		mo = EpisodeObject()
 		page = HTML.ElementFromURL(url)
@@ -25,10 +28,14 @@ def MetadataObjectForURL(url):
 		title = page.xpath('//title')[0].text
 		json = JSON.ObjectFromURL(dataRosurce)
 		if json['ResultSize'] > 0:
-			mo.title = unicode(title)
-			mo.thumb = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Data'][0]['Slug'] + '?height=512&width=512'
-			mo.art = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Data'][0]['Slug']
-			mo.duration = json['Data'][0]['Assets'][0]['DurationInMilliseconds']
+			if Datetime.TimestampFromDatetime(Datetime.ParseDate(json['Data'][0]['PrimaryAssetEndPublish'])) < Datetime.TimestampFromDatetime(Datetime.Now()):
+				raise Ex.MediaExpired
+			else:
+				mo.title = unicode(title)
+				mo.thumb = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Data'][0]['Slug'] + '?height=512&width=512'
+				mo.art = 'http://www.dr.dk/mu/ProgramCard/ImageUri/' + json['Data'][0]['Slug']
+				mo.duration = json['Data'][0]['Assets'][0]['DurationInMilliseconds']
+				mo.summary = json['Data'][0]['Description']
 		else:
 			raise Ex.MediaNotAvailable	
 		
