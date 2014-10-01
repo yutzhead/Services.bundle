@@ -8,7 +8,8 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http:\/\/nowthisnews\.com\/news\/.+</string>
+				<string>^https:\/\/nowthisnews\.com\/collections\/.+\/.+</string>
+				<string>^https:\/\/nowthismedia\.com\/.+</string>
 			</array>
 		</dict>
 	</dict>
