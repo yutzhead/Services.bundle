@@ -48,7 +48,12 @@ def MediaObjectsForURL(url):
 def GetTrackId(url):
 
 	if 'api.soundcloud.com' in url:
-		track_id = RE_TRACK_ID.search(url).group('id')
+		track_id = RE_TRACK_ID.search(url)
+
+		if track_id:
+			track_id = track_id.group('id')
+		else:
+			raise Ex.MediaNotAvailable
 	else:
 		try:
 			api_url = JSON.ObjectFromURL(FIND_API_URL % String.Quote(url, usePlus=False))
@@ -58,7 +63,12 @@ def GetTrackId(url):
 		if not 'location' in api_url:
 			raise Ex.MediaNotAvailable
 
-		track_id = RE_TRACK_ID.search(api_url['location']).group('id')
+		track_id = RE_TRACK_ID.search(api_url['location'])
+
+		if track_id:
+			track_id = track_id.group('id')
+		else:
+			raise Ex.MediaNotAvailable
 
 	return track_id
 
