@@ -9,6 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(www\.)?cwtv\.com/cw-video/.+</string>
+				<string>^http://(www\.)?cwtv\.com/shows/.+/\?play=.+</string>
 			</array>
 		</dict>
 	</dict>
