@@ -4,8 +4,6 @@ BASE_URL = 'http://www.cwtv.com'
 
 CW_SWF = 'http://pdl.warnerbros.com/cwtv/digital-smiths/production_player/vsplayer.swf'
 
-THUMB_PROXY = 'http://www.uswebproxy.com/?q=%s'
-
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -51,7 +49,6 @@ def MetadataObjectForURL(url):
 		duration = None
 
 	thumb = GetThumb(url)
-	thumb_alt = THUMB_PROXY % String.Base64Encode(thumb)
 
 	if video['contentType'] == "Full Episodes":    
 		return EpisodeObject(
@@ -63,7 +60,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 	else:
 		return VideoClipObject(
@@ -72,7 +69,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 ####################################################################################################
