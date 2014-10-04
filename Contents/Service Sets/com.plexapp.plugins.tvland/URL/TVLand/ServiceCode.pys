@@ -61,7 +61,6 @@ def MetadataObjectForURL(url):
 			originally_available_at = None
 
 		return EpisodeObject(
-			show = 'The Daily Show',
 			title = title,
 			summary = summary,
 			duration = duration,
