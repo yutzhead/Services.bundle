@@ -11,9 +11,9 @@ def MetadataObjectForURL(url):
     else:
         # This page contains a photo album
         
-        desc = pageElement.xpath('//meta[@property="og:Description"]')[0].get('content')
+        desc = unicode(pageElement.xpath('//meta[@property="og:Description"]')[0].get('content'))
         thumb = pageElement.xpath('//meta[@property="og:Image"]')[0].get('content')
-        title = pageElement.xpath('//head//title/text()')[0]
+        title = unicode(pageElement.xpath('//head//title/text()')[0].strip())
         
         return PhotoAlbumObject(
             key = Callback(GetPhotos, url=url),
@@ -83,6 +83,7 @@ def GetPhotos(url):
     if not photos:
         # Page with no text just images
         images = pageElement.xpath("//*[@class='mediaText']//*[@class='descriptionText']//following-sibling::*//img/@data-src")
+        title = unicode(pageElement.xpath('//head//title/text()')[0].strip())
         
         for image in images:
             oc.add(
