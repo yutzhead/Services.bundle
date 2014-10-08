@@ -23,9 +23,16 @@ def MetadataObjectForURL(url):
 		thumb.replace('large', 't500x500'),
 		thumb
 	]
+	
+	if track['user'] != None:
+		artist = track['user']['username']
+	else:
+		artist = '[Unknown Artist]'
 
 	return TrackObject(
 		title = track['title'],
+		artist = artist,
+		source_title = 'SoundCloud',
 		thumb = Resource.ContentsOfURLWithFallback(url=thumbs),
 		duration = int(track['duration'])
 	)
