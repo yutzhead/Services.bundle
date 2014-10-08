@@ -8,7 +8,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	try:
 		pid = page.xpath("//iframe[@id='tp-global-player']/@src")[0].split("/select/")[1].split("?")[0]
@@ -68,7 +71,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	try:
 		pid = page.xpath("//iframe[@id='tp-global-player']/@src")[0].split("/select/")[1].split("?")[0]
