@@ -19,7 +19,7 @@ def MetadataObjectForURL(url):
     # We parse the document as HTML, so use lowercase only for attribute names
     title = html.xpath("//meta[@property='og:title']/@content")[0]
     description = html.xpath("//meta[@property='og:description']/@content")[0]
-    thumb = html.xpath("//link[@rel='image_src']/@href")[0].replace('.WidePromo.jpg', '.jpg')
+    thumb = html.xpath("//link[@rel='image_src']/@href|//meta[@property='og:image']/@content")[0].replace('.WidePromo.jpg', '.jpg')
     tags = html.xpath("//meta[@name='keywords']/@content")[0].split(',')
     tags = [ tag.strip() for tag in tags ]
 
