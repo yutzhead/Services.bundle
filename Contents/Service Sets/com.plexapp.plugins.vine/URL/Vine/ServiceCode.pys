@@ -23,7 +23,7 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
-	date = html.xpath('//meta[@itemprop="uploadDate"]/@content')[0].split('T')[0]
+	date = html.xpath('//a[@itemprop="uploadDate"]/text()')[0].split('T')[0]
 	originally_available_at = Datetime.ParseDate(date).date()
 
 	return VideoClipObject(
@@ -55,7 +55,7 @@ def PlayVideo(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	video_url = html.xpath('//*[@itemtype="http://schema.org/VideoObject"]//meta[@itemprop="contentURL"]/@content')
+	video_url = html.xpath('//*[@itemtype="http://schema.org/VideoObject"]//meta[@itemprop="contentUrl"]/@content')
 
 	if len(video_url) > 0:
 		return IndirectResponse(VideoClipObject, key=video_url[0].replace('https://', 'http://'))
