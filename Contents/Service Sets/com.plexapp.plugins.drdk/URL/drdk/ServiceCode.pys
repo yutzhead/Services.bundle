@@ -94,10 +94,14 @@ def PlayMedia(slug=None, url=None):
 
 		for Links in PrimaryAsset['Links']:
 			if Links['Target'] == 'HLS':
-				values = JSON.ObjectFromString('{"Id":"' + slug + '","Client":"Plex.'  + Client.Platform + '.' + Client.Version + '"}')
-				HTTP.Request(API_URL + 'reporting/viewed', values = values, method = 'POST')
+
+				values = {
+					"Id": slug,
+					"Client": "Plex.%s.%s" % (Client.Platform, Client.Version)
+				}
+				HTTP.Request(API_URL + 'reporting/viewed', values=values)
+
 				return IndirectResponse(EpisodeObject, key=Links['Uri'])
-		
 
 		raise Ex.MediaNotAvailable
 
