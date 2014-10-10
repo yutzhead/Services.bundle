@@ -88,7 +88,11 @@ def PlayVideo(url, res=1080):
 	except:
 		raise Ex.MediaNotAvailable
 
-	(media_id, qualities) = RE_MEDIA_ID.search(data).groups()
+	mid = RE_MEDIA_ID.search(data)
+	if not mid:
+		raise Ex.MediaNotAvailable
+
+	(media_id, qualities) = mid.groups()
 
 	videos_url = VIDEOS_URL % (media_id, '+'.join(qualities.split(',')))
 
