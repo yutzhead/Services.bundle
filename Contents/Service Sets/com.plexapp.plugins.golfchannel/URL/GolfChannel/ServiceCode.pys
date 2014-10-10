@@ -3,6 +3,7 @@ SMIL_NS = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
 
 ####################################################################################################
 def NormalizeURL(url):
+
 	return url
 
 ####################################################################################################
@@ -42,13 +43,13 @@ def MetadataObjectForURL(url):
  			summary = page.xpath("//div[contains(@class,'panel-col-last')]//div[contains(@class,'field-item even')]//p/text()")[0]
  		except:
  			summary = None
-	
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
 		duration = int(duration)
 	)
+
 ####################################################################################################
 def MediaObjectsForURL(url):
 
@@ -62,10 +63,8 @@ def MediaObjectsForURL(url):
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True	
-
 		)
 	]
-
 
 ####################################################################################################
 @indirect
@@ -82,7 +81,7 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	smil = XML.ElementFromURL(VIDEO_XML % pid)
-	
+
 	try:
 		video_url = smil.xpath('//a:switch[1]/a:video/@src', namespaces=SMIL_NS)[0]
 	except:
@@ -99,4 +98,3 @@ def PlayVideo(url):
 		rtmp_url = smil.xpath('//a:meta[starts-with(@base, "rtmp")]/@base', namespaces=SMIL_NS)[0]
 		#Log(' --> RTMPDump test command line: rtmpdump -r "%s%s" -o test.flv' % (rtmp_url, video_url))
 		return IndirectResponse(VideoClipObject, key=RTMPVideoURL(url="%s%s" % (rtmp_url, video_url)))
-

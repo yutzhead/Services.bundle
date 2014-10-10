@@ -22,7 +22,6 @@ def MetadataObjectForURL(url):
             thumb = thumb
         )
 
-
 ####################################################################################################
 @deferred
 def MediaObjectsForURL(url):
