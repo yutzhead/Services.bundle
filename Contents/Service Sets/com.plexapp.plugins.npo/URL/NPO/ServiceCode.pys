@@ -29,7 +29,11 @@ def MetadataObjectForURL(url):
 	title = html.xpath('//meta[@name="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@name="og:description"]/@content')[0]
 	if summary.startswith('Geen omschrijving'): summary = None
-	thumb = html.xpath('//meta[@name="og:image"]/@content')[0].split('?')[0]
+
+	try:
+		thumb = html.xpath('//meta[@name="og:image"]/@content')[0].split('?')[0].replace('.png', '.jpg')
+	except:
+		thumb = ''
 
 	try:
 		release_date = html.xpath('//meta[@name="og:video:release_date"]/@content')[0].split(' ')[0]
