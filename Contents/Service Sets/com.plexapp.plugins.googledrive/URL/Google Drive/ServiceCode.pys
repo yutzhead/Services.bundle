@@ -15,6 +15,11 @@ def MetadataObjectForURL(url):
 
 	try:
 		data = HTTP.Request(url, cacheTime=300).content
+	except Ex.HTTPError, e:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
+		else:
+			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
 
@@ -51,7 +56,15 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-	data = HTTP.Request(url, cacheTime=300).content
+	try:
+		data = HTTP.Request(url, cacheTime=300).content
+	except Ex.HTTPError, e:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
+		else:
+			raise Ex.MediaNotAvailable
+	except:
+		raise Ex.MediaNotAvailable
 
 	if not RE_STATUS.search(data):
 		raise Ex.MediaNotAvailable
