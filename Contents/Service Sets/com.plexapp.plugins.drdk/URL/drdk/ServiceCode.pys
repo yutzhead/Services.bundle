@@ -118,7 +118,13 @@ def PlayMedia(slug=None, url=None):
 	elif url:
 
 		page = HTML.ElementFromURL(url)
-		dataResource = page.xpath("//div/@data-resource")[0]
+		dataResource = page.xpath("//div/@data-resource")
+
+		if len(dataResource) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			dataResource = dataResource[0]
+
 		json = JSON.ObjectFromURL(dataResource)['Data'][0]['Assets'][0]
 
 		for links in json['Links']:
