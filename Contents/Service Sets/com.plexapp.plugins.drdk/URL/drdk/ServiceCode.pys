@@ -6,6 +6,10 @@ RE_DRWEB = Regex('(.+)dr.dk/(?!tv)|(?!radio)')
 ####################################################################################################
 def NormalizeURL(url):
 
+	if 'mobil.dr.dk' in url:
+		url = url.replace('mobil.dr.dk', 'www.dr.dk')
+		url = url.replace('/smartphone/#artikel/', '/')
+
 	return url.rsplit('!#',1)[0].lower()
 
 ####################################################################################################
@@ -32,7 +36,13 @@ def MetadataObjectForURL(url):
 	elif RE_DRWEB.match(url):
 
 		page = HTML.ElementFromURL(url)
-		dataResource = page.xpath("//div/@data-resource")[0]
+		dataResource = page.xpath("//div/@data-resource")
+
+		if len(dataResource) < 1:
+			raise Ex.MediaNotAvailable
+		else:
+			dataResource = dataResource[0]
+
 		title = page.xpath('//title')[0].text
 		json = JSON.ObjectFromURL(dataResource)
 
