@@ -12,7 +12,12 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
-	title = html.xpath('//title/text()')[0].split("- Video's")[0].strip()
+	title = html.xpath('//title/text()')[0]
+
+	if not "- Video's" in title:
+		raise Ex.MediaNotAvailable
+
+	title = title.split("- Video's")[0].strip()
 	summary = html.xpath('//meta[@name="description"]/@content')[0]
 
 	html = HTML.ElementFromURL(url.replace('/video/', '/video/player/'))
