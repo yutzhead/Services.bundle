@@ -2,7 +2,7 @@ HTTP_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11A465 Safari/9537.53'
 }
 
-RE_VIDEO_SRC = Regex('<video.+src="([^"]+\.mp4)"')
+RE_MEDIA_SRC = Regex('<(?:audio|video).+src="([^"]+\.mp(3|4))"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -33,25 +33,8 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-
-    return [
-        MediaObject(
-            container = Container.MP4,
-            video_codec = VideoCodec.H264,
-            video_resolution = '432',
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True,
-            parts = [
-                PartObject(key=Callback(PlayVideo, url=url))
-            ]
-        )
-    ]
-
-####################################################################################################
-@indirect
-def PlayVideo(url, **kwargs):
 
     try:
         page = HTTP.Request(url, headers=HTTP_HEADERS, follow_redirects=False).content
@@ -60,12 +43,64 @@ def PlayVideo(url, **kwargs):
     except:
         raise Ex.MediaNotAvailable
 
-    video_src = RE_VIDEO_SRC.search(page)
+    media_src = RE_MEDIA_SRC.search(page)
 
-    if not video_src:
+    if not media_src:
         raise Ex.MediaNotAvailable
 
-    return IndirectResponse(VideoClipObject, key=video_src.group(1))
+    if media_src.group(2) == '4':
+
+        return [
+            MediaObject(
+                container = Container.MP4,
+                video_codec = VideoCodec.H264,
+                video_resolution = '432',
+                audio_codec = AudioCodec.AAC,
+                audio_channels = 2,
+                optimized_for_streaming = True,
+                parts = [
+                    PartObject(key=Callback(PlayMedia, url=url))
+                ]
+            )
+        ]
+
+    elif media_src.group(2) == '3':
+
+        return [
+            MediaObject(
+                container = Container.MP3,
+                audio_codec = AudioCodec.MP3,
+                audio_channels = 2,
+                optimized_for_streaming = True,
+                parts = [
+                    PartObject(key=Callback(PlayMedia, url=url))
+                ]
+            )
+        ]
+
+####################################################################################################
+@indirect
+def PlayMedia(url, **kwargs):
+
+    try:
+        page = HTTP.Request(url, headers=HTTP_HEADERS, follow_redirects=False).content
+    except Ex.RedirectError, e:
+        raise Ex.MediaExpired
+    except:
+        raise Ex.MediaNotAvailable
+
+    media_src = RE_MEDIA_SRC.search(page)
+
+    if not media_src:
+        raise Ex.MediaNotAvailable
+
+    if media_src.group(2) == '4':
+        return IndirectResponse(VideoClipObject, key=media_src.group(1))
+    elif media_src.group(2) == '3':
+        return IndirectResponse(TrackObject, key=media_src.group(1))
+
+####################################################################################################
+PlayVideo = PlayMedia
 
 ####################################################################################################
 def TestURLs():
