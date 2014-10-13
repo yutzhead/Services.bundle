@@ -98,7 +98,11 @@ def MediaObjectsForURL(url):
 
 	mrss_data = HTTP.Request(MRSS_URL % mgid[0]).content
 	mrss_data = RE_FIX_XML.sub('', mrss_data)
-	mrss_data = XML.ElementFromString(mrss_data)
+
+	try:
+		mrss_data = XML.ElementFromString(mrss_data)
+	except:
+		raise Ex.MediaNotAvailable
 
 	media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
 
