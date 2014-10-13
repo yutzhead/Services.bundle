@@ -128,8 +128,10 @@ def GetJsonURL(url):
 		except Ex.RedirectError, e:
 			try:
 				flash_xml = RE_FLASH_XML.search(String.Unquote(e.location)).group(1)
-				embed_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:embedLookup', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0].text
-				url = 'http://blip.tv/players/episode/%s' % embed_id
+				#embed_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:embedLookup', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0].text
+				#url = 'http://blip.tv/players/episode/%s' % embed_id
+				posts_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:posts_id/text()', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0]
+				url = 'http://blip.tv/posts/%s' % posts_id
 			except:
 				play_id = RE_PLAY_ID.search(url).group(1)
 				url = 'http://blip.tv/players/episode/%s' % play_id
@@ -138,7 +140,7 @@ def GetJsonURL(url):
 		if post_id:
 			url = 'http://blip.tv/posts/%s' % post_id.group(1)
 
-	return '%s?%s' % (url, 'skin=json&version=2')
+	return '%s?skin=json&version=2' % (url)
 
 ####################################################################################################
 def GetJson(url):
