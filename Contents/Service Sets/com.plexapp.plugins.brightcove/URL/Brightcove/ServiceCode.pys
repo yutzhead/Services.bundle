@@ -126,8 +126,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def GetJSON(url):
 
-	(url, referer) = url.split('&refURL=')
 	headers = HTTP_HEADERS
+	referer = None
+
+	if '&refURL=' in url:
+		(url, referer) = url.split('&refURL=')
 
 	if referer:
 		headers['Referer'] = String.Unquote(referer)
