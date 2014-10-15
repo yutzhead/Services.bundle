@@ -216,6 +216,37 @@ def MetadataObjectForURL(url):
 					Log.Debug(' --> [Metadata] Found a meta refresh tag with a new URL: %s' % refresh.group('url'))
 					return URLService.MetadataObjectForURL(refresh.group('url'))
 
+			# BC HTML5 Video
+			bc = doc.xpath('//object[contains(@class, "Brightcove")]/param[@name="playerKey" or @name="playerID"]/parent::object')
+
+			if len(bc) > 0:
+				Log.Debug(' --> [Metadata] Found a BC video')
+
+				video_player = bc[0].xpath('./param[@name="@videoPlayer"]/@value')[0]
+				player_key = bc[0].xpath('./param[@name="playerKey"]/@value')
+
+				# If we don't have a playerKey, use the playerID and let the BC URL Service figure out the playerKey
+				if len(player_key) < 1:
+					player_id = bc[0].xpath('./param[@name="playerID"]/@value')[0]
+					bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerID=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_id, video_player)
+				else:
+					bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key[0], video_player)
+
+				return URLService.MetadataObjectForURL(bc_url)
+
+			# BC Custom JS
+			custom_bc = RE_BC_CUSTOM.search(req.content)
+
+			if custom_bc:
+				Log.Debug(' --> [Metadata] Found a BrightCove video using the BrightCove custom js regex')
+				custom_bc = custom_bc.group(1).strip('"').split('","')
+				player_key = custom_bc[3]
+				video_player = custom_bc[4]
+
+				bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key, video_player)
+
+				return URLService.MetadataObjectForURL(bc_url)
+
 			# Regex Video
 			video = RE_PATTERN.search(req.content)
 
@@ -257,37 +288,6 @@ def MetadataObjectForURL(url):
 				youtube_url = youtube.group('vid').replace('\\', '')
 				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
 				return URLService.MetadataObjectForURL(youtube_url)
-
-			# BC HTML5 Video
-			bc = doc.xpath('//object[contains(@class, "Brightcove")]/param[@name="playerKey" or @name="playerID"]/parent::object')
-
-			if len(bc) > 0:
-				Log.Debug(' --> [Metadata] Found a BC video')
-
-				video_player = bc[0].xpath('./param[@name="@videoPlayer"]/@value')[0]
-				player_key = bc[0].xpath('./param[@name="playerKey"]/@value')
-
-				# If we don't have a playerKey, use the playerID and let the BC URL Service figure out the playerKey
-				if len(player_key) < 1:
-					player_id = bc[0].xpath('./param[@name="playerID"]/@value')[0]
-					bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerID=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_id, video_player)
-				else:
-					bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key[0], video_player)
-
-				return URLService.MetadataObjectForURL(bc_url)
-
-			# BC Custom JS
-			custom_bc = RE_BC_CUSTOM.search(req.content)
-
-			if custom_bc:
-				Log.Debug(' --> [Metadata] Found a BrightCove video using the BrightCove custom js regex')
-				custom_bc = custom_bc.group(1).strip('"').split('","')
-				player_key = custom_bc[3]
-				video_player = custom_bc[4]
-
-				bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key, video_player)
-
-				return URLService.MetadataObjectForURL(bc_url)
 
 		if not is_ipad_url:
 			return URLService.MetadataObjectForURL('ipad:%s' % url)
