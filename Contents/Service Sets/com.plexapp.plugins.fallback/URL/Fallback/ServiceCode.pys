@@ -201,11 +201,16 @@ def MetadataObjectForURL(url):
 				except:
 					thumb = None
 
+				try:
+					source_title = doc.xpath('//meta[@property="og:site_name"]/@content')[0]
+				except:
+					source_title = url.split('/')[2].replace('www.', '')
+
 				return VideoClipObject(
 					title = title,
 					summary = summary,
 					thumb = thumb,
-					source_title = url.split('/')[2].replace('www.', '')
+					source_title = source_title
 				)
 
 			# Meta tag refresh
@@ -274,11 +279,16 @@ def MetadataObjectForURL(url):
 					except:
 						thumb = None
 
+				try:
+					source_title = doc.xpath('//meta[@property="og:site_name"]/@content')[0]
+				except:
+					source_title = url.split('/')[2].replace('www.', '')
+
 				return VideoClipObject(
 					title = title,
 					summary = summary,
 					thumb = thumb,
-					source_title = url.split('/')[2].replace('www.', '')
+					source_title = source_title
 				)
 
 			# Regex Video YouTube
