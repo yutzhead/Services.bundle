@@ -24,15 +24,12 @@ def MetadataObjectForURL(url):
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
 
-	video = html.xpath('//meta[@property="og:video"]/@content')
+	video = html.xpath('//*[@id="video_area"]/iframe/@src')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
 
-	if 'youtube.com' in video[0]:
-		return None
-
-	if not 'player.ooyala.com' in video[0]:
+	if not 'embedcode' in video[0].lower():
 		raise Ex.MediaNotAvailable
 
 	# Extract the available information from the page
@@ -83,9 +80,12 @@ def PlayVideo(url):
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
 
-	video = html.xpath('//meta[@property="og:video"]/@content')
+	video = html.xpath('//*[@id="video_area"]/iframe/@src')
 
-	if len(video) < 1 or not 'player.ooyala.com' in video[0]:
+	if len(video) < 1:
+		raise Ex.MediaNotAvailable
+
+	if not 'embedcode' in video[0].lower():
 		raise Ex.MediaNotAvailable
 
 	embed_code = RE_EMBED_CODE.search(video[0]).group(1)
