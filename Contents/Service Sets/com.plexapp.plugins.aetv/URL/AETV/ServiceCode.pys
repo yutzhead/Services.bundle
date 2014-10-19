@@ -47,7 +47,7 @@ def MetadataObjectForURL(url):
 
   if data['AETN$mrssLengthType'] == "Episode":
     show = data['AANDE$seriesName']
-    index = int(data['AETN$episode'])
+    index = int(data['AETN$episode']) if 'AETN$episode' in data else None
 
     return EpisodeObject(
       title = title,
