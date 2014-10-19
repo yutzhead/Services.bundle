@@ -11,7 +11,11 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	user_id = GetUserId(url)
-	video = JSON.ObjectFromURL(STREAM_DATA % user_id, cacheTime=0)
+
+	try:
+		video = JSON.ObjectFromURL(STREAM_DATA % user_id, cacheTime=0)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if 'stream' not in video or video['stream'] is None:
 		raise Ex.LiveMediaNotStarted
