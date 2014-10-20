@@ -75,18 +75,20 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	items = []
+	media_objects = []
 
 	for value in reversed(BITRATES):
-		items.append(
+		media_objects.append(
 			MediaObject(
 				bitrate = value,
 				protocol = 'rtmp',
-				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=value))]
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate=value))
+				]
 			)
 		)
 
-	return items
+	return media_objects
 
 ####################################################################################################
 @indirect
@@ -124,21 +126,18 @@ def GetDetails(url):
 		id = url.split('?play=')[1]
 	else:
 		html = HTML.ElementFromURL(url)
-		current_url = html.xpath('//meta[@property="og:url"]', namespaces={'og': 'http://opengraphprotocol.org/schema/'})
+		url = html.xpath('//a[@class="thumbLink"]/@href')
 
-		if current_url:
-			url = current_url[0].get('content')
-			if '?play=' in url:
-				id = url.split('?play=')[1]
+		if len(url) > 0 and '?play=' in url[0]:
+			id = url[0].split('?play=')[1]
 
 	if id:
 		try:
-			details = JSON.ObjectFromURL(DETAILS_URL % id)
-			return details
+			return JSON.ObjectFromURL(DETAILS_URL % id)
 		except:
 			raise Ex.MediaExpired
 	else:
-		return None
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetThumb(url):
@@ -157,9 +156,13 @@ def GetThumb(url):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL(BASE_URL + '/cw-video/')
+	data = HTML.ElementFromURL('%s/shows/' % (BASE_URL))
 
-	for url in data.xpath('//a[contains(@href, "?play")]/@href'):
+	for url in data.xpath('//a[contains(@href, "/shows/")]/@href'):
+
+		if url.endswith('/shows/'):
+			continue
+
 		test_urls.append(BASE_URL + url)
 
 		if len(test_urls) > 2:
