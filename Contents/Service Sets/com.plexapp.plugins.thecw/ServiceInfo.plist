@@ -8,8 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://(www\.)?cwtv\.com/cw-video/.+</string>
-				<string>^http://(www\.)?cwtv\.com/shows/.+/\?play=.+</string>
+				<string>^http:\/\/(www\.)?cwtv\.com\/shows\/.+\?play=[a-f0-9]{8}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{4}\-[a-f0-9]{12}</string>
 			</array>
 		</dict>
 	</dict>
