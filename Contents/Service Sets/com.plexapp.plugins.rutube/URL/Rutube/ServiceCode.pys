@@ -60,6 +60,10 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	json_obj = JSON.ObjectFromString(json.group(1))
+
+	if not 'video_balancer' in json_obj['options']:
+		raise Ex.MediaNotAvailable
+
 	m3u8_url = json_obj['options']['video_balancer']['m3u8']
 
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=m3u8_url))
