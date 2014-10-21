@@ -1,5 +1,6 @@
 API_URL = 'http://vimeo.com/api/v2/video/%s.json'
 RE_VIMEO_ID = Regex('(\d{6,})')
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 HTTP_HEADERS = {
 	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
@@ -35,7 +36,10 @@ def MetadataObjectForURL(url):
 		raise Ex.MediaNotAvailable
 
 	title = json_obj['title']
-	summary = String.StripTags(json_obj['description'])
+
+	summary = RE_CONTROL_CHARS.sub('', json_obj['description'])
+	summary = String.StripTags(summary)
+
 	thumb = json_obj['thumbnail_large']
 	originally_available_at = Datetime.ParseDate(json_obj['upload_date'])
 
