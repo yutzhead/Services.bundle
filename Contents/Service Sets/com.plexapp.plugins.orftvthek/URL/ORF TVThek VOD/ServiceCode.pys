@@ -3,8 +3,11 @@ MAX_PARTS = 15
 
 ####################################################################################################
 def GetJSONData(url):
-    content   = HTTP.Request(url).content
-    data      = RE_DATA.search(content).groups()[0]
+    try:
+        content = HTTP.Request(url).content
+    except:
+        raise Ex.MediaNotAvailable
+    data = RE_DATA.search(content).groups()[0]
 
     if data == '':
         raise Ex.MediaNotAvailable
