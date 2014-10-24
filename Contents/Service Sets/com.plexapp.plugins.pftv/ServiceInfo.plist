@@ -32,6 +32,13 @@
 				<string>^http:\/\/(www\.)?royalvids\.eu\/.+</string>
 			</array>
 		</dict>
+		<key>vidzi.tv</key>
+		<dict>
+			<key>URLPatterns</key>
+			<array>
+				<string>^http:\/\/(www\.)?vidzi\.tv\/.+</string>
+			</array>
+		</dict>
 		<key>vodlocker.com</key>
 		<dict>
 			<key>URLPatterns</key>
