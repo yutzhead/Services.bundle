@@ -20,6 +20,9 @@ def MetadataObjectForURL(url):
 		slug = url.rsplit('/',1)[1]
 		json = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
 
+		if not 'PrimaryAsset' in json:
+			raise Ex.MediaNotAvailable
+
 		if Datetime.TimestampFromDatetime(Datetime.ParseDate(json['PrimaryAsset']['EndPublish'])) < Datetime.TimestampFromDatetime(Datetime.Now()):
 			raise Ex.MediaExpired
 		else:
