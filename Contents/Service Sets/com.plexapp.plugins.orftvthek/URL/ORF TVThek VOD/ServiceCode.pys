@@ -1,4 +1,4 @@
-RE_DATA   = Regex("initializeAdworx\(\[(.*)\]\);")
+RE_DATA = Regex("initializeAdworx\((\[.*\])\);")
 MAX_PARTS = 15
 
 ####################################################################################################
@@ -7,14 +7,14 @@ def GetJSONData(url):
         content = HTTP.Request(url).content
     except:
         raise Ex.MediaNotAvailable
-    data = RE_DATA.search(content).groups()[0]
+    data = RE_DATA.search(content).group(1)
 
     if data == '':
         raise Ex.MediaNotAvailable
 
     json_data = JSON.ObjectFromString(data)
 
-    return json_data
+    return json_data[-1]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
