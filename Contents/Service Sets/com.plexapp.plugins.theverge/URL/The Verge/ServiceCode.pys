@@ -1,5 +1,5 @@
 JSON_VIDEO_DATA = 'http://player.ooyala.com/sas/player_api/v1/authorization/embed_code/ppbnY65tdYh_HxFfIkVstq2Iq_oQ/%s?domain=player.ooyala.com&supportedFormats=mp4'
-RE_VIDEO_ID = Regex('"provider_video_id":"([^"]+)"')
+RE_VIDEO_ID = Regex('VideoContext\.addVideos.+?"provider_video_id":"([^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
