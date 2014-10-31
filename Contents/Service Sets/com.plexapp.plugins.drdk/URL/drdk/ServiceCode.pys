@@ -103,7 +103,11 @@ def PlayMedia(slug=None, url=None):
 	if slug:
 
 		ProgramCard = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
-		PrimaryAsset = JSON.ObjectFromURL(ProgramCard['PrimaryAsset']['Uri'])
+
+		try:
+			PrimaryAsset = JSON.ObjectFromURL(ProgramCard['PrimaryAsset']['Uri'])
+		except:
+			raise Ex.MediaNotAvailable
 
 		for Links in PrimaryAsset['Links']:
 			if Links['Target'] == 'HLS':
