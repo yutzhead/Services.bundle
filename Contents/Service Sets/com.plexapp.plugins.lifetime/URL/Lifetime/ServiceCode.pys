@@ -31,7 +31,13 @@ def TestURLs():
 def MetadataObjectForURL(url):
 
   # Not all input URLs are full URLs, grab the full URL
-  url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+  try:
+    url = HTML.ElementFromURL(url).xpath('//meta[@property="og:url"]/@content')[0]
+  except Ex.HTTPError, e:
+    if e.code == 403:
+      raise Ex.MediaNotAuthorized
+    else:
+      raise Ex.MediaNotAvailable
 
   video = GetJSON(url)
 
