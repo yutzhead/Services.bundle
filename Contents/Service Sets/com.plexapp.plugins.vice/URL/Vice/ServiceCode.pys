@@ -24,7 +24,7 @@ def MetadataObjectForURL(url):
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
 
-	video = html.xpath('//*[@id="video_area"]/iframe/@src')
+	video = html.xpath('//*[contains(@class,"video-container")]/iframe/@src')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
@@ -59,7 +59,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_resolution = 'sd',
+			video_resolution = 720,
 			optimized_for_streaming = True,
 			audio_channels = 2,
 			parts = [
@@ -80,7 +80,7 @@ def PlayVideo(url):
 	data = RE_CONTROL_CHARS.sub('', data)
 	html = HTML.ElementFromString(data)
 
-	video = html.xpath('//*[@id="video_area"]/iframe/@src')
+	video = html.xpath('//*[contains(@class,"video-container")]/iframe/@src')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
