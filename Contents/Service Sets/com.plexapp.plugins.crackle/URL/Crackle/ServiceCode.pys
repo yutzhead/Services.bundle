@@ -1,12 +1,16 @@
-import re
-
 URL_GEO = 'http://ios-api.crackle.com/Service.svc/geo/country?format=json'
 URL_DETAILS = 'http://ios-api.crackle.com/Service.svc/channel/%s/folders/%s?format=json'
+
+RE_VIDEO_ID = Regex('\/(?P<id>\d+)')
+RE_HOST = Regex('\/\/.+?\.crackle\.com\/')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
     details = GetVideoDetails(url)
+
+    if not details:
+        raise Ex.MediaNotAvailable
 
     title = details['Title']
 
@@ -127,7 +131,9 @@ def MediaObjectsForURL(url):
             video_resolution = 480,
             optimized_for_streaming = True,
             audio_channels = 2,
-            parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480p_1mbps"))]
+            parts = [
+                PartObject(key=Callback(PlayVideo, url=url, res="480p_1mbps"))
+            ]
         ),
         MediaObject(
             container = Container.MP4,
@@ -136,7 +142,9 @@ def MediaObjectsForURL(url):
             video_resolution = 480,
             optimized_for_streaming = True,
             audio_channels = 2,
-            parts = [PartObject(key=Callback(PlayVideo, url = url, res = "480p"))]
+            parts = [
+                PartObject(key=Callback(PlayVideo, url=url, res="480p"))
+            ]
         ),
         MediaObject(
             container = Container.MP4,
@@ -145,7 +153,9 @@ def MediaObjectsForURL(url):
             video_resolution = 360,
             optimized_for_streaming = True,
             audio_channels = 2,
-            parts = [PartObject(key=Callback(PlayVideo, url = url, res = "360p"))]
+            parts = [
+                PartObject(key=Callback(PlayVideo, url=url, res="360p"))
+            ]
         )
     ]
 
@@ -164,7 +174,7 @@ def PlayVideo(url, res):
         raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def GetVideoDetails(url, res = None):
+def GetVideoDetails(url, res=None):
 
     video_id = GetVideoID(url)
     geo_code = GetGeoCode()
@@ -182,7 +192,7 @@ def GetVideoDetails(url, res = None):
             if str(title['ID']) == video_id:
                 if res:
                     video_url = title['ThumbnailExternal']
-                    video_url = re.sub(r'//.*?\.crackle.com/', "//media-us-am.crackle.com/", video_url)
+                    video_url = RE_HOST.sub('//media-us-am.crackle.com/', video_url)
                     video_url = video_url[:video_url.rfind('_') + 1]
                     video_url = video_url + res + '.mp4'
 
@@ -190,10 +200,12 @@ def GetVideoDetails(url, res = None):
                 else:
                     return title
 
+    return None
+
 ####################################################################################################
 def GetVideoID(url):
 
-    return re.match(".*/(?P<id>[0-9]+)", url).groupdict()['id']
+    return RE_VIDEO_ID.search(url).group('id')
 
 ####################################################################################################
 def GetGeoCode():
