@@ -4,7 +4,7 @@ RE_VIDEO_URL = Regex('source src=.([^\'"]+). type=.application/x-mpegurl.')
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split('?')[0]
+	url = url.split('?')[0].split('\n')[0]
 
 	if '/embed/' in url:
 		url = url.replace('/embed/', '/videos/')
