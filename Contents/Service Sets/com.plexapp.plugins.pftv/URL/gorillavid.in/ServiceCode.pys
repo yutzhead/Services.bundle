@@ -28,8 +28,14 @@ def MetadataObjectForURL(url):
 
 	page = HTTP.Request(url, values=post_values, method='POST').content
 
-	title = RE_TITLE.search(page).group(1).strip()
-	thumb = RE_THUMB.search(page).group(1)
+	title = RE_TITLE.search(page)
+	thumb = RE_THUMB.search(page)
+
+	if not title or not thumb:
+		raise Ex.MediaNotAvailable
+
+	title = title.group(1).strip()
+	thumb = thumb.group(1)
 
 	return VideoClipObject(
 		title = title,
