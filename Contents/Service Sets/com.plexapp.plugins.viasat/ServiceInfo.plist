@@ -13,9 +13,12 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http:\/\/www\.tv3play\.(se|no|dk|ee|lt|lv)\/(play|(program|programmer|sisu|programos|parraides)\/.*)\/[0-9]+</string>
+				<string>^http:\/\/www\.tvplay\.lv\/parraides\/.*\/[0-9]+</string>
 				<string>^http:\/\/www\.tv6play\.(se|no)\/(play|(program|programmer)\/.*)\/[0-9]+</string>
 				<string>^http:\/\/www\.tv(8|10)play\.se\/(play|program\/.*)\/[0-9]+</string>
 				<string>^http:\/\/www\.viasat4play\.no\/(play|programmer\/.*)\/[0-9]+</string>
+				<string>^http:\/\/www\.viagame\.com\/channels\/.*\/[0-9]+</string>
+				<string>^http:\/\/play\.novatv\.bg\/programi\/.*\/[0-9]+</string>
 			</array>
 		</dict>
 	</dict>

@@ -1,5 +1,6 @@
-VIDEO_STREAM_URL  = 'http://viastream.viasat.tv/MobileStream/%s'
-VIDEO_DETAILS_URL = '/mobileapi/detailed?videoid=%s'
+API_BASE_URL = String.Decode('aHR0cDovL3BsYXlhcGkubXRneC50di92My8=')
+VIDEO_STREAM_URL = API_BASE_URL + 'videos/stream/%s'
+VIDEO_DETAILS_URL = API_BASE_URL + 'videos/%s'
 
 RE_ID = Regex('\d+')
 
@@ -7,45 +8,68 @@ RE_ID = Regex('\d+')
 def MetadataObjectForURL(url): 
     # Determine id of episode
     [baseurl, id] = FindVideoID(url)
-
+        
     try: 
-        videos = JSON.ObjectFromURL(baseurl + VIDEO_DETAILS_URL % id)
+        video = JSON.ObjectFromURL(VIDEO_DETAILS_URL % id)
     except:
         raise Ex.MediaNotAvailable
-
-    if not videos['videos']['video_program'] and not videos['videos']['video_clip']:
-        raise Ex.MediaGeoblocked
     
-    try:  
-        for video in videos['videos']['video_program']:
-            if id == video['id']:
-                return EpisodeObject(
-                    title = unicode(video['title']),
-                    summary = unicode(video['summary'] + video['description']),
-                    show = unicode(video['formattitle']),
-                    art = GetImgUrl(videos['format']['image']),
-                    thumb = GetImgUrl(video['image']),
-                    originally_available_at = Datetime.ParseDate(video['airdate'].split(" ")[0]).date(),
-                    duration = int(video['length']) * 1000,
-                    season = int(video['season']),
-                    index = int(video['episode'])
-                )
-                
-        for clip in videos['videos']['video_clip']:
-            if id == clip['id']:
-                return VideoClipObject(
-                    title = unicode(clip['title']),
-                    summary = unicode(clip['summary']),
-                    thumb = GetImgUrl(clip['image']),
-                    art = GetImgUrl(videos['format']['image']),
-                    originally_available_at = Datetime.FromTimestamp(int(clip['created'])),
-                    duration = int(clip['length']) * 1000
-                )
-                
+    try:
+        title = unicode(video['title'])
+    except:
         raise Ex.MediaNotAvailable
         
+    try:
+        summary = unicode(video['summary'])
     except:
-        raise Ex.MediaNotAvailable
+        summary = None
+        
+    try:
+        show = unicode(video['format_title'])
+    except:
+        show = None
+        
+    try:
+        art = video['_embedded']['season']['_links']['image']['href'].replace("{size}", "994x560")
+    except:
+        art = None
+        
+    try:
+        thumb = video['_links']['image']['href'].replace("{size}", "497x280")
+    except:
+        thumb = None
+        
+    try:
+        originally_available_at = Datetime.ParseDate(video['publish_at'].split("T")[0]).date()
+    except:
+        originally_available_at = None
+        
+    try:
+        duration = int(video['duration']) * 1000
+    except:
+        duration = None
+        
+    try:
+        season = int(video['format_position']['season'])
+    except:
+        season = None
+        
+    try:
+        index = int(video['format_position']['episode'])
+    except:
+        index = None  
+    
+    return EpisodeObject(
+        title = title,
+        summary = summary,
+        show = show,
+        art = art,
+        thumb = thumb,
+        originally_available_at = originally_available_at,
+        duration = duration,
+        season = season,
+        index = index
+    )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
@@ -69,29 +93,14 @@ def PlayVideo(url):
     [baseurl, id] = FindVideoID(url)
 
     try: 
-        videos = JSON.ObjectFromURL(baseurl + VIDEO_DETAILS_URL % id)
-
-        hls_url = None
-        
-        for video in videos['videos']['video_program']:
-            if id == video['id']:
-                hls_url = video['hlspath']
-        
-        if not hls_url:   
-            for clip in videos['videos']['video_clip']:
-                if id == clip['id']:
-                    hls_url = clip['hlspath']
-
-        if hls_url:
-            return IndirectResponse(
-                VideoClipObject,
-                key = HTTPLiveStreamURL(GetClientDependentURL(hls_url))
-            )
-        else:
-            raise Ex.MediaNotAvailable  
-
+        data = JSON.ObjectFromURL(VIDEO_STREAM_URL % id)
     except:
-        raise Ex.MediaNotAvailable
+        raise Ex.MediaGeoblocked
+            
+    return IndirectResponse(
+        VideoClipObject,
+        key = HTTPLiveStreamURL(GetClientDependentURL(data['streams']['hls']))
+    )
 
 ###########################################################
 def GetClientDependentURL(url):
@@ -146,10 +155,6 @@ def GetHLSStreams(url):
     sorted_streams = sorted(streams, key = lambda stream: stream["bitrate"], reverse = True)        
 
     return sorted_streams
-
-####################################################################################################
-def GetImgUrl(url):
-    return "http://play.pdl.viaplay.com/imagecache/497x280/" + url.replace('\\', '')
 
 ####################################################################################################
 def FindVideoID(url):
