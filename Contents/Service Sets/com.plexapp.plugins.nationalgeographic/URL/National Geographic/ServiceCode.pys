@@ -6,7 +6,10 @@ BASE = 'http://video.nationalgeographic.com'
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  data = HTML.ElementFromURL(url, cacheTime=7200)
+  try:
+    data = HTML.ElementFromURL(url, cacheTime=7200, follow_redirects=False)
+  except Ex.RedirectError, e:
+    raise Ex.MediaExpired
 
   if len(url.split('/full-episodes/')) > 1:
     full_episode = True
@@ -48,7 +51,9 @@ def MediaObjectsForURL(url):
 
   return [
     MediaObject(
-      parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+      parts = [
+        PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+      ],
       audio_channels = 2
     )
   ]
@@ -57,7 +62,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-  data = HTTP.Request(url, cacheTime=7200).content
+  try:
+    data = HTTP.Request(url, cacheTime=7200, follow_redirects=False).content
+  except Ex.RedirectError, e:
+    raise Ex.MediaExpired
+
   platform_url = RE_PLATFORM_URL.findall(data)
 
   if len(platform_url) < 1:
