@@ -27,7 +27,14 @@ def MetadataObjectForURL(url):
 	video = html.xpath('//*[contains(@class,"video-container")]/iframe/@src')
 
 	if len(video) < 1:
-		raise Ex.MediaNotAvailable
+		# Check for Youtube
+		youtube_link = html.xpath('//*[@class="youtube-video"]/@data-youtube-id')
+		
+		if youtube_link:
+			youtube_url = 'http://www.youtube.com/watch?v=%s' % youtube_link[0]
+			return URLService.MetadataObjectForURL(youtube_url)
+		else:
+			raise Ex.MediaNotAvailable
 
 	if not 'embedcode' in video[0].lower():
 		raise Ex.MediaNotAvailable
