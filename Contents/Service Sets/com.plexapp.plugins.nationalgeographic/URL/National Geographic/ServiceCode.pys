@@ -4,6 +4,12 @@ M3U8_URL = 'http://channelhd-i.akamaihd.net/i/mpx/video/Nat_Geo_Channels/%s_,180
 BASE = 'http://video.nationalgeographic.com'
 
 ####################################################################################################
+def NormalizeURL(url):
+
+  if '/embed/' in url:
+    return url.split('embed')[0]
+
+####################################################################################################
 def MetadataObjectForURL(url):
 
   try:
