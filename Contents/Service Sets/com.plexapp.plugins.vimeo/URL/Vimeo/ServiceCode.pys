@@ -12,11 +12,10 @@ HTTP_HEADERS = {
 ####################################################################################################
 def NormalizeURL(url):
 
-	if isinstance(url, basestring):
-		vimeo_id = RE_VIMEO_ID.search(url)
+	vimeo_id = RE_VIMEO_ID.search(url)
 
-		if vimeo_id:
-			return 'http://vimeo.com/%s' % vimeo_id.group(1)
+	if vimeo_id:
+		return 'http://vimeo.com/%s' % vimeo_id.group(1)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
