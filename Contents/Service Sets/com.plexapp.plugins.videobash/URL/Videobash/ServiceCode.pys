@@ -1,4 +1,4 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36'}
 VIDEO_PATTERN = Regex("flashvars.+?'http://'.+?'([^']+)")
 
 ####################################################################################################
@@ -14,7 +14,7 @@ def MetadataObjectForURL(url):
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
 	try:
-		date = html.xpath('//span[@class="time-upload"]/text()')[0].strip('on').strip()
+		date = html.xpath('//span[@class="time-upload"]/text()')[0].split(' on ')[-1].strip()
 		date = Datetime.ParseDate(date)
 	except:
 		date = None
