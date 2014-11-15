@@ -63,7 +63,7 @@ def ValidURL(url):
 
 	url = urlparse.urlparse(url)
 
-	for host in ('hulu.com', 'netflix.com'):
+	for host in ('hulu.com', 'netflix.com', 'plex.tv', 'plexapp.com'):
 		if host in url.hostname:
 			return False
 
