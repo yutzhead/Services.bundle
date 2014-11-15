@@ -80,7 +80,11 @@ def GetJSON(url):
 	try:
 		data = HTTP.Request(url, cacheTime=CACHE_1HOUR).content
 	except Ex.HTTPError, e:
-		if e.code == 404:
+		if e.code == 403:
+			raise Ex.MediaNotAuthorized
+		elif e.code == 404:
+			raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 
 	video_id = RE_VIDEO_ID.search(data)
