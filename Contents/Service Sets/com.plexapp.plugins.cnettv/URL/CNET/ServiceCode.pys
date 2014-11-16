@@ -47,7 +47,7 @@ def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
 
-	if not 'files' in json_obj or not 'hls_tablet' in json_obj['files']:
+	if not 'files' in json_obj or not 'hls_tablet' in json_obj['files'] or json_obj['files']['hls_tablet'] is None:
 		raise Ex.MediaNotAvailable
 
 	video_id = json_obj['files']['hls_tablet']
