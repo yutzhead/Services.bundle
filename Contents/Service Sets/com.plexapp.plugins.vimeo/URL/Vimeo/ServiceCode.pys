@@ -152,7 +152,7 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	# for one or more versions of a video, we try to find the best match based on resolution.
 	for video in streams.keys():
 
-		if video == 'mobile':
+		if video == 'mobile' and '.m3u8' in streams[video]['url']:
 			continue
 
 		b = streams[video]['bitrate']
