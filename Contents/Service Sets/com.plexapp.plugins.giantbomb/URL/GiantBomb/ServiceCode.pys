@@ -60,9 +60,18 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt='high'):
 
+	# This URL Service is meant for publicly available videos. If somehow this service is used
+	# with an API key in the URL, ignore it.
+	if 'api_key=' in url:
+		return None
+
 	html = HTML.ElementFromURL(url)
-	json = html.xpath('//div[@data-video]/@data-video')[0]
-	json_obj = JSON.ObjectFromString(json)
+	json = html.xpath('//div[@data-video]/@data-video')
+
+	if len(json) < 1:
+		raise Ex.MediaNotAvailable
+
+	json_obj = JSON.ObjectFromString(json[0])
 
 	if not 'videoStreams' in json_obj:
 		raise Ex.MediaNotAvailable
