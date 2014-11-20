@@ -16,6 +16,8 @@ def MetadataObjectForURL(url):
     data = HTML.ElementFromURL(url, cacheTime=7200, follow_redirects=False)
   except Ex.RedirectError, e:
     raise Ex.MediaExpired
+  except:
+    raise Ex.MediaNotAvailable
 
   if len(url.split('/full-episodes/')) > 1:
     full_episode = True
