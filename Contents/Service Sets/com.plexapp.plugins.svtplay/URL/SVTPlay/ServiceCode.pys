@@ -8,17 +8,12 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-
     try:
+        headers = HTTP.Request(url + '?output=json').headers
         page = HTML.ElementFromURL(url)
     except:
         raise Ex.MediaNotAvailable
-
-    # Test if this page contains video
-    json_url = page.xpath('//a[@id="player"]/@data-json-href')
-    if len(json_url) < 1:
-        return None
-
+        
     show = None
     title = page.xpath('//meta[@property="og:title"]/@content')[0].split(' | ')[0].replace('&amp;', '&')
     title = String.DecodeHTMLEntities(title)
