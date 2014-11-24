@@ -34,33 +34,33 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
 
     return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = '480',
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_480))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = '360',
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_360))]
-      ),
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        video_resolution = '180',
-        audio_channels = 2,
-        optimized_for_streaming = True,
-        parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_SD))]
-      )
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = '480',
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_480))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = '360',
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_360))]
+        ),
+        MediaObject(
+            container = Container.MP4,
+            video_codec = VideoCodec.H264,
+            audio_codec = AudioCodec.AAC,
+            video_resolution = '180',
+            audio_channels = 2,
+            optimized_for_streaming = True,
+            parts = [PartObject(key=Callback(PlayVideo, url = url, file_ext = VIDEO_URL_EXT_SD))]
+        )
     ]
 
 ####################################################################################################
@@ -70,7 +70,11 @@ def PlayVideo(url, file_ext):
 
     # Attempt to locate the ID of the video
     video_src = html.xpath('//link[@rel="video_src"]/@href')[0]
-    id = video_src.split('id=')[1]
+
+    if 'id=' in video_src:
+        id = video_src.split('id=')[1]
+    else:
+        id = video_src.split('videojug.com/')[-1].split('/')[1]
 
     playlist = XML.ElementFromURL(PLAYLIST_URL % id)
     location = playlist.xpath('//Locations/Location')[0].get('Url')
@@ -81,11 +85,14 @@ def PlayVideo(url, file_ext):
     # another.
     resolutions = [VIDEO_URL_EXT_480, VIDEO_URL_EXT_360, VIDEO_URL_EXT_SD]
     index = resolutions.index(file_ext)
+
     for resolution_index in range(index, len(resolutions)):
         video_url = location + video_prefix + resolutions[resolution_index]
+
         try:
             test = HTTP.Request(video_url).headers
             return Redirect(video_url)
-        except: pass
+        except:
+            pass
 
     raise Ex.MediaNotAvailable
