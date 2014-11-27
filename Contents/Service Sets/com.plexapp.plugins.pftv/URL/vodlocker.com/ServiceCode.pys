@@ -14,6 +14,10 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
+
+	if len(html.xpath('//b[text()="File Not Found"]')) > 0:
+		raise Ex.MediaNotAvailable
+
 	post_values = {}
 
 	for item in html.xpath('//form[@method="POST"]/input'):
