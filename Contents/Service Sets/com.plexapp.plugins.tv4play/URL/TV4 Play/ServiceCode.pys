@@ -89,7 +89,13 @@ def MediaObjectsForURL(url):
         id = RE_VIDEO_ID.search(url).group(0)
     except:
         raise Ex.MediaNotAvailable
-
+    
+    # Fix for Plex Web clients(avoid M3U8 cross domain access denied)
+    if Client.Product in ['Plex Web'] and Client.Platform not in ['Safari']:
+        cb = PlayDirect
+    else:
+        cb = PlayIndirect
+        
     return [
         MediaObject(
             video_resolution        = 576, 
@@ -97,15 +103,41 @@ def MediaObjectsForURL(url):
             optimized_for_streaming = True,
             parts                   = [
                 PartObject(
-                    key = HTTPLiveStreamURL(Callback(PlayVideo, id = id))
+                    key = HTTPLiveStreamURL(Callback(cb, id = id))
                 )
             ]
         )
     ]
 
 ####################################################################################################
+def PlayDirect(id):
+    hls_url, subs_url = GetURLs(id)
+    
+    if hls_url and subs_url:
+        return HTTP.Request(PROXY_URL % (hls_url, subs_url)).content
+    else:
+        # No subs were found(probably a live stream)
+        return HTTP.Request(hls_url).content
+   
+####################################################################################################
 @indirect
-def PlayVideo(id):
+def PlayIndirect(id):
+    hls_url, subs_url = GetURLs(id)
+    
+    if hls_url and subs_url:
+        return IndirectResponse(
+            VideoClipObject,
+            key = HTTPLiveStreamURL(url = PROXY_URL % (hls_url, subs_url))
+        )
+    else:
+        # No subs were found(probably a live stream)
+        return IndirectResponse(
+            VideoClipObject,
+            key = HTTPLiveStreamURL(url = hls_url)
+        ) 
+        
+####################################################################################################
+def GetURLs(id):
     xmlElement = None
         
     headers = {}
@@ -151,19 +183,12 @@ def PlayVideo(id):
                     
                 elif mediaFormat == 'webvtts':
                     subs_url = url
-                
+            
             if hls_url and subs_url:
-                return IndirectResponse(
-                    VideoClipObject,
-                    key = HTTPLiveStreamURL(url = PROXY_URL % (hls_url, subs_url))
-                )
+                return hls_url, subs_url
         
         if hls_url:
-            # No subs were found(probably a live stream)
-            return IndirectResponse(
-                VideoClipObject,
-                key = HTTPLiveStreamURL(url = hls_url)
-            ) 
+            return hls_url, None
     
         if is_live and xmlElement.xpath("//playback//playbackStatus/text()")[0] == 'NOT_STARTED':
             raise Ex.LiveMediaNotStarted
