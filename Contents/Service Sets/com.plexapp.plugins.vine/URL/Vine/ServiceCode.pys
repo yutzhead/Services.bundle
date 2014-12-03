@@ -42,7 +42,8 @@ def MediaObjectsForURL(url):
 			],
 			video_resolution = '480',
 			width = 480,
-			height = 480
+			height = 480,
+			optimized_for_streaming = False
 		)
 	]
 
