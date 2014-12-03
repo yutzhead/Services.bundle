@@ -56,7 +56,6 @@ def PlayVideo(url):
 		raise Ex.MediaNotAvailable
 
 	data = String.Unquote(data.group(1))
-	Log(data)
 	video_url = RE_VIDEO_URL.search(data).group(1)
 
 	return IndirectResponse(VideoClipObject, key=video_url)
