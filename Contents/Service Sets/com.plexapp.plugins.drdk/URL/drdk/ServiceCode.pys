@@ -10,7 +10,7 @@ def NormalizeURL(url):
 		url = url.replace('mobil.dr.dk', 'www.dr.dk')
 		url = url.replace('/smartphone/#artikel/', '/')
 
-	return url.rsplit('!#',1)[0].rsplit('#!',1)[0].lower()
+	return url.split('/popup')[0].rsplit('!#',1)[0].rsplit('#!',1)[0].lower()
 
 ####################################################################################################
 def MetadataObjectForURL(url):
