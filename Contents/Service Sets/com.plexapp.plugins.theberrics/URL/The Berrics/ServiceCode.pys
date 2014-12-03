@@ -50,7 +50,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaExpired
+
 	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')
 
 	if len(id) < 1:
