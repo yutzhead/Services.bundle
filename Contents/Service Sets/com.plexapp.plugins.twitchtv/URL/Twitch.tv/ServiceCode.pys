@@ -21,7 +21,7 @@ def MetadataObjectForURL(url):
 		raise Ex.LiveMediaNotStarted
 
 	display_name = video['stream']['channel']['display_name']
-	game = video['stream']['channel']['game']
+	game = video['stream']['channel']['game'] if 'game' in video['stream']['channel'] else '?'
 	status = video['stream']['channel']['status']
 	viewers = video['stream']['viewers']
 	thumb = video['stream']['preview']['large']
