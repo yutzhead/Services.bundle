@@ -108,7 +108,7 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 
 	try:
 		html = HTML.ElementFromURL(url, cacheTime=0, headers=HTTP_HEADERS)
-		config_url = html.xpath('//div[@class="player" and @data-config-url]/@data-config-url')[0].replace('&amp;', '&')
+		config_url = html.xpath('//div[contains(@class, "player") and @data-config-url]/@data-config-url')[0].replace('&amp;', '&')
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
