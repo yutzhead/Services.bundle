@@ -4,7 +4,10 @@ VIDEO_DETAILS_URL = 'http://theberrics.com/media/json_file_request/%s'
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTML.ElementFromURL(url)
+	try:
+		page = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	# Extract the configuration of the player, to determine the id of the associated content
 	id = page.xpath('//div[@data-media-file-id]/@data-media-file-id')
