@@ -331,8 +331,11 @@ def decrypt_signature(s, age_gate=False):
   json_obj = JSON.ObjectFromURL('http://downloads.plex.tv/plugins/youtube-sig.json', cacheTime=300)
 
   if key not in json_obj:
-    Log('Unable to decrypt signature, key %s not available' % (key))
-    raise Ex.MediaNotAvailable
+    json_obj = JSON.ObjectFromURL('https://442200954b6d9970e4ce-b0c40228a7b02641ddb14594625d1e51.ssl.cf3.rackcdn.com/y.json', cacheTime=300)
+
+    if key not in json_obj:
+      Log('Unable to decrypt signature, key %s not available' % (key))
+      raise Ex.MediaNotAvailable
 
   d = ''
 
