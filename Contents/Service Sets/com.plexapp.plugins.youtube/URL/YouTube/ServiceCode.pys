@@ -1,7 +1,7 @@
 import urlparse
 
 DEVELOPER_KEY = 'AI39si7PodNU93CVDU6kxh3-m2R9hkwqoVrfijDMr0L85J94ZrJFlimNxzFA9cSky9jCSHz9epJdps8yqHu1wb743d_SfSCRWA'
-YOUTUBE_VIDEO_DETAILS = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
+YOUTUBE_VIDEO_DETAILS = 'https://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
 YOUTUBE_VIDEO_FORMATS =	['360p',	'720p',	'1080p']
 YOUTUBE_FMT =			[18,		22,		37]
 YOUTUBE_CONTAINERS =	['mp4',		'mp4',	'mp4']
@@ -37,7 +37,7 @@ def NormalizeURL(url):
 
     # Rewrite mobile urls that contain a hash
     if url.fragment != '':
-      url = urlparse.urlparse('http://www.youtube.com%s' % url.fragment)
+      url = urlparse.urlparse('https://www.youtube.com%s' % url.fragment)
 
   # http://www.youtube.com/?v=lgTssWW2Qw4&feature=player_embedded
   # http://www.youtube.com/watch?v=lgTssWW2Qw4&feature=player_embedded
@@ -96,7 +96,7 @@ def NormalizeURL(url):
       else:
         return None
 
-  return 'http://www.youtube.com/watch?v=%s' % video_id
+  return 'https://www.youtube.com/watch?v=%s' % video_id
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -138,7 +138,7 @@ def MetadataObjectForURL(url):
   return VideoClipObject(
     title = details['title'],
     summary = details['description'],
-    thumb = Resource.ContentsOfURLWithFallback(thumb),
+    thumb = Resource.ContentsOfURLWithFallback(thumb.replace('https://', 'http://')),
     rating = rating,
     tags = tags,
     originally_available_at = Datetime.ParseDate(details['uploaded']).date(),
@@ -166,7 +166,7 @@ def MediaObjectsForURL(url):
       video_codec = YOUTUBE_VIDEOCODEC[index],
       audio_codec = YOUTUBE_AUDIOCODEC[index],
       video_resolution = YOUTUBE_VIDEORES[index],
-      optimized_for_streaming = (YOUTUBE_CONTAINERS[index] == 'mp4'),
+      optimized_for_streaming = (YOUTUBE_CONTAINERS[index] == 'mp4')
     ))
 
   return ret
@@ -230,7 +230,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
       'asv': 3,
       'sts':'1588',
     }
-    video_info_url = 'http://www.youtube.com/get_video_info'
+    video_info_url = 'https://www.youtube.com/get_video_info'
     yt_page = HTTP.Request(video_info_url, values=data, headers=HTTP_HEADERS).content
   else:
     age_gate = False
@@ -328,7 +328,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 def decrypt_signature(s, age_gate=False):
 
   key = '-'.join([str(len(p)) for p in s.split('.')])
-  json_obj = JSON.ObjectFromURL('http://downloads.plex.tv/plugins/youtube-sig.json', cacheTime=300)
+  json_obj = JSON.ObjectFromURL('https://downloads.plex.tv/plugins/youtube-sig.json', cacheTime=300)
 
   if key not in json_obj:
     json_obj = JSON.ObjectFromURL('https://442200954b6d9970e4ce-b0c40228a7b02641ddb14594625d1e51.ssl.cf3.rackcdn.com/y.json', cacheTime=300)
