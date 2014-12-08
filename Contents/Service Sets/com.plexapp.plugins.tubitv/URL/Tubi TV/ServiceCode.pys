@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		duration = int(duration) * 1000,
+		duration = int(duration) * 1000 if duration != '' else None,
 		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
 	)
 
