@@ -8,8 +8,9 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://dsc.discovery.com/</string>
-				<string>^http://animal.discovery.com/</string>
+				<string>^http://(www.)?(dsc.)?discovery.com/</string>
+				<string>^http://(www.)?animal.discovery.com/</string>
+				<string>^http://(www.)?animalplanet.com/</string>
 				<string>^http://www.apl.tv/</string>
 				<string>^http://www.tlc.com/</string>
 				<string>^http://investigation.discovery.com/</string>
