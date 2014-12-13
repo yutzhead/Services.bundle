@@ -15,7 +15,7 @@ def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
 
-	if len(html.xpath('//b[text()="File Not Found"]')) > 0:
+	if len(html.xpath('//*[text()="File Not Found" or contains(text(), "was removed")]')) > 0:
 		raise Ex.MediaNotAvailable
 
 	post_values = {}
@@ -61,7 +61,7 @@ def PlayVideo(url):
 
 	html = HTML.ElementFromURL(url)
 
-	if len(html.xpath('//b[text()="File Not Found"]')) > 0:
+	if len(html.xpath('//*[text()="File Not Found" or contains(text(), "was removed")]')) > 0:
 		raise Ex.MediaNotAvailable
 
 	post_values = {}
