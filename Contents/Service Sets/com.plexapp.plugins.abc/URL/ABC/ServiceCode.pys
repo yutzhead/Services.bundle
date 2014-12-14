@@ -98,13 +98,11 @@ def MediaObjectsForURL(url):
 
 	strings = (
 		'/2020/', '#SH559026',
-		'/good-morning-america/',
-		'/nightline/',
-		'/this-week/',
-		'/what-would-you-do/',
-		'/world-news-tonight-with-david-muir/',
-		'/world-news-tonight-weekend/',
-		'/world-news-tonight/'
+		'/good-morning-america/', '#SH5587637',
+		'/nightline/', '#SH5584743',
+		'/this-week', '#SH559082',
+		'/what-would-you-do/', '#SH5555951',
+		'/world-news-tonight', '#SH5585921', '#SH55228120'
 	)
 
 	for s in strings:
