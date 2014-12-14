@@ -87,7 +87,7 @@ def MediaObjectsForURL(url):
 	if '/VDKA' in url:
 		video_id = url.split('/VDKA')[-1].split('/')[0]
 	elif '/redirect/fep?videoid=VDKA' in url:
-		video_id = url.split('videoid=VDKA')[-1]
+		video_id = url.split('videoid=VDKA')[-1].split('#')[0]
 	else:
 		video_id = GetVideoId(url)
 
@@ -97,7 +97,7 @@ def MediaObjectsForURL(url):
 	storage_id = 1561
 
 	strings = (
-		'/2020/',
+		'/2020/', '#SH559026',
 		'/good-morning-america/',
 		'/nightline/',
 		'/this-week/',
