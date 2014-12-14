@@ -102,8 +102,9 @@ def MediaObjectsForURL(url):
 		'/nightline/',
 		'/this-week/',
 		'/what-would-you-do/',
-		'/world-news-with-diane-sawyer/',
-		'/world-news-with-david-muir/'
+		'/world-news-tonight-with-david-muir/',
+		'/world-news-tonight-weekend/',
+		'/world-news-tonight/'
 	)
 
 	for s in strings:
