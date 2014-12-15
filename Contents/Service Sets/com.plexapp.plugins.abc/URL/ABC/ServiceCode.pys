@@ -37,7 +37,7 @@ def MetadataObjectForURL(url):
 	summary = html.xpath('//meta[@property="og:title"]/@content')[0]
 
 	try:
-		sxx_exx = html.xpath('//meta[@name="title"]/@content|//title/text()')[0]
+		sxx_exx = html.xpath('//title/text()')[0]
 		(season, index) = RE_SXX_EXX.search(sxx_exx).groups()
 	except:
 		season = None
