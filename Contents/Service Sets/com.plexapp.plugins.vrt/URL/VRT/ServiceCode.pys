@@ -47,6 +47,9 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
+	if not 'title' in json:
+		raise Ex.MediaNotAvailable
+
 	title = json['title']
 	thumb = json['imageData']['imageURL']
 
