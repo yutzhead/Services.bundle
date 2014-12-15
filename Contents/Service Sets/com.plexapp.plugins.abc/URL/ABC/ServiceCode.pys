@@ -34,7 +34,7 @@ def MetadataObjectForURL(url):
 
 	episode_title = episode_title[0].strip()
 	show_title = html.xpath('//meta[@name="title"]/@content|//h2/a/text()')[0].split('  ')[0]
-	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:title"]/@content')[0]
 
 	try:
 		sxx_exx = html.xpath('//meta[@name="title"]/@content|//title/text()')[0]
