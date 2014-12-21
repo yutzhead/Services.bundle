@@ -4,8 +4,8 @@ import binascii, hmac
 RE_PLAYLIST = Regex('aetv_video":(.+?)\}', Regex.DOTALL)
 RE_BASE = Regex('meta base="(rtmp.+)"')
 
-SMIL_NS = {"a":"http://www.w3.org/2005/SMIL21/Language"}
-RESOLUTIONS = ["540","432","404","360"]
+SMIL_NS = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
+RESOLUTIONS = ['540','432','404','360']
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -33,10 +33,12 @@ def TestURLs():
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  releaseURL = '%s&format=script' %GetSMIL(url)
+  releaseURL = '%s&format=script' % GetSMIL(url)
   data = JSON.ObjectFromURL(releaseURL)
 
   thumb = data['defaultThumbnailUrl']
+  thumb_large = thumb.replace('_small.jpg', '_HD_768x432-16x9.jpg')
+
   summary = data['description']
   duration = data['duration']
   date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
@@ -45,7 +47,7 @@ def MetadataObjectForURL(url):
 
   if data['AETN$mrssLengthType'] == "Episode":
     show = data['AANDE$seriesName']
-    index = int(data['AETN$episode'])
+    index = int(data['AETN$episode']) if 'AETN$episode' in data else None
 
     return EpisodeObject(
       title = title,
@@ -55,7 +57,7 @@ def MetadataObjectForURL(url):
       duration = duration,
       originally_available_at = date,
       content_rating = content_rating,
-      thumb = Resource.ContentsOfURLWithFallback(thumb)
+      thumb = Resource.ContentsOfURLWithFallback([thumb_large, thumb])
     )
   else:
     return VideoClipObject(
@@ -72,28 +74,16 @@ def MediaObjectsForURL(url):
 
   media_objects = []
 
-#   we can't guarantee any kind of codec options due to a lot of legacy content
-#   but let's leave this around for later (if they ever finish their cleanup)
-#   if 'pfilter=CLIPS#' in url:
   for res in RESOLUTIONS:
     media_objects.append(
       MediaObject(
         parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
-        video_resolution = res,
-        protocol = 'rtmp'
+          container = Container.MP4,
+          video_codec = VideoCodec.H264,
+          video_resolution = res,
+          audio_codec = AudioCodec.AAC
+        )
       )
-    )
-#   else:
-#     for res in RESOLUTIONS:
-#       media_objects.append(
-#         MediaObject(
-#           parts = [PartObject(key=Callback(PlayVideo, url=url, res=res))],
-#           container = Container.MP4,
-#           video_codec = VideoCodec.H264,
-#           video_resolution = res,
-#           audio_codec = AudioCodec.AAC
-#         )
-#       )
 
   return media_objects
 
@@ -101,13 +91,12 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, res):
 
-  url = url.split('?')[0] # Should not be necessary, but apparently some clients use cached XML data
-                          # from when we did not do this split in NormalizeURL
+  url = URLService.NormalizeURL(url)
 
   smil_url = GetSMIL(url)
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
-  smil_url += '&sig='+sig
+  smil_url = '%s&sig=%s' % (smil_url, sig)
 
   smil = XML.ElementFromURL(smil_url)
   index = RESOLUTIONS.index(res)
@@ -121,13 +110,17 @@ def PlayVideo(url, res):
       if video.get('height') == RESOLUTIONS[index]:
         video_url = video.get('src')
         break
+
     index += 1
+
+    if video_url:
+      break
 
   # try falling back to the default //video/@src if we have one
   # (like for older style flv based videos)
   if not video_url:
-    video_url=smil.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
-  
+    video_url = smil.xpath('//a:video/@src', namespaces=SMIL_NS)[0]
+
   # now if we still don't have a video_url bail
   if not video_url:
     raise Ex.MediaNotAvailable
@@ -150,7 +143,6 @@ def PlayVideo(url, res):
 ####################################################################################################
 def GetSMIL(url):
 
-
   try:
     content = HTTP.Request(url).content.decode('utf8','replace')
   except:
@@ -162,11 +154,15 @@ def GetSMIL(url):
   playlist_json = JSON.ObjectFromString(playlist)
 
   #Log('the value of playlist_json is %s' %playlist_json)
-  SMIL_URL = '%s?%s' %(playlist_json[0]['releaseURL'], playlist_json[0]['flashReleaseUrlParams'])
-  info_url = SMIL_URL + '&format=script'
+  if not 'releaseURL' in playlist_json[0]:
+    raise Ex.MediaNotAvailable
+
+  SMIL_URL = '%s?%s' % (playlist_json[0]['releaseURL'], playlist_json[0]['flashReleaseUrlParams'])
+  info_url = '%s&format=script' % SMIL_URL
   data = JSON.ObjectFromURL(info_url)
   blocked = data['AETN$isBehindWall']
-  if blocked == True:
+
+  if blocked:
     raise Ex.MediaNotAuthorized
   else:
     return SMIL_URL

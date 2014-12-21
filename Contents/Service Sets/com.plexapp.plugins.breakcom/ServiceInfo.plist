@@ -8,13 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.break.com/break-university/didgeridoo-techno-2074240/</string>
-				<string>http://www.break.com/movie-trailers/arena-trailer-2090042</string>
-				<string>http://www.break.com/index/powerful-110-roman-candle-cannon.html</string>
+				<string>http://www.break.com/video/tetris-tshirt-2652253</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.break.com/.+</string>
+				<string>^http:\/\/www\.break\.com\/video\/.+\-\d+</string>
 			</array>
 		</dict>
 	</dict>

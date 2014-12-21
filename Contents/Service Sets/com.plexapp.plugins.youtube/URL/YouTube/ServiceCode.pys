@@ -1,7 +1,7 @@
 import urlparse
 
 DEVELOPER_KEY = 'AI39si7PodNU93CVDU6kxh3-m2R9hkwqoVrfijDMr0L85J94ZrJFlimNxzFA9cSky9jCSHz9epJdps8yqHu1wb743d_SfSCRWA'
-YOUTUBE_VIDEO_DETAILS = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
+YOUTUBE_VIDEO_DETAILS = 'https://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=jsonc'
 YOUTUBE_VIDEO_FORMATS =	['360p',	'720p',	'1080p']
 YOUTUBE_FMT =			[18,		22,		37]
 YOUTUBE_CONTAINERS =	['mp4',		'mp4',	'mp4']
@@ -13,11 +13,14 @@ HTTP_HEADERS = {'X-GData-Key':'key=%s' % DEVELOPER_KEY}
 
 RE_URL_MAP = Regex('"url_encoded_fmt_stream_map".+?"([^"]+)')
 RE_URL_MAP_ALT = Regex('&amp;url_encoded_fmt_stream_map=(.+?)&amp;')
+RE_URL_MAP_AGE_GATE = Regex('&url_encoded_fmt_stream_map=(.+?)&')
 RE_PATH_1 = Regex('^/(watch|details)(_popup)?')
 RE_PATH_2 = Regex('^/[^/]+$')
 RE_VID_ID = Regex('/(v|e(mbed)?)/(v/)?(?P<id>.{11})')
 RE_VID_PID = Regex('pid=(.{11})')
 RE_VIDEO_ID = Regex('"video_id":\s"([^"]+)')
+
+RE_AGE_GATE = Regex('(player-age-gate-content">)')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -34,7 +37,7 @@ def NormalizeURL(url):
 
     # Rewrite mobile urls that contain a hash
     if url.fragment != '':
-      url = urlparse.urlparse('http://www.youtube.com%s' % url.fragment)
+      url = urlparse.urlparse('https://www.youtube.com%s' % url.fragment)
 
   # http://www.youtube.com/?v=lgTssWW2Qw4&feature=player_embedded
   # http://www.youtube.com/watch?v=lgTssWW2Qw4&feature=player_embedded
@@ -93,7 +96,7 @@ def NormalizeURL(url):
       else:
         return None
 
-  return 'http://www.youtube.com/watch?v=%s' % video_id
+  return 'https://www.youtube.com/watch?v=%s' % video_id
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -135,7 +138,7 @@ def MetadataObjectForURL(url):
   return VideoClipObject(
     title = details['title'],
     summary = details['description'],
-    thumb = Resource.ContentsOfURLWithFallback(thumb),
+    thumb = Resource.ContentsOfURLWithFallback(thumb.replace('https://', 'http://')),
     rating = rating,
     tags = tags,
     originally_available_at = Datetime.ParseDate(details['uploaded']).date(),
@@ -163,7 +166,7 @@ def MediaObjectsForURL(url):
       video_codec = YOUTUBE_VIDEOCODEC[index],
       audio_codec = YOUTUBE_AUDIOCODEC[index],
       video_resolution = YOUTUBE_VIDEORES[index],
-      optimized_for_streaming = (YOUTUBE_CONTAINERS[index] == 'mp4'),
+      optimized_for_streaming = (YOUTUBE_CONTAINERS[index] == 'mp4')
     ))
 
   return ret
@@ -215,27 +218,50 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
   # Check for geoblocks and unavailable videos
   video_id = url[url.find('?v=')+3:].split('&')[0]
 
-  try:
-    details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS)['data']
-  except:
-    raise Ex.MediaNotAuthorized
+  # Check for age-gate
+  if RE_AGE_GATE.search(yt_page) is not None:
+    age_gate = True
+    data = {
+      'video_id': video_id,
+      'el': 'player_embedded',
+      'gl': 'US',
+      'hl': 'en',
+      'eurl': 'https://youtube.googleapis.com/v/' + video_id,
+      'asv': 3,
+      'sts':'1588',
+    }
+    video_info_url = 'https://www.youtube.com/get_video_info'
+    yt_page = HTTP.Request(video_info_url, values=data, headers=HTTP_HEADERS).content
+  else:
+    age_gate = False
+    try:
+      details = JSON.ObjectFromURL(YOUTUBE_VIDEO_DETAILS % video_id, headers=HTTP_HEADERS)['data']
+    except:
+      raise Ex.MediaNotAuthorized
 
-  if 'status' in details:
-    if 'value' in details['status'] and details['status']['value'] == 'restricted':
-      if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
-        raise Ex.MediaGeoblocked
+    if 'status' in details:
+      if 'value' in details['status'] and details['status']['value'] == 'restricted':
+        if 'reason' in details['status'] and details['status']['reason'] == 'requesterRegion':
+          raise Ex.MediaGeoblocked
 
   # Build up the format map.
-  fmt_url_map = RE_URL_MAP.findall(yt_page)
+  if age_gate:
+    fmt_url_map = RE_URL_MAP_AGE_GATE.findall(yt_page)
 
-  if not fmt_url_map:
-    fmt_url_map = RE_URL_MAP_ALT.findall(yt_page)
-
-    if not fmt_url_map:
+    if len(fmt_url_map) < 1:
       raise Ex.MediaNotAvailable
 
-  fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
+    fmt_url_map = String.Unquote(fmt_url_map[0]).replace('\/', '/').split(',')
+  else:
+    fmt_url_map = RE_URL_MAP.findall(yt_page)
+  
+    if not fmt_url_map:
+      fmt_url_map = RE_URL_MAP_ALT.findall(yt_page)
 
+      if not fmt_url_map:
+        raise Ex.MediaNotAvailable
+    fmt_url_map = fmt_url_map[0].replace('\/', '/').split(',')
+  
   fmts = []
   fmts_info = {}
 
@@ -246,10 +272,12 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
       params = f.split('\u0026')
     elif '&' in f:
       params = f.split('&')
+      Log(params)
     else:
       continue
 
     for p in params:
+      Log(p)
       if '=' in p:
         (name, value) = p.split('=', 1)
         map[name] = value
@@ -263,7 +291,7 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
         if not 'signature' in video_url and 'sig' in map:
           video_url = video_url + '&signature=' + map['sig']
         elif not 'signature' in video_url and 's' in map:
-          video_url = video_url + '&signature=' + decrypt_signature(map['s'])
+          video_url = video_url + '&signature=' + decrypt_signature(map['s'], age_gate=age_gate)
 
         if 'signature' in video_url:
           if 'ratebypass' not in video_url:
@@ -296,41 +324,32 @@ def PlayVideo(url=None, default_fmt=None, **kwargs):
 
   return IndirectResponse(VideoClipObject, key=final_url)
 
-
 ####################################################################################################
-# Source: https://github.com/rg3/youtube-dl/blob/master/youtube_dl/extractor/youtube.py
-def decrypt_signature(s):
+def decrypt_signature(s, age_gate=False):
 
-  Log('Sig length is: %s' % len(s))
+  key = '-'.join([str(len(p)) for p in s.split('.')])
+  json_obj = JSON.ObjectFromURL('https://downloads.plex.tv/plugins/youtube-sig.json', cacheTime=300)
 
-  if len(s) == 92:
-    return s[25] + s[3:25] + s[0] + s[26:42] + s[79] + s[43:79] + s[91] + s[80:83]
-  elif len(s) == 91:
-    return s[84:27:-1] + s[86] + s[26:5:-1]
-  elif len(s) == 90:
-    return s[25] + s[3:25] + s[2] + s[26:40] + s[77] + s[41:77] + s[89] + s[78:81]
-  elif len(s) == 89:
-    return s[84:78:-1] + s[87] + s[77:60:-1] + s[0] + s[59:3:-1]
-  elif len(s) == 88:
-    return s[48] + s[81:67:-1] + s[82] + s[66:62:-1] + s[85] + s[61:48:-1] + s[67] + s[47:12:-1] + s[3] + s[11:3:-1] + s[2] + s[12]
-  elif len(s) == 87:
-    return s[40]+s[82:53:-1]+s[3]+s[52:40:-1]+s[85]+s[39:10:-1]+s[0]+s[9:5:-1]+s[2:0:-1]+s[53]
-  elif len(s) == 86:
-    return s[4:31] + s[3] + s[32:85]
-  elif len(s) == 85:
-    return s[1:12] + s[81] + s[13:81] + s[12]
-  elif len(s) == 84:
-    return s[78:70:-1] + s[14] + s[69:37:-1] + s[70] + s[36:14:-1] + s[80] + s[:14][::-1]
-  elif len(s) == 83:
-    return s[17] + s[3:17] + s[2] + s[18:41] + s[82] + s[1] + s[43:82] + s[41]
-  elif len(s) == 82:
-    return s[80:37:-1] + s[7] + s[36:7:-1] + s[0] + s[6:0:-1] + s[37]
-  elif len(s) == 81:
-    return s[56] + s[79:56:-1] + s[41] + s[55:41:-1] + s[80] + s[40:34:-1] + s[0] + s[33:29:-1] + s[34] + s[28:9:-1] + s[29] + s[8:0:-1] + s[9]
-  elif len(s) == 80:
-    return s[1:19] + s[0] + s[20:68] + s[19] + s[69:80]
-  elif len(s) == 79:
-    return s[54] + s[77:54:-1] + s[39] + s[53:39:-1] + s[78] + s[38:34:-1] + s[0] + s[33:29:-1] + s[34] + s[28:9:-1] + s[29] + s[8:0:-1] + s[9]
-  else:
-    Log('Unable to decrypt signature, key length %d not supported; retrying might work' % (len(s)))
-    raise Ex.MediaNotAvailable
+  if key not in json_obj:
+    json_obj = JSON.ObjectFromURL('https://442200954b6d9970e4ce-b0c40228a7b02641ddb14594625d1e51.ssl.cf3.rackcdn.com/y.json', cacheTime=300)
+
+    if key not in json_obj:
+      Log('Unable to decrypt signature, key %s not available' % (key))
+      raise Ex.MediaNotAvailable
+
+  d = ''
+
+  for p in json_obj[key]:
+    t = []
+
+    for x in p.split(':'):
+      t.append(int(x) if x != "" else None)
+
+    if len(t) == 1:
+      d = '%s%s' % (d, s[t[0]])
+    elif len(t) == 2:
+      d = '%s%s' % (d, s[t[0]:t[1]])
+    elif len(t) == 3:
+      d = '%s%s' % (d, s[t[0]:t[1]:t[2]])
+
+  return d

@@ -1,38 +1,38 @@
-API_KEY = '70d735e54938286d6d9142727877107ced20e5ff'
-API_PATH = 'http://api.giantbomb.com'
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:18.0) Gecko/20100101 Firefox/18.0'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.94 Safari/537.36'}
 
-MediaObject.container = 'mp4'
-MediaObject.optimized_for_streaming = True
+MediaObject.container = Container.MP4
 MediaObject.video_codec = VideoCodec.H264
 MediaObject.audio_codec = AudioCodec.AAC
 MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	if not url.endswith('/'):
-		url = url +'/'
-
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	clip = GetClip(url)
+	html = HTML.ElementFromURL(url)
 
-	title = clip['name']
-	summary = clip['deck']
-	thumbUrl = clip['image']['super_url']
-	date = Datetime.ParseDate(clip['publish_date']).date()
-	duration = int(clip['length_seconds'])*1000
+	json = html.xpath('//div[@data-video]/@data-video')
+	if len(json) < 1:
+		raise Ex.MediaNotAvailable
+
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
+
+	json_obj = JSON.ObjectFromString(json[0])
+
+	duration = json_obj['lengthSeconds'] * 1000
 
 	return VideoClipObject(
 		title = title,
 		summary = summary,
-		thumb = Resource.ContentsOfURLWithFallback(thumbUrl),
-		duration = duration,
-		originally_available_at = date
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		duration = duration
 	)
 
 ####################################################################################################
@@ -41,8 +41,8 @@ def MediaObjectsForURL(url):
 	return [
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='hd'))],
-			bitrate = 2400,
-			video_resolution = 1080
+			bitrate = 4000,
+			video_resolution = 720
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='high'))],
@@ -51,7 +51,7 @@ def MediaObjectsForURL(url):
 		),
 		MediaObject(
 			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='low'))],
-			bitrate = 800,
+			bitrate = 250,
 			video_resolution = 360
 		)
 	]
@@ -60,59 +60,27 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt='high'):
 
-	fmts = ['low','high','hd']
+	# This URL Service is meant for publicly available videos. If somehow this service is used
+	# with an API key in the URL, ignore it.
+	if 'api_key=' in url:
+		return None
 
-	if fmt not in fmt:
-		fmt = 'high'
+	html = HTML.ElementFromURL(url)
+	json = html.xpath('//div[@data-video]/@data-video')
 
-	index = fmts.index(fmt)
-	video_url = None
-
-	clip = GetClip(url)
-
-	while index > -1:
-		if ('%s_url' % fmts[index]) in clip:
-			video_url = clip['%s_url' % fmts[index]]
-
-			if fmt == 'hd':
-				video_url = '%s&api_key=%s' % (video_url, ApiKey())
-			break
-		else:
-			index = index - 1
-
-	if not video_url:
-		raise Ex.MediaNotAvailable
-	
-	Log(video_url)
-
-	return IndirectResponse(VideoClipObject, key=video_url)
-
-####################################################################################################
-def GetClip(url):
-
-	video_id = url.split('/')[-2]
-	clip_detail_url = API_PATH + '/video/%s/?api_key=%s&format=json&limit=1' % (video_id, ApiKey())
-
-	try:
-		data = JSON.ObjectFromURL(clip_detail_url)
-		if data['status_code'] == 100:
-			clip_detail_url = API_PATH + '/video/%s/?api_key=%s&format=json&limit=1' % (video_id, API_KEY)
-			data = JSON.ObjectFromURL(clip_detail_url)
-	except:
+	if len(json) < 1:
 		raise Ex.MediaNotAvailable
 
-	if 'status_code' not in data or data['status_code'] != 1:
+	json_obj = JSON.ObjectFromString(json[0])
+
+	if not 'videoStreams' in json_obj:
 		raise Ex.MediaNotAvailable
 
-	return(data['results'])
-
-####################################################################################################
-def ApiKey():
-	link_code = Prefs['link_code']
-
-	if link_code and len(link_code) == 6:
-		response = JSON.ObjectFromURL(API_PATH + '/validate?link_code=' + link_code.upper() + '&format=json')
-		if 'api_key' in response:
-			return response['api_key']
-
-	return API_KEY
+	if fmt == 'hd' and 'progressive_hd' in json_obj['videoStreams']:
+		return IndirectResponse(VideoClipObject, key=json_obj['videoStreams']['progressive_hd'])
+	elif fmt in ('hd', 'high') and 'progressive_high' in json_obj['videoStreams']:
+		return IndirectResponse(VideoClipObject, key=json_obj['videoStreams']['progressive_high'])
+	elif fmt in ('hd', 'high', 'low') and 'progressive_low' in json_obj['videoStreams']:
+		return IndirectResponse(VideoClipObject, key=json_obj['videoStreams']['progressive_low'])
+	else:
+		raise Ex.MediaNotAvailable

@@ -19,6 +19,7 @@
 			<array>
 				<string>^http://www.svtplay.se/(?!sok).+</string>
 				<string>^http://www.oppetarkiv.se/.+</string>
+				<string>^http://www.svtflow.se/video/.+</string>
 			</array>
 		</dict>
 	</dict>

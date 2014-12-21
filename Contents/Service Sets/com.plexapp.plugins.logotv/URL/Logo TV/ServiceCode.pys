@@ -1,12 +1,14 @@
 NAMESPACES = {"media":"http://search.yahoo.com/mrss/"}
-
 MRSS_URL = "http://www.logotv.com/player/includes/rss.jhtml?uri=%s"
-MP4_URL = "http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s"
 
-RE_MGID = Regex('(?:\/|vid=|id=)(\d{4,7})\/?')
-RE_EPISODE_URI = Regex('MTVN.Player.episodeUri = \"(.+?)\"')
-RE_CLIP_URI	= Regex('MTVN.Player.videoUri = \"(.+?)\"')
+URI_FORMAT = 'mgid:uma:%s:mtv.com:%s'
+RE_URI = Regex('MTVN.Player.(?:episode|video)Uri = \"(.+?)\"')
+RE_PLAYLIST = Regex('MTVN.Player.defaultPlaylistId = (\d{7})')
 
+RE_RES_BIT = Regex('x(\d+)_(\d+)_?[^._]*\.(mp4|flv)')
+
+MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -33,89 +35,93 @@ def MetadataObjectForURL(url):
     )
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-# It is best to determine the type by the length of the mgid number so no errors come up and all playlist have parts
-# Also movies can be much longer than episodes, so to have movies play in full, but keep parts manageable, we separate them base on url structure
-
-    mgid = RE_MGID.search(url).group(1)
-
-    if len(mgid) > 6:
-        # This is for full episodes and can vary from 4 to 8 parts
-        if '/season-' in url or 'episode-' in url or '/operation-vacation-' in url or '/off-pitch-' in url:
-            num_parts = 8
-        # this is for movies that can vary from 7 to 17 parts. Most are 10 to 15 parts
-        else:
-            num_parts = 17
-    else:
-        num_parts = 1
-
-    return [
-        MediaObject(
-            parts = [
-                PartObject(
-                    key = Callback(PlayVideo, url=url, bitrate=str(bitrate), index=i)
-                ) for i in range(num_parts)
-            ],
-            bitrate = bitrate,
-            container = Container.MP4,
-            video_resolution = resolution,
-            video_codec = VideoCodec.H264,
-            audio_codec = AudioCodec.AAC,
-            audio_channels = 2,
-            optimized_for_streaming = True
-	    # Any other resolutions are handled by the closest command in the PlayVideo function
-        ) for bitrate,resolution in [(3500, '720'), (2200, '540'), (1700, '432'), (1200, '360'), (750, '288')]
-    ]
-
-####################################################################################################
-def PlayVideo(url, bitrate='1700', index=0):
 
     mrss_data = GetRSS(url)
-    media_url = mrss_data.xpath('//media:content[@medium="video"]', namespaces=NAMESPACES)
+    media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
+    available_streams = {}
+        
+    for media_url in media_urls:
+        try:
+            video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
+        except:
+            raise Ex.MediaNotAvailable
 
-    if index < len(media_url):
-        player_url = media_url[index].get('url')
-        player_url = player_url.replace('{device}', 'Other')
-    else:
-        # Return small filler movie for desktop clients
-        return Redirect('http://dl.dropbox.com/u/2974527/Plex/filler.mp4')
+        renditions = video_data.xpath('//rendition')
 
-    try:
-        player_data = XML.ElementFromURL(player_url)
-    except:
-        raise Ex.MediaNotAvailable
+        if len(renditions) < 1:
+            raise Ex.MediaNotAvailable
 
-    available_bitrates = player_data.xpath('//rendition[@bitrate]/@bitrate')
-    if len(available_bitrates) < 1:
-        raise Ex.MediaNotAvailable
+        for rendition in renditions:
+            rtmp_url = rendition.xpath('./src/text()')[0]
+            # For video with incorrect fields, try to get the bitrate and height from the rtmp url first
+            # Found one that was different, adjusted regex, but still best to put in a try/except
+            try: bitrate = RE_RES_BIT.search(rtmp_url).group(2)
+            except: bitrate = rendition.get('bitrate')
+            try: height = RE_RES_BIT.search(rtmp_url).group(1)
+            except: height = rendition.get('height')
 
-    closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]
-    rtmp_url = player_data.xpath('//rendition[@bitrate="%s"]/src' % closest)[0].text
+            # Set up to pull the type of video file so that it can work with flv or mp4
+            part = {}
+            part['duration'] = rendition.get('duration')
+            part['height'] = height
+            part['rtmp_url'] = rtmp_url.split('/viacomlogostrm/')[-1]
+            part['clip_type'] = rtmp_url.split('.')[-1]
 
-    if not '/viacomlogostrm/' in rtmp_url:
-        raise Ex.MediaNotAvailable
+            if bitrate not in available_streams:
+                available_streams[bitrate] = []
+            available_streams[bitrate].append(part)
 
-    stream_url = rtmp_url.split('/viacomlogostrm/')[1]
-    mp4_url = MP4_URL % stream_url
+    media_objects = []
+    bitrates = [int(i) for i in available_streams.keys()]
+    bitrates.sort(reverse=True)
 
-    return Redirect(mp4_url)
+    for bitrate in bitrates:
+
+        parts = []
+
+        for part in available_streams[str(bitrate)]:
+
+            parts.append(
+                PartObject(
+                    key = RTMPVideoURL(
+                        url='rtmpe://viacommtvstrmfs.fplive.net:1935/viacommtvstrm/',
+                        clip='%s:%s' % (part['clip_type'], part['rtmp_url'])
+                    ),
+                    duration = int(part['duration'])*1000
+                )
+            )
+
+            video_resolution = int(part['height'])
+
+        media_objects.append(
+            MediaObject(
+                parts = parts,
+                bitrate = bitrate,
+                video_resolution = video_resolution
+            )
+        )
+
+    return media_objects
 
 ####################################################################################################
-# Using regex to pull uri. Make it a separate function so it can be used for the metadataobject too. 
-# It is best to determine the type by the length of the mgid number so no errors come up
+# Pull the uri from the html of video page. 
+# We no longer use the mgid number in the url since the length no longer determines if is it a video or videolist type of uri. 
 def GetRSS(url):
 
-    mgid = RE_MGID.search(url).group(1)
+    # The uri may not show that it is part of a video clip playlist, so we check for a playlist id on the page first.
     content = HTTP.Request(url).content
-
-    if len(mgid) > 6:
-        uri = RE_EPISODE_URI.search(content).group(1)
+    try: mgid_num = RE_PLAYLIST.search(content).group(1)
+    except: mgid_num = None
+    if mgid_num:
+        # if there is a playlist id, build a videolist type uri
+        uri = URI_FORMAT %('videolist', mgid_num)
     else:
-        uri = RE_CLIP_URI.search(content).group(1)
-
-    # This in case the regex field for the uri on the page is blank
-    if not uri:
-        raise Ex.MediaExpired 
+        # Pull the uri from the web page
+        content = HTTP.Request(url).content
+        try: uri = RE_URI.search(content).group(1)
+        except: raise Ex.MediaNotAvailable
 
     xml = XML.ElementFromURL(MRSS_URL % uri)
 

@@ -1,91 +1,27 @@
-AMF_URL = 'http://c.brightcove.com/services/messagebroker/amf'
+PLAYER_KEY = Regex('"playerKey": "([^"]+)"')
+VIDEO_ID = Regex('"videoID": "(\d+)"')
 
-PLAYER_ID = Regex('"playerID":"(\w+)"', Regex.DOTALL)
-PLAYER_KEY = Regex('"playerKey":"([^"]+)"', Regex.DOTALL)
-VIDEO_ID = Regex('"videoID":"(\w+)"', Regex.DOTALL)
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.78.2 (KHTML, like Gecko) Version/7.0.6 Safari/537.78.2'}
+BC_URL = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&@videoPlayer=%s&refURL=%s'
 
 ####################################################################################################
-
 def MetadataObjectForURL(url):
 
-    amf_response = DoAmfRequest(url)
-    return VideoClipObject(
-        title = amf_response['displayName'],
-        summary = amf_response['shortDescription'],
-        thumb = amf_response['thumbnailURL'],
-        tags = [ tag['name'] for tag in amf_response['tags'] ],
-        originally_available_at = amf_response['publishedDate']
-    )
-    
-####################################################################################################
+	bc_url = GetBrightCoveURL(url)
+	return URLService.MetadataObjectForURL(bc_url)
 
+####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
-    return [
-      MediaObject(
-        container = Container.MP4,
-        video_codec = VideoCodec.H264,
-        audio_codec = AudioCodec.AAC,
-        audio_channels = 2,
-        parts = [PartObject(key=Callback(PlayVideo, url = url))]
-      )
-    ]
+
+	bc_url = GetBrightCoveURL(url)
+	return URLService.MediaObjectsForURL(bc_url)
 
 ####################################################################################################
+def GetBrightCoveURL(url):
 
-def PlayVideo(url):
-    amf_response = DoAmfRequest(url)
-    return Redirect(amf_response['FLVFullLengthURL'])
+	page = HTTP.Request(url).content
+	player_key = PLAYER_KEY.search(page).group(1)
+	video_id = VIDEO_ID.search(page).group(1)
 
-####################################################################################################
-
-def DoAmfRequest(url):
-    page_contents = HTTP.Request(url).content
-    player_id = PLAYER_ID.search(page_contents).groups()[0]
-
-    player_key = PLAYER_KEY.search(page_contents).groups()[0]
-    video_id = VIDEO_ID.search(page_contents).groups()[0]
-
-    return AmfRequest(url = url, playerID = player_id, playerKey = player_key, videoPlayer = video_id)
-
-####################################################################################################
-
-def AmfRequest(url=None, playerID=None, playerKey=None, videoPlayer=None):
-
-    endpoint = AMF_URL
-    if playerKey:
-        endpoint += '?playerKey=%s' % playerKey
-
-    client = AMF.RemotingService(url=endpoint, user_agent='', amf_version=3)
-    service = client.getService('com.brightcove.experience.ExperienceRuntimeFacade')
-
-    AMF.RegisterClass(ContentOverride, 'com.brightcove.experience.ContentOverride')
-    AMF.RegisterClass(ViewerExperienceRequest, 'com.brightcove.experience.ViewerExperienceRequest')
-
-    video_obj = ContentOverride(videoPlayer)
-    experience = ViewerExperienceRequest(url, playerID, playerKey, video_obj)
-    
-    result = service.getDataForExperience('', experience)
-
-    return result['programmedContent']['videoPlayer']['mediaDTO']
-
-####################################################################################################
-class ContentOverride(object):
-  def __init__ (self, videoPlayer=None):
-    self.contentType = int(0)
-    self.contentIds = None
-    self.target = 'videoPlayer'
-    self.contentId = int(videoPlayer)
-    self.featuredRefId = None
-    self.contentRefIds = None
-    self.featuredId = float('nan')
-    self.contentRefId = None
-
-class ViewerExperienceRequest(object):
-  def __init__ (self, url=None, playerID=None, playerKey=None, video_obj=None):
-    self.experienceId = int(playerID)
-    self.playerKey = playerKey
-    self.contentOverrides = []
-    self.contentOverrides.append(video_obj)
-    self.TTLToken = ''
-    self.URL = url
-    self.deliveryType = float('nan')
+	return BC_URL % (player_key, video_id, String.Quote(url))

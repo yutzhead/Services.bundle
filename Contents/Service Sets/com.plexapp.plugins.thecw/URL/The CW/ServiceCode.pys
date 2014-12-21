@@ -4,8 +4,6 @@ BASE_URL = 'http://www.cwtv.com'
 
 CW_SWF = 'http://pdl.warnerbros.com/cwtv/digital-smiths/production_player/vsplayer.swf'
 
-THUMB_PROXY = 'http://www.uswebproxy.com/?q=%s'
-
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -51,7 +49,6 @@ def MetadataObjectForURL(url):
 		duration = None
 
 	thumb = GetThumb(url)
-	thumb_alt = THUMB_PROXY % String.Base64Encode(thumb)
 
 	if video['contentType'] == "Full Episodes":    
 		return EpisodeObject(
@@ -63,7 +60,7 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 	else:
 		return VideoClipObject(
@@ -72,24 +69,26 @@ def MetadataObjectForURL(url):
 			rating = rating,
 			originally_available_at = date,
 			duration = duration,
-			thumb = Resource.ContentsOfURLWithFallback([thumb, thumb_alt])
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	items = []
+	media_objects = []
 
 	for value in reversed(BITRATES):
-		items.append(
+		media_objects.append(
 			MediaObject(
 				bitrate = value,
 				protocol = 'rtmp',
-				parts = [PartObject(key=Callback(PlayVideo, url=url, bitrate=value))]
+				parts = [
+					PartObject(key=Callback(PlayVideo, url=url, bitrate=value))
+				]
 			)
 		)
 
-	return items
+	return media_objects
 
 ####################################################################################################
 @indirect
@@ -127,21 +126,18 @@ def GetDetails(url):
 		id = url.split('?play=')[1]
 	else:
 		html = HTML.ElementFromURL(url)
-		current_url = html.xpath('//meta[@property="og:url"]', namespaces={'og': 'http://opengraphprotocol.org/schema/'})
+		url = html.xpath('//a[@class="thumbLink"]/@href')
 
-		if current_url:
-			url = current_url[0].get('content')
-			if '?play=' in url:
-				id = url.split('?play=')[1]
+		if len(url) > 0 and '?play=' in url[0]:
+			id = url[0].split('?play=')[1]
 
 	if id:
 		try:
-			details = JSON.ObjectFromURL(DETAILS_URL % id)
-			return details
+			return JSON.ObjectFromURL(DETAILS_URL % id)
 		except:
 			raise Ex.MediaExpired
 	else:
-		return None
+		raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def GetThumb(url):
@@ -160,9 +156,13 @@ def GetThumb(url):
 def TestURLs():
 
 	test_urls = []
-	data = HTML.ElementFromURL(BASE_URL + '/cw-video/')
+	data = HTML.ElementFromURL('%s/shows/' % (BASE_URL))
 
-	for url in data.xpath('//a[contains(@href, "?play")]/@href'):
+	for url in data.xpath('//a[contains(@href, "/shows/")]/@href'):
+
+		if url.endswith('/shows/'):
+			continue
+
 		test_urls.append(BASE_URL + url)
 
 		if len(test_urls) > 2:

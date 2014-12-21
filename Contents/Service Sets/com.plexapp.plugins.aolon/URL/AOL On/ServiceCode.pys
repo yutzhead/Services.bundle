@@ -68,43 +68,24 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, rendition_id=8))],
-			video_resolution = '1080'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, rendition_id=4))],
-			video_resolution = '720'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, rendition_id=2))],
-			video_resolution = '480'
-		),
-		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url, rendition_id=1))],
-			video_resolution = '360'
+			parts = [
+				PartObject(
+					key = HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+				)
+			]
 		)
 	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, rendition_id=8):
+def PlayVideo(url, **kwargs):
 
 	json_obj = GetJSON(url)
 
-	embed_url = json_obj['EmbededURL']
-	video_url = String.Unquote(RE_VIDEO_URL.search(embed_url).group('video_url'))
+	for r in json_obj['Renditions']:
 
-	renditions = [8, 4, 2, 1]
-	index = renditions.index(rendition_id)
-
-	while index < len(renditions):
-		for rendition in json_obj['Renditions']:
-			if rendition['RenditionType'] == 'mp4' and rendition['ID'] == renditions[index]:
-				video_url = video_url.replace('.mp4', '_%d.mp4' % rendition['ID'])
-
-				return IndirectResponse(VideoClipObject, key=video_url)
-
-		index = index + 1
+		if r['RenditionType'] == 'm3u8':
+			return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=r['Url']))
 
 	raise Ex.MediaNotAvailable
 

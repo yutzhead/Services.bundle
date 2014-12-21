@@ -1,0 +1,61 @@
+RE_QUOTED = Regex('document\.write\(unescape\("([^"]+)"\)')
+RE_THUMB = Regex('image: *"([^"]+)"')
+RE_VIDEO_URL = Regex('file: *"([^"]+)"')
+
+########################################################################################
+def NormalizeURL(url):
+
+	id = url.split('ref=')[-1].split('&')[0]
+	return 'http://videomega.tv/cdn.php?ref=%s' % (id)
+
+####################################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTTP.Request(url).content
+	data = RE_QUOTED.search(page)
+
+	if not data:
+		raise Ex.MediaNotAvailable
+
+	data = String.Unquote(data.group(1))
+	html = HTML.ElementFromString(page)
+
+	title = html.xpath('//title/text()')[0].split('VideoMega.tv - ')[-1].split(' | www.onlinemovies.pro')[0]
+	thumb = RE_THUMB.search(data).group(1)
+
+	return VideoClipObject(
+		title = title,
+		thumb = thumb
+	)
+
+####################################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url, post_url=url))
+			],
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			video_resolution = '720',
+			audio_channels = 2,
+			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
+		)
+	]
+
+####################################################################################################
+@indirect
+def PlayVideo(url):
+
+	page = HTTP.Request(url).content
+	data = RE_QUOTED.search(page)
+
+	if not data:
+		raise Ex.MediaNotAvailable
+
+	data = String.Unquote(data.group(1))
+	video_url = RE_VIDEO_URL.search(data).group(1)
+
+	return IndirectResponse(VideoClipObject, key=video_url)

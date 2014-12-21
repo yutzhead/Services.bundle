@@ -9,7 +9,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^http://(www\.)?cobra\.be/(permalink|cm/cobra/.+)/1\.\d+</string>
-				<string>^(?!.*/matchcenter)http://(www\.)?(deredactie|sporza)\.be/(permalink/1\.\d+|cm/(vrtnieuws(\.english)?|sporza)/.+)</string>
+				<string>^(?!.*/(livecenter|matchcenter))http://(www\.)?(deredactie|sporza)\.be/(permalink/1\.\d+|cm/(vrtnieuws(\.english)?|sporza)/.+)</string>
 			</array>
 			<key>TestURLs</key>
 			<array>

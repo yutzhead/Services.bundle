@@ -8,12 +8,12 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.traileraddict.com/trailer/red-tails/trailer</string>
-				<string>http://www.traileraddict.com/trailer/tucker-dale-vs-evil/red-band-trailer</string>
+				<string>http://www.traileraddict.com/red-tails/trailer</string>
+				<string>http://www.traileraddict.com/tucker-dale-vs-evil/red-band-trailer</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.traileraddict.com/trailer/.+</string>
+				<string>^http://www.traileraddict.com/[^/]+/.+</string>
 			</array>
 		</dict>
 	</dict>

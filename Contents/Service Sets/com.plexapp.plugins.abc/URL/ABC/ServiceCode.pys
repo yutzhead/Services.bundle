@@ -1,17 +1,21 @@
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.77 Safari/537.36'}
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36'}
 RE_SXX_EXX = Regex('Season (\d+).+Episode (\d+)')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split('?')[0].replace(' ', '%20')
-
-	return url
+	if not '/redirect/fep?videoid=VDKA' in url:
+		return url.split('?')[0]
+	else:
+		return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+	try:
+		html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+	except:
+		raise Ex.MediaNotAvailable
 
 	# Expired and unavailable media redirects to the home page. Instead of catching (multiple)
 	# redirects we check if there is a 'og:url' HTML element.
@@ -30,10 +34,10 @@ def MetadataObjectForURL(url):
 
 	episode_title = episode_title[0].strip()
 	show_title = html.xpath('//meta[@name="title"]/@content|//h2/a/text()')[0].split('  ')[0]
-	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:title"]/@content')[0]
 
 	try:
-		sxx_exx = html.xpath('//meta[@name="title"]/@content|//title/text()')[0]
+		sxx_exx = html.xpath('//title/text()')[0]
 		(season, index) = RE_SXX_EXX.search(sxx_exx).groups()
 	except:
 		season = None
@@ -58,6 +62,10 @@ def MetadataObjectForURL(url):
 
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
+	if thumb == '':
+		video_id = GetVideoId(url)
+		thumb = 'http://static.east.abc.go.com/service/image/ratio/id/VDKA%s/dim/1200.16x9.jpg' % (video_id)
+
 	source_title = 'ABC Family' if 'abcfamily' in url else 'ABC'
 
 	return EpisodeObject(
@@ -76,23 +84,25 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if not '/VDKA' in url:
-		url = FixURL(url)
+	if '/VDKA' in url:
+		video_id = url.split('/VDKA')[-1].split('/')[0]
+	elif '/redirect/fep?videoid=VDKA' in url:
+		video_id = url.split('videoid=VDKA')[-1].split('#')[0]
+	else:
+		video_id = GetVideoId(url)
 
-	if not url:
-		return None
+	if not video_id:
+		raise Ex.MediaNotAvailable
 
-	video_id = url.split('/VDKA')[-1].split('/')[0]
 	storage_id = 1561
 
 	strings = (
-		'/2020/',
-		'/good-morning-america/',
-		'/nightline/',
-		'/this-week/',
-		'/what-would-you-do/',
-		'/world-news-with-diane-sawyer/',
-		'/world-news-with-david-muir/'
+		'/2020/', '#SH559026',
+		'/good-morning-america/', '#SH5587637',
+		'/nightline/', '#SH5584743',
+		'/this-week', '#SH559082',
+		'/what-would-you-do/', '#SH5555951',
+		'/world-news-tonight', '#SH5585921', '#SH55228120'
 	)
 
 	for s in strings:
@@ -103,7 +113,7 @@ def MediaObjectsForURL(url):
 	if 'abcfamily' in url:
 		storage_id = 1571
 
-	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/%d/uiConfId/8628152/tags/uplynk/a/a.f4m?playbackContext=ct%%3Da%%26brand%%3D001%%26device%%3D001' % (video_id, storage_id)
+	f4m_url = 'http://cdnapi.kaltura.com/p/585231/sp/58523100/playManifest/entryId/%s/format/http/protocol/http/cdnHost/cdnbakmi.kaltura.com/storageId/%d/uiConfId/8628152/tags/uplynk/a/a.f4m' % (video_id, storage_id)
 
 	return [
 		MediaObject(
@@ -137,14 +147,13 @@ def PlayVideo(f4m_url=None, **kwargs):
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
-def FixURL(url):
+def GetVideoId(url):
 
-	try:
-		url = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//meta[@property="og:url"]/@content')[0]
+	html = HTML.ElementFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
 
-		if not '/VDKA' in url:
-			return None
+	# Loop over attribute values, because we can't grab the right one directly because of a missing namespace declaration(?)
+	for value in html.xpath('//div[@id="vp2k_container"]/@*'):
+		if value.startswith('VDKA'):
+			return value.split('VDKA')[-1]
 
-		return url
-	except:
-		return None
+	return None

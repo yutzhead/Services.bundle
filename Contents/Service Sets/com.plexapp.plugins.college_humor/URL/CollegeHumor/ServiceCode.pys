@@ -4,6 +4,10 @@ MOOGALOOP_JSON = 'http://www.collegehumor.com/moogaloop/video/%s.json'
 ####################################################################################################
 def NormalizeURL(url):
 
+	if 'moogaloop' in url and 'clip_id' in url:
+		clip_id = url.split('clip_id=')[-1].split('&')[0]
+		return 'http://www.collegehumor.com/video/%s/' % clip_id
+
 	return url.split('#')[0].split('?')[0]
 
 ####################################################################################################
@@ -49,7 +53,12 @@ def PlayVideo(url):
 	video_id = url.split('/')[4]
 	json_obj = JSON.ObjectFromURL(MOOGALOOP_JSON % video_id)
 
-	if not 'video' in json_obj:
+	if not 'video' in json_obj or not 'mp4' in json_obj['video']:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=json_obj['video']['mp4']['high_quality'])
+	if 'high_quality' in json_obj['video']['mp4']:
+		video_url = json_obj['video']['mp4']['high_quality']
+	else:
+		video_url = json_obj['video']['mp4']['low_quality']
+
+	return IndirectResponse(VideoClipObject, key=video_url)

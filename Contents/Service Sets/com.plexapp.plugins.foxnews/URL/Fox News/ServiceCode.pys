@@ -28,7 +28,7 @@ def MetadataObjectForURL(url):
     return VideoClipObject(
         title = title,
         summary = description,
-        thumb = thumb_url,
+        thumb = Resource.ContentsOfURLWithFallback(thumb_url),
         duration = duration,
         originally_available_at = date
     )
@@ -41,11 +41,16 @@ def MediaObjectsForURL(url):
             video_codec = VideoCodec.H264,
             audio_codec = AudioCodec.AAC,
             container = Container.MP4,
-            parts = [PartObject(key=Callback(PlayVideo, url=url))]
+            parts = [
+                PartObject(
+                    key = Callback(PlayVideo, url=url)
+                )
+            ]
         )
     ]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
     # The url should contain details of the actual media asset number.
@@ -68,4 +73,4 @@ def PlayVideo(url):
         video_url = json_root['media-content']['mvn-flv1200']
         video_url = video_url.replace(' ', '%20')
 
-    return Redirect(video_url)
+    return IndirectResponse(VideoClipObject, key=video_url)

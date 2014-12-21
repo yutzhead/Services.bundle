@@ -16,8 +16,8 @@ def NormalizeURL(url):
 
 	url = url.split('?')[0]
 
-	if url.endswith('.x'):
-		url = url.split('.x')[0]
+	if url.endswith('.x') or url.endswith('.s'):
+		url = url.rsplit('.', 1)[0]
 
 	return String.StripDiacritics(url)
 
@@ -61,11 +61,14 @@ def MediaObjectsForURL(url):
 
 	for video in data['additionalMedia']:
 
+		if 'role' in video and video['role'] == 'Source':
+			continue
+
 		if video['archive_type'] == 'MPEG4':
 			media_objects.append(MediaObject(
 				parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 				container = Container.MP4,
-				video_resolution = video['media_height'],
+				video_resolution = int(video['media_height']),
 				bitrate = video['video_bitrate'],
 				duration = int(video['media_length']) * 1000,
 				video_codec = VideoCodec.H264,
@@ -82,7 +85,7 @@ def MediaObjectsForURL(url):
 				media_objects.append(MediaObject(
 					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 					container = 'flv',
-					video_resolution = video['media_height'],
+					video_resolution = int(video['media_height']),
 					duration = int(video['media_length']) * 1000,
 					video_codec = video['video_codec'],
 					audio_codec = video['audio_codec'],
@@ -98,7 +101,7 @@ def MediaObjectsForURL(url):
 				media_objects.append(MediaObject(
 					parts = [PartObject(key=Callback(PlayVideo, url=video['url']))],
 					container = 'mov',
-					video_resolution = video['media_height'],
+					video_resolution = int(video['media_height']),
 					duration = int(video['media_length']) * 1000,
 					video_codec = video['video_codec'],
 					audio_codec = video['audio_codec'],
@@ -125,8 +128,10 @@ def GetJsonURL(url):
 		except Ex.RedirectError, e:
 			try:
 				flash_xml = RE_FLASH_XML.search(String.Unquote(e.location)).group(1)
-				embed_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:embedLookup', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0].text
-				url = 'http://blip.tv/players/episode/%s' % embed_id
+				#embed_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:embedLookup', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0].text
+				#url = 'http://blip.tv/players/episode/%s' % embed_id
+				posts_id = XML.ElementFromURL(flash_xml).xpath('//item/blip:posts_id/text()', namespaces={'blip': 'http://blip.tv/dtd/blip/1.0'})[0]
+				url = 'http://blip.tv/posts/%s' % posts_id
 			except:
 				play_id = RE_PLAY_ID.search(url).group(1)
 				url = 'http://blip.tv/players/episode/%s' % play_id
@@ -135,7 +140,7 @@ def GetJsonURL(url):
 		if post_id:
 			url = 'http://blip.tv/posts/%s' % post_id.group(1)
 
-	return '%s?%s' % (url, 'skin=json&version=2')
+	return '%s?skin=json&version=2' % (url)
 
 ####################################################################################################
 def GetJson(url):
@@ -159,15 +164,10 @@ def GetJson(url):
 @indirect
 def PlayVideo(url):
 
-	c = ObjectContainer()
-
-	c.add(VideoClipObject(
-		items = [
-			MediaObject(
-				parts = [PartObject(key=url)]
-			)
-		]
-	))
-
-	c.http_headers = {'User-Agent': 'Shockwave Flash'}
-	return c
+	try:
+		h = HTTP.Request(url, follow_redirects=False, headers={'Referer': 'http://web-sniffer.net/', 'User-Agent': 'Web-sniffer/1.1.0 (+http://web-sniffer.net/)', 'Range': 'bytes=0-1'}).content
+	except Ex.RedirectError, e:
+		if 'Location' in e.headers:
+			return IndirectResponse(VideoClipObject, key=e.headers['Location'])
+	except:
+		raise Ex.MediaNotAvailable

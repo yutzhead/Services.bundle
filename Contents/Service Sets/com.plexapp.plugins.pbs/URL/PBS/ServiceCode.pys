@@ -68,11 +68,11 @@ def PlayVideo(url):
             video_url = None
 
     if video_url:
-        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
+        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8 or an mp4
         # we now have to check here for this as well as there are some cases where whoever is
         # entering the data has started putting these in video_download_url (they never used to be there)
         if video_url.startswith('http://urs.pbs.org/redirect/'):
-            Log.Debug("Found redirect, assuming HLS: "+video_url)
+            Log.Debug("Found redirect: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
             # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
             try:
@@ -85,16 +85,17 @@ def PlayVideo(url):
                 if e.code == 410:
                     raise Ex.MediaExpired
             Log.Debug("Parsed URL: "+video_url)
-            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
+            if video_url.endswith(".m3u8"):
+	            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
 
         return IndirectResponse(VideoClipObject, key=video_url)
     else:
         # We have an older format, but things have changed slightly from the older parsing methods
         video_url = video['mediafiles'][-1]['video_data_url']
 
-        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8
+        # corner case, some shows use http://urs.pbs.org/redirect/ to obtain an m3u8 or an mp4
         if video_url.startswith('http://urs.pbs.org/redirect/'):
-            Log.Debug("Found redirect, assuming HLS: "+video_url)
+            Log.Debug("Found redirect: "+video_url)
             # We have to do a bit of juggling to get the correct URL 302, the framework/clients don't follow 
             # these redirects properly (PBS serves them up strangely, they 302 AND they serve page content)
             try:
@@ -104,6 +105,9 @@ def PlayVideo(url):
                 if e.headers.has_key('Location'):
                     video_url = e.headers['Location']
             Log.Debug("Parsed URL: "+video_url)
+            if video_url.endswith(".m3u8"):
+	            return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
+
             return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=video_url))
 
         smil = XML.ElementFromURL(video_url + '&format=SMIL')

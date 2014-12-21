@@ -9,13 +9,14 @@
 			<key>URLPatterns</key>
 			<array>
 				<!-- AOL On site -->
-				<string>^http://on.aol.com/video/(.+\-)?(\d{9,})</string>
-				<string>^http://on.aol.com/show/[^/]+/episode/(\d{9,})</string>
-				<string>^http://on.aol.com/.+videoid=(\d{9,})</string>
-				<string>^http://on.aol.com/playlist/.+</string>
-				<!-- Embeds in other websites -->
-				<string>^http://cfiles.5min.com/.+videoID=(\d{9,})</string>
-				<string>^https?://s?pshared.5min.com/.+playList=(\d{9,})</string>
+				<string>^http://on\.aol\.com/video/(.+\-)?(\d{9,})</string>
+				<string>^http://on\.aol\.com/show/[^/]+/episode/(\d{9,})</string>
+				<string>^http://on\.aol\.com/.+videoid=(\d{9,})</string>
+				<string>^http://on\.aol\.com/playlist/.+</string>
+				<!-- Embeds on other websites -->
+				<string>^http://cfiles\.5min\.com/.+videoID=(\d{9,})</string>
+				<string>^https?://s?pshared\.5min\.com/.+playList=(\d{9,})</string>
+				<string>^http://www\.engadget\.com/embed\-5min/.+playList=(\d{9,})</string>
 			</array>
 		</dict>
 	</dict>

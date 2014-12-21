@@ -3,8 +3,7 @@ HTTP_HEADERS_VID = {
 }
 
 HTTP_HEADERS = {
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1',
-	'Host': 'trailers.apple.com'
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1'
 }
 
 ALL_VIDEOS_INC = '%s/includes/automatic.html'
@@ -14,7 +13,7 @@ VIDEO_INC_ALT = '%s/includes/%s/large.html'
 # 'h640w' is used as a fallback for older movies (it's not offered as an option in MediaObjectsForURL).
 QUALITY = ['h1080p', 'h720p', 'h480p', 'h640w']
 
-RE_URL_INFO = Regex('^http://(?:trailers|www)\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
+RE_URL_INFO = Regex('^https?://(?:movie)?trailers\.apple\.com/trailers/([^/]+)/([^/#]+)/?#?([^/]+)?$')
 RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 ####################################################################################################
@@ -24,8 +23,7 @@ def NormalizeURL(url):
 	(studio, title, video) = RE_URL_INFO.findall(url)[0]
 	if not video: video = 'trailer'
 
-	host = 'www.apple.com' if Client.Product == 'PlexConnect' else 'trailers.apple.com'
-	return 'http://%s/trailers/%s/%s/#%s' % (host, studio, title, video)
+	return 'http://movietrailers.apple.com/trailers/%s/%s/#%s' % (studio, title, video)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
@@ -57,37 +55,31 @@ def MetadataObjectForURL(url):
 
 	thumb = amt_html.xpath('//meta[@property="og:image"]/@content|//img[contains(@src, "poster.jpg")]/@src')[0]
 	thumb = '%s/poster-xlarge.jpg' % thumb.rsplit('/', 1)[0]
+	thumb = thumb.replace('https://', 'http://').replace('trailers.apple.com', 'movietrailers.apple.com')
 
-	return VideoClipObject(
+	return MovieObject(
 		title = '%s (%s)' % (movie_title, title),
 		summary = summary,
 		duration = duration,
 		originally_available_at = originally_available_at,
-		thumb = Callback(GetThumb, thumb=thumb, client=Client.Product)
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	if Client.Product == 'PlexConnect':
-		return [
-			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
-				video_resolution = resolution
-			) for resolution in ['1080', '720', '480']
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
-				video_resolution = resolution,
-				container = Container.MOV,
-				video_codec = VideoCodec.H264,
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				optimized_for_streaming = True
-			) for resolution in ['1080', '720', '480']
-		]
+	return [
+		MediaObject(
+			parts = [PartObject(key=Callback(PlayVideo, url=url, fmt='h%sp' % resolution))],
+			bitrate = bitrate,
+			container = Container.MOV,
+			video_codec = VideoCodec.H264,
+			video_resolution = resolution,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		) for resolution, bitrate in [('1080', 10000), ('720', 5000), ('480', 1500)]
+	]
 
 ####################################################################################################
 @indirect
@@ -118,17 +110,11 @@ def PlayVideo(url, fmt=None):
 
 		try:
 			test = HTTP.Request(final_url, headers=HTTP_HEADERS_VID, cacheTime=0).headers
-			oc = ObjectContainer(http_headers=HTTP_HEADERS_VID)
 
-			oc.add(VideoClipObject(
-				items = [
-					MediaObject(
-						parts = [PartObject(key=final_url)]
-					)
-				]
-			))
-
-			return oc
+			return IndirectResponse(VideoClipObject,
+				key = final_url,
+				http_headers = HTTP_HEADERS_VID
+			)
 
 		except:
 			continue
@@ -167,15 +153,6 @@ def FindVideoId(url):
 	return video
 
 ####################################################################################################
-def GetThumb(thumb, client='', **kwargs):
-
-	if client == 'PlexConnect':
-		thumb = thumb.replace('http://trailers.apple.com/', 'http://www.apple.com/')
-
-	try:
-		data = HTTP.Request(thumb, cacheTime=CACHE_1MONTH, headers=HTTP_HEADERS).content
-		return DataObject(data, 'image/jpeg')
-	except:
-		pass
+def GetThumb(**kwargs):
 
 	return Redirect('http://resources-cdn.plexapp.com/image/source/com.plexapp.plugins.amt.jpg')

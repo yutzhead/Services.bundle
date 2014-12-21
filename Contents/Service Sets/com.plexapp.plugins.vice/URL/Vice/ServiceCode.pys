@@ -1,10 +1,12 @@
-BASE_URL = "http://www.vice.com%s"
+BASE_URL = 'http://www.vice.com%s'
 PLAYER_URL = 'http://player.ooyala.com/player.js?embedCode=%s'
 MOBILE_PLAYER_URL = 'http://player.ooyala.com/mobile_player.js?%s'
 
 RE_EMBED_CODE = Regex('embedCode=([^&]+)')
 RE_PLAYER_ARGS = Regex('var mobile_player_url="http://player.ooyala.com/mobile_player.js\?([^"]+)"')
 RE_STREAM = Regex('var streams=window.oo_testEnv\?\[\]:eval\("\((?P<json>.+?)\)"\);', Regex.DOTALL)
+
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -15,26 +17,32 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	try:
-		data = HTML.ElementFromURL(url)
-	except Ex.HTTPError, e:
-		if e.code == 404:
-			raise Ex.MediaNotAvailable
-
-	video = data.xpath('//meta[@property="og:video"]/@content')
-
-	if len(video) < 1:
+		data = HTTP.Request(url).content
+	except:
 		raise Ex.MediaNotAvailable
 
-	if 'youtube.com' in video[0]:
-		return None
+	data = RE_CONTROL_CHARS.sub('', data)
+	html = HTML.ElementFromString(data)
 
-	if not 'player.ooyala.com' in video[0]:
+	video = html.xpath('//*[contains(@class,"video-container")]/iframe/@src')
+
+	if len(video) < 1:
+		# Check for Youtube
+		youtube_link = html.xpath('//*[@class="youtube-video"]/@data-youtube-id')
+		
+		if youtube_link:
+			youtube_url = 'http://www.youtube.com/watch?v=%s' % youtube_link[0]
+			return URLService.MetadataObjectForURL(youtube_url)
+		else:
+			raise Ex.MediaNotAvailable
+
+	if not 'embedcode' in video[0].lower():
 		raise Ex.MediaNotAvailable
 
 	# Extract the available information from the page
-	title = data.xpath('//meta[@property="og:title"]')[0].get('content')
-	description = data.xpath('//meta[@name="description"]')[0].get('content')
-	thumb = data.xpath('//meta[@property="og:image"]')[0].get('content').replace(' ', '%20')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	description = html.xpath('//meta[@name="description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].replace(' ', '%20')
 
 	try:
 		show_name = title.split('|')[1].strip()
@@ -44,13 +52,13 @@ def MetadataObjectForURL(url):
 			title = ep_name,
 			show = show_name,
 			summary = description,
-			thumb = thumb
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 	except:
 		return VideoClipObject(
 			title = title,
 			summary = description,
-			thumb = thumb
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 ####################################################################################################
@@ -58,7 +66,7 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			video_resolution = 'sd',
+			video_resolution = 720,
 			optimized_for_streaming = True,
 			audio_channels = 2,
 			parts = [
@@ -68,18 +76,23 @@ def MediaObjectsForURL(url):
 	]
 
 ####################################################################################################
+@indirect
 def PlayVideo(url):
 
-	data = HTML.ElementFromURL(url)
-	video = data.xpath('//meta[@property="og:video"]/@content')
+	try:
+		data = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
+	data = RE_CONTROL_CHARS.sub('', data)
+	html = HTML.ElementFromString(data)
+
+	video = html.xpath('//*[contains(@class,"video-container")]/iframe/@src')
 
 	if len(video) < 1:
 		raise Ex.MediaNotAvailable
 
-	if 'youtube.com' in video[0]:
-		return None
-
-	if not 'player.ooyala.com' in video[0]:
+	if not 'embedcode' in video[0].lower():
 		raise Ex.MediaNotAvailable
 
 	embed_code = RE_EMBED_CODE.search(video[0]).group(1)
@@ -99,7 +112,7 @@ def PlayVideo(url):
 		stream_json = stream_json.decode('unicode_escape')[1:-1]
 		stream_details = JSON.ObjectFromString(stream_json)
 
-		return Redirect(stream_details['ipad_url'])
+		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(stream_details['ipad_url']))
 	except:
 		raise Ex.MediaNotAvailable
 

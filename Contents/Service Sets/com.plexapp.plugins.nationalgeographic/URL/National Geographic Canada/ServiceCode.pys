@@ -6,7 +6,7 @@ MediaObject.audio_codec = 'aac'
 AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
-def NomralizeURL(url):
+def NormalizeURL(url):
 
 	return url
 

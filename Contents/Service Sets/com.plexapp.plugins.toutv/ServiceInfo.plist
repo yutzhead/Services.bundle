@@ -8,11 +8,11 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.tou.tv/decouverte/S2011E28</string>
+				<string>http://ici.tou.tv/les-chefs</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.tou.tv/.+</string>
+				<string>^http://api.radio-canada.ca/.+</string>
 			</array>
 		</dict>
 	</dict>

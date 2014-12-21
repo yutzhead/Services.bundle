@@ -1,34 +1,58 @@
 API_URL = 'http://vimeo.com/api/v2/video/%s.json'
-RE_VIMEO_ID = Regex('(\d{6,8})')
+RE_VIMEO_ID = Regex('(\d{6,})')
+RE_CONTROL_CHARS = Regex(u'[\u0000-\u001F]')
+
+PLAYER_URL = 'http://player.vimeo.com/video/%s'
+RE_JSON = Regex(',a=(\{.+?h264.+?\});')
 
 HTTP_HEADERS = {
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0'
+	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
 }
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	if isinstance(url, basestring):
-		vimeo_id = RE_VIMEO_ID.search(url)
+	vimeo_id = RE_VIMEO_ID.search(url)
 
-		if vimeo_id:
-			return 'http://vimeo.com/%s' % vimeo_id.group(1)
+	if vimeo_id:
+		return 'http://vimeo.com/%s' % vimeo_id.group(1)
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
+	json_obj = None
 
 	try:
 		json_obj = JSON.ObjectFromURL(API_URL % url.split('/')[-1], cacheTime=CACHE_1HOUR, headers=HTTP_HEADERS)[0]
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
-		if e.code == 404:
+		elif e.code == 404:
+			try:
+				page = HTTP.Request(PLAYER_URL % url.split('/')[-1]).content
+				json = RE_JSON.search(page).group(1)
+				json_obj = JSON.ObjectFromString(json)['video']
+
+				return VideoClipObject(
+					title = json_obj['title'],
+					thumb = Resource.ContentsOfURLWithFallback(json_obj['thumbs']['640'])
+				)
+
+			except:
+				raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
 
+	if not json_obj:
+		raise Ex.MediaNotAvailable
+
 	title = json_obj['title']
-	summary = String.StripTags(json_obj['description'])
+
+	summary = RE_CONTROL_CHARS.sub('', json_obj['description'])
+	summary = String.StripTags(summary)
+
 	thumb = json_obj['thumbnail_large']
 	originally_available_at = Datetime.ParseDate(json_obj['upload_date'])
 
@@ -80,31 +104,45 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	if not url:
 		raise Ex.MediaNotAvailable
 
+	json_obj = None
+
 	try:
 		html = HTML.ElementFromURL(url, cacheTime=0, headers=HTTP_HEADERS)
-		config_url = html.xpath('//div[@class="player" and @data-config-url]/@data-config-url')[0].replace('&amp;', '&')
+		config_url = html.xpath('//div[contains(@class, "player") and @data-config-url]/@data-config-url')[0].replace('&amp;', '&')
 	except Ex.HTTPError, e:
 		if e.code == 403:
 			raise Ex.MediaNotAuthorized
-		if e.code == 404:
+		elif e.code == 404:
+			try:
+				page = HTTP.Request(PLAYER_URL % url.split('/')[-1]).content
+				json = RE_JSON.search(page).group(1)
+				json_obj = JSON.ObjectFromString(json)
+
+			except:
+				raise Ex.MediaNotAvailable
+		else:
 			raise Ex.MediaNotAvailable
 	except:
 		raise Ex.MediaNotAvailable
 
-	try:
-		jsob_obj = JSON.ObjectFromURL(config_url, cacheTime=0, headers=HTTP_HEADERS)
-	except Ex.HTTPError, e:
-		if e.code == 403:
-			raise Ex.MediaNotAuthorized
-		if e.code == 404:
-			raise Ex.MediaNotAvailable
-	except:
-		raise Ex.MediaNotAvailable
+	if not json_obj:
 
-	if not 'h264' in jsob_obj['request']['files']:
+		try:
+			json_obj = JSON.ObjectFromURL(config_url, cacheTime=0, headers=HTTP_HEADERS)
+		except Ex.HTTPError, e:
+			if e.code == 403:
+				raise Ex.MediaNotAuthorized
+			elif e.code == 404:
+				raise Ex.MediaNotAvailable
+			else:
+				raise Ex.MediaNotAvailable
+		except:
+			raise Ex.MediaNotAvailable
+
+	if not 'h264' in json_obj['request']['files']:
 		raise Ex.MediaNotAvailable
 	else:
-		streams = jsob_obj['request']['files']['h264']
+		streams = json_obj['request']['files']['h264']
 
 	available_bitrates = []
 	available_resolutions = []
@@ -113,12 +151,17 @@ def PlayVideo(url, bitrate=5000, resolution='1080', **kwargs):
 	# bitrate first (if we have this info for all available versions). If bitrate info is missing
 	# for one or more versions of a video, we try to find the best match based on resolution.
 	for video in streams.keys():
-		bitrate = streams[video]['bitrate']
 
-		if bitrate and bitrate not in available_bitrates:
-			available_bitrates.append(bitrate)
+		if video == 'mobile' and '.m3u8' in streams[video]['url']:
+			continue
 
-		if streams[video]['height']: available_resolutions.append(streams[video]['height'])
+		b = streams[video]['bitrate']
+
+		if b and b not in available_bitrates:
+			available_bitrates.append(b)
+
+		if streams[video]['height']:
+			available_resolutions.append(streams[video]['height'])
 
 	if len(set(available_bitrates)) == len(set(available_resolutions)):
 		closest = min((abs(int(bitrate) - int(i)), i) for i in available_bitrates)[1]

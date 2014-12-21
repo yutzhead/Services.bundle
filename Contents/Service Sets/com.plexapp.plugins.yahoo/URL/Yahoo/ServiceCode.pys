@@ -3,15 +3,15 @@ QUERY = 'SELECT * FROM yahoo.media.video.streams WHERE id="%s" AND format="mp4" 
 RESOLUTIONS = [1080, 720, 540, 480, 360]
 BITRATES = [4000, 3000, 2000, 1500, 1000]
 
-RE_VIDEO_ID = Regex('\-(\d{9,})\.html')
+RE_VIDEO_ID = Regex('\-(\d{9,})(-.+)?\.html')
 RE_JSON = Regex('YAHOO.Media.CarouselDataManager\(({.+?}), Y\.merge')
 RE_UUID = Regex('[a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12}')
-RE_UUID_HTML = Regex('"uuid":"([a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12})"')
+RE_UUID_HTML = Regex('(?:"uuid":|"videoId":|"first_videoid":|curVideo = \{)"([a-f0-9]{8}\-([a-f0-9]{4}\-){3}[a-f0-9]{12})"')
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	url = url.split(';')[0].split('?')[0]
+	url = url.split(';')[0].split('?')[0].split('\n')[0]
 
 	if 'movies.yahoo.com/movie' in url:
 		if '#' in url:
@@ -21,7 +21,8 @@ def NormalizeURL(url):
 			else:
 				url = FindVideoURL(url, video)
 		elif RE_VIDEO_ID.search(url):
-			url = 'http://movies.yahoo.com/video/%s' % url.split('/')[-1]
+			video_id = RE_VIDEO_ID.search(data).group(1)
+			url = 'http://movies.yahoo.com/video/%s' % video_id
 		else:
 			url = FindVideoURL(url, video='Theatrical Trailer')
 
@@ -32,8 +33,8 @@ def MetadataObjectForURL(url):
 
 	meta = GetJSON(url)['meta']
 
-	title = meta['title']
-	summary = String.StripTags(meta['description'])
+	title = String.DecodeHTMLEntities(meta['title'])
+	summary = String.DecodeHTMLEntities(String.StripTags(meta['description']))
 	duration = int(meta['duration'] * 1000)
 
 	if 'thumbnail' in meta:
@@ -106,20 +107,38 @@ def PlayVideo(url, bitrate):
 def GetJSON(url, content_id=None):
 
 	if not content_id:
+
 		try:
-			if 'gma.yahoo.com' in url:
-				data = HTTP.Request(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'}).content
-				content_id = RE_UUID_HTML.search(data).group(1)
-			else:
-				html = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'})
-				content_id = html.xpath('//section[contains(@id, "mediacontentvideo")]/@data-uuid|//div[contains(@class, "video-meta")]/@data-uuid')[0]
+			html = HTML.ElementFromURL(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'})
 		except:
 			raise Ex.MediaNotAvailable
+
+		content_id = html.xpath('//section[contains(@id, "mediacontentvideo")]/@data-uuid|//div[contains(@class, "video-meta")]/@data-uuid')
+
+		if len(content_id) > 0:
+			content_id = content_id[0]
+		else:
+			content_id = html.xpath('//meta[@property="og:video"]/@content')
+
+			if len(content_id) > 0 and 'uuid=' in content_id[0]:
+				content_id = content_id[0].split('uuid=')[-1].split('&')[0]
+			else:
+				content_id = None
+
+	if not content_id:
+
+		data = HTTP.Request(url, cacheTime=CACHE_1WEEK, headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.65 Safari/537.36'}).content
+		content_id = RE_UUID_HTML.search(data)
+
+		if content_id:
+			content_id = content_id.group(1)
+		else:
+			content_id = None
 
 	if not content_id:
 		raise Ex.MediaNotAvailable
 
-	if url.split('/')[2].split('.')[0] in ('screen', 'movies', 'gma'):
+	if url.split('/')[2].split('.')[0] in ('screen', 'movies', 'gma', 'www'):
 		region = 'US'
 	else:
 		region = url.split('/')[2].split('.')[0].upper()

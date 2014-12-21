@@ -20,7 +20,11 @@ def MetadataObjectForURL(url):
 	else:
 		video_id = video_id[-1]
 
-	data = HTTP.Request(META_URL % video_id).content
+	try:
+		data = HTTP.Request(META_URL % video_id).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	xml = RE_VIDEO_XML.findall(data)
 
 	if xml:

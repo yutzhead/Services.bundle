@@ -8,9 +8,13 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^(?!.*/press/)http://(www|tosh)\.comedycentral\.com/.+</string>
+				<string>^(?!.*\/press\/)http:\/\/(www|tosh)\.cc\.com\/(full\-episodes|video\-clips)\/[^/]{6}\/.+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>

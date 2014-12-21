@@ -12,11 +12,12 @@ def MetadataObjectForURL(url):
 	json_obj = GetJSON(url)
 
 	title = json_obj['md_title'] if json_obj['md_title'] != "" else "-"
+	title = String.Unquote(str(title), usePlus=True)
 	thumb = json_obj['thumb']
 
 	return VideoClipObject(
 		title = title,
-		thumb = thumb
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################

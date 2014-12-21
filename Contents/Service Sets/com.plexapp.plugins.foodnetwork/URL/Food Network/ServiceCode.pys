@@ -1,19 +1,20 @@
-RE_AMPERSAND = Regex('&(?!amp;)')
+RE_JSON = Regex('\{"video": (\{.+\})\}', Regex.DOTALL)
+NAMESPACES = {'a': 'http://www.w3.org/2005/SMIL21/Language'}
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	return url
+	return url.replace('.embed.', '.')
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	xml = GetXML(url)
+	json_obj = GetJSON(url)
 
-	title = xml.xpath('//clipName/text()')[0]
-	summary = xml.xpath('//abstract/text()')[0]
-	duration = Datetime.MillisecondsFromString(xml.xpath('//length/text()')[0])
-	thumb = xml.xpath('//thumbnailUrl/text()')[0].replace('_92x69.jpg', '_480x360.jpg')
+	title = json_obj['title']
+	summary = json_obj['description']
+	duration = json_obj['length'] * 1000
+	thumb = '%s_480x360.jpg' % (json_obj['thumbnailUrl'].rsplit('_', 1)[0])
 
 	return VideoClipObject(
 		title = title,
@@ -25,26 +26,48 @@ def MetadataObjectForURL(url):
 ####################################################################################################
 def MediaObjectsForURL(url):
 
-	xml = GetXML(url)
-	url = xml.xpath('//videoUrl/text()')[0].replace('http://wms','rtmp://flash').replace('.wmv','').replace('scrippsnetworks.com/','scrippsnetworks.com/ondemand/&').split('&')
-
 	return [
 		MediaObject(
-			video_resolution = '480',
-			audio_channels = 2,
 			parts = [
-				PartObject(key=RTMPVideoURL(url=url[0], clip=url[1]))
-			]
-		)
+				PartObject(
+					key = Callback(PlayVideo, url=url, bitrate=bitrate)
+				)
+			],
+			bitrate = bitrate,
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			video_resolution = resolution,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True
+		) for bitrate, resolution in [(3000, '720'), (1700, '540'), (1400, '480')]
 	]
 
 ####################################################################################################
-def GetXML(url):
+@indirect
+def PlayVideo(url, bitrate=3000):
 
-	id = url.split('/')[-1].split('.')[0]
+	json_obj = GetJSON(url)
+	smil_url = json_obj['releaseUrl']
 
-	# NB: must do it this way as the first line of their xml is a carriage return (which makes it invalid)
-	xml = HTTP.Request('http://www.foodnetwork.com/content/food/videos/%s.videoplayer.xml' % id).content.strip()
-	xml = RE_AMPERSAND.sub('&amp;', xml)
+	xml = XML.ElementFromURL(smil_url)
+	available_versions = xml.xpath('//a:switch[1]/a:video/@system-bitrate', namespaces=NAMESPACES)
 
-	return XML.ElementFromString(xml)
+	if len(available_versions) < 1:
+		raise Ex.MediaNotAvailable
+
+	closest = min((abs((bitrate*1000) - int(i)), int(i)) for i in available_versions)[1]
+	video_url = xml.xpath('//a:switch[1]/a:video[@system-bitrate="%s"]/@src' % (closest), namespaces=NAMESPACES)[0]
+
+	return IndirectResponse(VideoClipObject, key=video_url)
+
+####################################################################################################
+def GetJSON(url):
+
+	data = HTTP.Request(url).content
+	json = RE_JSON.search(data)
+
+	if not json:
+		raise Ex.MediaNotAvailable
+	else:
+		return JSON.ObjectFromString(json.group(1))

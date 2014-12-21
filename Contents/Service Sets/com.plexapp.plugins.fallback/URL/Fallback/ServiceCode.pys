@@ -7,7 +7,7 @@ VALID_TYPES = ['text/html', 'application/xhtml+xml']
 MAX_LENGTH = 1024
 
 EMBEDDED_VIDEO = [
-	'//iframe/@src',
+	'//iframe/@src|//pagespeed_iframe/@src',
 	'//embed/@src',
 	'//object/@data',
 	'//param[@name="flashvars"]/@value',
@@ -22,7 +22,7 @@ HTTP_IPAD_UA = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) App
 HTTP_DESKTOP_UA = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.14 (KHTML, like Gecko) Version/6.0.1 Safari/536.26.14'}
 
 RE_IPV4_PRIVATE = Regex('(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^169\.254\.)|(^localhost$)|(\.local$)')
-RE_PATTERN = Regex('(\\?"|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(\\+?/|%2F){2}|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv)((\?|%3F).+?)?)(\\?"|\'|&quot;|%22)', Regex.IGNORECASE)
+RE_PATTERN = Regex('(\\\*"|\'|&quot;|%22)(?P<vid>(https?(:|%3A)(\\*?/|%2F){2}|(/|%2F))[^{}"\']+?\.(m3u8|mov|mp(e)?g|avi|mkv|mp4|m4v|flv|webm)((\?|%3F).+?)?)(\\\*"|\'|&quot;|%22)', Regex.IGNORECASE)
 RE_SUB_PATTERN = Regex('=(http[^&]+\.(mp4|m4v|flv)[^&]*)')
 RE_UNWANTED = Regex('promo|commercial', Regex.IGNORECASE)
 RE_YOUTUBE = Regex('("|\'|&quot;|%22)(?P<vid>(https?:)?((\\\+)?/){2}(www\.)?youtu((be\.com|be\.googleapis\.com)(\\\+)?/(v(\\\+)?/|watch\?v=|e(mbed)?(\\\+)?/)(?!__videoid__)|\.be(\\\+)?/)([a-z0-9_\-]){11}).*?("|\'|&quot;|%22)', Regex.IGNORECASE)
@@ -62,6 +62,10 @@ def ValidURL(url):
 		url = url.lstrip('ipad:')
 
 	url = urlparse.urlparse(url)
+
+	for host in ('hulu.com', 'netflix.com', 'plex.tv', 'plexapp.com'):
+		if host in url.hostname:
+			return False
 
 	if url.scheme not in ('http', 'https'):
 		return False
@@ -197,11 +201,16 @@ def MetadataObjectForURL(url):
 				except:
 					thumb = None
 
+				try:
+					source_title = doc.xpath('//meta[@property="og:site_name"]/@content')[0]
+				except:
+					source_title = url.split('/')[2].replace('www.', '')
+
 				return VideoClipObject(
 					title = title,
 					summary = summary,
 					thumb = thumb,
-					source_title = url.split('/')[2].replace('www.', '')
+					source_title = source_title
 				)
 
 			# Meta tag refresh
@@ -211,48 +220,6 @@ def MetadataObjectForURL(url):
 				if refresh.group('url').split('://',1)[1] != url.split('://',1)[1]:
 					Log.Debug(' --> [Metadata] Found a meta refresh tag with a new URL: %s' % refresh.group('url'))
 					return URLService.MetadataObjectForURL(refresh.group('url'))
-
-			# Regex Video
-			video = RE_PATTERN.search(req.content)
-
-			if video:
-				Log.Debug(' --> [Metadata] Found a video using the regex')
-
-				try:
-					title = doc.xpath('//meta[@property="og:title"]/@content')[0].strip()
-				except:
-					title = doc.xpath('//title/text()')[0].strip()
-
-				try:
-					summary = doc.xpath('//meta[@property="og:description"]/@content')[0].strip()
-				except:
-					try:
-						summary = doc.xpath('//meta[@name="description"]/@content')[0].strip()
-					except:
-						summary = None
-
-				try:
-					thumb = doc.xpath('//link[@rel="image_src"]/@href')[0]
-				except:
-					try:
-						thumb = doc.xpath('//meta[@property="og:image"]/@content')[0]
-					except:
-						thumb = None
-
-				return VideoClipObject(
-					title = title,
-					summary = summary,
-					thumb = thumb,
-					source_title = url.split('/')[2].replace('www.', '')
-				)
-
-			# Regex Video YouTube
-			youtube = RE_YOUTUBE.search(req.content)
-
-			if youtube:
-				youtube_url = youtube.group('vid').replace('\\', '')
-				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
-				return URLService.MetadataObjectForURL(youtube_url)
 
 			# BC HTML5 Video
 			bc = doc.xpath('//object[contains(@class, "Brightcove")]/param[@name="playerKey" or @name="playerID"]/parent::object')
@@ -284,6 +251,53 @@ def MetadataObjectForURL(url):
 				bc_url = 'http://c.brightcove.com/services/viewer/htmlFederated?playerKey=%s&dynamicStreaming=true&%%40videoPlayer=%s' % (player_key, video_player)
 
 				return URLService.MetadataObjectForURL(bc_url)
+
+			# Regex Video
+			video = RE_PATTERN.search(req.content)
+
+			if video:
+				Log.Debug(' --> [Metadata] Found a video using the regex')
+
+				try:
+					title = doc.xpath('//meta[@property="og:title"]/@content')[0].strip()
+				except:
+					title = doc.xpath('//title/text()')[0].strip()
+
+				try:
+					summary = doc.xpath('//meta[@property="og:description"]/@content')[0].strip()
+				except:
+					try:
+						summary = doc.xpath('//meta[@name="description"]/@content')[0].strip()
+					except:
+						summary = None
+
+				try:
+					thumb = doc.xpath('//link[@rel="image_src"]/@href')[0]
+				except:
+					try:
+						thumb = doc.xpath('//meta[@property="og:image"]/@content')[0]
+					except:
+						thumb = None
+
+				try:
+					source_title = doc.xpath('//meta[@property="og:site_name"]/@content')[0]
+				except:
+					source_title = url.split('/')[2].replace('www.', '')
+
+				return VideoClipObject(
+					title = title,
+					summary = summary,
+					thumb = thumb,
+					source_title = source_title
+				)
+
+			# Regex Video YouTube
+			youtube = RE_YOUTUBE.search(req.content)
+
+			if youtube:
+				youtube_url = youtube.group('vid').replace('\\', '')
+				Log.Debug(' --> [Metadata] Found a YouTube video using the YouTube regex: %s' % youtube_url)
+				return URLService.MetadataObjectForURL(youtube_url)
 
 		if not is_ipad_url:
 			return URLService.MetadataObjectForURL('ipad:%s' % url)
@@ -394,6 +408,15 @@ def MediaObjectsForURL(url):
 					return [
 						MediaObject(
 							parts = [PartObject(key=HTTPLiveStreamURL(src))]
+						)
+					]
+				elif src.split('?')[0].endswith('.mp4'):
+					return [
+						MediaObject(
+							container = Container.MP4,
+							video_codec = VideoCodec.H264,
+							audio_codec = AudioCodec.AAC,
+							parts = [PartObject(key=src)]
 						)
 					]
 				else:

@@ -1,10 +1,11 @@
 NAMESPACES = {'media': 'http://search.yahoo.com/mrss/'}
-
 MRSS_URL = 'http://www.spike.com/feeds/mrss/?uri=%s&ref=www.spike.com'
-FEED_URL = 'http://www.spike.com/feeds/mediagen/?uri=%s'
-MP4_URL = 'http://mtvnmobile.vo.llnwd.net/kip0/_pxn=0+_pxK=18639+_pxE=/44620/mtvnorigin/%s'
-RE_AMPERSANDS = Regex('&(?!amp;)')
 
+RE_AMPERSANDS = Regex('&(?!amp;)')
+RE_RES_BIT = Regex('x(\d+)_(\d+)_?[^._]*\.(mp4|flv)')
+
+MediaObject.audio_channels = 2
+MediaObject.optimized_for_streaming = True
 ####################################################################################################
 def NormalizeURL(url):
 
@@ -18,11 +19,11 @@ def MetadataObjectForURL(url):
 	except:
 		raise Ex.MediaNotAvailable
 
-	title = html.xpath('//meta[@property="og:title"]')[0].get('content')
-	summary = html.xpath('//meta[@property="og:description"]')[0].get('content')
-	thumb = html.xpath('//meta[@property="og:image"]')[0].get('content')
+	title = html.xpath('//meta[@property="og:title"]/@content')[0]
+	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
+	thumb = html.xpath('//meta[@property="og:image"]/@content')[0].split('?')[0]
 	try:
-		duration = int(html.xpath('//meta[@itemprop="duration"]')[0].get('content'))
+		duration = int(html.xpath('//meta[@itemprop="duration"]/@content')[0])
 	except:
 		video_player_box = html.xpath('//div[@id="video_player_box"]')
 		if len(video_player_box) < 1:
@@ -46,7 +47,7 @@ def MetadataObjectForURL(url):
 		show_title = html.xpath('//title')[0].text.split(' | ')[0]
 
 		try:
-			air_date = html.xpath('//meta[@itemprop="datePublished"]')[0].get('content')
+			air_date = html.xpath('//meta[@itemprop="datePublished"]/@content')[0]
 			originally_available_at = Datetime.ParseDate(air_date).date()
 		except:
 			originally_available_at = None
@@ -55,8 +56,8 @@ def MetadataObjectForURL(url):
 			show = show_title,
 			title = title,
 			summary = summary,
-			duration=duration,
-			thumb = thumb,
+			duration = duration,
+			thumb = Resource.ContentsOfURLWithFallback(thumb),
 			originally_available_at = originally_available_at
 		)
 
@@ -65,198 +66,94 @@ def MetadataObjectForURL(url):
 		return VideoClipObject(
 			title = title,
 			summary = summary,
-			duration=duration,
-			thumb = thumb
+			duration = duration,
+			thumb = Resource.ContentsOfURLWithFallback(thumb)
 		)
 
 	else:
 		raise Ex.MediaNotAvailable
 
 ####################################################################################################
+@deferred
 def MediaObjectsForURL(url):
+    try: 
+        data = HTML.ElementFromURL(url)
+        mgid = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@id="video_player_box"]/@data-mgid')
+    except:
+        raise Ex.MediaNotAvailable
 
-	if '/full-episodes/' in url or '/episodes/' in url:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=4))
-				],
-				bitrate = 3500,
-				video_resolution = '720',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=4))
-				],
-				bitrate = 2200,
-				video_resolution = '540',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=4))
-				],
-				bitrate = 1700,
-				video_resolution = '432',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=4))
-				],
-				bitrate = 1200,
-				video_resolution = '360',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=1)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=2)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=3)),
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=4))
-				],
-				bitrate = 750,
-				video_resolution = '288',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
-	else:
-		return [
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="3500", index=0))
-				],
-				bitrate = 3500,
-				video_resolution = '720',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="2200", index=0))
-				],
-				bitrate = 2200,
-				video_resolution = '540',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1700", index=0))
-				],
-				bitrate = 1700,
-				video_resolution = '432',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="1200", index=0))
-				],
-				bitrate = 1200,
-				video_resolution = '360',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			),
-			MediaObject(
-				parts = [
-					PartObject(key=Callback(PlayVideo, url=url, bitrate="750", index=0))
-				],
-				bitrate = 750,
-				video_resolution = '288',
-				audio_channels = 2,
-				optimized_for_streaming = True
-			)
-		]
+    mrss_data = HTTP.Request(MRSS_URL % mgid[0], cacheTime=CACHE_1HOUR).content
+    mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
+    mrss_data = XML.ElementFromString(mrss_data)
+	
+    media_urls = mrss_data.xpath('//media:content[@medium="video"]/@url', namespaces=NAMESPACES)
+    available_streams = {}
+        
+    for media_url in media_urls:
+        try:
+            video_data = XML.ElementFromURL(media_url, cacheTime=CACHE_1HOUR)
+        except:
+            raise Ex.MediaNotAvailable
 
-####################################################################################################
-def PlayVideo(url, bitrate='1700', index=0):
+        renditions = video_data.xpath('//rendition')
 
-	BITRATES = ['750', '1200', '1700', '2200', '3500']
+        if len(renditions) < 1:
+            raise Ex.MediaNotAvailable
 
-	try: 
-		data = HTML.ElementFromURL(url)
-	except:
-		raise Ex.MediaNotAvailable
+        for rendition in renditions:
+            rtmp_url = rendition.xpath('./src/text()')[0]
+            # try to get the bitrate and height from the rtmp url first
+            try: bitrate = RE_RES_BIT.search(rtmp_url).group(2)
+            except: bitrate = rendition.get('bitrate')
+            try: height = RE_RES_BIT.search(rtmp_url).group(1)
+            except: height = rendition.get('height')
+            if '/viacomspikestrm/' in rtmp_url:
+                rtmp_url = rtmp_url.split('/viacomspikestrm/')[-1]
+            elif '/mtvnorigin/' in rtmp_url:
+                rtmp_url = rtmp_url.split('/mtvnorigin/')[-1]
+            else:
+                raise Ex.MediaNotAvailable
 
-	uri = data.xpath('//div[@id="video_player_box"]')[0].get('data-mgid')
+            # Set up to pull the type of video file so that it can work with flv or mp4
+            part = {}
+            part['duration'] = rendition.get('duration')
+            part['height'] = height
+            part['rtmp_url'] = rtmp_url
+            part['clip_type'] = rtmp_url.split('.')[-1]
 
-	mrss_data = HTTP.Request(MRSS_URL % uri).content
-	mrss_data = RE_AMPERSANDS.sub('&amp;', mrss_data)
-	mrss_data = XML.ElementFromString(mrss_data)
+            if bitrate not in available_streams:
+                available_streams[bitrate] = []
+            available_streams[bitrate].append(part)
 
-	guids = mrss_data.xpath('//guid')
+    #Log('the value of available_streams is %s' %available_streams)
+    media_objects = []
+    bitrates = [int(i) for i in available_streams.keys()]
+    bitrates.sort(reverse=True)
 
-	if len(guids) < 1:
-		raise Ex.MediaNotAvailable
+    for bitrate in bitrates:
 
-	if index >= len(guids):
-		ad_index = len(guids) - index
-		ad_segment_uri = mrss_data.xpath('//guid')[ad_index].text
-		referer = 'http://media.mtvnservices.com/player/prime/mediaplayerprime.2.3.7.swf?uri=%s&type=network&ref=www.spike.com&geo=US&group=entertainment&network=None&device=Other'
-		headers = {'Referer':referer % ad_segment_uri}
-		post_data = '<adRequest profile="82125:MTVN_live" version="1" networkId="82125"><customDistributor /><capabilities><supportsSlotTemplate /><explicitVideoTracking /><expectMultipleCreativeRenditions /><supportsAdUnitInMultipleSlots /><supportsSlotCallback /><supportsFallbackAds /><requiresRendererManifest /><requiresVideoCallbackUrl /></capabilities><visitor customId="4ed3800b-c091-6712-9216-114c7ca250a1" caller="AS3-3.1.0-r4736-1005190341"><httpHeaders><httpHeader name="x-flash-version" value="11,6,602,180" /><httpHeader name="referer" value="http://www.spike.com/video-clips" /></httpHeaders><bandwidthInfo bandwidth="2237" /></visitor><keyValues><keyValue value="VN999" key="A1" /><keyValue value="%s" key="playlist" /><keyValue value="D" key="demo" /><keyValue value="T" key="demo" /><keyValue value="2966" key="demo" /><keyValue value="2907" key="demo" /><keyValue value="2905" key="demo" /><keyValue value="850" key="demo" /><keyValue value="844" key="demo" /><keyValue value="827" key="demo" /><keyValue value="790" key="demo" /><keyValue value="777" key="demo" /><keyValue value="775" key="demo" /><keyValue value="774" key="demo" /></keyValues><siteSection customId="Spike_Videos_Clips" siteSectionNetworkId="82125"><videoPlayer><videoAsset videoAssetNetworkId="82125" duration="180" customId="%s" autoPlay="true" mediaLocation="http://media.mtvnservices.com/%s"><adSlots defaultSlotProfile="82125:MTVN_live" /></videoAsset><adSlots /></videoPlayer><adSlots /></siteSection></adRequest>'
-		post_data = post_data % (ad_segment_uri, ad_segment_uri, ad_segment_uri)
-		ad_data = HTTP.Request('http://140cc.v.fwmrm.net/ad/p/1?', headers = headers, data = post_data).content
-		ad_xml = XML.ElementFromString(ad_data)
-		ad_url = ad_xml.xpath('//asset[@mimeType="video/mp4"]')[0].get('url')
-		return Redirect(ad_url)
+        parts = []
 
-	segment_uri = mrss_data.xpath('//guid')[index].text
-	player_data = XML.ElementFromURL(FEED_URL % segment_uri)
+        for part in available_streams[str(bitrate)]:
 
-	try:
-		rtmp_url = player_data.xpath('//rendition[@bitrate="'+bitrate+'"]/src')[0].text
-	except:
-		rtmp_url = ''
-		index = BITRATES.index(bitrate)
-		while index > -1:
-			try:
-				rtmp_url = player_data.xpath('//rendition/src')[index].text
-				break
-			except:
-				index = index - 1
+            parts.append(
+                PartObject(
+                    key = RTMPVideoURL(
+                        url='rtmpe://viacommtvstrmfs.fplive.net:1935/viacommtvstrm/',
+                        clip='%s:%s' % (part['clip_type'], part['rtmp_url'])
+                    ),
+                    duration = int(part['duration'])*1000
+                )
+            )
 
-	if rtmp_url == '':
-		raise Ex.MediaGeoblocked
+            video_resolution = int(part['height'])
 
-	stream_url = rtmp_url.split('/mtvnorigin/')[1]
-	mp4_url = MP4_URL % stream_url
+        media_objects.append(
+            MediaObject(
+                parts = parts,
+                bitrate = bitrate,
+                video_resolution = video_resolution
+            )
+        )
 
-	return Redirect(mp4_url)
-
-####################################################################################################
-def TestURLs():
-
-	test_urls = []
-
-	data1 = HTML.ElementFromURL('http://www.spike.com/video-clips/')
-	test_urls.append(data1.xpath('//div[@class="block b_video_orange"]//h3/a')[0].get('href'))
-
-	data2 = HTML.ElementFromURL('http://www.spike.com/full-episodes/')
-	test_urls.append(data2.xpath('//div[@class="module latest_full_episodes"]//h3/a')[0].get('href'))
-
-	return test_urls
+    return media_objects

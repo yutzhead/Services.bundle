@@ -9,17 +9,21 @@ def NormalizeURL(url):
 def MetadataObjectForURL(url):
 
 	content = HTTP.Request(url, encoding='latin1').content
-	data = HTML.ElementFromString(content)
+	html = HTML.ElementFromString(content)
 
 	# Extract the available information from the page
-	title = data.xpath('//title')[0].text.strip('U B U W E B - Film &amp; Video: ')
-	description = content.split('<!--PLAYER END-->')[1]
-	description = description.split('<center>')[0]
-	description = String.StripTags(description)
+	title = html.xpath('//title')[0].text.split('Film & Video: ')[-1]
+
+	if '<!--PLAYER END-->' in content:
+		description = content.split('<!--PLAYER END-->')[1]
+		description = description.split('<center>')[0]
+		description = String.StripTags(description)
+	elif '<div id="ubudesc">' in content:
+		description = html.xpath('//div[@id="ubudesc"]')[0].text_content()
 
 	return VideoClipObject(
-		title = title,
-		summary = description
+		title = title.strip(),
+		summary = description.strip()
 	)
 
 ####################################################################################################

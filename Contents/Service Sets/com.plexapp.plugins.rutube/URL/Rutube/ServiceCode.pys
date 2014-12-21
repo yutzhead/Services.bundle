@@ -1,4 +1,4 @@
-JSON_URL = 'http://rutube.ru/api/play/trackinfo/%s/?format=json'
+RE_JSON = Regex('window\.player_data = (\{.+\});', Regex.DOTALL)
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -8,7 +8,11 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except Ex.HTTPError, e:
+		if e.code == 404:
+			raise Ex.MediaNotAvailable
 
 	if len(html.xpath('//meta[@property="og:video"]')) < 1:
 		raise Ex.MediaNotAvailable
@@ -30,7 +34,9 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+			parts = [
+				PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))
+			],
 			audio_channels = 2,
 			optimized_for_streaming = True
 		)
@@ -46,10 +52,19 @@ def PlayVideo(url):
 		if e.code == 404:
 			raise Ex.MediaExpired
 
-	embed_id = html.xpath('//meta[@property="og:video"]/@content')[0].split('/')[-1]
+	embed_url = html.xpath('//meta[@property="og:video:iframe"]/@content')[0]
+	page = HTTP.Request(embed_url).content
+	json = RE_JSON.search(page)
 
-	json_data = JSON.ObjectFromURL(JSON_URL % embed_id)
-	m3u8_url = json_data['video_balancer']['m3u8']
+	if not json:
+		raise Ex.MediaNotAvailable
+
+	json_obj = JSON.ObjectFromString(json.group(1))
+
+	if not 'video_balancer' in json_obj['options']:
+		raise Ex.MediaNotAvailable
+
+	m3u8_url = json_obj['options']['video_balancer']['m3u8']
 
 	return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url=m3u8_url))
 
@@ -59,7 +74,7 @@ def TestURLs():
 	test_urls = []
 	html = HTML.ElementFromURL('http://rutube.ru/')
 
-	for vid in html.xpath('//article[@html-category="editorsfeed"]'):
+	for vid in html.xpath('//article[contains(@class, "editorsfeed")]'):
 		url = vid.xpath('.//meta[@itemprop="url"]/@content')[0]
 		test_urls.append(url)
 

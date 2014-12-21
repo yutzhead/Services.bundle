@@ -10,12 +10,9 @@
 	<dict>
 		<key>Absolute Radio</key>
 		<dict>
-			<key>TestURLs</key>
-			<array>
-			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.absoluteradio.co.uk/player.*/[0-9]+/.+</string>
+				<string>^http:\/\/www\.absoluteradio\.co\.uk\/player.*\/\d+\/.+</string>
 			</array>
 		</dict>
 	</dict>

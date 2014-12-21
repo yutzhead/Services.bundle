@@ -145,7 +145,7 @@ def PlayVideo(url, resolution):
 		pass
 
 	if not video:
-		available_bitrates = data.xpath('//file/@bitrate')
+		available_bitrates = data.xpath('//file[contains(., ".mp4")]/@bitrate')
 		available_bitrates = [int(bitrate.split('x')[-1]) for bitrate in available_bitrates]
 		closest = min((abs(int(resolution.split('x')[-1]) - i), i) for i in available_bitrates)[1]
 		video = data.xpath('//file[contains(@bitrate, "x%d")]/text()' % closest)[0]

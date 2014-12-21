@@ -11,13 +11,20 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	pid = RE_PID.search(page)
 
 	if not pid:
 		raise Ex.MediaNotAvailable
 
-	xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
+	try:
+		xml = XML.ElementFromURL(VIDEO_XML % pid.group('pid'))
+	except:
+		raise Ex.MediaNotAvailable
 
 	if len(xml.xpath('//a:ref[@title="Geographic Restriction"]', namespaces=SMIL_NS)) > 0:
 		raise Ex.MediaGeoblocked
@@ -96,7 +103,11 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, bitrate=2000, **kwargs):
 
-	page = HTTP.Request(url).content
+	try:
+		page = HTTP.Request(url).content
+	except:
+		raise Ex.MediaNotAvailable
+
 	pid = RE_PID.search(page)
 
 	if not pid:

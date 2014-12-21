@@ -8,14 +8,18 @@
 		<dict>
 			<key>TestURLs</key>
 			<array>
-				<string>http://www.thedailyshow.com/full-episodes/</string>
-				<string>http://www.thedailyshow.com/watch/tue-july-26-2011/armadebtdon-2011---call-congress</string>
+				<string>http://thedailyshow.cc.com/full-episodes/</string>
+				<string>http://thedailyshow.cc.com/videos/65jewx/armadebtdon-2011---call-congress</string>
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.thedailyshow.com/(full-episodes|watch)/</string>
+				<string>^http:\/\/thedailyshow\.cc\.com\/(full\-episodes|special\-editions|videos)\/[^/]{6}\/.+</string>
 			</array>
 		</dict>
 	</dict>
+	<key>PlexFrameworkFlags</key>
+	<array>
+		<string>UseRealRTMP</string>
+	</array>
 </dict>
 </plist>

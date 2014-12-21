@@ -19,23 +19,25 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-  content = HTTP.Request(url).content
+  try:
+    content = HTTP.Request(url).content
+  except:
+    raise Ex.MediaNotAvailable
+
   smil_url = GetSMILURL(url)
   releaseURL = '%s&format=script' % smil_url
   data = JSON.ObjectFromURL(releaseURL)
 
-  thumb = data['defaultThumbnailUrl']
+  thumb = data['defaultThumbnailUrl'] if 'defaultThumbnailUrl' in data else ''
   summary = data['description']
   duration = data['duration']
   date = Datetime.FromTimestamp(float(data['pubDate'])/1000).date()
   content_rating = data['ratings'][0]['rating'] if len(data['ratings']) > 0 else None
   title = data['title']
 
-  show = data['history$seriesName']
   return VideoClipObject(
     title = title,
     summary = summary,
-    source_title = show,
     duration = duration,
     originally_available_at = date,
     content_rating = content_rating,
@@ -60,9 +62,13 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res):
+def PlayVideo(url, res='540'):
 
-  content = HTTP.Request(url).content
+  try:
+    content = HTTP.Request(url).content
+  except:
+    raise Ex.MediaExpired
+
   smil_url = GetSMILURL(url)
   smil_url = smil_url.replace('switch=hds', 'format=SMIL')
   sig = sign_url(smil_url)
@@ -70,6 +76,12 @@ def PlayVideo(url, res):
   #Log('the value of smil_url is %s' %smil_url)
 
   smil = XML.ElementFromURL(smil_url)
+
+  # Check for expired
+  expired = smil.xpath('//*[@*[contains(., "Expired") or contains(., "expired")]]')
+  if len(expired) > 0:
+    raise Ex.MediaExpired
+
   available_res = smil.xpath("//a:video//@height", namespaces=SMIL_NS)
   if len(available_res) < 1:
     raise Ex.MediaNotAvailable
@@ -102,6 +114,7 @@ def GetSMILURL(url):
         content = HTTP.Request(url).content.decode('utf8','replace')
     except:
         raise Ex.MediaExpired
+
     # The Regex for this pull is created to only pull videos that are unlocked and have the word 'video'
     # immediately following the smil_url. Videos that are locked have the word 'locked' immediately following the smil_url
     try:
@@ -122,7 +135,9 @@ def GetSMILURL(url):
             if playlist_json['entries'][0]['premium'] == 'true':
                 raise Ex.MediaNotAuthorized
             else:
-                releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL']
+                releaseURL = playlist_json['entries'][0]['videoURLs']['releaseURL'].split('?')[0]
+                releaseURL = '%s?switch=hds&mbr=true' % releaseURL
+
                 return releaseURL
         except:
            raise Ex.MediaNotAvailable 

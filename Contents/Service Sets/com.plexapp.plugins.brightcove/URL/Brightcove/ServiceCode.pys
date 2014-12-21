@@ -36,9 +36,41 @@ def MediaObjectsForURL(url):
 	media_objects = []
 	json_obj = GetJSON(url)
 
-	if 'renditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']) > 0:
+	if 'IOSRenditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['IOSRenditions']) > 0:
+
+		for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['IOSRenditions']:
+
+			if rendition['audioOnly']:
+				continue
+
+			resolution = rendition['frameHeight']
+			url = rendition['defaultURL']
+
+			if resolution < 360 or not '.m3u8' in url:
+				continue
+
+			bitrate = int(float(rendition['encodingRate'])/1000)
+			width = rendition['frameWidth']
+
+			media_objects.append(
+				MediaObject(
+					parts = [
+						PartObject(key=HTTPLiveStreamURL(url))
+					],
+					video_resolution = resolution,
+					audio_channels = 2,
+					bitrate = bitrate,
+					optimized_for_streaming = True
+				)
+			)
+
+	if len(media_objects) < 1 and 'renditions' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and len(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']) > 0:
 
 		for rendition in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['renditions']:
+
+			if rendition['audioOnly']:
+				continue
+
 			resolution = rendition['frameHeight']
 			url = rendition['defaultURL']
 
@@ -50,10 +82,12 @@ def MediaObjectsForURL(url):
 
 			media_objects.append(
 				MediaObject(
-					parts = [PartObject(key=url)],
+					parts = [
+						PartObject(key=url)
+					],
 					container = Container.MP4,
 					video_codec = VideoCodec.H264,
-					video_resolution = str(resolution),
+					video_resolution = resolution,
 					audio_codec = AudioCodec.AAC,
 					audio_channels = 2,
 					bitrate = bitrate,
@@ -64,28 +98,44 @@ def MediaObjectsForURL(url):
 	if len(media_objects) < 1 and 'FLVFullLengthURL' in json_obj['data']['programmedContent']['videoPlayer']['mediaDTO'] and json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']:
 
 		url = json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['FLVFullLengthURL']
-		bitrate = int(float(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['encodingRate'])/1000)
 
-		media_objects.append(
-			MediaObject(
-				parts = [PartObject(key=url)],
-				container = Container.MP4,
-				video_codec = VideoCodec.H264,
-				video_resolution = 'sd',
-				audio_codec = AudioCodec.AAC,
-				audio_channels = 2,
-				bitrate = bitrate,
-				optimized_for_streaming = True
+		if not '.f4m' in url:
+
+			bitrate = int(float(json_obj['data']['programmedContent']['videoPlayer']['mediaDTO']['encodingRate'])/1000)
+
+			media_objects.append(
+				MediaObject(
+					parts = [PartObject(key=url)],
+					container = Container.MP4,
+					video_codec = VideoCodec.H264,
+					video_resolution = 360,
+					audio_codec = AudioCodec.AAC,
+					audio_channels = 2,
+					bitrate = bitrate,
+					optimized_for_streaming = True
+				)
 			)
-		)
 
-	media_objects.sort(key=lambda obj: obj.bitrate, reverse=True)
+	media_objects.sort(key=lambda obj: obj.video_resolution, reverse=True)
+
+	if len(media_objects) < 1:
+		raise Ex.MediaNotAvailable
+
 	return media_objects
 
 ####################################################################################################
 def GetJSON(url):
 
-	data = HTTP.Request(url, headers=HTTP_HEADERS).content
+	headers = HTTP_HEADERS
+	referer = None
+
+	if '&refURL=' in url:
+		(url, referer) = url.split('&refURL=')
+
+	if referer:
+		headers['Referer'] = String.Unquote(referer)
+
+	data = HTTP.Request(url, headers=headers).content
 	json = RE_JSON.search(data)
 
 	if json:

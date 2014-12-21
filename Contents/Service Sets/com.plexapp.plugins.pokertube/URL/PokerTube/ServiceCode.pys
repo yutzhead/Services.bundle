@@ -10,7 +10,7 @@ def MetadataObjectForURL(url):
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0].strip()
 	thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
 
-	video = html.xpath('//meta[@property="og:video"]/@content')[0]
+	video = html.xpath('//meta[@property="og:secure_url"]/@content|//meta[@property="og:video:secure_url"]/@content')[0]
 	video_id = RE_VIDEO_ID.search(video).group('video_id')
 
 	try:
@@ -70,7 +70,7 @@ def PlayVideo(url, res):
 
 	html = HTML.ElementFromURL(url, cacheTime=CACHE_1DAY)
 
-	video = html.xpath('//meta[@property="og:video"]/@content')[0]
+	video = html.xpath('//meta[@property="og:secure_url"]/@content|//meta[@property="og:video:secure_url"]/@content')[0]
 	video_id = RE_VIDEO_ID.search(video).group('video_id')
 
 	try:

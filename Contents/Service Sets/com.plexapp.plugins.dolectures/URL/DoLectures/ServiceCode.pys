@@ -52,7 +52,10 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url, fmt='720'):
 
-  html = HTML.ElementFromURL(url, cacheTime=7200)
+  try:
+    html = HTML.ElementFromURL(url, cacheTime=7200)
+  except:
+    raise Ex.MediaNotAvailable
 
   if fmt == '720':
     video_url = html.xpath('//source[contains(@type, "video/mp4")]/@src')[0]
