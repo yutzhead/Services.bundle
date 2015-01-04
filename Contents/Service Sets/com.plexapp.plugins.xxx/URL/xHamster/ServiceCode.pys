@@ -52,12 +52,15 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = 'sd',
 			audio_codec = AudioCodec.AAC,
-			audio_channels = 2
+			audio_channels = 2,
+			optimized_for_streaming = True if Client.Product not in ['Plex Web'] else False
 		)
 	]
 
