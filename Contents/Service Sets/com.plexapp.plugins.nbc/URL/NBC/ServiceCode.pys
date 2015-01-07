@@ -5,8 +5,8 @@ THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted
 ###
 
 ### For videos that have 'XXXX' as id
-SHOWS_URL = 'http://tve-atcnbc.nbcuni.com/ep-live/2/nbce/shows/iPad'
-EPISODES_URL = 'http://tve-atcnbc.nbcuni.com/ep-live/2/nbce/container/x/iPad/%s'
+SHOWS_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/iPad'
+EPISODES_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/%s/iPad?filterBy=episode'
 ###
 
 RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n?\d{4,})')
@@ -57,7 +57,7 @@ def MetadataObjectForURL(url):
 		(episodes_url, video_id) = GetEpisodeData(url, video_id)
 		found_episode = False
 
-		for episode in JSON.ObjectFromURL(episodes_url)['assetsX']:
+		for episode in JSON.ObjectFromURL(episodes_url)['results']:
 			if episode['assetID'].endswith(video_id):
 				show = episode['parentContainerTitle']
 				season = episode['seasonNumber'] if 'seasonNumber' in episode else None
@@ -139,6 +139,7 @@ def PlayVideo(url):
 	video_id = video_id.group('id')
 
 	if video_id.startswith('n'):
+
 		json_obj = JSON.ObjectFromURL(VIDEO_URL % video_id, cacheTime=10)
 		m3u8_url = json_obj['tokenizedURL']
 		playlist = HTTP.Request(m3u8_url, cacheTime=10)
@@ -171,7 +172,7 @@ def PlayVideo(url):
 		found_episode = False
 
 		try:
-			json_obj = JSON.ObjectFromURL(episodes_url)['assetsX']
+			json_obj = JSON.ObjectFromURL(episodes_url)['results']
 		except:
 			raise Ex.MediaNotAvailable
 
