@@ -16,13 +16,18 @@ def MetadataObjectForURL(url):
 	if not video_id:
 		return None
 
-	html = HTML.ElementFromURL(url)
 	xml = XML.ElementFromURL(XML_URL % video_id)
+	video_url = xml.xpath('//file/text()')[0]
+
+	if 'youtube.com/' in video_url:
+		return URLService.MetadataObjectForURL(video_url)
+
+	html = HTML.ElementFromURL(url)
 
 	title = html.xpath('//meta[@property="og:title"]/@content')[0]
 	summary = html.xpath('//meta[@property="og:description"]/@content')[0]
-	duration = int(xml.xpath('//duration')[0].text) * 1000
-	thumb = xml.xpath('//image')[0].text
+	duration = int(xml.xpath('//duration/text()')[0]) * 1000
+	thumb = xml.xpath('//image/text()')[0]
 
 	return VideoClipObject(
 		title = title,
@@ -55,7 +60,7 @@ def PlayVideo(url):
 		return None
 
 	xml = XML.ElementFromURL(XML_URL % video_id)
-	video_url = xml.xpath('//file')[0].text
+	video_url = xml.xpath('//file/text()')[0]
 
 	return IndirectResponse(VideoClipObject, key=video_url)
 
