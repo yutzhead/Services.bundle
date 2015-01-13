@@ -1,31 +1,35 @@
 RE_VIDEO_ID = Regex('\/(?P<video_id>\d{12,})\/')
-RE_VIDEO_ID_HASH = Regex('#(?P<video_id>\d+)')
-
-BC_VIDEO_BY_REFERENCE_URL = 'http://api.brightcove.com/services/library?command=find_video_by_reference_id&reference_id=%s&token=cE97ArV7TzqBzkmeRVVhJ8O6GWME2iG_bRvjBTlNb4o.&custom_fields=videourl'
-
-HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0'}
+API_URL = 'http://www.nytimes.com/svc/video/api/v2/video/%s'
+HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
 ####################################################################################################
 def NormalizeURL(url):
 
-	if RE_VIDEO_ID_HASH.search(url):
-		json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % RE_VIDEO_ID_HASH.search(url).group('video_id'), cacheTime=CACHE_1WEEK)
-		url = json_obj['customFields']['videourl']
-
-	return url
+	return url.split('?')[0]
 
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	video_id = RE_VIDEO_ID.search(url).group('video_id')
-	json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % video_id, cacheTime=CACHE_1WEEK)
+	video_id = RE_VIDEO_ID.search(url)
+
+	if not video_id:
+		raise Ex.MediaNotAvailable
+
+	json_obj = JSON.ObjectFromURL(API_URL % (video_id.group('video_id')), headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
+	thumb = ''
+
+	for image in json_obj['images']:
+
+		if image['type'] in ('jumbo', 'superJumbo'):
+			thumb = 'http://www.nytimes.com/%s' % (image['url'])
+			break
 
 	return VideoClipObject(
-		title = json_obj['name'],
-		summary = json_obj['longDescription'],
-		originally_available_at = Datetime.FromTimestamp(float(json_obj['publishedDate']) / 1000),
-		duration = json_obj['length'],
-		thumb = Resource.ContentsOfURLWithFallback(json_obj['videoStillURL'])
+		title = json_obj['headline'],
+		summary = json_obj['summary'],
+		duration = json_obj['duration'],
+		originally_available_at = Datetime.ParseDate(json_obj['first_published_date'].split('T')[0]).date(),
+		thumb = Resource.ContentsOfURLWithFallback(thumb)
 	)
 
 ####################################################################################################
@@ -33,32 +37,46 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url, res=resolution))
+			],
+			video_resolution = resolution,
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			video_resolution = '576',
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res=576))]
-		),
-		MediaObject(
-			container = Container.MP4,
-			video_codec = VideoCodec.H264,
-			audio_codec = AudioCodec.AAC,
-			audio_channels = 2,
-			video_resolution = '360',
-			parts = [PartObject(key=Callback(PlayVideo, url=url, res=360))]
-		)
+			optimized_for_streaming = True
+		) for resolution in [1080, 720, 480, 360]
 	]
 
 ####################################################################################################
 @indirect
-def PlayVideo(url, res=576):
+def PlayVideo(url, res=1080):
 
-	video_id = RE_VIDEO_ID.search(url).group('video_id')
-	json_obj = JSON.ObjectFromURL(BC_VIDEO_BY_REFERENCE_URL % video_id, cacheTime=CACHE_1WEEK)
+	video_id = RE_VIDEO_ID.search(url)
 
-	for rendition in json_obj['renditions']:
-		if rendition['videoCodec'] == "H264" and rendition['frameHeight'] == int(res):
-			return IndirectResponse(VideoClipObject, key=rendition['url'])
+	if not video_id:
+		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=json_obj['FLVFullLength']['url'])
+	json_obj = JSON.ObjectFromURL(API_URL % (video_id.group('video_id')), headers=HTTP_HEADERS, cacheTime=CACHE_1WEEK)
+	available_videos = {}
+	resolutions = (1080, 720, 480, 360)
+
+	for video in json_obj['renditions']:
+
+		if video['video_codec'] == 'H264' and '.mp4' in video['url'] and video['height'] in resolutions and str(video['height']) not in available_videos.keys():
+
+			available_videos[str(video['height'])] = video['url']
+
+	if res == 1080 and '1080' in available_videos:
+		video_url = available_videos['1080']
+	elif res in (1080, 720) and '720' in available_videos:
+		video_url = available_videos['720']
+	elif res in (1080, 720, 480) and '480' in available_videos:
+		video_url = available_videos['480']
+	elif res in (1080, 720, 480, 360) and '360' in available_videos:
+		video_url = available_videos['360']
+	else:
+		raise Ex.MediaNotAvailable
+
+	return IndirectResponse(VideoClipObject, key=video_url)
