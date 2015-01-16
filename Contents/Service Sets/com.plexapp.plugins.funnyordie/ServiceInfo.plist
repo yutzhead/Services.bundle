@@ -13,7 +13,7 @@
 			</array>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http://www.funnyordie.com/(embed|videos)/[0-9a-f]{10}</string>
+				<string>^http://www.funnyordie.com/(embed|videos)/([0-9a-f]{10}|\d+)</string>
 			</array>
 		</dict>
 	</dict>
