@@ -77,7 +77,7 @@ def MediaObjectsForURL(url):
 			video_resolution = resolution,
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
-			optimized_for_streaming = True
+			optimized_for_streaming = True if Client.Product == 'Plex Home Theater' else False
 		) for resolution, bitrate in [('1080', 10000), ('720', 5000), ('480', 1500)]
 	]
 
