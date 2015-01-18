@@ -44,8 +44,11 @@ def PlayVideo(url):
     page = HTML.ElementFromURL(url)
 
     # Determine the embed_code of the associated video
-    video_src = page.xpath('//meta[@property="og:video"]/@content')[0]
-    embed_code = RE_EMBED_CODE.search(video_src).group('embed')
+    try:
+        video_src = page.xpath('//meta[@name="twitter:player"]/@content')[0]
+        embed_code = RE_EMBED_CODE.search(video_src).group('embed')
+    except:
+        raise Ex.MediaNotAvailable
 
     return IndirectResponse(
     	VideoClipObject,
