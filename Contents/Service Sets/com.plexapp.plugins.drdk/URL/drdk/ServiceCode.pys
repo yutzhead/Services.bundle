@@ -46,6 +46,9 @@ def MetadataObjectForURL(url):
 		else:
 			dataResource = dataResource[0]
 
+			if dataResource.startswith('//'):
+				dataResource = 'http:%s' % (dataResource)
+
 		title = page.xpath('//title')[0].text
 		json = JSON.ObjectFromURL(dataResource)
 
