@@ -20,7 +20,10 @@ def MetadataObjectForURL(url):
 
     video = video['results'][0]
     thumbs = SortThumbs(video['associated_images'])
-    airdate = Datetime.ParseDate(video['airdate']).date()
+    try:
+        airdate = Datetime.ParseDate(video['airdate']).date()
+    except:
+        airdate = None
     summary = video['long_description']
     title = video['title']
     try:
