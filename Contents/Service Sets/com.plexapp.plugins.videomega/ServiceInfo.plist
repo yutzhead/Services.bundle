@@ -8,7 +8,7 @@
 		<dict>
 			<key>URLPatterns</key>
 			<array>
-				<string>^http:\/\/(www\.)?videomega\.tv\/(cdn|iframe)\.php\?ref=.+</string>
+				<string>^http:\/\/(www\.)?videomega\.tv\/((cdn|iframe)\.php)?\?ref=.+</string>
 			</array>
 		</dict>
 	</dict>
