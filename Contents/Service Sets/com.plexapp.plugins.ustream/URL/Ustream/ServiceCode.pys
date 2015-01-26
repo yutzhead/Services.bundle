@@ -64,7 +64,10 @@ def MetadataObjectForURL(url):
 		if len(video_id) < 1:
 			raise Ex.MediaNotAvailable
 
-		json_obj = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id[0]))['channel']
+		try:
+			json_obj = JSON.ObjectFromURL(USTREAM_CH_JSON % (video_id[0]))['channel']
+		except:
+			raise Ex.MediaNotAvailable
 
 		if json_obj['status'] != 'live':
 			raise Ex.LiveMediaNotStarted
