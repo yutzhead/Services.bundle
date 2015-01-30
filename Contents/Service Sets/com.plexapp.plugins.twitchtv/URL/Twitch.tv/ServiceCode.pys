@@ -22,7 +22,7 @@ def MetadataObjectForURL(url):
 
 	display_name = video['stream']['channel']['display_name']
 	game = video['stream']['channel']['game'] if 'game' in video['stream']['channel'] else '?'
-	status = video['stream']['channel']['status']
+	status = video['stream']['channel']['status'] if 'status' in video['stream']['channel'] else ''
 	viewers = video['stream']['viewers']
 	thumb = video['stream']['preview']['large']
 
