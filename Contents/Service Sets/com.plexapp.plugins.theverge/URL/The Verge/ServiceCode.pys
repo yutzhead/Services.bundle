@@ -47,7 +47,7 @@ def MetadataObjectForURL(url):
 		title = title,
 		summary = summary,
 		originally_available_at = date,
-		thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+		thumb = thumb
 	)
 
 ####################################################################################################
@@ -75,12 +75,23 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate):
 
 	data = HTTP.Request(url).content
-	video_id = RE_VIDEO_ID.search(data)
+	html = HTML.ElementFromString(data)
 
-	if not video_id:
-		raise Ex.MediaNotAvailable
+	video_id = html.xpath('//a[@data-ooyala-id]/@data-ooyala-id')
 
-	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id.group(1))['authorization_data'][video_id.group(1)]['streams']
+	if len(video_id) < 1:
+
+		video_id = RE_VIDEO_ID.search(data)
+
+		if not video_id:
+			raise Ex.MediaNotAvailable
+		else:
+			video_id = video_id.group(1)
+
+	else:
+		video_id = video_id[0]
+
+	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id]['streams']
 	available_bitrates = []
 
 	for video in streams:
