@@ -157,9 +157,9 @@ def PlayVideo(url, res=720):
 ####################################################################################################
 def GetVideoId(url):
 
-	video_id = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//div[@class="player" and @data-id]/@data-id')
+	video_id = HTML.ElementFromURL(url, cacheTime=CACHE_1HOUR).xpath('//link[@itemprop="embedUrl"]/@href')
 
 	if len(video_id) > 0:
-		return video_id[0]
+		return video_id[0].split('/')[-1]
 	else:
 		raise Ex.MediaNotAvailable
