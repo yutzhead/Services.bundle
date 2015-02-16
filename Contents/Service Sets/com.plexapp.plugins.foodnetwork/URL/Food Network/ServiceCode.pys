@@ -48,7 +48,8 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, bitrate=3000):
 
 	json_obj = GetJSON(url)
-	smil_url = json_obj['releaseUrl']
+	smil_url = json_obj['releaseUrl'].split('?')[0]
+	smil_url = '%s?format=SMIL&MBR=true' % (smil_url)
 
 	xml = XML.ElementFromURL(smil_url)
 	available_versions = xml.xpath('//a:switch[1]/a:video/@system-bitrate', namespaces=NAMESPACES)
