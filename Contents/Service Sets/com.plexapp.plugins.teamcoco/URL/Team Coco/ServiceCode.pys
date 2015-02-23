@@ -140,7 +140,7 @@ def PlayVideo(url, res=1080):
 
 		if video['bitrate'] == 'hd':
 			hd_url = video['url']
-		if video['bitrate'] == '1200':
+		if video['bitrate'] == 'embed':
 			sd_url = video['url']
 
 	if res == 1080 and hd_url:
