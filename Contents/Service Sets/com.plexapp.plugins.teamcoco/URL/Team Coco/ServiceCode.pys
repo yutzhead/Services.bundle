@@ -1,6 +1,6 @@
 EPISODE_DATA = 'http://teamcoco.com/cvp/2.0/%s.xml'
 RE_BANDWIDTH = Regex('BANDWIDTH=(\d+)')
-RE_JSON = Regex('"preload":"([^"]+)"')
+RE_JSON = Regex('var player.+"preload":"([^"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -170,6 +170,8 @@ def GetVideoJson(url):
 
 	if not json:
 		raise Ex.MediaNotAvailable
+
+	Log(json.group(1))
 
 	json_obj = JSON.ObjectFromString(String.Base64Decode(json.group(1)))
 	return json_obj
