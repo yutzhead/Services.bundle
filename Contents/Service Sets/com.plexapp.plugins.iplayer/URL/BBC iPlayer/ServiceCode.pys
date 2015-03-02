@@ -126,32 +126,16 @@ def MetadataObjectForURL(url):
 def MediaObjectsForURL(url):
     return [
         MediaObject(
-            protocol = 'rtmp',
-            video_resolution = '720',
-            audio_channels = 2,
-            parts = [
-                PartObject(
-                    key=Callback(DetermineAvailableVideo, url = url, height = '720')
-                )
-            ]
-        ),
-        MediaObject(
-            protocol = 'rtmp',
             video_resolution = '468',
             audio_channels = 2,
             parts = [
                 PartObject(
-                    key=Callback(DetermineAvailableVideo, url = url, height = '468')
-                )
-            ]
-        ),
-        MediaObject(
-            protocol = 'rtmp',
-            video_resolution = 'sd',
-            audio_channels = 2,
-            parts = [
-                PartObject(
-                    key=Callback(DetermineAvailableVideo, url = url, height = '360')
+                    key = 
+                        HTTPLiveStreamURL(
+                            Callback(
+                                DetermineAvailableVideo, url = url
+                            )
+                        )
                 )
             ]
         )
@@ -159,7 +143,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def DetermineAvailableVideo(url, height):
+def DetermineAvailableVideo(url):
     try:
         content = HTTP.Request(url).content
         vpid    = RE_VPID.search(content).groups()[0]
@@ -167,112 +151,55 @@ def DetermineAvailableVideo(url, height):
     except:
         raise Ex.MediaNotAvailable
 
-    media_selector_url = MediaSelectorURL(vpid)
-    
+    media_selector_url = String.Decode('aHR0cDovL29wZW4ubGl2ZS5iYmMuY28udWsvbWVkaWFzZWxlY3Rvci81L3NlbGVjdC92ZXJzaW9uLzIuMC9mb3JtYXQvanNvbi9tZWRpYXNldC9hcHBsZS1pcGFkLWhscy92cGlkLyVz') % vpid
+
     return IndirectResponse(
         VideoClipObject,
-        key = 
-            Callback(
-                PlayVideo,
-                post_url = media_selector_url,
-                url = url, 
-                media_selector_url = media_selector_url, 
-                height = height
+        key =
+            HTTPLiveStreamURL( 
+                Callback(
+                    PlayVideo,
+                    post_url = media_selector_url,
+                    url = url, 
+                    media_selector_url = media_selector_url
+                )
             )     
     )
 
 ####################################################################################################
 @indirect
-def PlayVideo(url='', media_selector_url='', height='720'):
+def PlayVideo(url='', media_selector_url=''):
 
     if url == '' or media_selector_url == '':
         raise Ex.MediaNotAvailable
 
     try:
-        stream_details = XML.ElementFromURL(media_selector_url, cacheTime = 0)
+        stream_details = JSON.ObjectFromURL(media_selector_url, cacheTime = 0)
     except:
         raise Ex.MediaGeoblocked
 
-    # Try to get a video stream
-    stream = GetStream(stream_details = stream_details, type = 'video', height = height)
+    max_bitrate_found = 0
+    hls_url = None
+    
+    for media in stream_details['media']:
+        if media['kind'] == 'video':
+            if int(media['bitrate']) > max_bitrate_found:
+                for connection in media['connection']:
+                    if 'transferFormat' in connection:
+                        if connection['transferFormat'] == 'hls':
+                            hls_url = connection['href']
+                            max_bitrate_found = int(media['bitrate'])
+                            break  
 
-    if not stream:
-        # Try to get an audio stream instead
-        stream = GetStream(stream_details = stream_details, type = 'audio')
         
-    if stream:      
+    if hls_url:      
         return IndirectResponse(
                     VideoClipObject, 
-                    key = RTMPVideoURL(
-                            url = stream['rtmp_url'], 
-                            clip = stream['clip'], 
-                            app = stream['app'], 
-                            swf_url = stream['swf_url'],
-                            live = stream['live']
-                    )
+                    key = HTTPLiveStreamURL(url = hls_url)
         )
         
     else:
         raise Ex.MediaNotAvailable
-    
-####################################################################################################
-def GetStream(stream_details, type = 'video', height = 720):
-    height = int(height)
-    stream = {}
-
-    if type == 'video':
-        min_height_diff_found = 1000000 # Some huge number to get it started
-    else:
-        max_bitrate_found = 0
-        
-    for media in stream_details.xpath('//m:media[@kind = "%s"]' % type, namespaces = NAMESPACES):
-        if type == 'video':
-            height_diff                  = abs(height - int(media.get('height'))) 
-            possible_better_source_found = height_diff < min_height_diff_found
-        else:
-            possible_better_source_found = int(media.get('bitrate')) > max_bitrate_found
-        
-        if possible_better_source_found:
-            for connection in media.xpath('./m:connection', namespaces = NAMESPACES):
-                if 'rtmp' in connection.get('protocol'):
-                    supplier = connection.get('supplier') 
-                    if not 'akamai' in supplier or type == 'audio':
-                        if type == 'video':
-                            min_height_diff_found = height_diff
-                        else:
-                            max_bitrate_found = int(media.get('bitrate'))
-                
-                        server = connection.get('server')
-                        auth   = connection.get('authString')
-                        
-                        if not auth:
-                            auth = ''
-        
-                        app  = connection.get('application')
-                        clip = connection.get('identifier')
-                        
-                        if not app and 'akamai' in supplier:
-                            app = 'ondemand'
-                        
-                        stream['rtmp_url'] = 'rtmp://%s/%s' % (server, app)
-                        stream['app']      = app
-                        stream['clip']     = clip
-                        stream['live']     = 'live' in stream['app']
-                        stream['supplier'] = supplier
-                        
-                        if auth:
-                            stream['rtmp_url'] = stream['rtmp_url'] + '?' + auth
-                            stream['app']      = stream['app'] + '?' + auth
-                            
-    if stream:
-        stream['swf_url'] = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
-    
-    return stream 
-
-####################################################################################################
-def MediaSelectorURL(vpid):
-    hash = Hash.SHA1((String.Decode('N2RmZjc2NzFkMGM2OTdmZWRiMWQ5MDVkOWExMjE3MTk5MzhiOTJiZg__') + vpid))    
-    return String.Decode('aHR0cDovL29wZW4ubGl2ZS5iYmMuY28udWsvbWVkaWFzZWxlY3Rvci81L3NlbGVjdC92ZXJzaW9uLzIuMC9tZWRpYXNldC9wYy92cGlkLyVzL2F0ay8lcy9hc24vJXMv') % (vpid, hash, '1')
 
 ####################################################################################################
 def TestURLs():
