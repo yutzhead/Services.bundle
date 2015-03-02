@@ -35,7 +35,7 @@ def MetadataObjectForURL(url):
 		title = meta['kw'],
 		thumb = Resource.ContentsOfURLWithFallback(meta['pic']),
 		summary = meta['desc'],
-		duration = meta['seconds']*1000
+		duration = meta['seconds']
 	)
 
 ####################################################################################################

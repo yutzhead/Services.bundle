@@ -123,6 +123,10 @@ def MediaObjectsForURL(url):
 				continue
 
 			rtmp_url = rendition.xpath('./src/text()')[0]
+
+			if '.flv' in rtmp_url:
+				continue
+
 			bitrate = RE_BITRATE.search(rtmp_url).group(1)
 
 			if bitrate not in available_streams:
