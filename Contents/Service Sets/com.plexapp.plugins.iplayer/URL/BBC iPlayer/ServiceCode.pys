@@ -232,11 +232,11 @@ def GetStream(stream_details, type = 'video', height = 720):
         else:
             possible_better_source_found = int(media.get('bitrate')) > max_bitrate_found
         
-        if possible_better_source_found or not stream:
+        if possible_better_source_found:
             for connection in media.xpath('./m:connection', namespaces = NAMESPACES):
                 if 'rtmp' in connection.get('protocol'):
                     supplier = connection.get('supplier') 
-                    if 'limelight' in supplier or type == 'audio':
+                    if not 'akamai' in supplier or type == 'audio':
                         if type == 'video':
                             min_height_diff_found = height_diff
                         else:
@@ -255,7 +255,6 @@ def GetStream(stream_details, type = 'video', height = 720):
                             app = 'ondemand'
                         
                         stream['rtmp_url'] = 'rtmp://%s/%s' % (server, app)
-                        
                         stream['app']      = app
                         stream['clip']     = clip
                         stream['live']     = 'live' in stream['app']
@@ -266,7 +265,7 @@ def GetStream(stream_details, type = 'video', height = 720):
                             stream['app']      = stream['app'] + '?' + auth
                             
     if stream:
-        stream['swf_url'] = 'http://emp.bbci.co.uk/emp/SMPf/1.10.16/StandardMediaPlayerChromelessFlash.swf'
+        stream['swf_url'] = 'http://www.bbc.co.uk/emp/releases/iplayer/revisions/617463_618125_4/617463_618125_4_emp.swf'
     
     return stream 
 
