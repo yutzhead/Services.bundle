@@ -6,10 +6,12 @@ RE_VPID    = Regex('"vpid" *: *"(.+?)"')
 
 ####################################################################################################
 def NormalizeURL(url):
+
     return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+
     pid       = RE_PID.findall(url)[0]
     programme = JSON.ObjectFromURL('http://www.bbc.co.uk/programmes/%s.json' % pid, headers=HTTP_HEADERS)['programme']
 
@@ -122,6 +124,7 @@ def MetadataObjectForURL(url):
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+
     return [
         MediaObject(
             video_resolution = '468',
@@ -142,10 +145,11 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 @indirect
 def DetermineAvailableVideo(url, **kwargs):
+
     try:
         content = HTTP.Request(url).content
         vpid    = RE_VPID.search(content).groups()[0]
-        
+
     except:
         raise Ex.MediaNotAvailable
 
@@ -158,10 +162,10 @@ def DetermineAvailableVideo(url, **kwargs):
                 Callback(
                     PlayVideo,
                     post_url = media_selector_url,
-                    url = url, 
+                    url = url,
                     media_selector_url = media_selector_url
                 )
-            )     
+            )
     )
 
 ####################################################################################################
@@ -178,7 +182,7 @@ def PlayVideo(url='', media_selector_url='', **kwargs):
 
     max_bitrate_found = 0
     hls_url = None
-    
+
     for media in stream_details['media']:
         if media['kind'] == 'video':
             if int(media['bitrate']) > max_bitrate_found:
@@ -187,20 +191,20 @@ def PlayVideo(url='', media_selector_url='', **kwargs):
                         if connection['transferFormat'] == 'hls':
                             hls_url = connection['href']
                             max_bitrate_found = int(media['bitrate'])
-                            break  
+                            break
 
-        
-    if hls_url:      
+    if hls_url:
         return IndirectResponse(
-                    VideoClipObject, 
-                    key = HTTPLiveStreamURL(url = hls_url)
+            VideoClipObject, 
+            key = HTTPLiveStreamURL(url = hls_url)
         )
-        
+
     else:
         raise Ex.MediaNotAvailable
 
 ####################################################################################################
 def TestURLs():
+
     test_urls = []
     data = HTML.ElementFromURL('http://www.bbc.co.uk/iplayer')
 
