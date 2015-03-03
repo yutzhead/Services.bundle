@@ -6,7 +6,9 @@ THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted
 
 ### For videos that have 'XXXX' as id
 SHOWS_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/iPad'
-EPISODES_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/%s/iPad?filterBy=episode'
+#EPISODES_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/%s/iPad?filterBy=episode'
+EPISODES_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/%s/iPad'
+#CLIPS_URL = 'http://tve-atcnbce.nbcuni.com/live/3/nbce/containers/%s/iPad?filterBy=clip'
 ###
 
 RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n?\d{4,})')
@@ -227,8 +229,15 @@ def GetEpisodeData(url, video_id):
 		except:
 			raise Ex.MediaNotAvailable
 
-		show_name = html.xpath('//title/text()')[0].split(' | ')[2].lower()
-		show_name = RE_CLEANUP_TITLE.sub('', show_name)
+		try:
+			show_name = html.xpath('//title/text()')[0].split(' | ')[2].lower()
+			show_name = RE_CLEANUP_TITLE.sub('', show_name)
+		except:
+			try:
+				show_name = html.xpath('//meta[@property="og:url"]/@content')[0].split('/')[3]
+				show_name = RE_CLEANUP_TITLE.sub('', show_name)
+			except:
+				show_name = ''
 
 		for show in JSON.ObjectFromURL(SHOWS_URL):
 			show_title = RE_CLEANUP_TITLE.sub('', show['title'].lower())
