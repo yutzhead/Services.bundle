@@ -143,7 +143,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def DetermineAvailableVideo(url):
+def DetermineAvailableVideo(url, **kwargs):
     try:
         content = HTTP.Request(url).content
         vpid    = RE_VPID.search(content).groups()[0]
@@ -168,7 +168,7 @@ def DetermineAvailableVideo(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(url='', media_selector_url=''):
+def PlayVideo(url='', media_selector_url='', **kwargs):
 
     if url == '' or media_selector_url == '':
         raise Ex.MediaNotAvailable
