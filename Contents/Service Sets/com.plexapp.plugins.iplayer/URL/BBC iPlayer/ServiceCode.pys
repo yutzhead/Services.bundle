@@ -4,8 +4,6 @@ RE_PID     = Regex('iplayer/episode/([^/$]{8})')
 RE_DETAILS = Regex('episodeRegistry.addData\([^{]*(.+)\)+')
 RE_VPID    = Regex('"vpid" *: *"(.+?)"')
 
-NAMESPACES = {'m': 'http://bbc.co.uk/2008/mp/mediaselection'}
-
 ####################################################################################################
 def NormalizeURL(url):
     return url
