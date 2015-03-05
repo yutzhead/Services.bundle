@@ -56,6 +56,7 @@ def MediaObjectsForURL(url):
 
     return [
         MediaObject(
+	        protocol = 'rtmp',
             parts = [
                 PartObject(key=Callback(PlayVideo, url=url))
             ]
