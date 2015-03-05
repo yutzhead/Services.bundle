@@ -104,14 +104,14 @@ def GetDetails(url):
     json_obj = JSON.ObjectFromURL(JSON_URL + id + JSON_FIELDS)
 
     if 'entries' in json_obj:
- 
+
         details = JSON.ObjectFromURL(JSON_URL + id + JSON_FIELDS)['entries']
 
         if len(details) < 1:
             raise Ex.MediaNotAvailable
 
         return details[0]
- 
+
     else:
         raise Ex.MediaNotAvailable
 
