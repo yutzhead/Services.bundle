@@ -103,7 +103,10 @@ def MediaObjectsForURL(url):
 ####################################################################################################
 def PlayVideo(url, resolution='720', client='', **kwargs):
     try:
-        json_obj = JSON.ObjectFromURL(url + '?output=json')
+        if "?" in url:
+            json_obj = JSON.ObjectFromURL(url + '&output=json')
+        else:
+            json_obj = JSON.ObjectFromURL(url + '?output=json')
     except:
         raise Ex.MediaNotAvailable
         
