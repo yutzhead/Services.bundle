@@ -1,7 +1,7 @@
 HTTP_HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36'}
 HTTP_HEADERS_IPAD = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 6_0_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A523 Safari/8536.25'}
 
-RE_YT_ID = Regex('"file"(?:\:|,) *"http:\/\/www\.youtube\.com\/watch\?v=([^\"]+)"')
+RE_FILE_ID = Regex('"file"(?:\:|,) *"([^\"]+)"')
 
 ####################################################################################################
 def NormalizeURL(url):
@@ -18,8 +18,15 @@ def MetadataObjectForURL(url):
 
 	if len(yt_iframe) > 0:
 		return URLService.MetadataObjectForURL(yt_iframe[0])
-	elif RE_YT_ID.search(data):
-		return URLService.MetadataObjectForURL('http://www.youtube.com/watch?v=%s' % RE_YT_ID.search(data).group(1))
+	elif RE_FILE_ID.search(data):
+		url = RE_FILE_ID.search(data).group(1)
+
+		# If this is a YouTube video we use the YouTube URL Service to handle the request
+		if 'youtube.com/' in url:
+			return URLService.MetadataObjectForURL(url)
+		# NOTE: We check for '.flv' here (because we're not in the iPad version of the website), but we use the mp4 file in MediaObjectsForURL and PlayVideo!
+		elif '.flv' not in url:
+			raise Ex.MediaNotAvailable
 	else:
 		raise Ex.MediaNotAvailable
 
@@ -38,7 +45,9 @@ def MediaObjectsForURL(url):
 
 	return [
 		MediaObject(
-			parts = [PartObject(key=Callback(PlayVideo, url=url))],
+			parts = [
+				PartObject(key=Callback(PlayVideo, url=url))
+			],
 			container = Container.MP4,
 			video_codec = VideoCodec.H264,
 			video_resolution = 'sd',
@@ -53,9 +62,16 @@ def MediaObjectsForURL(url):
 def PlayVideo(url):
 
 	url = url.replace('http://www.', 'http://m.')
-	video = HTML.ElementFromURL(url, headers=HTTP_HEADERS_IPAD).xpath('//video/@src|//video/source/@src')
+	data = HTTP.Request(url, headers=HTTP_HEADERS_IPAD).content
+	html = HTML.ElementFromString(data)
 
-	if len(video) < 1:
+	video = html.xpath('//video/@src|//video/source/@src')
+
+	if len(video) > 0:
+		video_url = video[0]
+	elif RE_FILE_ID.search(data):
+		video_url = RE_FILE_ID.search(data).group(1)
+	else:
 		raise Ex.MediaNotAvailable
 
-	return IndirectResponse(VideoClipObject, key=video[0])
+	return IndirectResponse(VideoClipObject, key=video_url)
