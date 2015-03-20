@@ -18,6 +18,12 @@ def MetadataObjectForURL(url):
 	if RE_DRTV.match(url):
 
 		slug = url.rsplit('/',1)[1]
+
+		if slug == '':
+			html = HTML.ElementFromURL(url)
+			url = html.xpath('//input[@id="shareLink"]/@data-value')[0]
+			slug = url.rsplit('/',1)[1]
+
 		json = JSON.ObjectFromURL(API_URL + 'programcard/' + slug)
 
 		if not 'PrimaryAsset' in json:
