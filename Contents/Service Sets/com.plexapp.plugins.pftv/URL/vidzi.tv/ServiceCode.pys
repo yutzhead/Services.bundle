@@ -10,7 +10,7 @@ def MetadataObjectForURL(url):
 
 	html = HTML.ElementFromURL(url)
 
-	if len(html.xpath('//h3[contains(text(), "deleted")]')) > 0:
+	if len(html.xpath('//*[contains(., "deleted")]')) > 0:
 		raise Ex.MediaNotAvailable
 
 	title = html.xpath('//h2[@class="video-title"]/text()')[0].strip()
