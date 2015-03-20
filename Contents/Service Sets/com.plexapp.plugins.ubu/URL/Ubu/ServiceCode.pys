@@ -12,7 +12,12 @@ def MetadataObjectForURL(url):
 	html = HTML.ElementFromString(content)
 
 	# Extract the available information from the page
-	title = html.xpath('//title')[0].text.split('Film & Video: ')[-1]
+	title = html.xpath('//title/text()')
+
+	if title:
+		title = title[0].split('Film & Video: ')[-1]
+	else:
+		title = html.xpath('//a[@id="moviename"]/text()')[0]
 
 	if '<!--PLAYER END-->' in content:
 		description = content.split('<!--PLAYER END-->')[1]
