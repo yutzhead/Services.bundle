@@ -32,9 +32,15 @@ def MetadataObjectForURL(url):
   elif ' | ' in title:
     title = title.split(' | ')[0]
 
-  thumb_url = data.xpath('//meta[@property="og:image"]')[0].get('content')
-  description = String.StripTags(data.xpath('//meta[@name="description"]')[0].get('content'))
-  keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]')[0].get('content').split(',')]
+  thumb_url = data.xpath('//meta[@property="og:image"]/@content')
+
+  if len(thumb_url) < 1:
+    raise Ex.MediaNotAvailable
+  else:
+    thumb_url = thumb_url[0]
+
+  description = String.StripTags(data.xpath('//meta[@name="description"]/@content')[0])
+  keywords = [x.strip() for x in data.xpath('//meta[@name="keywords"]/@content')[0].split(',')]
 
   if full_episode:
     # Construct a metadata item

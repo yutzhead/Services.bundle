@@ -14,7 +14,7 @@
 			<key>URLPatterns</key>
 			<array>
 				<string>^(?!.*/search/)http://video.nationalgeographic.com/video/(player/)?.+</string>
-				<string>^(?!.*/search/)http://channel.nationalgeographic.com/channel/(.+/)?videos/.+</string>
+				<string>^(?!.*/search/)http://channel.nationalgeographic.com/(channel/)?(.+/)?videos/.+</string>
 			</array>
 		</dict>
 		<key>National Geographic Photography</key>
