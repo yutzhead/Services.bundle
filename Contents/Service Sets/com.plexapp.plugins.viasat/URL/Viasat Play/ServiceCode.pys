@@ -133,6 +133,8 @@ def GetHLSStreams(url):
     # - Resolution
     # - Bitrate
     for line in playList.splitlines():
+        if "TYPE=SUBTITLES" in line:
+            continue
         if "BANDWIDTH" in line:
             stream            = {}
             stream["bitrate"] = int(Regex('(?<=BANDWIDTH=)[0-9]+').search(line).group(0))        
