@@ -131,11 +131,11 @@ def MediaObjectsForURL(url):
 
     return [
         MediaObject(
-            video_resolution = '468',
+            video_resolution = '720',
             audio_channels = 2,
             parts = [
                 PartObject(
-                    key = HTTPLiveStreamURL(Callback(PlayVideo, post_url=media_selector_url, media_selector_url=media_selector_url))
+                    key = HTTPLiveStreamURL(Callback(PlayVideo, post_url=media_selector_url, media_selector_url=media_selector_url, vpid=vpid))
                 )
             ]
         )
@@ -143,7 +143,7 @@ def MediaObjectsForURL(url):
 
 ####################################################################################################
 @indirect
-def PlayVideo(media_selector_url='', **kwargs):
+def PlayVideo(media_selector_url='', vpid='', **kwargs):
 
     if media_selector_url == '':
         raise Ex.MediaNotAvailable
@@ -153,26 +153,52 @@ def PlayVideo(media_selector_url='', **kwargs):
     except:
         raise Ex.MediaGeoblocked
 
+    url = GetMaxBitrateURL(stream_details, 'hls')
+
+    if url:
+        try:
+            stream_details = JSON.ObjectFromURL(
+                String.Decode('aHR0cDovL29wZW4ubGl2ZS5iYmMuY28udWsvbWVkaWFzZWxlY3Rvci81L3NlbGVjdC92ZXJzaW9uLzIuMC9mb3JtYXQvanNvbi9tZWRpYXNldC9wYy92cGlkLyVz') % (vpid),
+                cacheTime = 0
+            )
+
+            id = GetMaxBitrateURL(stream_details, 'rtmp')
+
+            if not id in url:
+                url = url.replace(String.Decode("LC5tcDQuY3NtaWw_"), id + String.Decode("LC5tcDQuY3NtaWw_")).replace(String.Decode("Kn5obWFj"), id + String.Decode("Kn5obWFj"))
+
+        except:
+            pass
+    else:
+        raise Ex.MediaNotAvailable
+
+    return IndirectResponse(
+        VideoClipObject, key=HTTPLiveStreamURL(url=url)
+    )
+
+####################################################################################################
+def GetMaxBitrateURL(stream_details, transfer_format):
+
     max_bitrate_found = 0
-    hls_url = None
+    url = None
 
     for media in stream_details['media']:
         if media['kind'] == 'video':
             if int(media['bitrate']) > max_bitrate_found:
                 for connection in media['connection']:
-                    if 'transferFormat' in connection:
-                        if connection['transferFormat'] == 'hls':
-                            hls_url = connection['href']
-                            max_bitrate_found = int(media['bitrate'])
-                            break
+                    if 'akamai' in connection['supplier']:
+                        if transfer_format == 'hls':
+                            if 'transferFormat' in connection:
+                                if 'hls' in connection['transferFormat']:
+                                    url = connection['href']
+                                    max_bitrate_found = int(media['bitrate'])
+                        else:
+                            if 'protocol' in connection:
+                                if 'rtmp' in connection['protocol']:
+                                    url = connection['identifier'].replace(String.Decode("bXA0OmlwbGF5ZXJzdHJlYW0vc2VjdXJlX2F1dGgv"), ",").replace(String.Decode("Lm1wNA=="), "").replace(String.Decode("bXA0OnNlY3VyZS8="), ",")
+                                    max_bitrate_found = int(media['bitrate'])
 
-    if hls_url:
-        return IndirectResponse(
-            VideoClipObject, key=HTTPLiveStreamURL(url=hls_url)
-        )
-
-    else:
-        raise Ex.MediaNotAvailable
+    return url
 
 ####################################################################################################
 def TestURLs():
