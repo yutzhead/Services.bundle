@@ -77,7 +77,7 @@ def PlayVideo(url, bitrate):
 	data = HTTP.Request(url).content
 	html = HTML.ElementFromString(data)
 
-	video_id = html.xpath('//a[@data-ooyala-id]/@data-ooyala-id')
+	video_id = html.xpath('//meta[@property="og:video"]/@content')
 
 	if len(video_id) < 1:
 
@@ -89,7 +89,7 @@ def PlayVideo(url, bitrate):
 			video_id = video_id.group(1)
 
 	else:
-		video_id = video_id[0]
+		video_id = video_id[0].split('embedCode=')[-1].split('&')[0]
 
 	streams = JSON.ObjectFromURL(JSON_VIDEO_DATA % video_id)['authorization_data'][video_id]['streams']
 	available_bitrates = []
