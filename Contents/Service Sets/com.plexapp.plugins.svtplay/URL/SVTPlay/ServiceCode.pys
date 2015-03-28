@@ -4,6 +4,7 @@ USER_AGENT = 'AppleCoreMedia/1.0.0.11A501 (iPad; U; CPU OS 7_0_2 like Mac OS X; 
 ####################################################################################################
 def NormalizeURL(url):
 
+    url = url.replace("?start=auto&", "?").replace("?start=auto", "")
     if 'type=embed' in url:
         url = url.split('type=embed')[0].strip('&?')
 
