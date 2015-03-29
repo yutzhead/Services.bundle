@@ -8,7 +8,10 @@ def NormalizeURL(url):
 ####################################################################################################
 def MetadataObjectForURL(url):
 
-	html = HTML.ElementFromURL(url)
+	try:
+		html = HTML.ElementFromURL(url)
+	except:
+		raise Ex.MediaNotAvailable
 
 	if len(html.xpath('//*[contains(., "deleted")]')) > 0:
 		raise Ex.MediaNotAvailable
