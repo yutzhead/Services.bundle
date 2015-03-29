@@ -186,9 +186,6 @@ def PlayVideo(media_selector_url='', vpid='', resolution='', **kwargs):
     else:
         raise Ex.MediaNotAvailable
 
-
-    streams = GetHLSStreams(url)
-    
     if Client.Platform in HLS_CLIENTS:
         # These clients can handle HLS properly
         return IndirectResponse(
@@ -198,7 +195,8 @@ def PlayVideo(media_selector_url='', vpid='', resolution='', **kwargs):
         # Other clients have problems if returning the original URL:
         # - Plex/Web: 'No playable sources found'
         # - Chromecast: PMS is selecting a low res variant when remuxing for CC
-        
+        streams = GetHLSStreams(url)
+
         min_resolution_diff = 1000000000 # some huge number to get it started
         url = streams[0]['url']
         
