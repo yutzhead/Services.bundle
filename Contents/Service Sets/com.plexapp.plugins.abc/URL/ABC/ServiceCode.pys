@@ -120,7 +120,7 @@ def MediaObjectsForURL(url):
 			protocol = 'hls',
 			container = 'mpegts',
 			video_codec = VideoCodec.H264,
-			video_resolution = '480',
+			video_resolution = '1080',
 			audio_codec = AudioCodec.AAC,
 			audio_channels = 2,
 			optimized_for_streaming = True,
