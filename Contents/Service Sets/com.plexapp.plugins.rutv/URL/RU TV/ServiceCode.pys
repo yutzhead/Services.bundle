@@ -28,7 +28,12 @@ def MetadataObjectForURL(url):
 	if not vid_id:
 		raise Ex.MediaNotAvailable
 
-	json_obj = JSON.ObjectFromURL(DATA_URL % vid_id.group(1))['data']['playlist']['medialist'][0]
+	json_obj = JSON.ObjectFromURL(DATA_URL % vid_id.group(1))
+
+	if 'errors' in json_obj:
+		raise Ex.MediaNotAvailable
+
+	json_obj = json_obj['data']['playlist']['medialist'][0]
 
 	return VideoClipObject(
 		title = json_obj['title'],
@@ -61,7 +66,12 @@ def PlayVideo(url, **kwargs):
 	if not vid_id:
 		raise Ex.MediaNotAvailable
 
-	json_obj = JSON.ObjectFromURL(DATA_URL % vid_id.group(1))['data']['playlist']['medialist'][0]
+	json_obj = JSON.ObjectFromURL(DATA_URL % vid_id.group(1))
+
+	if 'errors' in json_obj:
+		raise Ex.MediaNotAvailable
+
+	json_obj = json_obj['data']['playlist']['medialist'][0]
 	video_url = json_obj['sources']['m3u8']['auto']
 
 	return IndirectResponse(VideoClipObject, key=video_url)
