@@ -176,7 +176,5 @@ def GetVideoJson(url):
 	if not json:
 		raise Ex.MediaNotAvailable
 
-	Log(json.group(1))
-
 	json_obj = JSON.ObjectFromString(String.Base64Decode(json.group(1)))
 	return json_obj
