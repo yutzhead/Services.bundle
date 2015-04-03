@@ -74,7 +74,7 @@ def MediaObjectsForURL(url):
 				audio_codec = AudioCodec.AAC,
 				audio_channels = 2,
 				optimized_for_streaming = True
-			) for res in [1080, 480]
+			) for res in [1080, 720, 480]
 		]
 
 ####################################################################################################
@@ -130,20 +130,25 @@ def PlayEpisode(url, **kwargs):
 @indirect
 def PlayVideo(url, res=1080):
 
-	res = 480 if res not in [1080, 480] else res
+	res = 720 if res not in [1080, 720, 480] else res
 
 	json_obj = GetVideoJson(url)
+	uhd_url = None
 	hd_url = None
 	sd_url = None
 
 	for video in json_obj['files']:
 
-		if video['bitrate'] == 'hd':
+		if video['type'] == 'uhd' or video['bitrate'] == 'hd':
+			uhd_url = video['url']
+		if video['type'] == 'hd':
 			hd_url = video['url']
-		if video['bitrate'] == 'embed':
+		if video['type'] == 'sd' or video['bitrate'] == 'embed':
 			sd_url = video['url']
 
-	if res == 1080 and hd_url:
+	if res == 1080 and uhd_url:
+		video_url = uhd_url
+	elif res in [1080, 720] and hd_url:
 		video_url = hd_url
 	elif sd_url:
 		video_url = sd_url
